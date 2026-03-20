@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // React Compiler left untouched — enable explicitly when ready
 };
 
 export default nextConfig;
