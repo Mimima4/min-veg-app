@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { LocalePageShell } from "@/components/layout/locale-page-shell";
-import SignupForm from "./signup-form";
+import ResetPasswordForm from "./reset-password-form";
 
-export default async function SignupPage({
+export default async function ResetPasswordPage({
   params,
 }: {
   params: Promise<{ locale: string }>;
@@ -12,19 +12,19 @@ export default async function SignupPage({
   return (
     <LocalePageShell
       locale={locale}
-      title="Create account"
-      subtitle="Set up your Min Veg account to start planning."
-      backHref={`/${locale}`}
+      title="Reset password"
+      subtitle="Set a new password after opening the recovery link from your email."
+      backHref={`/${locale}/login`}
     >
-      <SignupForm locale={locale} />
+      <ResetPasswordForm locale={locale} />
 
       <div className="mt-6 text-sm text-stone-500">
-        Already have an account?{" "}
+        Back to{" "}
         <Link
           href={`/${locale}/login`}
           className="text-stone-700 underline underline-offset-4 hover:text-stone-900"
         >
-          Sign in
+          Login
         </Link>
       </div>
     </LocalePageShell>
