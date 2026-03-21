@@ -4,7 +4,6 @@ import "./globals.css";
 
 const geist = Geist({
   subsets: ["latin"],
-  variable: "--font-geist",
 });
 
 export const metadata: Metadata = {
@@ -18,8 +17,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={geist.variable}>
-      <body className="bg-white text-stone-800 antialiased">
+    <html lang="en">
+      <body className={`${geist.className} bg-stone-50 text-stone-800 antialiased`}>
         {children}
       </body>
     </html>
