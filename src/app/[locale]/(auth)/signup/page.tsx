@@ -15,6 +15,7 @@ export default async function SignupPage({
       title="Create account"
       subtitle="Set up your Min Veg account to start planning."
       backHref={`/${locale}`}
+      backLabel="Back home"
     >
       <SignupForm locale={locale} />
 

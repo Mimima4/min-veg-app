@@ -1,4 +1,4 @@
-import { LocalePageShell } from "@/components/layout/locale-page-shell";
+import { redirect } from "next/navigation";
 
 export default async function ChildrenPage({
   params,
@@ -6,18 +6,6 @@ export default async function ChildrenPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-
-  return (
-    <LocalePageShell
-      locale={locale}
-      title="Children"
-      subtitle={`Placeholder page for /${locale}/app/children.`}
-      backHref={`/${locale}`}
-      navLinks={[
-        { href: `/${locale}/app/dashboard`, label: "Dashboard" },
-        { href: `/${locale}/app/professions`, label: "Professions" },
-      ]}
-    />
-  );
+  redirect(`/${locale}/app/family`);
 }
 

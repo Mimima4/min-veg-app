@@ -15,6 +15,7 @@ export default async function ForgotPasswordPage({
       title="Forgot password"
       subtitle="Enter your email and we will send you a password reset link."
       backHref={`/${locale}/login`}
+      backLabel="Back to login"
     >
       <ForgotPasswordForm locale={locale} />
 

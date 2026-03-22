@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
 import type { SupportedLocale } from "@/lib/i18n/site-copy";
 import { getSiteCopy } from "@/lib/i18n/site-copy";
+import SignOutButton from "@/components/auth/sign-out-button";
 
 export default async function MarketingHome({
   params,
@@ -9,6 +11,13 @@ export default async function MarketingHome({
 }) {
   const { locale } = await params;
   const copy = getSiteCopy(locale as SupportedLocale);
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const isSignedIn = Boolean(user);
 
   return (
     <main className="min-h-screen bg-stone-50 px-6 py-16">
@@ -29,37 +38,64 @@ export default async function MarketingHome({
           <p className="max-w-2xl text-base leading-relaxed text-stone-700">
             {copy.shortExplanation}
           </p>
+
+          {isSignedIn ? (
+            <div className="rounded-2xl border border-stone-200 bg-white px-5 py-4 text-sm text-stone-600">
+              Signed in as{" "}
+              <span className="font-medium text-stone-900">{user?.email}</span>
+            </div>
+          ) : null}
         </section>
 
-        <section className="mt-10 flex flex-wrap gap-3">
-          <Link
-            href={`/${locale}/demo`}
-            className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-5 py-2.5 text-sm text-stone-900 transition hover:border-stone-400"
-          >
-            {copy.ctas.tryDemo}
-          </Link>
+        {!isSignedIn ? (
+          <section className="mt-10 flex flex-wrap gap-3">
+            <Link
+              href={`/${locale}/demo`}
+              className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-5 py-2.5 text-sm text-stone-900 transition hover:border-stone-400"
+            >
+              {copy.ctas.tryDemo}
+            </Link>
 
-          <Link
-            href={`/${locale}/pricing`}
-            className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-5 py-2.5 text-sm text-stone-900 transition hover:border-stone-400"
-          >
-            {copy.ctas.viewPricing}
-          </Link>
+            <Link
+              href={`/${locale}/pricing`}
+              className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-5 py-2.5 text-sm text-stone-900 transition hover:border-stone-400"
+            >
+              {copy.ctas.viewPricing}
+            </Link>
 
-          <Link
-            href={`/${locale}/signup`}
-            className="inline-flex items-center justify-center rounded-full border border-stone-900 bg-stone-900 px-5 py-2.5 text-sm text-white transition hover:bg-stone-800"
-          >
-            {copy.ctas.createAccount}
-          </Link>
+            <Link
+              href={`/${locale}/signup`}
+              className="inline-flex items-center justify-center rounded-full border border-stone-900 bg-stone-900 px-5 py-2.5 text-sm text-white transition hover:bg-stone-800"
+            >
+              {copy.ctas.createAccount}
+            </Link>
+          </section>
+        ) : (
+          <section className="mt-10 flex flex-wrap gap-3">
+            <Link
+              href={`/${locale}/app/dashboard`}
+              className="inline-flex items-center justify-center rounded-full border border-stone-900 bg-stone-900 px-5 py-2.5 text-sm text-white transition hover:bg-stone-800"
+            >
+              Open dashboard
+            </Link>
 
-          <Link
-            href={`/${locale}/app/dashboard`}
-            className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-5 py-2.5 text-sm text-stone-900 transition hover:border-stone-400"
-          >
-            {copy.ctas.openDashboardPreview}
-          </Link>
-        </section>
+            <Link
+              href={`/${locale}/app/family`}
+              className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-5 py-2.5 text-sm text-stone-900 transition hover:border-stone-400"
+            >
+              Open family
+            </Link>
+
+            <Link
+              href={`/${locale}/app/profile`}
+              className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-5 py-2.5 text-sm text-stone-900 transition hover:border-stone-400"
+            >
+              Open profile
+            </Link>
+
+            <SignOutButton locale={locale} />
+          </section>
+        )}
 
         <section className="mt-14 grid gap-6 sm:grid-cols-3">
           {copy.features.map((feature) => (
@@ -77,19 +113,19 @@ export default async function MarketingHome({
           ))}
         </section>
 
-        <section className="mt-10 text-sm text-stone-500">
-          {copy.loginPrompt ? (
+        {!isSignedIn ? (
+          <section className="mt-10 text-sm text-stone-500">
             <p>
-              {copy.loginPrompt}{" "}
+              Har du allerede en konto?{" "}
               <Link
                 href={`/${locale}/login`}
                 className="text-stone-700 underline underline-offset-4 hover:text-stone-900"
               >
-                Login
+                Logg inn
               </Link>
             </p>
-          ) : null}
-        </section>
+          </section>
+        ) : null}
 
         <footer className="mt-14 border-t border-stone-200 pt-6 text-sm text-stone-500">
           {copy.footerNote}

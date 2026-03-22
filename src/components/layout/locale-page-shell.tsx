@@ -11,28 +11,30 @@ export function LocalePageShell({
   title,
   subtitle,
   backHref,
+  backLabel = "Back home",
   navLinks,
   children,
 }: {
   locale: string;
   title: string;
   subtitle: string;
-  backHref: string;
+  backHref?: string;
+  backLabel?: string;
   navLinks?: NavLink[];
   children?: ReactNode;
 }) {
   return (
-    <main className="min-h-screen px-6 py-16">
-      <div className="max-w-3xl mx-auto">
-        <div className="text-xs font-medium tracking-widest text-stone-500 uppercase">
+    <main className="min-h-screen bg-stone-50 px-6 py-16">
+      <div className="mx-auto max-w-5xl">
+        <div className="text-xs font-medium uppercase tracking-[0.2em] text-stone-500">
           Locale: {locale.toUpperCase()}
         </div>
 
         <div className="mt-6 space-y-3">
-          <h1 className="text-4xl font-semibold tracking-tight text-stone-900">
+          <h1 className="text-5xl font-semibold tracking-tight text-stone-900 sm:text-6xl">
             {title}
           </h1>
-          <p className="text-lg text-stone-500 font-light leading-relaxed">
+          <p className="max-w-3xl text-lg font-light leading-relaxed text-stone-600 sm:text-xl">
             {subtitle}
           </p>
         </div>
@@ -54,14 +56,16 @@ export function LocalePageShell({
           </nav>
         ) : null}
 
-        <div className="mt-8">
-          <Link
-            href={backHref}
-            className="text-sm text-stone-700 underline underline-offset-4 hover:text-stone-900"
-          >
-            Back to main
-          </Link>
-        </div>
+        {backHref ? (
+          <div className="mt-8">
+            <Link
+              href={backHref}
+              className="text-sm text-stone-700 underline underline-offset-4 hover:text-stone-900"
+            >
+              {backLabel}
+            </Link>
+          </div>
+        ) : null}
 
         {children ? <section className="mt-10">{children}</section> : null}
       </div>

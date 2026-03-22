@@ -15,6 +15,7 @@ export default async function ResetPasswordPage({
       title="Reset password"
       subtitle="Set a new password after opening the recovery link from your email."
       backHref={`/${locale}/login`}
+      backLabel="Back to login"
     >
       <ResetPasswordForm locale={locale} />
 

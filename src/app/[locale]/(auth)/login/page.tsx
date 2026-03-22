@@ -15,6 +15,7 @@ export default async function LoginPage({
       title="Login"
       subtitle="Sign in to continue to your Min Veg workspace."
       backHref={`/${locale}`}
+      backLabel="Back home"
     >
       <LoginForm locale={locale} />
 

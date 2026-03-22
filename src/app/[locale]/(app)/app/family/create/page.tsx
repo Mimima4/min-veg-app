@@ -1,0 +1,45 @@
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { LocalePageShell } from "@/components/layout/locale-page-shell";
+import AppPrivateNav from "@/components/layout/app-private-nav";
+import CreateFamilyForm from "./create-family-form";
+
+export default async function CreateFamilyPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect(`/${locale}/login`);
+  }
+
+  const { data: existingFamily } = await supabase
+    .from("family_accounts")
+    .select("id")
+    .eq("primary_user_id", user.id)
+    .maybeSingle();
+
+  if (existingFamily) {
+    redirect(`/${locale}/app/family`);
+  }
+
+  return (
+    <LocalePageShell
+      locale={locale}
+      title="Create family account"
+      subtitle="Create the base family container for your Min Veg area."
+      backHref={`/${locale}/app/family`}
+      backLabel="Back family overview"
+    >
+      <AppPrivateNav locale={locale} currentPath="/app/family" />
+      <CreateFamilyForm locale={locale} userId={user.id} />
+    </LocalePageShell>
+  );
+}

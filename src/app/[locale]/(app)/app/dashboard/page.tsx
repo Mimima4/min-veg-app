@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { LocalePageShell } from "@/components/layout/locale-page-shell";
+import AppPrivateNav from "@/components/layout/app-private-nav";
 import SignOutButton from "./sign-out-button";
 
 export default async function DashboardPage({
@@ -24,9 +25,10 @@ export default async function DashboardPage({
     <LocalePageShell
       locale={locale}
       title="Dashboard"
-      subtitle="This is the private Min Veg workspace. More family and planning tools will be added here next."
-      backHref={`/${locale}`}
+      subtitle="Welcome back. This is your main area for profile, family, and future planning."
     >
+      <AppPrivateNav locale={locale} currentPath="/app/dashboard" />
+
       <div className="mt-6 space-y-6">
         <div className="rounded-2xl border border-stone-200 bg-white p-6">
           <p className="text-sm text-stone-500">Signed in as</p>

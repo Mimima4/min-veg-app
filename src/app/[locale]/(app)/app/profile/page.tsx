@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { LocalePageShell } from "@/components/layout/locale-page-shell";
+import AppPrivateNav from "@/components/layout/app-private-nav";
+import ProfileForm from "./profile-form";
 
 export default async function ProfilePage({
   params,
@@ -18,35 +20,49 @@ export default async function ProfilePage({
     redirect(`/${locale}/login`);
   }
 
+  const { data: profile, error } = await supabase
+    .from("user_profiles")
+    .select("display_name, interface_language, country_code")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (error) {
+    return (
+      <LocalePageShell
+        locale={locale}
+        title="Profile"
+        subtitle="There was a problem loading your profile."
+        backHref={`/${locale}/app/dashboard`}
+        backLabel="Back dashboard"
+      >
+        <AppPrivateNav locale={locale} currentPath="/app/profile" />
+
+        <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+          {error.message}
+        </div>
+      </LocalePageShell>
+    );
+  }
+
   return (
     <LocalePageShell
       locale={locale}
       title="Profile"
-      subtitle="This is the first private profile skeleton for the signed-in user."
+      subtitle="Manage your basic account details and interface settings."
       backHref={`/${locale}/app/dashboard`}
+      backLabel="Back dashboard"
     >
-      <div className="mt-6 rounded-2xl border border-stone-200 bg-white p-6">
-        <dl className="space-y-4">
-          <div>
-            <dt className="text-sm text-stone-500">Email</dt>
-            <dd className="mt-1 text-base text-stone-900">{user.email}</dd>
-          </div>
+      <AppPrivateNav locale={locale} currentPath="/app/profile" />
 
-          <div>
-            <dt className="text-sm text-stone-500">User ID</dt>
-            <dd className="mt-1 break-all text-sm text-stone-700">
-              {user.id}
-            </dd>
-          </div>
-
-          <div>
-            <dt className="text-sm text-stone-500">Email confirmed</dt>
-            <dd className="mt-1 text-base text-stone-900">
-              {user.email_confirmed_at ? "Yes" : "No"}
-            </dd>
-          </div>
-        </dl>
-      </div>
+      <ProfileForm
+        userId={user.id}
+        userEmail={user.email ?? ""}
+        initialDisplayName={profile?.display_name ?? ""}
+        initialInterfaceLanguage={
+          (profile?.interface_language as "nb" | "nn" | "en") ?? "nb"
+        }
+        initialCountryCode={profile?.country_code ?? "NO"}
+      />
     </LocalePageShell>
   );
 }
