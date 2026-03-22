@@ -4,6 +4,14 @@ import { LocalePageShell } from "@/components/layout/locale-page-shell";
 import AppPrivateNav from "@/components/layout/app-private-nav";
 import type { SupportedLocale } from "@/lib/i18n/site-copy";
 import { getLocalizedValue } from "@/lib/i18n/get-localized-value";
+import {
+  getDerivedStrengthLabel,
+  getInterestLabel,
+} from "@/lib/planning/child-tag-catalog";
+import {
+  getDevelopmentFocusLabel,
+  getSchoolSubjectLabel,
+} from "@/lib/planning/profession-tag-catalog";
 import SaveProfessionForChildForm from "./save-profession-for-child-form";
 
 function formatSalary(value: number | null) {
@@ -22,6 +30,41 @@ function formatDemandLevel(value: string) {
     default:
       return value;
   }
+}
+
+function getStringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
+}
+
+function TagGroup({
+  title,
+  items,
+}: {
+  title: string;
+  items: string[];
+}) {
+  return (
+    <div className="rounded-2xl border border-stone-200 bg-stone-50 p-5">
+      <h3 className="text-sm font-semibold text-stone-900">{title}</h3>
+
+      {items.length === 0 ? (
+        <p className="mt-2 text-sm text-stone-500">No items listed yet.</p>
+      ) : (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {items.map((item) => (
+            <span
+              key={item}
+              className="inline-flex items-center rounded-full border border-stone-300 bg-white px-3 py-1 text-sm text-stone-800"
+            >
+              {item}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default async function ProfessionDetailPage({
@@ -43,7 +86,7 @@ export default async function ProfessionDetailPage({
   const { data: profession, error } = await supabase
     .from("professions")
     .select(
-      "id, slug, title_i18n, summary_i18n, avg_salary_nok, demand_level, education_level, work_style, key_skills"
+      "id, slug, title_i18n, summary_i18n, avg_salary_nok, demand_level, education_level, work_style, key_skills, interest_tags, strength_tags, development_focus_tags, school_subject_tags, education_notes_i18n"
     )
     .eq("slug", slug)
     .eq("is_active", true)
@@ -80,11 +123,23 @@ export default async function ProfessionDetailPage({
     locale as SupportedLocale
   );
 
-  const skills = Array.isArray(profession.key_skills)
-    ? profession.key_skills.filter(
-        (item): item is string => typeof item === "string"
-      )
-    : [];
+  const skills = getStringArray(profession.key_skills);
+  const interestLabels = getStringArray(profession.interest_tags).map((id) =>
+    getInterestLabel(id, locale as SupportedLocale)
+  );
+  const strengthLabels = getStringArray(profession.strength_tags).map((id) =>
+    getDerivedStrengthLabel(id, locale as SupportedLocale)
+  );
+  const developmentFocusLabels = getStringArray(
+    profession.development_focus_tags
+  ).map((id) => getDevelopmentFocusLabel(id, locale as SupportedLocale));
+  const schoolSubjectLabels = getStringArray(profession.school_subject_tags).map(
+    (id) => getSchoolSubjectLabel(id, locale as SupportedLocale)
+  );
+  const educationNotes = getLocalizedValue(
+    profession.education_notes_i18n as Record<string, string>,
+    locale as SupportedLocale
+  );
 
   const { data: familyAccount } = await supabase
     .from("family_accounts")
@@ -168,25 +223,27 @@ export default async function ProfessionDetailPage({
           </dl>
         </div>
 
-        <div className="rounded-2xl border border-stone-200 bg-white p-6">
-          <h2 className="text-lg font-semibold text-stone-900">Key skills</h2>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <TagGroup title="Key skills" items={skills} />
+          <TagGroup title="Relevant interests" items={interestLabels} />
+          <TagGroup title="Helpful strengths" items={strengthLabels} />
+          <TagGroup title="School subjects" items={schoolSubjectLabels} />
+        </div>
 
-          {skills.length === 0 ? (
-            <p className="mt-3 text-sm text-stone-500">
-              No skills listed yet.
+        <div className="grid gap-4 sm:grid-cols-2">
+          <TagGroup
+            title="What to develop next"
+            items={developmentFocusLabels}
+          />
+
+          <div className="rounded-2xl border border-stone-200 bg-stone-50 p-5">
+            <h3 className="text-sm font-semibold text-stone-900">
+              Education path notes
+            </h3>
+            <p className="mt-3 text-sm leading-relaxed text-stone-600">
+              {educationNotes || "No education notes listed yet."}
             </p>
-          ) : (
-            <div className="mt-4 flex flex-wrap gap-2">
-              {skills.map((skill) => (
-                <span
-                  key={skill}
-                  className="inline-flex items-center rounded-full border border-stone-300 bg-stone-50 px-3 py-1 text-sm text-stone-800"
-                >
-                  {skill}
-                </span>
-              ))}
-            </div>
-          )}
+          </div>
         </div>
 
         <div className="rounded-2xl border border-stone-200 bg-white p-6">
@@ -213,11 +270,6 @@ export default async function ProfessionDetailPage({
               initiallySavedChildIds={initiallySavedChildIds}
             />
           </div>
-        </div>
-
-        <div className="rounded-2xl border border-stone-200 bg-stone-50 p-6 text-sm leading-relaxed text-stone-600">
-          This profession can now be connected to a child profile. Child-to-profession
-          planning logic will be expanded in the next step.
         </div>
       </div>
     </LocalePageShell>
