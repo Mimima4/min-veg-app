@@ -3,9 +3,6 @@ import {
   type PreferredEducationLevel,
   type PreferredWorkStyle,
   getPreferenceMatchLabels,
-  matchesEducationLevel,
-  matchesIncomeBand,
-  matchesWorkStyle,
 } from "@/lib/planning/profession-fit-utils";
 
 type ProfessionForMatching = {
@@ -28,6 +25,8 @@ export type SuggestedProfession = ProfessionForMatching & {
   matchedStrengthIds: string[];
   matchedPreferences: string[];
 };
+
+const MIN_VISIBLE_MATCH_SCORE = 6;
 
 function getStringArray(value: unknown): string[] {
   return Array.isArray(value)
@@ -65,18 +64,13 @@ export function getSuggestedProfessions({
 }): SuggestedProfession[] {
   const suggestions: SuggestedProfession[] = [];
 
-  for (const profession of professions) {
-    if (
-      !matchesIncomeBand(profession.avg_salary_nok, desiredIncomeBand) ||
-      !matchesWorkStyle(profession.work_style, preferredWorkStyle) ||
-      !matchesEducationLevel(
-        profession.education_level,
-        preferredEducationLevel
-      )
-    ) {
-      continue;
-    }
+  const activePreferenceCount = [
+    desiredIncomeBand !== "open",
+    preferredWorkStyle !== "open",
+    preferredEducationLevel !== "open",
+  ].filter(Boolean).length;
 
+  for (const profession of professions) {
     const professionInterestIds = getStringArray(profession.interest_tags);
     const professionStrengthIds = getStringArray(profession.strength_tags);
 
@@ -102,7 +96,13 @@ export function getSuggestedProfessions({
       matchedStrengthIds.length * 3 +
       matchedPreferences.length;
 
-    if (matchScore > 0) {
+    const passesPreferenceGate =
+      activePreferenceCount === 0 || matchedPreferences.length > 0;
+
+    if (
+      matchScore >= MIN_VISIBLE_MATCH_SCORE &&
+      passesPreferenceGate
+    ) {
       suggestions.push({
         ...profession,
         matchScore,
@@ -116,6 +116,10 @@ export function getSuggestedProfessions({
   return suggestions.sort((a, b) => {
     if (b.matchScore !== a.matchScore) {
       return b.matchScore - a.matchScore;
+    }
+
+    if (b.matchedPreferences.length !== a.matchedPreferences.length) {
+      return b.matchedPreferences.length - a.matchedPreferences.length;
     }
 
     if (demandWeight(b.demand_level) !== demandWeight(a.demand_level)) {

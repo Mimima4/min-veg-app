@@ -7,6 +7,7 @@ import CompareProfessionButton from "@/components/planning/compare-profession-bu
 import CompareProfessionsButton from "@/components/planning/compare-professions-button";
 import type { SupportedLocale } from "@/lib/i18n/site-copy";
 import { getLocalizedValue } from "@/lib/i18n/get-localized-value";
+import { getNorwayCountyMunicipalityOptions } from "@/lib/planning/norway-admin";
 import {
   coerceInterestIds,
   coerceObservedTraitIds,
@@ -22,6 +23,174 @@ import {
 } from "@/lib/planning/profession-tag-catalog";
 import EditChildForm from "./edit-child-form";
 import RemoveSavedProfessionButton from "./remove-saved-profession-button";
+
+type DesiredIncomeBand =
+  | "open"
+  | "up_to_600k"
+  | "600k_to_800k"
+  | "800k_plus";
+
+type PreferredWorkStyle =
+  | "open"
+  | "onsite"
+  | "hybrid"
+  | "remote"
+  | "mixed";
+
+type PreferredEducationLevel =
+  | "open"
+  | "certificate"
+  | "vocational"
+  | "bachelor"
+  | "master"
+  | "flexible";
+
+const INCOME_BAND_LABELS: Record<
+  DesiredIncomeBand,
+  Record<SupportedLocale, string>
+> = {
+  open: {
+    nb: "Åpen",
+    nn: "Open",
+    en: "Open",
+  },
+  up_to_600k: {
+    nb: "Opptil 600k NOK",
+    nn: "Opptil 600k NOK",
+    en: "Up to 600k NOK",
+  },
+  "600k_to_800k": {
+    nb: "600k til 800k NOK",
+    nn: "600k til 800k NOK",
+    en: "600k to 800k NOK",
+  },
+  "800k_plus": {
+    nb: "800k+ NOK",
+    nn: "800k+ NOK",
+    en: "800k+ NOK",
+  },
+};
+
+const WORK_STYLE_LABELS: Record<
+  PreferredWorkStyle,
+  Record<SupportedLocale, string>
+> = {
+  open: {
+    nb: "Åpen",
+    nn: "Open",
+    en: "Open",
+  },
+  onsite: {
+    nb: "På stedet",
+    nn: "På staden",
+    en: "On-site",
+  },
+  hybrid: {
+    nb: "Hybrid",
+    nn: "Hybrid",
+    en: "Hybrid",
+  },
+  remote: {
+    nb: "Fjernarbeid",
+    nn: "Fjernarbeid",
+    en: "Remote",
+  },
+  mixed: {
+    nb: "Blandet",
+    nn: "Blanda",
+    en: "Mixed",
+  },
+};
+
+const EDUCATION_LEVEL_LABELS: Record<
+  PreferredEducationLevel,
+  Record<SupportedLocale, string>
+> = {
+  open: {
+    nb: "Åpen",
+    nn: "Open",
+    en: "Open",
+  },
+  certificate: {
+    nb: "Sertifikat",
+    nn: "Sertifikat",
+    en: "Certificate",
+  },
+  vocational: {
+    nb: "Yrkesfaglig",
+    nn: "Yrkesfagleg",
+    en: "Vocational",
+  },
+  bachelor: {
+    nb: "Bachelor",
+    nn: "Bachelor",
+    en: "Bachelor",
+  },
+  master: {
+    nb: "Master",
+    nn: "Master",
+    en: "Master",
+  },
+  flexible: {
+    nb: "Fleksibel",
+    nn: "Fleksibel",
+    en: "Flexible",
+  },
+};
+
+function getLocalizedLabel<T extends string>(
+  labels: Record<T, Record<SupportedLocale, string>>,
+  value: T,
+  locale: SupportedLocale
+): string {
+  return labels[value][locale];
+}
+
+function buildActivePreferenceLabels({
+  desiredIncomeBand,
+  preferredWorkStyle,
+  preferredEducationLevel,
+  locale,
+}: {
+  desiredIncomeBand: DesiredIncomeBand;
+  preferredWorkStyle: PreferredWorkStyle;
+  preferredEducationLevel: PreferredEducationLevel;
+  locale: SupportedLocale;
+}): string[] {
+  const labels: string[] = [];
+
+  if (desiredIncomeBand !== "open") {
+    labels.push(
+      `Income: ${getLocalizedLabel(
+        INCOME_BAND_LABELS,
+        desiredIncomeBand,
+        locale
+      )}`
+    );
+  }
+
+  if (preferredWorkStyle !== "open") {
+    labels.push(
+      `Work style: ${getLocalizedLabel(
+        WORK_STYLE_LABELS,
+        preferredWorkStyle,
+        locale
+      )}`
+    );
+  }
+
+  if (preferredEducationLevel !== "open") {
+    labels.push(
+      `Education: ${getLocalizedLabel(
+        EDUCATION_LEVEL_LABELS,
+        preferredEducationLevel,
+        locale
+      )}`
+    );
+  }
+
+  return labels;
+}
 
 function TagList({
   title,
@@ -77,7 +246,7 @@ export default async function ChildDetailPage({
   const { data: child, error } = await supabase
     .from("child_profiles")
     .select(
-      "id, display_name, birth_year, school_stage, country_code, relocation_willingness, interests, observed_traits, strengths, desired_income_band, preferred_work_style, preferred_education_level"
+      "id, display_name, birth_year, school_stage, country_code, relocation_willingness, interests, observed_traits, strengths, desired_income_band, preferred_work_style, preferred_education_level, preferred_municipality_codes"
     )
     .eq("id", childId)
     .maybeSingle();
@@ -103,6 +272,18 @@ export default async function ChildDetailPage({
     redirect(`/${locale}/app/family`);
   }
 
+  const municipalityOptions = await getNorwayCountyMunicipalityOptions().catch(
+    () => []
+  );
+
+  const initialPreferredMunicipalityCodes = Array.isArray(
+    child.preferred_municipality_codes
+  )
+    ? child.preferred_municipality_codes.filter(
+        (item): item is string => typeof item === "string"
+      )
+    : [];
+
   const rawInterests = Array.isArray(child.interests)
     ? child.interests.filter((item): item is string => typeof item === "string")
     : [];
@@ -121,28 +302,13 @@ export default async function ChildDetailPage({
   });
 
   const desiredIncomeBand =
-    (child.desired_income_band as
-      | "open"
-      | "up_to_600k"
-      | "600k_to_800k"
-      | "800k_plus") ?? "open";
+    (child.desired_income_band as DesiredIncomeBand) ?? "open";
 
   const preferredWorkStyle =
-    (child.preferred_work_style as
-      | "open"
-      | "onsite"
-      | "hybrid"
-      | "remote"
-      | "mixed") ?? "open";
+    (child.preferred_work_style as PreferredWorkStyle) ?? "open";
 
   const preferredEducationLevel =
-    (child.preferred_education_level as
-      | "open"
-      | "certificate"
-      | "vocational"
-      | "bachelor"
-      | "master"
-      | "flexible") ?? "open";
+    (child.preferred_education_level as PreferredEducationLevel) ?? "open";
 
   const { data: savedLinks } = await supabase
     .from("child_profession_interests")
@@ -194,6 +360,19 @@ export default async function ChildDetailPage({
     preferredEducationLevel,
   }).slice(0, 3);
 
+  const supportedLocale = locale as SupportedLocale;
+  const hasPlanningFilters =
+    desiredIncomeBand !== "open" ||
+    preferredWorkStyle !== "open" ||
+    preferredEducationLevel !== "open";
+
+  const activePreferenceLabels = buildActivePreferenceLabels({
+    desiredIncomeBand,
+    preferredWorkStyle,
+    preferredEducationLevel,
+    locale: supportedLocale,
+  });
+
   return (
     <LocalePageShell
       locale={locale}
@@ -205,29 +384,33 @@ export default async function ChildDetailPage({
       <AppPrivateNav locale={locale} currentPath="/app/family" />
 
       <div className="space-y-6">
-        <EditChildForm
-          locale={locale}
-          childId={child.id}
-          initialDisplayName={child.display_name ?? ""}
-          initialBirthYear={child.birth_year}
-          initialSchoolStage={
-            child.school_stage as
-              | "barneskole"
-              | "ungdomsskole"
-              | "vgs"
-              | "student"
-              | "young_adult"
-          }
-          initialCountryCode={child.country_code}
-          initialRelocationWillingness={
-            child.relocation_willingness as "no" | "maybe" | "yes" | null
-          }
-          initialInterestIds={interestIds}
-          initialObservedTraitIds={observedTraitIds}
-          initialDesiredIncomeBand={desiredIncomeBand}
-          initialPreferredWorkStyle={preferredWorkStyle}
-          initialPreferredEducationLevel={preferredEducationLevel}
-        />
+        <div id="current-signals" className="scroll-mt-24">
+          <EditChildForm
+            locale={locale}
+            childId={child.id}
+            initialDisplayName={child.display_name ?? ""}
+            initialBirthYear={child.birth_year}
+            initialSchoolStage={
+              child.school_stage as
+                | "barneskole"
+                | "ungdomsskole"
+                | "vgs"
+                | "student"
+                | "young_adult"
+            }
+            initialCountryCode={child.country_code}
+            initialRelocationWillingness={
+              child.relocation_willingness as "no" | "maybe" | "yes" | null
+            }
+            initialInterestIds={interestIds}
+            initialObservedTraitIds={observedTraitIds}
+            initialDesiredIncomeBand={desiredIncomeBand}
+            initialPreferredWorkStyle={preferredWorkStyle}
+            initialPreferredEducationLevel={preferredEducationLevel}
+            initialPreferredMunicipalityCodes={initialPreferredMunicipalityCodes}
+            municipalityOptions={municipalityOptions}
+          />
+        </div>
 
         <div className="rounded-2xl border border-stone-200 bg-white p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -257,27 +440,56 @@ export default async function ChildDetailPage({
               Select interests and observed traits to get profession suggestions.
             </p>
           ) : suggestedProfessions.length === 0 ? (
-            <p className="mt-5 text-sm text-stone-600">
-              No matching professions found for the current child profile and planning preferences.
-            </p>
+            <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-5">
+              <h3 className="text-base font-semibold text-stone-900">
+                No professions are visible with the current planning filters
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-stone-700">
+                The child profile still has useful signals, but the current
+                planning direction is filtering out all profession matches. Try
+                widening the active filters below.
+              </p>
+
+              {hasPlanningFilters && activePreferenceLabels.length > 0 ? (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {activePreferenceLabels.map((item) => (
+                    <span
+                      key={item}
+                      className="inline-flex items-center rounded-full border border-amber-300 bg-white px-3 py-1 text-sm text-amber-800"
+                    >
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+
+              <div className="mt-5">
+                <Link
+                  href={`/${locale}/app/children/${child.id}#planning-preferences`}
+                  className="inline-flex items-center justify-center rounded-full border border-stone-900 bg-stone-900 px-4 py-2 text-sm text-white transition hover:bg-stone-800"
+                >
+                  Review planning filters
+                </Link>
+              </div>
+            </div>
           ) : (
             <div className="mt-5 grid gap-4">
               {suggestedProfessions.map((profession) => {
                 const title = getLocalizedValue(
                   profession.title_i18n as Record<string, string>,
-                  locale as SupportedLocale
+                  supportedLocale
                 );
                 const summary = getLocalizedValue(
                   profession.summary_i18n as Record<string, string>,
-                  locale as SupportedLocale
+                  supportedLocale
                 );
 
                 const matchedInterestLabels = profession.matchedInterestIds.map(
-                  (id) => getInterestLabel(id, locale as SupportedLocale)
+                  (id) => getInterestLabel(id, supportedLocale)
                 );
 
                 const matchedStrengthLabels = profession.matchedStrengthIds.map(
-                  (id) => getDerivedStrengthLabel(id, locale as SupportedLocale)
+                  (id) => getDerivedStrengthLabel(id, supportedLocale)
                 );
 
                 return (
@@ -341,7 +553,10 @@ export default async function ChildDetailPage({
           )}
         </div>
 
-        <div className="rounded-2xl border border-stone-200 bg-white p-6">
+        <div
+          id="saved-professions"
+          className="scroll-mt-24 rounded-2xl border border-stone-200 bg-white p-6"
+        >
           <h2 className="text-lg font-semibold text-stone-900">
             Saved professions
           </h2>
@@ -355,11 +570,11 @@ export default async function ChildDetailPage({
               {savedProfessions.map((profession) => {
                 const title = getLocalizedValue(
                   profession!.title_i18n as Record<string, string>,
-                  locale as SupportedLocale
+                  supportedLocale
                 );
                 const summary = getLocalizedValue(
                   profession!.summary_i18n as Record<string, string>,
-                  locale as SupportedLocale
+                  supportedLocale
                 );
 
                 const fit = getProfessionChildFit({
@@ -380,19 +595,19 @@ export default async function ChildDetailPage({
                 });
 
                 const matchedInterestLabels = fit.matchedInterestIds.map((id) =>
-                  getInterestLabel(id, locale as SupportedLocale)
+                  getInterestLabel(id, supportedLocale)
                 );
                 const matchedStrengthLabels = fit.matchedStrengthIds.map((id) =>
-                  getDerivedStrengthLabel(id, locale as SupportedLocale)
+                  getDerivedStrengthLabel(id, supportedLocale)
                 );
                 const missingStrengthLabels = fit.missingStrengthIds.map((id) =>
-                  getDerivedStrengthLabel(id, locale as SupportedLocale)
+                  getDerivedStrengthLabel(id, supportedLocale)
                 );
                 const developmentFocusLabels = fit.developmentFocusIds.map((id) =>
-                  getDevelopmentFocusLabel(id, locale as SupportedLocale)
+                  getDevelopmentFocusLabel(id, supportedLocale)
                 );
                 const schoolSubjectLabels = fit.schoolSubjectIds.map((id) =>
-                  getSchoolSubjectLabel(id, locale as SupportedLocale)
+                  getSchoolSubjectLabel(id, supportedLocale)
                 );
                 const keySkills = Array.isArray(profession!.key_skills)
                   ? profession!.key_skills.filter(
@@ -401,7 +616,7 @@ export default async function ChildDetailPage({
                   : [];
                 const educationNotes = getLocalizedValue(
                   profession!.education_notes_i18n as Record<string, string>,
-                  locale as SupportedLocale
+                  supportedLocale
                 );
 
                 return (
@@ -456,7 +671,7 @@ export default async function ChildDetailPage({
                         ) : null}
                       </div>
 
-                      <div className="flex flex-wrap gap-2 sm:flex-col">
+                      <div className="flex flex-wrap gap-2 sm:flex-col sm:items-end">
                         <Link
                           href={`/${locale}/app/professions/${profession!.slug}`}
                           className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-4 py-2 text-sm text-stone-900 transition hover:border-stone-400"
@@ -464,12 +679,12 @@ export default async function ChildDetailPage({
                           Open profession
                         </Link>
 
-                        <CompareProfessionButton
+                        <RemoveSavedProfessionButton
                           childId={child.id}
                           professionId={profession!.id}
                         />
 
-                        <RemoveSavedProfessionButton
+                        <CompareProfessionButton
                           childId={child.id}
                           professionId={profession!.id}
                         />

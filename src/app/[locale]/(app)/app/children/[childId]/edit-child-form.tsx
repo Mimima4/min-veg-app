@@ -4,8 +4,8 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { SupportedLocale } from "@/lib/i18n/site-copy";
+import type { CountyMunicipalityGroup } from "@/lib/planning/norway-admin";
 import {
-  DERIVED_STRENGTH_TAGS,
   INTEREST_TAGS,
   OBSERVED_TRAIT_TAGS,
   getDerivedStrengthIds,
@@ -57,7 +57,162 @@ type Props = {
   initialDesiredIncomeBand: DesiredIncomeBand;
   initialPreferredWorkStyle: PreferredWorkStyle;
   initialPreferredEducationLevel: PreferredEducationLevel;
+  initialPreferredMunicipalityCodes: string[];
+  municipalityOptions: CountyMunicipalityGroup[];
 };
+
+const SCHOOL_STAGE_LABELS: Record<
+  SchoolStage,
+  Record<SupportedLocale, string>
+> = {
+  barneskole: {
+    nb: "Barneskole",
+    nn: "Barneskule",
+    en: "Primary school",
+  },
+  ungdomsskole: {
+    nb: "Ungdomsskole",
+    nn: "Ungdomsskule",
+    en: "Lower secondary school",
+  },
+  vgs: {
+    nb: "Videregående skole",
+    nn: "Vidaregåande skule",
+    en: "Upper secondary school",
+  },
+  student: {
+    nb: "Student",
+    nn: "Student",
+    en: "Student",
+  },
+  young_adult: {
+    nb: "Ung voksen",
+    nn: "Ung vaksen",
+    en: "Young adult",
+  },
+};
+
+const RELOCATION_LABELS: Record<
+  RelocationWillingness,
+  Record<SupportedLocale, string>
+> = {
+  no: {
+    nb: "Nei",
+    nn: "Nei",
+    en: "No",
+  },
+  maybe: {
+    nb: "Kanskje",
+    nn: "Kanskje",
+    en: "Maybe",
+  },
+  yes: {
+    nb: "Ja",
+    nn: "Ja",
+    en: "Yes",
+  },
+};
+
+const INCOME_BAND_LABELS: Record<
+  DesiredIncomeBand,
+  Record<SupportedLocale, string>
+> = {
+  open: {
+    nb: "Åpen",
+    nn: "Open",
+    en: "Open",
+  },
+  up_to_600k: {
+    nb: "Opptil 600k NOK",
+    nn: "Opptil 600k NOK",
+    en: "Up to 600k NOK",
+  },
+  "600k_to_800k": {
+    nb: "600k til 800k NOK",
+    nn: "600k til 800k NOK",
+    en: "600k to 800k NOK",
+  },
+  "800k_plus": {
+    nb: "800k+ NOK",
+    nn: "800k+ NOK",
+    en: "800k+ NOK",
+  },
+};
+
+const WORK_STYLE_LABELS: Record<
+  PreferredWorkStyle,
+  Record<SupportedLocale, string>
+> = {
+  open: {
+    nb: "Åpen",
+    nn: "Open",
+    en: "Open",
+  },
+  onsite: {
+    nb: "På stedet",
+    nn: "På staden",
+    en: "On-site",
+  },
+  hybrid: {
+    nb: "Hybrid",
+    nn: "Hybrid",
+    en: "Hybrid",
+  },
+  remote: {
+    nb: "Fjernarbeid",
+    nn: "Fjernarbeid",
+    en: "Remote",
+  },
+  mixed: {
+    nb: "Blandet",
+    nn: "Blanda",
+    en: "Mixed",
+  },
+};
+
+const EDUCATION_LEVEL_LABELS: Record<
+  PreferredEducationLevel,
+  Record<SupportedLocale, string>
+> = {
+  open: {
+    nb: "Åpen",
+    nn: "Open",
+    en: "Open",
+  },
+  certificate: {
+    nb: "Sertifikat",
+    nn: "Sertifikat",
+    en: "Certificate",
+  },
+  vocational: {
+    nb: "Yrkesfaglig",
+    nn: "Yrkesfagleg",
+    en: "Vocational",
+  },
+  bachelor: {
+    nb: "Bachelor",
+    nn: "Bachelor",
+    en: "Bachelor",
+  },
+  master: {
+    nb: "Master",
+    nn: "Master",
+    en: "Master",
+  },
+  flexible: {
+    nb: "Fleksibel",
+    nn: "Fleksibel",
+    en: "Flexible",
+  },
+};
+
+function getLocalizedLabel<T extends string>(
+  labels: Record<T, Record<SupportedLocale, string>>,
+  value: T,
+  locale: SupportedLocale
+): string {
+  return labels[value][locale];
+}
 
 function ToggleTagButton({
   label,
@@ -125,9 +280,12 @@ export default function EditChildForm({
   initialDesiredIncomeBand,
   initialPreferredWorkStyle,
   initialPreferredEducationLevel,
+  initialPreferredMunicipalityCodes,
+  municipalityOptions,
 }: Props) {
   const supabase = createClient();
   const router = useRouter();
+  const supportedLocale = locale as SupportedLocale;
 
   const currentYear = new Date().getFullYear();
 
@@ -153,6 +311,20 @@ export default function EditChildForm({
   const [selectedObservedTraitIds, setSelectedObservedTraitIds] = useState<
     string[]
   >(initialObservedTraitIds);
+  const [selectedMunicipalityCodes, setSelectedMunicipalityCodes] = useState<
+    string[]
+  >(initialPreferredMunicipalityCodes);
+
+  const [activeCountyCode, setActiveCountyCode] = useState<string>(() => {
+    const initialCounty =
+      municipalityOptions.find((county) =>
+        county.municipalities.some((municipality) =>
+          initialPreferredMunicipalityCodes.includes(municipality.code)
+        )
+      )?.code ?? municipalityOptions[0]?.code;
+
+    return initialCounty ?? "03";
+  });
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -168,36 +340,85 @@ export default function EditChildForm({
   );
 
   const interestLabels = useMemo(
-    () =>
-      selectedInterestIds.map((id) =>
-        getInterestLabel(id, locale as SupportedLocale)
-      ),
-    [selectedInterestIds, locale]
+    () => selectedInterestIds.map((id) => getInterestLabel(id, supportedLocale)),
+    [selectedInterestIds, supportedLocale]
   );
 
   const observedTraitLabels = useMemo(
     () =>
       selectedObservedTraitIds.map((id) =>
-        getObservedTraitLabel(id, locale as SupportedLocale)
+        getObservedTraitLabel(id, supportedLocale)
       ),
-    [selectedObservedTraitIds, locale]
+    [selectedObservedTraitIds, supportedLocale]
   );
 
   const derivedStrengthLabels = useMemo(
     () =>
       derivedStrengthIds.map((id) =>
-        getDerivedStrengthLabel(id, locale as SupportedLocale)
+        getDerivedStrengthLabel(id, supportedLocale)
       ),
-    [derivedStrengthIds, locale]
+    [derivedStrengthIds, supportedLocale]
   );
 
-  function toggleTag(id: string, currentValues: string[], setValues: (next: string[]) => void) {
+  const activeCounty = useMemo(
+    () =>
+      municipalityOptions.find((county) => county.code === activeCountyCode) ??
+      municipalityOptions[0] ??
+      null,
+    [municipalityOptions, activeCountyCode]
+  );
+
+  const municipalityLookup = useMemo(() => {
+    const map = new Map<string, { name: string; countyName: string }>();
+
+    for (const county of municipalityOptions) {
+      for (const municipality of county.municipalities) {
+        map.set(municipality.code, {
+          name: municipality.name,
+          countyName: county.name,
+        });
+      }
+    }
+
+    return map;
+  }, [municipalityOptions]);
+
+  const selectedMunicipalityLabels = useMemo(() => {
+    return selectedMunicipalityCodes
+      .map((code) => municipalityLookup.get(code))
+      .filter(
+        (
+          item
+        ): item is {
+          name: string;
+          countyName: string;
+        } => Boolean(item)
+      )
+      .map((item) => `${item.name} · ${item.countyName}`);
+  }, [municipalityLookup, selectedMunicipalityCodes]);
+
+  function toggleTag(
+    id: string,
+    currentValues: string[],
+    setValues: (next: string[]) => void
+  ) {
     if (currentValues.includes(id)) {
       setValues(currentValues.filter((item) => item !== id));
       return;
     }
 
     setValues([...currentValues, id]);
+  }
+
+  function toggleMunicipality(code: string) {
+    if (selectedMunicipalityCodes.includes(code)) {
+      setSelectedMunicipalityCodes(
+        selectedMunicipalityCodes.filter((item) => item !== code)
+      );
+      return;
+    }
+
+    setSelectedMunicipalityCodes([...selectedMunicipalityCodes, code]);
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -217,6 +438,7 @@ export default function EditChildForm({
         desired_income_band: desiredIncomeBand,
         preferred_work_style: preferredWorkStyle,
         preferred_education_level: preferredEducationLevel,
+        preferred_municipality_codes: selectedMunicipalityCodes,
         interests: selectedInterestIds,
         observed_traits: selectedObservedTraitIds,
         strengths: derivedStrengthIds,
@@ -277,22 +499,21 @@ export default function EditChildForm({
                 <select
                   value={schoolStage}
                   onChange={(e) =>
-                    setSchoolStage(
-                      e.target.value as
-                        | "barneskole"
-                        | "ungdomsskole"
-                        | "vgs"
-                        | "student"
-                        | "young_adult"
-                    )
+                    setSchoolStage(e.target.value as SchoolStage)
                   }
                   className="w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-stone-900 outline-none focus:border-stone-500"
                 >
-                  <option value="barneskole">barneskole</option>
-                  <option value="ungdomsskole">ungdomsskole</option>
-                  <option value="vgs">vgs</option>
-                  <option value="student">student</option>
-                  <option value="young_adult">young_adult</option>
+                  {(Object.keys(SCHOOL_STAGE_LABELS) as SchoolStage[]).map(
+                    (value) => (
+                      <option key={value} value={value}>
+                        {getLocalizedLabel(
+                          SCHOOL_STAGE_LABELS,
+                          value,
+                          supportedLocale
+                        )}
+                      </option>
+                    )
+                  )}
                 </select>
               </div>
             </div>
@@ -320,21 +541,32 @@ export default function EditChildForm({
                   value={relocationWillingness}
                   onChange={(e) =>
                     setRelocationWillingness(
-                      e.target.value as "no" | "maybe" | "yes"
+                      e.target.value as RelocationWillingness
                     )
                   }
                   className="w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-stone-900 outline-none focus:border-stone-500"
                 >
-                  <option value="no">no</option>
-                  <option value="maybe">maybe</option>
-                  <option value="yes">yes</option>
+                  {(Object.keys(RELOCATION_LABELS) as RelocationWillingness[]).map(
+                    (value) => (
+                      <option key={value} value={value}>
+                        {getLocalizedLabel(
+                          RELOCATION_LABELS,
+                          value,
+                          supportedLocale
+                        )}
+                      </option>
+                    )
+                  )}
                 </select>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-stone-200 bg-white p-6">
+        <div
+          id="planning-preferences"
+          className="scroll-mt-24 rounded-2xl border border-stone-200 bg-white p-6"
+        >
           <h2 className="text-lg font-semibold text-stone-900">
             Planning preferences
           </h2>
@@ -351,20 +583,21 @@ export default function EditChildForm({
               <select
                 value={desiredIncomeBand}
                 onChange={(e) =>
-                  setDesiredIncomeBand(
-                    e.target.value as
-                      | "open"
-                      | "up_to_600k"
-                      | "600k_to_800k"
-                      | "800k_plus"
-                  )
+                  setDesiredIncomeBand(e.target.value as DesiredIncomeBand)
                 }
                 className="w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-stone-900 outline-none focus:border-stone-500"
               >
-                <option value="open">open</option>
-                <option value="up_to_600k">up to 600k NOK</option>
-                <option value="600k_to_800k">600k to 800k NOK</option>
-                <option value="800k_plus">800k+ NOK</option>
+                {(Object.keys(INCOME_BAND_LABELS) as DesiredIncomeBand[]).map(
+                  (value) => (
+                    <option key={value} value={value}>
+                      {getLocalizedLabel(
+                        INCOME_BAND_LABELS,
+                        value,
+                        supportedLocale
+                      )}
+                    </option>
+                  )
+                )}
               </select>
             </div>
 
@@ -375,22 +608,21 @@ export default function EditChildForm({
               <select
                 value={preferredWorkStyle}
                 onChange={(e) =>
-                  setPreferredWorkStyle(
-                    e.target.value as
-                      | "open"
-                      | "onsite"
-                      | "hybrid"
-                      | "remote"
-                      | "mixed"
-                  )
+                  setPreferredWorkStyle(e.target.value as PreferredWorkStyle)
                 }
                 className="w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-stone-900 outline-none focus:border-stone-500"
               >
-                <option value="open">open</option>
-                <option value="onsite">onsite</option>
-                <option value="hybrid">hybrid</option>
-                <option value="remote">remote</option>
-                <option value="mixed">mixed</option>
+                {(Object.keys(WORK_STYLE_LABELS) as PreferredWorkStyle[]).map(
+                  (value) => (
+                    <option key={value} value={value}>
+                      {getLocalizedLabel(
+                        WORK_STYLE_LABELS,
+                        value,
+                        supportedLocale
+                      )}
+                    </option>
+                  )
+                )}
               </select>
             </div>
 
@@ -402,24 +634,90 @@ export default function EditChildForm({
                 value={preferredEducationLevel}
                 onChange={(e) =>
                   setPreferredEducationLevel(
-                    e.target.value as
-                      | "open"
-                      | "certificate"
-                      | "vocational"
-                      | "bachelor"
-                      | "master"
-                      | "flexible"
+                    e.target.value as PreferredEducationLevel
                   )
                 }
                 className="w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-stone-900 outline-none focus:border-stone-500"
               >
-                <option value="open">open</option>
-                <option value="certificate">certificate</option>
-                <option value="vocational">vocational</option>
-                <option value="bachelor">bachelor</option>
-                <option value="master">master</option>
-                <option value="flexible">flexible</option>
+                {(
+                  Object.keys(
+                    EDUCATION_LEVEL_LABELS
+                  ) as PreferredEducationLevel[]
+                ).map((value) => (
+                  <option key={value} value={value}>
+                    {getLocalizedLabel(
+                      EDUCATION_LEVEL_LABELS,
+                      value,
+                      supportedLocale
+                    )}
+                  </option>
+                ))}
               </select>
+            </div>
+          </div>
+
+          <div className="mt-5 rounded-2xl border border-stone-200 bg-stone-50 p-5">
+            <h3 className="text-sm font-semibold text-stone-900">
+              Commune filter
+            </h3>
+            <p className="mt-2 text-sm leading-relaxed text-stone-600">
+              Choose one or more communes. This filter will be used in the next
+              education layer and later to narrow study options and institutions.
+            </p>
+
+            <div className="mt-4 grid gap-5 lg:grid-cols-[16rem,1fr]">
+              <div className="space-y-2">
+                <label className="block text-sm text-stone-700">
+                  Browse by fylke
+                </label>
+                <select
+                  value={activeCountyCode}
+                  onChange={(e) => setActiveCountyCode(e.target.value)}
+                  className="w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-stone-900 outline-none focus:border-stone-500"
+                >
+                  {municipalityOptions.map((county) => (
+                    <option key={county.code} value={county.code}>
+                      {county.name}
+                    </option>
+                  ))}
+                </select>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedMunicipalityCodes([])}
+                  className="inline-flex items-center rounded-full border border-stone-300 bg-white px-3 py-1.5 text-sm text-stone-800 transition hover:border-stone-400"
+                >
+                  Clear commune selection
+                </button>
+              </div>
+
+              <div>
+                {activeCounty ? (
+                  <div className="flex flex-wrap gap-2">
+                    {activeCounty.municipalities.map((municipality) => (
+                      <ToggleTagButton
+                        key={municipality.code}
+                        label={municipality.name}
+                        selected={selectedMunicipalityCodes.includes(
+                          municipality.code
+                        )}
+                        onClick={() => toggleMunicipality(municipality.code)}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-stone-500">
+                    No municipality list available right now.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-5">
+              <PreviewTags
+                title="Selected communes"
+                items={selectedMunicipalityLabels}
+              />
             </div>
           </div>
         </div>
@@ -438,7 +736,7 @@ export default function EditChildForm({
               return (
                 <ToggleTagButton
                   key={tag.id}
-                  label={getInterestLabel(tag.id, locale as SupportedLocale)}
+                  label={getInterestLabel(tag.id, supportedLocale)}
                   selected={selected}
                   onClick={() =>
                     toggleTag(
@@ -473,10 +771,7 @@ export default function EditChildForm({
               return (
                 <ToggleTagButton
                   key={tag.id}
-                  label={getObservedTraitLabel(
-                    tag.id,
-                    locale as SupportedLocale
-                  )}
+                  label={getObservedTraitLabel(tag.id, supportedLocale)}
                   selected={selected}
                   onClick={() =>
                     toggleTag(

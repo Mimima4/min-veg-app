@@ -369,6 +369,13 @@ export default async function ChildComparePage({
                     Open profession
                   </Link>
 
+                  <Link
+                    href={`/${locale}/app/children/${child.id}/education/${profession!.slug}`}
+                    className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-4 py-2 text-sm text-stone-900 transition hover:border-stone-400"
+                  >
+                    Open study options
+                  </Link>
+
                   <SaveProfessionToChildButton
                     childId={child.id}
                     professionId={profession!.id}
