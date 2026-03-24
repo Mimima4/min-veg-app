@@ -10,6 +10,7 @@ import {
   getDerivedStrengthIds,
 } from "@/lib/planning/child-tag-catalog";
 import { getChildSummary } from "@/lib/planning/get-child-summary";
+import UpgradeChildLimitButton from "./upgrade-child-limit-button";
 
 function SummaryMetricLink({
   label,
@@ -192,6 +193,39 @@ export default async function FamilyPage({
     savedCountByChildId.set(link.child_profile_id, current + 1);
   }
 
+  const { data: savedStudyRoutes, error: savedStudyRoutesError } =
+    childIds.length > 0
+      ? await supabase
+          .from("child_saved_education_routes")
+          .select("child_profile_id, program_slug")
+          .in("child_profile_id", childIds)
+      : { data: [], error: null };
+
+  if (savedStudyRoutesError) {
+    return (
+      <LocalePageShell
+        locale={locale}
+        title="Family"
+        subtitle="There was a problem loading saved study routes."
+        backHref={`/${locale}/app/dashboard`}
+        backLabel="Back dashboard"
+      >
+        <AppPrivateNav locale={locale} currentPath="/app/family" />
+
+        <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+          {savedStudyRoutesError.message}
+        </div>
+      </LocalePageShell>
+    );
+  }
+
+  const savedStudyRouteCountByChildId = new Map<string, number>();
+
+  for (const route of savedStudyRoutes ?? []) {
+    const current = savedStudyRouteCountByChildId.get(route.child_profile_id) ?? 0;
+    savedStudyRouteCountByChildId.set(route.child_profile_id, current + 1);
+  }
+
   const { data: professions, error: professionsError } = await supabase
     .from("professions")
     .select(
@@ -285,9 +319,7 @@ export default async function FamilyPage({
                 Create child profile
               </Link>
             ) : (
-              <span className="inline-flex items-center justify-center rounded-full border border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-800">
-                Child limit reached
-              </span>
+              <UpgradeChildLimitButton locale={locale} />
             )}
           </div>
 
@@ -403,7 +435,7 @@ export default async function FamilyPage({
                         </dl>
 
                         <div className="rounded-2xl border border-stone-200 bg-stone-100 p-4">
-                          <div className="grid gap-3 sm:grid-cols-2">
+                          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
                             <SummaryMetricLink
                               label="Current signals"
                               value={currentSignalsCount}
@@ -423,6 +455,13 @@ export default async function FamilyPage({
                               label="Saved professions"
                               value={summary.savedProfessionCount}
                               href={`/${locale}/app/children/${child.id}#saved-professions`}
+                            />
+                            <SummaryMetricLink
+                              label="Saved study routes"
+                              value={
+                                savedStudyRouteCountByChildId.get(child.id) ?? 0
+                              }
+                              href={`/${locale}/app/children/${child.id}#saved-study-routes`}
                             />
                           </div>
                         </div>
