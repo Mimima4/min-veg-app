@@ -5,6 +5,8 @@ import { LocalePageShell } from "@/components/layout/locale-page-shell";
 import AppPrivateNav from "@/components/layout/app-private-nav";
 import CompareProfessionButton from "@/components/planning/compare-profession-button";
 import CompareProfessionsButton from "@/components/planning/compare-professions-button";
+import CollapsibleSection from "@/components/planning/collapsible-section";
+import RouteOpenDoorsPanel from "@/components/planning/route-open-doors-panel";
 import type { SupportedLocale } from "@/lib/i18n/site-copy";
 import { getLocalizedValue } from "@/lib/i18n/get-localized-value";
 import { getNorwayCountyMunicipalityOptions } from "@/lib/planning/norway-admin";
@@ -15,6 +17,12 @@ import {
   getDerivedStrengthLabel,
   getInterestLabel,
 } from "@/lib/planning/child-tag-catalog";
+import {
+  getEducationProgramDecisionSupport,
+  getEducationDecisionRoleLabel,
+  getEducationRouteTypeLabel,
+  type EducationDecisionRole,
+} from "@/lib/planning/get-education-program-fit";
 import { getProfessionChildFit } from "@/lib/planning/get-profession-child-fit";
 import { getSuggestedProfessions } from "@/lib/planning/get-suggested-professions";
 import {
@@ -23,6 +31,7 @@ import {
 } from "@/lib/planning/profession-tag-catalog";
 import EditChildForm from "./edit-child-form";
 import RemoveSavedProfessionButton from "./remove-saved-profession-button";
+import RemoveSavedStudyRouteButton from "./remove-saved-study-route-button";
 
 type DesiredIncomeBand =
   | "open"
@@ -44,6 +53,56 @@ type PreferredEducationLevel =
   | "bachelor"
   | "master"
   | "flexible";
+
+type SavedStudyRouteRow = {
+  profession_slug: string;
+  program_slug: string;
+  created_at: string;
+};
+
+type SavedStudyProgramRow = {
+  slug: string;
+  title: string;
+  education_level: string;
+  study_mode: string;
+  duration_years: number | null;
+  institution_id: string;
+};
+
+type SavedStudyInstitutionRow = {
+  id: string;
+  slug: string;
+  name: string;
+  website_url: string | null;
+  municipality_name: string;
+  municipality_code: string;
+};
+
+type SavedStudyProfessionRow = {
+  slug: string;
+  title_i18n: Record<string, string> | null;
+  interest_tags: unknown;
+  strength_tags: unknown;
+  development_focus_tags: unknown;
+  school_subject_tags: unknown;
+  work_style: string;
+  education_level: string;
+  avg_salary_nok: number | null;
+};
+
+type SavedStudyLinkRow = {
+  profession_slug: string;
+  program_slug: string;
+  fit_band: "strong" | "broader";
+};
+
+type AdjacentProfessionCard = {
+  slug: string;
+  title: string;
+  fitScore: number;
+  matchedInterestLabels: string[];
+  matchedStrengthLabels: string[];
+};
 
 const INCOME_BAND_LABELS: Record<
   DesiredIncomeBand,
@@ -227,6 +286,67 @@ function TagList({
   );
 }
 
+function getStudyModeLabel(value: string, locale: SupportedLocale) {
+  const labels = {
+    full_time: { nb: "Heltid", nn: "Heiltid", en: "Full-time" },
+    part_time: { nb: "Deltid", nn: "Deltid", en: "Part-time" },
+    flexible: { nb: "Fleksibel", nn: "Fleksibel", en: "Flexible" },
+  } as const;
+
+  if (value in labels) {
+    return labels[value as keyof typeof labels][locale];
+  }
+
+  return value;
+}
+
+function getDurationLabel(
+  value: number | null,
+  locale: SupportedLocale
+): string | null {
+  if (!value) {
+    return null;
+  }
+
+  if (locale === "en") {
+    return value === 1 ? "1 year" : `${value} years`;
+  }
+
+  return value === 1 ? "1 år" : `${value} år`;
+}
+
+function getDecisionRoleTone(role: EducationDecisionRole): string {
+  switch (role) {
+    case "local_priority":
+      return "inline-flex items-center rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1 text-sm text-emerald-800";
+    case "main_route":
+      return "inline-flex items-center rounded-full border border-blue-300 bg-blue-50 px-3 py-1 text-sm text-blue-800";
+    case "stretch_route":
+      return "inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-sm text-amber-800";
+    case "local_alternative":
+      return "inline-flex items-center rounded-full border border-stone-300 bg-white px-3 py-1 text-sm text-stone-800";
+    case "broader_alternative":
+    default:
+      return "inline-flex items-center rounded-full border border-stone-300 bg-white px-3 py-1 text-sm text-stone-800";
+  }
+}
+
+function getDecisionRoleExplanation(role: EducationDecisionRole): string {
+  switch (role) {
+    case "local_priority":
+      return "This is the clearest nearby route right now and should be treated as a strong primary option.";
+    case "main_route":
+      return "This is one of the strongest current routes for the child profile and is worth keeping near the top of the shortlist.";
+    case "stretch_route":
+      return "This route is still meaningful, but it sits wider than the current education preference and should be read more carefully.";
+    case "local_alternative":
+      return "This is a realistic nearby backup option. It is useful to keep visible, but it is not the clearest primary choice.";
+    case "broader_alternative":
+    default:
+      return "This is a broader comparison route. Keep it visible, but treat it as a secondary option for now.";
+  }
+}
+
 export default async function ChildDetailPage({
   params,
 }: {
@@ -360,6 +480,371 @@ export default async function ChildDetailPage({
     preferredEducationLevel,
   }).slice(0, 3);
 
+  const { data: savedStudyRoutes, error: savedStudyRoutesError } = await supabase
+    .from("child_saved_education_routes")
+    .select("profession_slug, program_slug, created_at")
+    .eq("child_profile_id", child.id)
+    .order("created_at", { ascending: false });
+
+  if (savedStudyRoutesError) {
+    return (
+      <LocalePageShell
+        locale={locale}
+        title="Child profile"
+        subtitle="There was a problem loading saved study routes."
+        backHref={`/${locale}/app/family`}
+        backLabel="Back family overview"
+      >
+        <AppPrivateNav locale={locale} currentPath="/app/family" />
+        <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+          {savedStudyRoutesError.message}
+        </div>
+      </LocalePageShell>
+    );
+  }
+
+  const savedStudyRouteRows = (savedStudyRoutes ?? []) as SavedStudyRouteRow[];
+  const savedStudyProgramSlugs = savedStudyRouteRows.map((item) => item.program_slug);
+  const savedStudyProfessionSlugs = savedStudyRouteRows.map(
+    (item) => item.profession_slug
+  );
+
+  const savedStudyProgramsQuery =
+    savedStudyProgramSlugs.length > 0
+      ? await supabase
+          .from("education_programs")
+          .select(
+            "slug, title, education_level, study_mode, duration_years, institution_id"
+          )
+          .in("slug", savedStudyProgramSlugs)
+          .eq("is_active", true)
+      : { data: [], error: null };
+
+  if (savedStudyProgramsQuery.error) {
+    return (
+      <LocalePageShell
+        locale={locale}
+        title="Child profile"
+        subtitle="There was a problem loading saved study route programs."
+        backHref={`/${locale}/app/family`}
+        backLabel="Back family overview"
+      >
+        <AppPrivateNav locale={locale} currentPath="/app/family" />
+        <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+          {savedStudyProgramsQuery.error.message}
+        </div>
+      </LocalePageShell>
+    );
+  }
+
+  const savedStudyPrograms = (savedStudyProgramsQuery.data ??
+    []) as SavedStudyProgramRow[];
+
+  const savedStudyInstitutionIds = savedStudyPrograms.map(
+    (item) => item.institution_id
+  );
+
+  const savedStudyInstitutionsQuery =
+    savedStudyInstitutionIds.length > 0
+      ? await supabase
+          .from("education_institutions")
+          .select("id, slug, name, website_url, municipality_name, municipality_code")
+          .in("id", savedStudyInstitutionIds)
+          .eq("is_active", true)
+      : { data: [], error: null };
+
+  if (savedStudyInstitutionsQuery.error) {
+    return (
+      <LocalePageShell
+        locale={locale}
+        title="Child profile"
+        subtitle="There was a problem loading saved study route institutions."
+        backHref={`/${locale}/app/family`}
+        backLabel="Back family overview"
+      >
+        <AppPrivateNav locale={locale} currentPath="/app/family" />
+        <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+          {savedStudyInstitutionsQuery.error.message}
+        </div>
+      </LocalePageShell>
+    );
+  }
+
+  const savedStudyProfessionsQuery =
+    savedStudyProfessionSlugs.length > 0
+      ? await supabase
+          .from("professions")
+          .select(
+            "slug, title_i18n, interest_tags, strength_tags, development_focus_tags, school_subject_tags, work_style, education_level, avg_salary_nok"
+          )
+          .in("slug", savedStudyProfessionSlugs)
+      : { data: [], error: null };
+
+  if (savedStudyProfessionsQuery.error) {
+    return (
+      <LocalePageShell
+        locale={locale}
+        title="Child profile"
+        subtitle="There was a problem loading saved study route professions."
+        backHref={`/${locale}/app/family`}
+        backLabel="Back family overview"
+      >
+        <AppPrivateNav locale={locale} currentPath="/app/family" />
+        <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+          {savedStudyProfessionsQuery.error.message}
+        </div>
+      </LocalePageShell>
+    );
+  }
+
+  const savedStudyLinksQuery =
+    savedStudyProgramSlugs.length > 0 && savedStudyProfessionSlugs.length > 0
+      ? await supabase
+          .from("profession_program_links")
+          .select("profession_slug, program_slug, fit_band")
+          .in("program_slug", savedStudyProgramSlugs)
+          .in("profession_slug", savedStudyProfessionSlugs)
+      : { data: [], error: null };
+
+  if (savedStudyLinksQuery.error) {
+    return (
+      <LocalePageShell
+        locale={locale}
+        title="Child profile"
+        subtitle="There was a problem loading saved study route links."
+        backHref={`/${locale}/app/family`}
+        backLabel="Back family overview"
+      >
+        <AppPrivateNav locale={locale} currentPath="/app/family" />
+        <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+          {savedStudyLinksQuery.error.message}
+        </div>
+      </LocalePageShell>
+    );
+  }
+
+  const adjacentLinksQuery =
+    savedStudyProgramSlugs.length > 0
+      ? await supabase
+          .from("profession_program_links")
+          .select("profession_slug, program_slug, fit_band")
+          .in("program_slug", savedStudyProgramSlugs)
+      : { data: [], error: null };
+
+  if (adjacentLinksQuery.error) {
+    return (
+      <LocalePageShell
+        locale={locale}
+        title="Child profile"
+        subtitle="There was a problem loading adjacent profession paths."
+        backHref={`/${locale}/app/family`}
+        backLabel="Back family overview"
+      >
+        <AppPrivateNav locale={locale} currentPath="/app/family" />
+        <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+          {adjacentLinksQuery.error.message}
+        </div>
+      </LocalePageShell>
+    );
+  }
+
+  const adjacentProfessionSlugs = Array.from(
+    new Set(
+      ((adjacentLinksQuery.data ?? []) as SavedStudyLinkRow[]).map(
+        (item) => item.profession_slug
+      )
+    )
+  );
+
+  const adjacentProfessionsQuery =
+    adjacentProfessionSlugs.length > 0
+      ? await supabase
+          .from("professions")
+          .select(
+            "slug, title_i18n, interest_tags, strength_tags, development_focus_tags, school_subject_tags, work_style, education_level, avg_salary_nok"
+          )
+          .in("slug", adjacentProfessionSlugs)
+      : { data: [], error: null };
+
+  if (adjacentProfessionsQuery.error) {
+    return (
+      <LocalePageShell
+        locale={locale}
+        title="Child profile"
+        subtitle="There was a problem loading adjacent professions."
+        backHref={`/${locale}/app/family`}
+        backLabel="Back family overview"
+      >
+        <AppPrivateNav locale={locale} currentPath="/app/family" />
+        <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+          {adjacentProfessionsQuery.error.message}
+        </div>
+      </LocalePageShell>
+    );
+  }
+
+  const savedProgramMap = new Map(
+    savedStudyPrograms.map((item) => [item.slug, item])
+  );
+
+  const savedInstitutionMap = new Map(
+    ((savedStudyInstitutionsQuery.data ?? []) as SavedStudyInstitutionRow[]).map(
+      (item) => [item.id, item]
+    )
+  );
+
+  const savedProfessionMapBySlug = new Map(
+    ((savedStudyProfessionsQuery.data ?? []) as SavedStudyProfessionRow[]).map(
+      (item) => [item.slug, item]
+    )
+  );
+
+  const savedLinkMap = new Map(
+    ((savedStudyLinksQuery.data ?? []) as SavedStudyLinkRow[]).map((item) => [
+      `${item.profession_slug}::${item.program_slug}`,
+      item,
+    ])
+  );
+
+  const adjacentProfessionMap = new Map(
+    ((adjacentProfessionsQuery.data ?? []) as SavedStudyProfessionRow[]).map(
+      (item) => [item.slug, item]
+    )
+  );
+
+  const adjacentLinksByProgram = new Map<string, SavedStudyLinkRow[]>();
+
+  for (const link of (adjacentLinksQuery.data ?? []) as SavedStudyLinkRow[]) {
+    const current = adjacentLinksByProgram.get(link.program_slug) ?? [];
+    current.push(link);
+    adjacentLinksByProgram.set(link.program_slug, current);
+  }
+
+  const savedStudyRouteCards = savedStudyRouteRows
+    .map((savedRoute) => {
+      const program = savedProgramMap.get(savedRoute.program_slug);
+      const profession = savedProfessionMapBySlug.get(savedRoute.profession_slug);
+
+      if (!program || !profession) {
+        return null;
+      }
+
+      const institution = savedInstitutionMap.get(program.institution_id);
+      const link = savedLinkMap.get(
+        `${savedRoute.profession_slug}::${savedRoute.program_slug}`
+      );
+
+      if (!institution || !link) {
+        return null;
+      }
+
+      const decisionSupport = getEducationProgramDecisionSupport({
+        locale: locale as SupportedLocale,
+        fitBand: link.fit_band,
+        programEducationLevel: program.education_level,
+        institutionMunicipalityCode: institution.municipality_code,
+        selectedMunicipalityCodes: initialPreferredMunicipalityCodes,
+        childInterestIds: interestIds,
+        childDerivedStrengthIds: derivedStrengthIds,
+        desiredIncomeBand,
+        preferredWorkStyle,
+        preferredEducationLevel,
+        profession: {
+          interest_tags: profession.interest_tags,
+          strength_tags: profession.strength_tags,
+          development_focus_tags: profession.development_focus_tags,
+          school_subject_tags: profession.school_subject_tags,
+          work_style: profession.work_style,
+          education_level: profession.education_level,
+          avg_salary_nok: profession.avg_salary_nok,
+        },
+      });
+
+      const openDoorProfessions: AdjacentProfessionCard[] = (
+        adjacentLinksByProgram.get(savedRoute.program_slug) ?? []
+      )
+        .filter((item) => item.profession_slug !== savedRoute.profession_slug)
+        .map((item) => {
+          const adjacentProfession = adjacentProfessionMap.get(item.profession_slug);
+
+          if (!adjacentProfession) {
+            return null;
+          }
+
+          const fit = getProfessionChildFit({
+            profession: {
+              interest_tags: adjacentProfession.interest_tags,
+              strength_tags: adjacentProfession.strength_tags,
+              development_focus_tags:
+                adjacentProfession.development_focus_tags,
+              school_subject_tags: adjacentProfession.school_subject_tags,
+              avg_salary_nok: adjacentProfession.avg_salary_nok,
+              work_style: adjacentProfession.work_style,
+              education_level: adjacentProfession.education_level,
+            },
+            childInterestIds: interestIds,
+            childDerivedStrengthIds: derivedStrengthIds,
+            desiredIncomeBand,
+            preferredWorkStyle,
+            preferredEducationLevel,
+          });
+
+          const matchedInterestLabels = fit.matchedInterestIds.map((id) =>
+            getInterestLabel(id, supportedLocale)
+          );
+
+          const matchedStrengthLabels = fit.matchedStrengthIds.map((id) =>
+            getDerivedStrengthLabel(id, supportedLocale)
+          );
+
+          const fitScore =
+            fit.matchedInterestIds.length * 2 +
+            fit.matchedStrengthIds.length * 3 +
+            fit.preferenceMatches.length;
+
+          return {
+            slug: adjacentProfession.slug,
+            title: getLocalizedValue(
+              adjacentProfession.title_i18n ?? {},
+              supportedLocale
+            ),
+            fitScore,
+            matchedInterestLabels,
+            matchedStrengthLabels,
+          };
+        })
+        .filter((item): item is AdjacentProfessionCard => Boolean(item))
+        .sort((a, b) => {
+          if (b.fitScore !== a.fitScore) {
+            return b.fitScore - a.fitScore;
+          }
+
+          return a.title.localeCompare(b.title);
+        })
+        .slice(0, 3);
+
+      return {
+        savedRoute,
+        program,
+        institution,
+        profession,
+        decisionSupport,
+        openDoorProfessions,
+      };
+    })
+    .filter(
+      (
+        item
+      ): item is {
+        savedRoute: SavedStudyRouteRow;
+        program: SavedStudyProgramRow;
+        institution: SavedStudyInstitutionRow;
+        profession: SavedStudyProfessionRow;
+        decisionSupport: ReturnType<typeof getEducationProgramDecisionSupport>;
+        openDoorProfessions: AdjacentProfessionCard[];
+      } => Boolean(item)
+    );
+
   const supportedLocale = locale as SupportedLocale;
   const hasPlanningFilters =
     desiredIncomeBand !== "open" ||
@@ -377,7 +862,7 @@ export default async function ChildDetailPage({
     <LocalePageShell
       locale={locale}
       title={child.display_name || "Child profile"}
-      subtitle="Review and update the child profile, development signals, and planning preferences."
+      subtitle="Review and update the child profile, development signals, planning preferences, and saved study routes."
       backHref={`/${locale}/app/family`}
       backLabel="Back family overview"
     >
@@ -412,27 +897,24 @@ export default async function ChildDetailPage({
           />
         </div>
 
-        <div className="rounded-2xl border border-stone-200 bg-white p-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-stone-900">
-                Suggested professions
-              </h2>
-              <p className="mt-2 text-sm leading-relaxed text-stone-600">
-                These are the strongest current matches for this child profile.
-              </p>
-            </div>
+        <CollapsibleSection
+          id="suggested-professions"
+          title="Suggested professions"
+          count={suggestedProfessions.length}
+        >
+          <p className="text-sm leading-relaxed text-stone-600">
+            These are the strongest current matches for this child profile.
+          </p>
 
-            <div className="flex flex-wrap gap-3">
-              <Link
-                href={`/${locale}/app/children/${child.id}/matches`}
-                className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-4 py-2 text-sm text-stone-900 transition hover:border-stone-400"
-              >
-                Explore professions
-              </Link>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Link
+              href={`/${locale}/app/children/${child.id}/matches`}
+              className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-4 py-2 text-sm text-stone-900 transition hover:border-stone-400"
+            >
+              Explore professions
+            </Link>
 
-              <CompareProfessionsButton locale={locale} childId={child.id} />
-            </div>
+            <CompareProfessionsButton locale={locale} childId={child.id} />
           </div>
 
           {interestIds.length === 0 && observedTraitIds.length === 0 ? (
@@ -525,7 +1007,7 @@ export default async function ChildDetailPage({
 
                       <div className="flex flex-wrap gap-2 sm:flex-col">
                         <div className="text-sm text-stone-500">
-                          Match score:{" "}
+                          Match score{" "}
                           <span className="font-medium text-stone-900">
                             {profession.matchScore}
                           </span>
@@ -551,22 +1033,19 @@ export default async function ChildDetailPage({
               })}
             </div>
           )}
-        </div>
+        </CollapsibleSection>
 
-        <div
+        <CollapsibleSection
           id="saved-professions"
-          className="scroll-mt-24 rounded-2xl border border-stone-200 bg-white p-6"
+          title="Saved professions"
+          count={savedProfessions.length}
         >
-          <h2 className="text-lg font-semibold text-stone-900">
-            Saved professions
-          </h2>
-
-          {!savedProfessions || savedProfessions.length === 0 ? (
-            <p className="mt-3 text-sm text-stone-600">
+          {savedProfessions.length === 0 ? (
+            <p className="text-sm text-stone-600">
               No professions saved for this child yet.
             </p>
           ) : (
-            <div className="mt-5 grid gap-4">
+            <div className="grid gap-4">
               {savedProfessions.map((profession) => {
                 const title = getLocalizedValue(
                   profession!.title_i18n as Record<string, string>,
@@ -695,7 +1174,148 @@ export default async function ChildDetailPage({
               })}
             </div>
           )}
-        </div>
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          id="saved-study-routes"
+          title="Saved study routes"
+          count={savedStudyRouteCards.length}
+        >
+          <p className="text-sm leading-relaxed text-stone-600">
+            These are the concrete study paths already selected from the study
+            options screen. This block should help the parent quickly read
+            which routes are primary, local, broader, or more stretch-based.
+          </p>
+
+          {savedStudyRouteCards.length === 0 ? (
+            <p className="mt-4 text-sm text-stone-600">
+              No study routes saved for this child yet.
+            </p>
+          ) : (
+            <div className="mt-5 grid gap-4">
+              {savedStudyRouteCards.map((item) => {
+                const professionTitle = getLocalizedValue(
+                  item.profession.title_i18n ?? {},
+                  supportedLocale
+                );
+                const durationLabel = getDurationLabel(
+                  item.program.duration_years,
+                  supportedLocale
+                );
+
+                return (
+                  <div
+                    key={`${item.savedRoute.profession_slug}-${item.savedRoute.program_slug}`}
+                    className="rounded-2xl border border-stone-200 bg-stone-50 p-5"
+                  >
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="max-w-3xl">
+                        <div className="flex flex-wrap gap-2">
+                          <span
+                            className={getDecisionRoleTone(
+                              item.decisionSupport.decisionRole
+                            )}
+                          >
+                            {getEducationDecisionRoleLabel(
+                              item.decisionSupport.decisionRole,
+                              supportedLocale
+                            )}
+                          </span>
+
+                          <span className="inline-flex items-center rounded-full border border-stone-300 bg-white px-3 py-1 text-sm text-stone-800">
+                            {getEducationRouteTypeLabel(
+                              item.decisionSupport.routeType,
+                              supportedLocale
+                            )}
+                          </span>
+
+                          <span className="inline-flex items-center rounded-full border border-stone-300 bg-white px-3 py-1 text-sm text-stone-800">
+                            {getStudyModeLabel(
+                              item.program.study_mode,
+                              supportedLocale
+                            )}
+                          </span>
+
+                          {durationLabel ? (
+                            <span className="inline-flex items-center rounded-full border border-stone-300 bg-white px-3 py-1 text-sm text-stone-800">
+                              {durationLabel}
+                            </span>
+                          ) : null}
+                        </div>
+
+                        <h3 className="mt-4 text-base font-semibold text-stone-900">
+                          {item.program.title}
+                        </h3>
+
+                        <p className="mt-2 text-sm leading-relaxed text-stone-600">
+                          {professionTitle} · {item.institution.name} ·{" "}
+                          {item.institution.municipality_name}
+                        </p>
+
+                        <div className="mt-4 rounded-2xl border border-stone-200 bg-white p-4">
+                          <div className="text-sm font-semibold text-stone-900">
+                            How to read this route now
+                          </div>
+                          <p className="mt-2 text-sm leading-relaxed text-stone-600">
+                            {getDecisionRoleExplanation(
+                              item.decisionSupport.decisionRole
+                            )}
+                          </p>
+                        </div>
+
+                        <RouteOpenDoorsPanel
+                          items={item.openDoorProfessions.map((adjacentProfession) => ({
+                            ...adjacentProfession,
+                            href: `/${locale}/app/professions/${adjacentProfession.slug}`,
+                          }))}
+                        />
+
+                        <TagList
+                          title="Profile signals already supporting this route"
+                          items={[
+                            ...item.decisionSupport.supportingInterestLabels,
+                            ...item.decisionSupport.supportingStrengthLabels,
+                          ]}
+                          highlight
+                        />
+
+                        <TagList
+                          title="Useful school focus"
+                          items={item.decisionSupport.schoolFocusLabels}
+                        />
+                      </div>
+
+                      <div className="flex flex-wrap gap-2 sm:flex-col sm:items-end">
+                        {item.institution.website_url ? (
+                          <a
+                            href={item.institution.website_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-4 py-2 text-sm text-stone-900 transition hover:border-stone-400"
+                          >
+                            Open institution page
+                          </a>
+                        ) : null}
+
+                        <Link
+                          href={`/${locale}/app/children/${child.id}/education/${item.savedRoute.profession_slug}`}
+                          className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-4 py-2 text-sm text-stone-900 transition hover:border-stone-400"
+                        >
+                          Review route options
+                        </Link>
+
+                        <RemoveSavedStudyRouteButton
+                          childId={child.id}
+                          programSlug={item.savedRoute.program_slug}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CollapsibleSection>
       </div>
     </LocalePageShell>
   );
