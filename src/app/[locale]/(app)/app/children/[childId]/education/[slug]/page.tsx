@@ -1,91 +1,22 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 import { LocalePageShell } from "@/components/layout/locale-page-shell";
 import AppPrivateNav from "@/components/layout/app-private-nav";
-import { getLocalizedValue } from "@/lib/i18n/get-localized-value";
-import type { SupportedLocale } from "@/lib/i18n/site-copy";
-import { getNorwayCountyMunicipalityOptions } from "@/lib/planning/norway-admin";
-import {
-  coerceInterestIds,
-  coerceObservedTraitIds,
-  getDerivedStrengthIds,
-} from "@/lib/planning/child-tag-catalog";
 import { getEducationLevelLabel } from "@/lib/planning/education-route";
 import {
-  getEducationProgramDecisionSupport,
   getEducationDecisionRoleLabel,
   getEducationRouteTypeLabel,
   type EducationProgramDecisionSupport,
   type EducationProgramLocationState,
   type EducationProgramPreferenceState,
 } from "@/lib/planning/get-education-program-fit";
-import type {
-  DesiredIncomeBand,
-  PreferredEducationLevel,
-  PreferredWorkStyle,
-} from "@/lib/planning/profession-fit-utils";
+import type { SupportedLocale } from "@/lib/i18n/site-copy";
+import type { PreferredEducationLevel } from "@/lib/planning/profession-fit-utils";
 import SaveStudyRouteButton from "../../save-study-route-button";
-
-type ProgramRow = {
-  program_slug: string;
-  fit_band: "strong" | "broader";
-  note: string | null;
-};
-
-type InstitutionRow = {
-  id: string;
-  slug: string;
-  name: string;
-  institution_type: string;
-  website_url: string | null;
-  county_code: string;
-  municipality_code: string;
-  municipality_name: string;
-};
-
-type ProgramDetailsRow = {
-  slug: string;
-  title: string;
-  education_level: string;
-  study_mode: string;
-  duration_years: number | null;
-  description: string | null;
-  institution_id: string;
-};
-
-type ChildRow = {
-  id: string;
-  display_name: string | null;
-  interests: unknown;
-  observed_traits: unknown;
-  desired_income_band: DesiredIncomeBand | null;
-  preferred_work_style: PreferredWorkStyle | null;
-  preferred_education_level: PreferredEducationLevel | null;
-  preferred_municipality_codes: unknown;
-};
-
-type ProfessionRow = {
-  id: string;
-  slug: string;
-  title_i18n: Record<string, string> | null;
-  summary_i18n: Record<string, string> | null;
-  education_notes_i18n: Record<string, string> | null;
-  interest_tags: unknown;
-  strength_tags: unknown;
-  development_focus_tags: unknown;
-  school_subject_tags: unknown;
-  work_style: string;
-  education_level: string;
-};
-
-type DecoratedProgramRow = {
-  program: ProgramDetailsRow;
-  institution: InstitutionRow;
-  fitBand: "strong" | "broader";
-  note: string | null;
-  decisionSupport: EducationProgramDecisionSupport;
-};
+import {
+  getProfessionStudyOptions,
+  type ProfessionStudyOptionRow,
+} from "@/server/professions/study-options/get-profession-study-options";
 
 function getStudyModeLabel(value: string, locale: SupportedLocale) {
   const labels = {
@@ -155,7 +86,9 @@ function getEducationPreferenceBadgeLabel({
   }
 }
 
-function getRouteTypeExplanation(routeType: EducationProgramDecisionSupport["routeType"]) {
+function getRouteTypeExplanation(
+  routeType: EducationProgramDecisionSupport["routeType"]
+) {
   switch (routeType) {
     case "academic_first":
       return "This route leans more toward a study-prep path that can lead further toward university or university college.";
@@ -230,20 +163,6 @@ function getLocationExplanation({
   return `This programme is outside the currently selected communes and should be read as a broader route (${municipalityName}).`;
 }
 
-function getPreferenceSortPriority(state: EducationProgramPreferenceState) {
-  switch (state) {
-    case "aligned":
-      return 0;
-    case "flexible":
-      return 1;
-    case "open":
-      return 2;
-    case "broader":
-    default:
-      return 3;
-  }
-}
-
 function LabelGroup({
   title,
   items,
@@ -285,11 +204,7 @@ function ProgramCard({
   locale,
   childId,
   professionSlug,
-  program,
-  institution,
-  fitBand,
-  note,
-  decisionSupport,
+  row,
   hasCommuneFilter,
   preferredEducationLevel,
   isSavedRoute,
@@ -297,17 +212,16 @@ function ProgramCard({
   locale: string;
   childId: string;
   professionSlug: string;
-  program: ProgramDetailsRow;
-  institution: InstitutionRow;
-  fitBand: "strong" | "broader";
-  note: string | null;
-  decisionSupport: EducationProgramDecisionSupport;
+  row: ProfessionStudyOptionRow;
   hasCommuneFilter: boolean;
   preferredEducationLevel: PreferredEducationLevel;
   isSavedRoute: boolean;
 }) {
   const supportedLocale = locale as SupportedLocale;
-  const durationLabel = getDurationLabel(program.duration_years, supportedLocale);
+  const durationLabel = getDurationLabel(
+    row.program.duration_years,
+    supportedLocale
+  );
 
   return (
     <div className="rounded-2xl border border-stone-200 bg-white p-5">
@@ -316,52 +230,60 @@ function ProgramCard({
           <div className="flex flex-wrap gap-2">
             <span
               className={
-                fitBand === "strong"
+                row.fitBand === "strong"
                   ? "inline-flex items-center rounded-full border border-blue-300 bg-white px-3 py-1 text-sm text-blue-700"
                   : "inline-flex items-center rounded-full border border-stone-300 bg-white px-3 py-1 text-sm text-stone-800"
               }
             >
-              {fitBand === "strong" ? "Strong study option" : "Broader study option"}
+              {row.fitBand === "strong"
+                ? "Strong study option"
+                : "Broader study option"}
             </span>
 
             <span className="inline-flex items-center rounded-full border border-stone-300 bg-white px-3 py-1 text-sm text-stone-800">
-              {getEducationRouteTypeLabel(decisionSupport.routeType, supportedLocale)}
+              {getEducationRouteTypeLabel(
+                row.decisionSupport.routeType,
+                supportedLocale
+              )}
             </span>
 
             <span className="inline-flex items-center rounded-full border border-stone-300 bg-white px-3 py-1 text-sm text-stone-800">
               {getEducationDecisionRoleLabel(
-                decisionSupport.decisionRole,
+                row.decisionSupport.decisionRole,
                 supportedLocale
               )}
             </span>
 
             <span
               className={
-                decisionSupport.locationState === "local"
+                row.decisionSupport.locationState === "local"
                   ? "inline-flex items-center rounded-full border border-emerald-300 bg-white px-3 py-1 text-sm text-emerald-700"
                   : "inline-flex items-center rounded-full border border-stone-300 bg-white px-3 py-1 text-sm text-stone-800"
               }
             >
               {getLocationBadgeLabel({
-                state: decisionSupport.locationState,
+                state: row.decisionSupport.locationState,
                 hasCommuneFilter,
               })}
             </span>
 
             <span className="inline-flex items-center rounded-full border border-stone-300 bg-white px-3 py-1 text-sm text-stone-800">
               {getEducationPreferenceBadgeLabel({
-                preferenceState: decisionSupport.preferenceState,
+                preferenceState: row.decisionSupport.preferenceState,
                 preferredEducationLevel,
                 locale: supportedLocale,
               })}
             </span>
 
             <span className="inline-flex items-center rounded-full border border-stone-300 bg-white px-3 py-1 text-sm text-stone-800">
-              {getEducationLevelLabel(program.education_level, supportedLocale)}
+              {getEducationLevelLabel(
+                row.program.education_level,
+                supportedLocale
+              )}
             </span>
 
             <span className="inline-flex items-center rounded-full border border-stone-300 bg-white px-3 py-1 text-sm text-stone-800">
-              {getStudyModeLabel(program.study_mode, supportedLocale)}
+              {getStudyModeLabel(row.program.study_mode, supportedLocale)}
             </span>
 
             {durationLabel ? (
@@ -372,24 +294,26 @@ function ProgramCard({
           </div>
 
           <h2 className="mt-4 text-lg font-semibold text-stone-900">
-            {program.title}
+            {row.program.title}
           </h2>
 
           <p className="mt-2 text-sm leading-relaxed text-stone-600">
-            {institution.name} · {institution.municipality_name}
+            {row.institution.name} · {row.institution.municipality_name}
           </p>
 
-          {program.description ? (
+          {row.program.description ? (
             <p className="mt-3 text-sm leading-relaxed text-stone-600">
-              {program.description}
+              {row.program.description}
             </p>
           ) : null}
 
           <div className="mt-4 grid gap-4 xl:grid-cols-2">
             <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
-              <div className="text-sm font-semibold text-stone-900">Route type</div>
+              <div className="text-sm font-semibold text-stone-900">
+                Route type
+              </div>
               <p className="mt-2 text-sm leading-relaxed text-stone-600">
-                {getRouteTypeExplanation(decisionSupport.routeType)}
+                {getRouteTypeExplanation(row.decisionSupport.routeType)}
               </p>
             </div>
 
@@ -398,7 +322,7 @@ function ProgramCard({
                 Decision role for this child
               </div>
               <p className="mt-2 text-sm leading-relaxed text-stone-600">
-                {getDecisionRoleExplanation(decisionSupport.decisionRole)}
+                {getDecisionRoleExplanation(row.decisionSupport.decisionRole)}
               </p>
             </div>
           </div>
@@ -406,24 +330,24 @@ function ProgramCard({
           <div className="mt-4 grid gap-4 xl:grid-cols-2">
             <LabelGroup
               title="Supporting interests"
-              items={decisionSupport.supportingInterestLabels}
+              items={row.decisionSupport.supportingInterestLabels}
               emptyText="Add a few more child signals to sharpen this route."
               highlight
             />
             <LabelGroup
               title="Supporting strengths"
-              items={decisionSupport.supportingStrengthLabels}
+              items={row.decisionSupport.supportingStrengthLabels}
               emptyText="Derived strengths will appear here as the profile gets clearer."
               highlight
             />
             <LabelGroup
               title="Useful school focus"
-              items={decisionSupport.schoolFocusLabels}
+              items={row.decisionSupport.schoolFocusLabels}
               emptyText="The programme is linked, but no school-focus tags are attached yet."
             />
             <LabelGroup
               title="Still worth developing"
-              items={decisionSupport.developmentLabels}
+              items={row.decisionSupport.developmentLabels}
               emptyText="No extra development prompts are attached yet."
             />
           </div>
@@ -438,7 +362,7 @@ function ProgramCard({
                   Education preference.
                 </span>{" "}
                 {getEducationPreferenceExplanation({
-                  preferenceState: decisionSupport.preferenceState,
+                  preferenceState: row.decisionSupport.preferenceState,
                   preferredEducationLevel,
                   locale: supportedLocale,
                 })}
@@ -447,16 +371,16 @@ function ProgramCard({
               <p>
                 <span className="font-medium text-stone-900">Location.</span>{" "}
                 {getLocationExplanation({
-                  locationState: decisionSupport.locationState,
+                  locationState: row.decisionSupport.locationState,
                   hasCommuneFilter,
-                  municipalityName: institution.municipality_name,
+                  municipalityName: row.institution.municipality_name,
                 })}
               </p>
 
-              {note ? (
+              {row.note ? (
                 <p>
                   <span className="font-medium text-stone-900">Route note.</span>{" "}
-                  {note}
+                  {row.note}
                 </p>
               ) : null}
             </div>
@@ -467,13 +391,13 @@ function ProgramCard({
           <SaveStudyRouteButton
             childId={childId}
             professionSlug={professionSlug}
-            programSlug={program.slug}
+            programSlug={row.program.slug}
             isSaved={isSavedRoute}
           />
 
-          {institution.website_url ? (
+          {row.institution.website_url ? (
             <a
-              href={institution.website_url}
+              href={row.institution.website_url}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-4 py-2 text-sm text-stone-900 transition hover:border-stone-400"
@@ -500,112 +424,35 @@ export default async function ChildEducationRoutePage({
   params: Promise<{ locale: string; childId: string; slug: string }>;
 }) {
   const { locale, childId, slug } = await params;
-  const supportedLocale = locale as SupportedLocale;
-  const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect(`/${locale}/login`);
-  }
-
-  const [{ data: child }, { data: profession }] = await Promise.all([
-    supabase
-      .from("child_profiles")
-      .select(
-        "id, display_name, interests, observed_traits, desired_income_band, preferred_work_style, preferred_education_level, preferred_municipality_codes"
-      )
-      .eq("id", childId)
-      .maybeSingle(),
-    supabase
-      .from("professions")
-      .select(
-        "id, slug, title_i18n, summary_i18n, education_notes_i18n, interest_tags, strength_tags, development_focus_tags, school_subject_tags, work_style, education_level"
-      )
-      .eq("slug", slug)
-      .maybeSingle(),
-  ]);
-
-  if (!child || !profession) {
-    redirect(`/${locale}/app/children/${childId}/summary`);
-  }
-
-  const childRow = child as ChildRow;
-  const professionRow = profession as ProfessionRow;
-
-  const rawInterests = Array.isArray(childRow.interests)
-    ? childRow.interests.filter((item): item is string => typeof item === "string")
-    : [];
-
-  const rawObservedTraits = Array.isArray(childRow.observed_traits)
-    ? childRow.observed_traits.filter(
-        (item): item is string => typeof item === "string"
-      )
-    : [];
-
-  const interestIds = coerceInterestIds(rawInterests);
-  const observedTraitIds = coerceObservedTraitIds(rawObservedTraits);
-  const derivedStrengthIds = getDerivedStrengthIds({
-    interestIds,
-    observedTraitIds,
+  const result = await getProfessionStudyOptions({
+    locale,
+    childId,
+    professionSlug: slug,
   });
 
-  const desiredIncomeBand = childRow.desired_income_band ?? "open";
-  const preferredWorkStyle = childRow.preferred_work_style ?? "open";
-  const preferredEducationLevel = childRow.preferred_education_level ?? "open";
+  if (result.kind === "redirect") {
+    redirect(result.href);
+  }
 
-  const selectedMunicipalityCodes = Array.isArray(
-    childRow.preferred_municipality_codes
-  )
-    ? childRow.preferred_municipality_codes.filter(
-        (item): item is string => typeof item === "string"
-      )
-    : [];
-
-  const municipalityOptions = await getNorwayCountyMunicipalityOptions().catch(
-    () => []
-  );
-
-  const municipalityNameMap = new Map<string, string>(
-    municipalityOptions.flatMap((county) =>
-      county.municipalities.map((municipality) => [
-        municipality.code,
-        `${municipality.name} · ${county.name}`,
-      ])
-    )
-  );
-
-  const selectedMunicipalityLabels = selectedMunicipalityCodes.map(
-    (code) => municipalityNameMap.get(code) ?? code
-  );
-
-  const { data: links, error: linksError } = await supabase
-    .from("profession_program_links")
-    .select("program_slug, fit_band, note")
-    .eq("profession_slug", slug);
-
-  if (linksError) {
+  if (result.kind === "error") {
     return (
       <LocalePageShell
         locale={locale}
-        title="Study options"
-        subtitle="There was a problem loading education links."
+        title={result.title}
+        subtitle={result.subtitle}
         backHref={`/${locale}/app/children/${childId}/summary#professions-worth-exploring`}
         backLabel="Back child summary"
       >
         <AppPrivateNav locale={locale} currentPath="/app/family" />
         <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
-          {linksError.message}
+          {result.message}
         </div>
       </LocalePageShell>
     );
   }
 
-  const programSlugs = (links ?? []).map((item) => item.program_slug);
-
-  if (programSlugs.length === 0) {
+  if (result.kind === "no_links") {
     return (
       <LocalePageShell
         locale={locale}
@@ -630,159 +477,30 @@ export default async function ChildEducationRoutePage({
     );
   }
 
-  const { data: programs, error: programsError } = await supabase
-    .from("education_programs")
-    .select(
-      "slug, title, education_level, study_mode, duration_years, description, institution_id"
-    )
-    .in("slug", programSlugs)
-    .eq("is_active", true);
+  const {
+    supportedLocale,
+    childId: resolvedChildId,
+    professionSlug,
+    childDisplayName,
+    professionTitle,
+    professionSummary,
+    educationNotes,
+    preferredEducationLevel,
+    selectedMunicipalityLabels,
+    hasCommuneFilter,
+    previewSupport,
+    filteredRows,
+    savedProgramSlugs,
+  } = result.data;
 
-  if (programsError) {
-    return (
-      <LocalePageShell
-        locale={locale}
-        title="Study options"
-        subtitle="There was a problem loading programs."
-        backHref={`/${locale}/app/children/${childId}/summary#professions-worth-exploring`}
-        backLabel="Back child summary"
-      >
-        <AppPrivateNav locale={locale} currentPath="/app/family" />
-        <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
-          {programsError.message}
-        </div>
-      </LocalePageShell>
-    );
-  }
-
-  const institutionIds = (programs ?? []).map((program) => program.institution_id);
-
-  const { data: institutions, error: institutionsError } = await supabase
-    .from("education_institutions")
-    .select(
-      "id, slug, name, institution_type, website_url, county_code, municipality_code, municipality_name"
-    )
-    .in("id", institutionIds)
-    .eq("is_active", true);
-
-  if (institutionsError) {
-    return (
-      <LocalePageShell
-        locale={locale}
-        title="Study options"
-        subtitle="There was a problem loading institutions."
-        backHref={`/${locale}/app/children/${childId}/summary#professions-worth-exploring`}
-        backLabel="Back child summary"
-      >
-        <AppPrivateNav locale={locale} currentPath="/app/family" />
-        <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
-          {institutionsError.message}
-        </div>
-      </LocalePageShell>
-    );
-  }
-
-  const { data: savedRouteRows } = await supabase
-    .from("child_saved_education_routes")
-    .select("program_slug")
-    .eq("child_profile_id", childId)
-    .in("program_slug", programSlugs);
-
-  const savedProgramSlugSet = new Set(
-    (savedRouteRows ?? []).map((item) => item.program_slug)
-  );
-
-  const linkMap = new Map<string, ProgramRow>(
-    (links ?? []).map((item) => [item.program_slug, item as ProgramRow])
-  );
-
-  const institutionMap = new Map<string, InstitutionRow>(
-    (institutions ?? []).map((item) => [item.id, item as InstitutionRow])
-  );
-
-  const decoratedRows = ((programs ?? []) as ProgramDetailsRow[])
-    .map((program) => {
-      const institution = institutionMap.get(program.institution_id);
-      const link = linkMap.get(program.slug);
-
-      if (!institution || !link) {
-        return null;
-      }
-
-      return {
-        program,
-        institution,
-        fitBand: link.fit_band,
-        note: link.note,
-        decisionSupport: getEducationProgramDecisionSupport({
-          locale: supportedLocale,
-          fitBand: link.fit_band,
-          programEducationLevel: program.education_level,
-          institutionMunicipalityCode: institution.municipality_code,
-          selectedMunicipalityCodes,
-          childInterestIds: interestIds,
-          childDerivedStrengthIds: derivedStrengthIds,
-          desiredIncomeBand,
-          preferredWorkStyle,
-          preferredEducationLevel,
-          profession: {
-            interest_tags: professionRow.interest_tags,
-            strength_tags: professionRow.strength_tags,
-            development_focus_tags: professionRow.development_focus_tags,
-            school_subject_tags: professionRow.school_subject_tags,
-            work_style: professionRow.work_style,
-            education_level: professionRow.education_level,
-          },
-        }),
-      } satisfies DecoratedProgramRow;
-    })
-    .filter((item): item is DecoratedProgramRow => Boolean(item))
-    .sort((a, b) => {
-      if (a.fitBand !== b.fitBand) {
-        return a.fitBand === "strong" ? -1 : 1;
-      }
-
-      const preferencePriorityA = getPreferenceSortPriority(
-        a.decisionSupport.preferenceState
-      );
-      const preferencePriorityB = getPreferenceSortPriority(
-        b.decisionSupport.preferenceState
-      );
-
-      if (preferencePriorityA !== preferencePriorityB) {
-        return preferencePriorityA - preferencePriorityB;
-      }
-
-      return a.program.title.localeCompare(b.program.title);
-    });
-
-  const filteredRows =
-    selectedMunicipalityCodes.length === 0
-      ? decoratedRows
-      : decoratedRows.filter((row) =>
-          selectedMunicipalityCodes.includes(row.institution.municipality_code)
-        );
-
-  const previewSupport = (filteredRows[0] ?? decoratedRows[0])?.decisionSupport ?? null;
-
-  const professionTitle = professionRow.title_i18n
-    ? getLocalizedValue(professionRow.title_i18n, supportedLocale)
-    : professionRow.slug;
-
-  const professionSummary = professionRow.summary_i18n
-    ? getLocalizedValue(professionRow.summary_i18n, supportedLocale)
-    : "";
-
-  const educationNotes = professionRow.education_notes_i18n
-    ? getLocalizedValue(professionRow.education_notes_i18n, supportedLocale)
-    : "";
+  const savedProgramSlugSet = new Set(savedProgramSlugs);
 
   return (
     <LocalePageShell
       locale={locale}
       title={`${professionTitle} study options`}
       subtitle="Decision support for concrete programs linked to this profession, using the current child profile, route type, route role, education preference, and commune filter."
-      backHref={`/${locale}/app/children/${childId}/summary#professions-worth-exploring`}
+      backHref={`/${locale}/app/children/${resolvedChildId}/summary#professions-worth-exploring`}
       backLabel="Back child summary"
     >
       <AppPrivateNav locale={locale} currentPath="/app/family" />
@@ -795,9 +513,9 @@ export default async function ChildEducationRoutePage({
                 {professionTitle}
               </h1>
 
-              {childRow.display_name ? (
+              {childDisplayName ? (
                 <p className="mt-2 text-sm leading-relaxed text-stone-500">
-                  Decision support for {childRow.display_name}.
+                  Decision support for {childDisplayName}.
                 </p>
               ) : null}
 
@@ -894,12 +612,12 @@ export default async function ChildEducationRoutePage({
           <section className="space-y-4">
             <div>
               <h2 className="text-lg font-semibold text-stone-900">
-                {selectedMunicipalityCodes.length > 0
+                {hasCommuneFilter
                   ? "Filtered study options"
                   : "Available study options"}
               </h2>
               <p className="mt-2 text-sm leading-relaxed text-stone-600">
-                {selectedMunicipalityCodes.length > 0
+                {hasCommuneFilter
                   ? "These programmes are inside the communes selected in the child profile and are now explained through route type, route role, child signals, school focus, and education preference."
                   : "These programmes are currently linked to this profession in the starter dataset and are now explained through route type, route role, child signals, school focus, and education preference."}
               </p>
@@ -909,14 +627,10 @@ export default async function ChildEducationRoutePage({
               <ProgramCard
                 key={row.program.slug}
                 locale={locale}
-                childId={childId}
-                professionSlug={slug}
-                program={row.program}
-                institution={row.institution}
-                fitBand={row.fitBand}
-                note={row.note}
-                decisionSupport={row.decisionSupport}
-                hasCommuneFilter={selectedMunicipalityCodes.length > 0}
+                childId={resolvedChildId}
+                professionSlug={professionSlug}
+                row={row}
+                hasCommuneFilter={hasCommuneFilter}
                 preferredEducationLevel={preferredEducationLevel}
                 isSavedRoute={savedProgramSlugSet.has(row.program.slug)}
               />
@@ -934,7 +648,7 @@ export default async function ChildEducationRoutePage({
 
             <div className="mt-5">
               <Link
-                href={`/${locale}/app/children/${childId}#planning-preferences`}
+                href={`/${locale}/app/children/${resolvedChildId}#planning-preferences`}
                 className="inline-flex items-center justify-center rounded-full border border-stone-900 bg-stone-900 px-4 py-2 text-sm text-white transition hover:bg-stone-800"
               >
                 Edit planning preferences
