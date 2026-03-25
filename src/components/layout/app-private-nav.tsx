@@ -6,8 +6,7 @@ type Props = {
 };
 
 const navItems = [
-  { label: "Dashboard", href: "/app/dashboard" },
-  { label: "Profile", href: "/app/profile" },
+  { label: "Account", href: "/app/profile" },
   { label: "Family", href: "/app/family" },
   { label: "Professions", href: "/app/professions" },
 ];

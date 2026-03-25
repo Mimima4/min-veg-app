@@ -65,7 +65,6 @@ function buildActivePreferenceLabels({
   desiredIncomeBand,
   preferredWorkStyle,
   preferredEducationLevel,
-  locale,
 }: {
   desiredIncomeBand: DesiredIncomeBand;
   preferredWorkStyle: PreferredWorkStyle;
@@ -75,15 +74,15 @@ function buildActivePreferenceLabels({
   const labels: string[] = [];
 
   if (desiredIncomeBand !== "open") {
-    labels.push(`Income preference active`);
+    labels.push("Income preference active");
   }
 
   if (preferredWorkStyle !== "open") {
-    labels.push(`Work style preference active`);
+    labels.push("Work style preference active");
   }
 
   if (preferredEducationLevel !== "open") {
-    labels.push(`Education preference active`);
+    labels.push("Education preference active");
   }
 
   return labels;
@@ -488,6 +487,13 @@ export default async function ChildMatchesPage({
                             Open profession
                           </Link>
 
+                          <Link
+                            href={`/${locale}/app/children/${child.id}/education/${profession.slug}`}
+                            className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-4 py-2 text-sm text-stone-900 transition hover:border-stone-400"
+                          >
+                            Open study options
+                          </Link>
+
                           <SaveProfessionToChildButton
                             childId={child.id}
                             professionId={profession.id}
@@ -595,6 +601,13 @@ export default async function ChildMatchesPage({
                             className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-4 py-2 text-sm text-stone-900 transition hover:border-stone-400"
                           >
                             Open profession
+                          </Link>
+
+                          <Link
+                            href={`/${locale}/app/children/${child.id}/education/${profession.slug}`}
+                            className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-4 py-2 text-sm text-stone-900 transition hover:border-stone-400"
+                          >
+                            Open study options
                           </Link>
 
                           <SaveProfessionToChildButton

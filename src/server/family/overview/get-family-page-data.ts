@@ -1,20 +1,17 @@
-import { createClient } from "@/lib/supabase/server";
 import type { SupportedLocale } from "@/lib/i18n/site-copy";
 import { getChildSummary } from "@/lib/planning/get-child-summary";
+import { createClient } from "@/lib/supabase/server";
+import {
+  getAccountEntitlements,
+  type AccountEntitlements,
+  type FamilyAccountRow,
+} from "@/server/billing/get-account-entitlements";
 import {
   getChildPlanningState,
   type DesiredIncomeBand,
   type PreferredEducationLevel,
   type PreferredWorkStyle,
 } from "@/server/children/planning/get-child-planning-state";
-
-type FamilyAccountRow = {
-  id: string;
-  plan_type: string;
-  status: string;
-  max_children: number;
-  created_at: string;
-};
 
 type ChildRow = {
   id: string;
@@ -68,8 +65,7 @@ export type FamilyChildOverviewCard = {
 export type FamilyPageData = {
   locale: string;
   familyAccount: FamilyAccountRow;
-  childCount: number;
-  canCreateMore: boolean;
+  entitlements: AccountEntitlements;
   children: FamilyChildOverviewCard[];
 };
 
@@ -126,41 +122,37 @@ export async function getFamilyPageData({
   const supportedLocale = locale as SupportedLocale;
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const entitlementsResult = await getAccountEntitlements({
+    locale,
+    supabase,
+  });
 
-  if (!user) {
-    return { kind: "redirect", href: `/${locale}/login` };
+  if (entitlementsResult.kind === "redirect") {
+    return entitlementsResult;
   }
 
-  const { data: familyAccount, error: familyError } = await supabase
-    .from("family_accounts")
-    .select("id, plan_type, status, max_children, created_at")
-    .eq("primary_user_id", user.id)
-    .maybeSingle();
-
-  if (familyError) {
+  if (entitlementsResult.kind === "error") {
     return {
       kind: "error",
       title: "Family",
       subtitle: "There was a problem loading your family account.",
-      message: familyError.message,
+      message: entitlementsResult.message,
     };
   }
 
-  if (!familyAccount) {
+  if (entitlementsResult.kind === "no_family") {
     return { kind: "no_family" };
   }
 
-  const typedFamilyAccount = familyAccount as FamilyAccountRow;
+  const entitlements = entitlementsResult.data;
+  const childIds: string[] = [];
 
   const { data: children, error: childrenError } = await supabase
     .from("child_profiles")
     .select(
       "id, display_name, birth_year, school_stage, interests, observed_traits, desired_income_band, preferred_work_style, preferred_education_level, created_at"
     )
-    .eq("family_account_id", typedFamilyAccount.id)
+    .eq("family_account_id", entitlements.familyAccount.id)
     .order("created_at", { ascending: true });
 
   if (childrenError) {
@@ -173,9 +165,10 @@ export async function getFamilyPageData({
   }
 
   const typedChildren = (children ?? []) as ChildRow[];
-  const childCount = typedChildren.length;
-  const canCreateMore = childCount < typedFamilyAccount.max_children;
-  const childIds = typedChildren.map((child) => child.id);
+
+  for (const child of typedChildren) {
+    childIds.push(child.id);
+  }
 
   const { data: savedLinks, error: savedLinksError } =
     childIds.length > 0
@@ -277,7 +270,7 @@ export async function getFamilyPageData({
       profileHref: `/${locale}/app/children/${child.id}`,
       currentSignalsHref: `/${locale}/app/children/${child.id}#current-signals`,
       derivedStrengthsHref: `/${locale}/app/children/${child.id}/summary#derived-strengths`,
-      matchingProfessionsHref: `/${locale}/app/children/${child.id}/matches#matching-professions`,
+      matchingProfessionsHref: `/${locale}/app/children/${child.id}/matches`,
       savedProfessionsHref: `/${locale}/app/children/${child.id}#saved-professions`,
       savedStudyRoutesHref: `/${locale}/app/children/${child.id}#saved-study-routes`,
     };
@@ -287,9 +280,8 @@ export async function getFamilyPageData({
     kind: "ok",
     data: {
       locale,
-      familyAccount: typedFamilyAccount,
-      childCount,
-      canCreateMore,
+      familyAccount: entitlements.familyAccount,
+      entitlements,
       children: childCards,
     },
   };

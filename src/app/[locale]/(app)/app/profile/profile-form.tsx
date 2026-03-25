@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { COUNTRY_OPTIONS } from "@/lib/profile/country-options";
 
 type Props = {
   userId: string;
@@ -20,10 +21,20 @@ export default function ProfileForm({
 }: Props) {
   const supabase = createClient();
 
+  const normalizedInitialCountryCode = useMemo(() => {
+    const upper = initialCountryCode.trim().toUpperCase();
+
+    if (COUNTRY_OPTIONS.some((option) => option.code === upper)) {
+      return upper;
+    }
+
+    return "NO";
+  }, [initialCountryCode]);
+
   const [displayName, setDisplayName] = useState(initialDisplayName);
   const [interfaceLanguage, setInterfaceLanguage] =
     useState(initialInterfaceLanguage);
-  const [countryCode, setCountryCode] = useState(initialCountryCode);
+  const [countryCode, setCountryCode] = useState(normalizedInitialCountryCode);
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -41,7 +52,7 @@ export default function ProfileForm({
         email: userEmail,
         display_name: displayName.trim() || null,
         interface_language: interfaceLanguage,
-        country_code: countryCode.trim().toUpperCase() || "NO",
+        country_code: countryCode || "NO",
         updated_at: new Date().toISOString(),
       },
       {
@@ -56,7 +67,7 @@ export default function ProfileForm({
       return;
     }
 
-    setMessage("Profile saved successfully.");
+    setMessage("Account saved successfully.");
   }
 
   return (
@@ -101,15 +112,18 @@ export default function ProfileForm({
         </div>
 
         <div className="space-y-1">
-          <label className="block text-sm text-stone-700">Country code</label>
-          <input
-            type="text"
+          <label className="block text-sm text-stone-700">Country</label>
+          <select
             value={countryCode}
             onChange={(e) => setCountryCode(e.target.value)}
-            placeholder="NO"
-            maxLength={2}
-            className="w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-stone-900 uppercase outline-none focus:border-stone-500"
-          />
+            className="w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-stone-900 outline-none focus:border-stone-500"
+          >
+            {COUNTRY_OPTIONS.map((country) => (
+              <option key={country.code} value={country.code}>
+                {country.label}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -126,7 +140,7 @@ export default function ProfileForm({
         disabled={loading}
         className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-stone-900 px-5 py-2.5 text-sm text-white transition hover:bg-stone-800 disabled:opacity-50"
       >
-        {loading ? "Saving..." : "Save profile"}
+        {loading ? "Saving..." : "Save account"}
       </button>
     </form>
   );

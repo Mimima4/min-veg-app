@@ -12,8 +12,8 @@ export default async function LoginPage({
   return (
     <LocalePageShell
       locale={locale}
-      title="Login"
-      subtitle="Sign in to continue to your Min Veg workspace."
+      title="Sign in"
+      subtitle="Sign in to continue to your Min Veg account."
       backHref={`/${locale}`}
       backLabel="Back home"
     >
@@ -26,7 +26,7 @@ export default async function LoginPage({
             href={`/${locale}/signup`}
             className="text-stone-700 underline underline-offset-4 hover:text-stone-900"
           >
-            Create one
+            Create account
           </Link>
         </div>
 
@@ -36,7 +36,7 @@ export default async function LoginPage({
             href={`/${locale}/forgot-password`}
             className="text-stone-700 underline underline-offset-4 hover:text-stone-900"
           >
-            Reset it
+            Reset password
           </Link>
         </div>
       </div>

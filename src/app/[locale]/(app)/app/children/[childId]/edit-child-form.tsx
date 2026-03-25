@@ -206,6 +206,8 @@ const EDUCATION_LEVEL_LABELS: Record<
   },
 };
 
+const COUNTRY_OPTIONS = [{ code: "NO", label: "Norway" }] as const;
+
 function getLocalizedLabel<T extends string>(
   labels: Record<T, Record<SupportedLocale, string>>,
   value: T,
@@ -293,7 +295,11 @@ export default function EditChildForm({
   const [birthYear, setBirthYear] = useState(initialBirthYear);
   const [schoolStage, setSchoolStage] =
     useState<SchoolStage>(initialSchoolStage);
-  const [countryCode, setCountryCode] = useState(initialCountryCode);
+
+  const normalizedInitialCountryCode =
+    initialCountryCode.trim().toUpperCase() === "NO" ? "NO" : "NO";
+  const [countryCode, setCountryCode] = useState(normalizedInitialCountryCode);
+
   const [relocationWillingness, setRelocationWillingness] = useState<
     RelocationWillingness
   >(initialRelocationWillingness ?? "no");
@@ -433,7 +439,7 @@ export default function EditChildForm({
         display_name: displayName.trim() || null,
         birth_year: birthYear,
         school_stage: schoolStage,
-        country_code: countryCode.trim().toUpperCase() || "NO",
+        country_code: countryCode || "NO",
         relocation_willingness: relocationWillingness,
         desired_income_band: desiredIncomeBand,
         preferred_work_style: preferredWorkStyle,
@@ -520,17 +526,18 @@ export default function EditChildForm({
 
             <div className="grid gap-5 sm:grid-cols-2">
               <div className="space-y-1">
-                <label className="block text-sm text-stone-700">
-                  Country code
-                </label>
-                <input
-                  type="text"
+                <label className="block text-sm text-stone-700">Country</label>
+                <select
                   value={countryCode}
                   onChange={(e) => setCountryCode(e.target.value)}
-                  placeholder="NO"
-                  maxLength={2}
-                  className="w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-stone-900 uppercase outline-none focus:border-stone-500"
-                />
+                  className="w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-stone-900 outline-none focus:border-stone-500"
+                >
+                  {COUNTRY_OPTIONS.map((country) => (
+                    <option key={country.code} value={country.code}>
+                      {country.label}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="space-y-1">
@@ -546,20 +553,108 @@ export default function EditChildForm({
                   }
                   className="w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-stone-900 outline-none focus:border-stone-500"
                 >
-                  {(Object.keys(RELOCATION_LABELS) as RelocationWillingness[]).map(
-                    (value) => (
-                      <option key={value} value={value}>
-                        {getLocalizedLabel(
-                          RELOCATION_LABELS,
-                          value,
-                          supportedLocale
-                        )}
-                      </option>
-                    )
-                  )}
+                  {(
+                    Object.keys(RELOCATION_LABELS) as RelocationWillingness[]
+                  ).map((value) => (
+                    <option key={value} value={value}>
+                      {getLocalizedLabel(
+                        RELOCATION_LABELS,
+                        value,
+                        supportedLocale
+                      )}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-stone-200 bg-white p-6">
+          <h2 className="text-lg font-semibold text-stone-900">Interests</h2>
+          <p className="mt-2 text-sm leading-relaxed text-stone-600">
+            Choose what the child is naturally drawn to. Use the buttons instead
+            of writing your own labels.
+          </p>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            {INTEREST_TAGS.map((tag) => {
+              const selected = selectedInterestIds.includes(tag.id);
+
+              return (
+                <ToggleTagButton
+                  key={tag.id}
+                  label={getInterestLabel(tag.id, supportedLocale)}
+                  selected={selected}
+                  onClick={() =>
+                    toggleTag(
+                      tag.id,
+                      selectedInterestIds,
+                      setSelectedInterestIds
+                    )
+                  }
+                />
+              );
+            })}
+          </div>
+
+          <div className="mt-5">
+            <PreviewTags title="Selected interests" items={interestLabels} />
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-stone-200 bg-white p-6">
+          <h2 className="text-lg font-semibold text-stone-900">
+            Observed traits
+          </h2>
+          <p className="mt-2 text-sm leading-relaxed text-stone-600">
+            Choose what you actually observe in the child. These observations
+            will be used to derive strengths automatically.
+          </p>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            {OBSERVED_TRAIT_TAGS.map((tag) => {
+              const selected = selectedObservedTraitIds.includes(tag.id);
+
+              return (
+                <ToggleTagButton
+                  key={tag.id}
+                  label={getObservedTraitLabel(tag.id, supportedLocale)}
+                  selected={selected}
+                  onClick={() =>
+                    toggleTag(
+                      tag.id,
+                      selectedObservedTraitIds,
+                      setSelectedObservedTraitIds
+                    )
+                  }
+                />
+              );
+            })}
+          </div>
+
+          <div className="mt-5">
+            <PreviewTags
+              title="Selected observations"
+              items={observedTraitLabels}
+            />
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-stone-200 bg-white p-6">
+          <h2 className="text-lg font-semibold text-stone-900">
+            Derived strengths
+          </h2>
+          <p className="mt-2 text-sm leading-relaxed text-stone-600">
+            These strengths are generated from selected interests and observed
+            traits. They are not entered manually.
+          </p>
+
+          <div className="mt-5">
+            <PreviewTags
+              title="Derived strengths"
+              items={derivedStrengthLabels}
+            />
           </div>
         </div>
 
@@ -719,94 +814,6 @@ export default function EditChildForm({
                 items={selectedMunicipalityLabels}
               />
             </div>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-stone-200 bg-white p-6">
-          <h2 className="text-lg font-semibold text-stone-900">Interests</h2>
-          <p className="mt-2 text-sm leading-relaxed text-stone-600">
-            Choose what the child is naturally drawn to. Use the buttons instead
-            of writing your own labels.
-          </p>
-
-          <div className="mt-4 flex flex-wrap gap-2">
-            {INTEREST_TAGS.map((tag) => {
-              const selected = selectedInterestIds.includes(tag.id);
-
-              return (
-                <ToggleTagButton
-                  key={tag.id}
-                  label={getInterestLabel(tag.id, supportedLocale)}
-                  selected={selected}
-                  onClick={() =>
-                    toggleTag(
-                      tag.id,
-                      selectedInterestIds,
-                      setSelectedInterestIds
-                    )
-                  }
-                />
-              );
-            })}
-          </div>
-
-          <div className="mt-5">
-            <PreviewTags title="Selected interests" items={interestLabels} />
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-stone-200 bg-white p-6">
-          <h2 className="text-lg font-semibold text-stone-900">
-            Observed traits
-          </h2>
-          <p className="mt-2 text-sm leading-relaxed text-stone-600">
-            Choose what you actually observe in the child. These observations
-            will be used to derive strengths automatically.
-          </p>
-
-          <div className="mt-4 flex flex-wrap gap-2">
-            {OBSERVED_TRAIT_TAGS.map((tag) => {
-              const selected = selectedObservedTraitIds.includes(tag.id);
-
-              return (
-                <ToggleTagButton
-                  key={tag.id}
-                  label={getObservedTraitLabel(tag.id, supportedLocale)}
-                  selected={selected}
-                  onClick={() =>
-                    toggleTag(
-                      tag.id,
-                      selectedObservedTraitIds,
-                      setSelectedObservedTraitIds
-                    )
-                  }
-                />
-              );
-            })}
-          </div>
-
-          <div className="mt-5">
-            <PreviewTags
-              title="Selected observations"
-              items={observedTraitLabels}
-            />
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-stone-200 bg-white p-6">
-          <h2 className="text-lg font-semibold text-stone-900">
-            Derived strengths
-          </h2>
-          <p className="mt-2 text-sm leading-relaxed text-stone-600">
-            These strengths are generated from selected interests and observed
-            traits. They are not entered manually.
-          </p>
-
-          <div className="mt-5">
-            <PreviewTags
-              title="Derived strengths"
-              items={derivedStrengthLabels}
-            />
           </div>
         </div>
       </div>

@@ -29,6 +29,21 @@ function SummaryMetricLink({
   );
 }
 
+function getBillingStageLabel(value: string): string {
+  switch (value) {
+    case "demo":
+      return "Demo";
+    case "trial":
+      return "Trial";
+    case "paid":
+      return "Paid";
+    case "inactive":
+      return "Inactive";
+    default:
+      return "Unknown";
+  }
+}
+
 export default async function FamilyPage({
   params,
 }: {
@@ -48,8 +63,6 @@ export default async function FamilyPage({
         locale={locale}
         title={result.title}
         subtitle={result.subtitle}
-        backHref={`/${locale}/app/dashboard`}
-        backLabel="Back dashboard"
       >
         <AppPrivateNav locale={locale} currentPath="/app/family" />
 
@@ -66,8 +79,6 @@ export default async function FamilyPage({
         locale={locale}
         title="Family"
         subtitle="This is where your family account and child profiles will live."
-        backHref={`/${locale}/app/dashboard`}
-        backLabel="Back dashboard"
       >
         <AppPrivateNav locale={locale} currentPath="/app/family" />
 
@@ -93,15 +104,13 @@ export default async function FamilyPage({
     );
   }
 
-  const { familyAccount, childCount, canCreateMore, children } = result.data;
+  const { familyAccount, entitlements, children } = result.data;
 
   return (
     <LocalePageShell
       locale={locale}
       title="Family"
       subtitle="Manage your family account and the child profiles connected to it."
-      backHref={`/${locale}/app/dashboard`}
-      backLabel="Back dashboard"
     >
       <AppPrivateNav locale={locale} currentPath="/app/family" />
 
@@ -127,9 +136,23 @@ export default async function FamilyPage({
             </div>
 
             <div>
+              <dt className="text-sm text-stone-500">Billing stage</dt>
+              <dd className="mt-1 text-base text-stone-900">
+                {getBillingStageLabel(entitlements.billingStage)}
+              </dd>
+            </div>
+
+            <div>
               <dt className="text-sm text-stone-500">Children</dt>
               <dd className="mt-1 text-base text-stone-900">
-                {childCount} / {familyAccount.max_children}
+                {entitlements.childCount} / {entitlements.maxChildren}
+              </dd>
+            </div>
+
+            <div>
+              <dt className="text-sm text-stone-500">Remaining child slots</dt>
+              <dd className="mt-1 text-base text-stone-900">
+                {entitlements.remainingChildSlots}
               </dd>
             </div>
 
@@ -140,6 +163,12 @@ export default async function FamilyPage({
               </dd>
             </div>
           </dl>
+
+          {entitlements.restrictionMessage ? (
+            <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+              {entitlements.restrictionMessage}
+            </div>
+          ) : null}
         </div>
 
         <div className="rounded-2xl border border-stone-200 bg-white p-6">
@@ -153,15 +182,19 @@ export default async function FamilyPage({
               </p>
             </div>
 
-            {canCreateMore ? (
+            {entitlements.canCreateChild ? (
               <Link
                 href={`/${locale}/app/children/create`}
                 className="inline-flex items-center justify-center rounded-full border border-stone-900 bg-stone-900 px-5 py-2.5 text-sm text-white transition hover:bg-stone-800"
               >
                 Create child profile
               </Link>
-            ) : (
+            ) : entitlements.needsUpgradeForMoreChildren ? (
               <UpgradeChildLimitButton locale={locale} />
+            ) : (
+              <div className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-stone-100 px-4 py-2 text-sm text-stone-600">
+                Child creation unavailable
+              </div>
             )}
           </div>
 
@@ -245,17 +278,17 @@ export default async function FamilyPage({
 
                       <div className="flex w-full flex-col gap-2 lg:min-w-[12.5rem]">
                         <Link
-                          href={child.summaryHref}
+                          href={child.profileHref}
                           className="inline-flex w-full items-center justify-center rounded-full border border-stone-900 bg-stone-900 px-4 py-2 text-sm text-white transition hover:bg-stone-800"
                         >
-                          Open child summary
+                          Open child profile
                         </Link>
 
                         <Link
-                          href={child.profileHref}
+                          href={child.summaryHref}
                           className="inline-flex w-full items-center justify-center rounded-full border border-stone-300 bg-white px-4 py-2 text-sm text-stone-900 transition hover:border-stone-400"
                         >
-                          Open child profile
+                          Open child summary
                         </Link>
                       </div>
                     </div>

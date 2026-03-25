@@ -34,7 +34,7 @@ export default function LoginForm({ locale }: Props) {
       return;
     }
 
-    router.push(`/${locale}/app/dashboard`);
+    router.push(`/${locale}/app/profile`);
     router.refresh();
   }
 

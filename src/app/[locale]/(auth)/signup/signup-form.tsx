@@ -26,7 +26,7 @@ export default function SignupForm({ locale }: Props) {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/${locale}/app/dashboard`,
+        emailRedirectTo: `${window.location.origin}/${locale}/app/profile`,
       },
     });
 

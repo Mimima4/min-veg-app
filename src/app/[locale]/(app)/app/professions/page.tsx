@@ -35,8 +35,6 @@ export default async function ProfessionsPage({
         locale={locale}
         title="Professions"
         subtitle="There was a problem loading the professions catalog."
-        backHref={`/${locale}/app/dashboard`}
-        backLabel="Back dashboard"
       >
         <AppPrivateNav locale={locale} currentPath="/app/professions" />
         <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
@@ -51,8 +49,6 @@ export default async function ProfessionsPage({
       locale={locale}
       title="Professions"
       subtitle="Explore the profession catalog and search for specific roles quickly."
-      backHref={`/${locale}/app/dashboard`}
-      backLabel="Back dashboard"
     >
       <AppPrivateNav locale={locale} currentPath="/app/professions" />
 

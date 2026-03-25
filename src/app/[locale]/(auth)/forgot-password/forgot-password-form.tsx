@@ -5,9 +5,13 @@ import { createClient } from "@/lib/supabase/client";
 
 type Props = {
   locale: string;
+  fromAccount?: boolean;
 };
 
-export default function ForgotPasswordForm({ locale }: Props) {
+export default function ForgotPasswordForm({
+  locale,
+  fromAccount = false,
+}: Props) {
   const supabase = createClient();
 
   const [email, setEmail] = useState("");
@@ -21,8 +25,10 @@ export default function ForgotPasswordForm({ locale }: Props) {
     setMessage("");
     setErrorMessage("");
 
+    const redirectSuffix = fromAccount ? "?from=account" : "";
+
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/${locale}/reset-password`,
+      redirectTo: `${window.location.origin}/${locale}/reset-password${redirectSuffix}`,
     });
 
     setLoading(false);
