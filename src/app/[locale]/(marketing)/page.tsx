@@ -1,6 +1,8 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { Suspense } from "react";
 import SignOutButton from "@/components/auth/sign-out-button";
+import LocaleSwitcher from "@/components/layout/locale-switcher";
+import { getHomeEntryState } from "@/server/billing/get-home-entry-state";
 
 type EntryCard = {
   eyebrow: string;
@@ -71,35 +73,6 @@ function getCopy(locale: string): MarketingCopy {
   return COPY[locale] ?? COPY.en;
 }
 
-function formatTrialRemainingLabel(trialEndsAt: string | null): string {
-  if (!trialEndsAt) {
-    return "—";
-  }
-
-  const endsAt = new Date(trialEndsAt);
-  const now = new Date();
-  const diff = endsAt.getTime() - now.getTime();
-
-  if (Number.isNaN(endsAt.getTime()) || diff <= 0) {
-    return "Trial expired";
-  }
-
-  const totalMinutes = Math.ceil(diff / (1000 * 60));
-  const days = Math.floor(totalMinutes / (60 * 24));
-  const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
-  const minutes = totalMinutes % 60;
-
-  if (days > 0) {
-    return `${days}d ${hours}h left`;
-  }
-
-  if (hours > 0) {
-    return `${hours}h ${minutes}m left`;
-  }
-
-  return `${minutes}m left`;
-}
-
 function EntryCardView({
   locale,
   item,
@@ -163,21 +136,7 @@ export default async function MarketingHome({
 }) {
   const { locale } = await params;
   const copy = getCopy(locale);
-
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const { data: familyAccount } = user
-    ? await supabase
-        .from("family_accounts")
-        .select("id, plan_type, subscription_state, trial_ends_at")
-        .eq("primary_user_id", user.id)
-        .maybeSingle()
-    : { data: null };
-
-  const isSignedIn = Boolean(user);
+  const homeState = await getHomeEntryState();
 
   const familyEntries: EntryCard[] = [
     {
@@ -236,9 +195,15 @@ export default async function MarketingHome({
   return (
     <main className="min-h-screen bg-stone-50 px-6 py-16">
       <div className="mx-auto max-w-6xl">
-        <div className="inline-flex min-w-14 items-center justify-center rounded-full border border-stone-300 bg-white px-4 py-2 text-xs font-medium uppercase tracking-[0.18em] text-stone-700">
-          {locale.toUpperCase()}
-        </div>
+        <Suspense
+          fallback={
+            <div className="inline-flex min-w-14 items-center justify-center rounded-full border border-stone-300 bg-white px-4 py-2 text-xs font-medium uppercase tracking-[0.18em] text-stone-700">
+              {locale.toUpperCase()}
+            </div>
+          }
+        >
+          <LocaleSwitcher currentLocale={locale} />
+        </Suspense>
 
         <section className="mt-8 max-w-4xl space-y-5">
           <h1 className="text-5xl font-semibold tracking-tight text-stone-900 sm:text-6xl">
@@ -252,95 +217,9 @@ export default async function MarketingHome({
           <p className="max-w-3xl text-base leading-relaxed text-stone-700">
             {copy.heroBody}
           </p>
-
-          {isSignedIn ? (
-            <div className="rounded-2xl border border-stone-200 bg-white px-5 py-4 text-sm text-stone-600">
-              Signed in as{" "}
-              <span className="font-medium text-stone-900">{user?.email}</span>
-            </div>
-          ) : null}
         </section>
 
-        {isSignedIn ? (
-          <section className="mt-10 rounded-2xl border border-stone-200 bg-white p-6">
-            {!familyAccount ? (
-              <>
-                <h2 className="text-lg font-semibold text-stone-900">
-                  Continue as signed-in user
-                </h2>
-                <p className="mt-2 max-w-3xl text-sm leading-relaxed text-stone-600">
-                  Your account is signed in, but no family container exists yet.
-                </p>
-
-                <div className="mt-5 flex flex-wrap gap-3">
-                  <Link
-                    href={`/${locale}/app/family/create?entry=trial`}
-                    className="inline-flex items-center justify-center rounded-full border border-stone-900 bg-stone-900 px-5 py-2.5 text-sm text-white transition hover:bg-stone-800"
-                  >
-                    Start 3-day trial
-                  </Link>
-
-                  <Link
-                    href={`/${locale}/pricing?entry=family`}
-                    className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-5 py-2.5 text-sm text-stone-900 transition hover:border-stone-400"
-                  >
-                    Choose family plan
-                  </Link>
-
-                  <SignOutButton locale={locale} />
-                </div>
-              </>
-            ) : (
-              <>
-                {familyAccount.plan_type === "trial" &&
-                familyAccount.subscription_state === "trialing" ? (
-                  <div className="mb-5 rounded-2xl border border-blue-200 bg-blue-50 p-5">
-                    <h2 className="text-base font-semibold text-stone-900">
-                      3-day trial active
-                    </h2>
-                    <p className="mt-2 text-sm leading-relaxed text-blue-900">
-                      Time remaining:{" "}
-                      {formatTrialRemainingLabel(familyAccount.trial_ends_at)}
-                    </p>
-                  </div>
-                ) : null}
-
-                <h2 className="text-lg font-semibold text-stone-900">
-                  You are already signed in
-                </h2>
-                <p className="mt-2 max-w-3xl text-sm leading-relaxed text-stone-600">
-                  Continue from your existing account instead of restarting entry
-                  flow.
-                </p>
-
-                <div className="mt-5 flex flex-wrap gap-3">
-                  <Link
-                    href={`/${locale}/app/family`}
-                    className="inline-flex items-center justify-center rounded-full border border-stone-900 bg-stone-900 px-5 py-2.5 text-sm text-white transition hover:bg-stone-800"
-                  >
-                    Open family
-                  </Link>
-
-                  <Link
-                    href={`/${locale}/app/profile`}
-                    className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-5 py-2.5 text-sm text-stone-900 transition hover:border-stone-400"
-                  >
-                    Open account
-                  </Link>
-
-                  <Link
-                    href={`/${locale}/app/professions`}
-                    className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-5 py-2.5 text-sm text-stone-900 transition hover:border-stone-400"
-                  >
-                    Open professions
-                  </Link>
-
-                  <SignOutButton locale={locale} />
-                </div>
-              </>
-            )}
-          </section>
-        ) : (
+        {homeState.kind === "anonymous" ? (
           <>
             <section className="mt-12">
               <div className="max-w-3xl">
@@ -376,6 +255,161 @@ export default async function MarketingHome({
               </div>
             </section>
           </>
+        ) : (
+          <section className="mt-12 rounded-2xl border border-stone-200 bg-white p-6">
+            <div className="text-sm text-stone-500">
+              Signed in as{" "}
+              <span className="font-medium text-stone-900">
+                {homeState.email ?? "user"}
+              </span>
+            </div>
+
+            {homeState.kind === "signed_in_no_family" ? (
+              <>
+                <h2 className="mt-4 text-lg font-semibold text-stone-900">
+                  Continue setup
+                </h2>
+                <p className="mt-2 max-w-3xl text-sm leading-relaxed text-stone-600">
+                  Your account is signed in, but no family container exists yet.
+                </p>
+
+                <div className="mt-5 flex flex-wrap gap-3">
+                  <Link
+                    href={`/${locale}/app/family/create?entry=trial`}
+                    className="inline-flex items-center justify-center rounded-full border border-stone-900 bg-stone-900 px-5 py-2.5 text-sm text-white transition hover:bg-stone-800"
+                  >
+                    Start 3-day trial
+                  </Link>
+
+                  <Link
+                    href={`/${locale}/pricing?entry=family`}
+                    className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-5 py-2.5 text-sm text-stone-900 transition hover:border-stone-400"
+                  >
+                    Choose family plan
+                  </Link>
+
+                  <SignOutButton locale={locale} />
+                </div>
+              </>
+            ) : null}
+
+            {homeState.kind === "trial_active" ? (
+              <>
+                <div className="mt-5 rounded-2xl border border-blue-200 bg-blue-50 p-5">
+                  <h2 className="text-base font-semibold text-stone-900">
+                    3-day trial active
+                  </h2>
+                  <p className="mt-2 text-sm leading-relaxed text-blue-900">
+                    Time remaining: {homeState.trialRemainingLabel}
+                  </p>
+                </div>
+
+                <div className="mt-5 flex flex-wrap gap-3">
+                  <Link
+                    href={`/${locale}/app/family`}
+                    className="inline-flex items-center justify-center rounded-full border border-stone-900 bg-stone-900 px-5 py-2.5 text-sm text-white transition hover:bg-stone-800"
+                  >
+                    Open family
+                  </Link>
+
+                  <Link
+                    href={`/${locale}/pricing?entry=family`}
+                    className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-5 py-2.5 text-sm text-stone-900 transition hover:border-stone-400"
+                  >
+                    Choose family plan
+                  </Link>
+
+                  <SignOutButton locale={locale} />
+                </div>
+              </>
+            ) : null}
+
+            {homeState.kind === "trial_expired" ? (
+              <>
+                <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-5">
+                  <h2 className="text-base font-semibold text-stone-900">
+                    Trial ended
+                  </h2>
+                  <p className="mt-2 text-sm leading-relaxed text-amber-900">
+                    The 3-day trial has ended. Continue with a paid family plan.
+                  </p>
+                </div>
+
+                <div className="mt-5 flex flex-wrap gap-3">
+                  <Link
+                    href={`/${locale}/pricing?entry=family`}
+                    className="inline-flex items-center justify-center rounded-full border border-stone-900 bg-stone-900 px-5 py-2.5 text-sm text-white transition hover:bg-stone-800"
+                  >
+                    Choose family plan
+                  </Link>
+
+                  <SignOutButton locale={locale} />
+                </div>
+              </>
+            ) : null}
+
+            {homeState.kind === "paid_active" ? (
+              <>
+                <h2 className="mt-4 text-lg font-semibold text-stone-900">
+                  Paid family access active
+                </h2>
+                <p className="mt-2 max-w-3xl text-sm leading-relaxed text-stone-600">
+                  Continue from your live family account.
+                </p>
+
+                <div className="mt-5 flex flex-wrap gap-3">
+                  <Link
+                    href={`/${locale}/app/family`}
+                    className="inline-flex items-center justify-center rounded-full border border-stone-900 bg-stone-900 px-5 py-2.5 text-sm text-white transition hover:bg-stone-800"
+                  >
+                    Open family
+                  </Link>
+
+                  <Link
+                    href={`/${locale}/app/profile`}
+                    className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-5 py-2.5 text-sm text-stone-900 transition hover:border-stone-400"
+                  >
+                    Open account
+                  </Link>
+
+                  <SignOutButton locale={locale} />
+                </div>
+              </>
+            ) : null}
+
+            {homeState.kind === "inactive_access" ? (
+              <>
+                <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-5">
+                  <h2 className="text-base font-semibold text-stone-900">
+                    Access inactive
+                  </h2>
+                  <p className="mt-2 text-sm leading-relaxed text-amber-900">
+                    This account is signed in, but active access is not currently
+                    available.
+                  </p>
+                </div>
+
+                <div className="mt-5 flex flex-wrap gap-3">
+                  <Link
+                    href={
+                      homeState.entrySource === "school_referral" ||
+                      homeState.entrySource === "school" ||
+                      homeState.entrySource === "kommune" ||
+                      homeState.entrySource === "fylke" ||
+                      homeState.entrySource === "institutional"
+                        ? `/${locale}/pricing?entry=institutional`
+                        : `/${locale}/pricing?entry=family`
+                    }
+                    className="inline-flex items-center justify-center rounded-full border border-stone-900 bg-stone-900 px-5 py-2.5 text-sm text-white transition hover:bg-stone-800"
+                  >
+                    Restore access
+                  </Link>
+
+                  <SignOutButton locale={locale} />
+                </div>
+              </>
+            ) : null}
+          </section>
         )}
 
         <footer className="mt-14 border-t border-stone-200 pt-6 text-sm text-stone-500">
