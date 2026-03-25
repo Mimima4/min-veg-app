@@ -13,6 +13,9 @@ type ProfessionForMatching = {
   key_skills: unknown;
   interest_tags: unknown;
   strength_tags: unknown;
+  development_focus_tags: unknown;
+  school_subject_tags: unknown;
+  education_notes_i18n: Record<string, string> | null;
   avg_salary_nok: number | null;
   demand_level: string;
   education_level: string;

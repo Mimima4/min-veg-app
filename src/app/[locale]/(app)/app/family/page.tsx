@@ -1,8 +1,10 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
 import { LocalePageShell } from "@/components/layout/locale-page-shell";
 import AppPrivateNav from "@/components/layout/app-private-nav";
 import UpgradeChildLimitButton from "./upgrade-child-limit-button";
+import TrialStatusBanner from "@/components/billing/trial-status-banner";
 import { getFamilyPageData } from "@/server/family/overview/get-family-page-data";
 
 function SummaryMetricLink({
@@ -42,6 +44,90 @@ function getBillingStageLabel(value: string): string {
     default:
       return "Unknown";
   }
+}
+
+function formatTrialRemainingLabel(trialEndsAt: string | null): string {
+  if (!trialEndsAt) {
+    return "—";
+  }
+
+  const endsAt = new Date(trialEndsAt);
+  const now = new Date();
+  const diff = endsAt.getTime() - now.getTime();
+
+  if (Number.isNaN(endsAt.getTime()) || diff <= 0) {
+    return "Trial expired";
+  }
+
+  const totalMinutes = Math.ceil(diff / (1000 * 60));
+  const days = Math.floor(totalMinutes / (60 * 24));
+  const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+  const minutes = totalMinutes % 60;
+
+  if (days > 0) {
+    return `${days}d ${hours}h left`;
+  }
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m left`;
+  }
+
+  return `${minutes}m left`;
+}
+
+async function resetTrialFamily(locale: string) {
+  "use server";
+
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect(`/${locale}/login`);
+  }
+
+  const { data: family } = await supabase
+    .from("family_accounts")
+    .select("id, plan_type, subscription_state")
+    .eq("primary_user_id", user.id)
+    .maybeSingle();
+
+  if (!family) {
+    redirect(`/${locale}/app/family`);
+  }
+
+  const { data: childRows } = await supabase
+    .from("child_profiles")
+    .select("id")
+    .eq("family_account_id", family.id);
+
+  const childIds = (childRows ?? [])
+    .map((row) => row.id as string)
+    .filter(Boolean);
+
+  if (childIds.length > 0) {
+    await supabase
+      .from("child_profession_interests")
+      .delete()
+      .in("child_profile_id", childIds);
+
+    await supabase
+      .from("child_saved_education_routes")
+      .delete()
+      .in("child_profile_id", childIds);
+  }
+
+  await supabase.from("child_profiles").delete().eq("family_account_id", family.id);
+
+  await supabase
+    .from("family_accounts")
+    .delete()
+    .eq("id", family.id)
+    .eq("primary_user_id", user.id);
+
+  redirect(`/${locale}/app/family/create?entry=trial`);
 }
 
 export default async function FamilyPage({
@@ -93,10 +179,10 @@ export default async function FamilyPage({
 
           <div className="mt-5">
             <Link
-              href={`/${locale}/app/family/create`}
+              href={`/${locale}/app/family/create?entry=trial`}
               className="inline-flex items-center justify-center rounded-full border border-stone-900 bg-stone-900 px-5 py-2.5 text-sm text-white transition hover:bg-stone-800"
             >
-              Create family account
+              Start 3-day trial
             </Link>
           </div>
         </div>
@@ -105,6 +191,10 @@ export default async function FamilyPage({
   }
 
   const { familyAccount, entitlements, children } = result.data;
+  const trialState = entitlements.activation?.trialState;
+  const trialEndsAt = entitlements.activation?.trialEndsAt ?? null;
+  const showTrialBanner = trialState === "active";
+  const showExpiredBanner = trialState === "expired";
 
   return (
     <LocalePageShell
@@ -115,10 +205,41 @@ export default async function FamilyPage({
       <AppPrivateNav locale={locale} currentPath="/app/family" />
 
       <div className="mt-6 space-y-6">
+        {showTrialBanner ? (
+          <TrialStatusBanner
+            tone="neutral"
+            title="3-day trial active"
+            body={`Time remaining: ${formatTrialRemainingLabel(trialEndsAt)}`}
+            ctaHref={`/${locale}/pricing?entry=family`}
+            ctaLabel="Choose family plan"
+          />
+        ) : null}
+
+        {showExpiredBanner ? (
+          <TrialStatusBanner
+            tone="amber"
+            title="Trial ended"
+            body="The 3-day trial has ended. Your family account is still here, but full access now requires a paid family plan."
+            ctaHref={`/${locale}/pricing?entry=family`}
+            ctaLabel="Continue with paid family plan"
+          />
+        ) : null}
+
         <div className="rounded-2xl border border-stone-200 bg-white p-6">
-          <h2 className="text-lg font-semibold text-stone-900">
-            Family account
-          </h2>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <h2 className="text-lg font-semibold text-stone-900">
+              Family account
+            </h2>
+
+            <form action={resetTrialFamily.bind(null, locale)}>
+              <button
+                type="submit"
+                className="inline-flex items-center justify-center rounded-full border border-red-300 bg-white px-4 py-2 text-sm text-red-700 transition hover:border-red-400 hover:bg-red-50"
+              >
+                Reset family state
+              </button>
+            </form>
+          </div>
 
           <dl className="mt-5 grid gap-4 sm:grid-cols-2">
             <div>
@@ -139,6 +260,41 @@ export default async function FamilyPage({
               <dt className="text-sm text-stone-500">Billing stage</dt>
               <dd className="mt-1 text-base text-stone-900">
                 {getBillingStageLabel(entitlements.billingStage)}
+              </dd>
+            </div>
+
+            <div>
+              <dt className="text-sm text-stone-500">Subscription state</dt>
+              <dd className="mt-1 text-base text-stone-900">
+                {familyAccount.subscription_state ?? "—"}
+              </dd>
+            </div>
+
+            <div>
+              <dt className="text-sm text-stone-500">Plan code</dt>
+              <dd className="mt-1 text-base text-stone-900">
+                {familyAccount.plan_code ?? "—"}
+              </dd>
+            </div>
+
+            <div>
+              <dt className="text-sm text-stone-500">Entry source</dt>
+              <dd className="mt-1 text-base text-stone-900">
+                {familyAccount.entry_source ?? "—"}
+              </dd>
+            </div>
+
+            <div>
+              <dt className="text-sm text-stone-500">Activation source</dt>
+              <dd className="mt-1 text-base text-stone-900">
+                {familyAccount.activation_source ?? "—"}
+              </dd>
+            </div>
+
+            <div>
+              <dt className="text-sm text-stone-500">Trial ends</dt>
+              <dd className="mt-1 text-base text-stone-900">
+                {trialEndsAt ? new Date(trialEndsAt).toLocaleString() : "—"}
               </dd>
             </div>
 

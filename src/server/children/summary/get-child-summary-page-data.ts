@@ -56,6 +56,7 @@ type ProfessionRow = {
   strength_tags: unknown;
   development_focus_tags: unknown;
   school_subject_tags: unknown;
+  education_notes_i18n: Record<string, string> | null;
 };
 
 type SavedProfessionLinkRow = {
@@ -413,7 +414,7 @@ export async function getChildSummaryPageData({
   const { data: professions, error: professionsError } = await supabase
     .from("professions")
     .select(
-      "id, slug, title_i18n, summary_i18n, avg_salary_nok, demand_level, education_level, work_style, key_skills, interest_tags, strength_tags, development_focus_tags, school_subject_tags"
+      "id, slug, title_i18n, summary_i18n, avg_salary_nok, demand_level, education_level, work_style, key_skills, interest_tags, strength_tags, development_focus_tags, school_subject_tags, education_notes_i18n"
     )
     .eq("is_active", true);
 

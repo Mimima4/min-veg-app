@@ -337,7 +337,7 @@ export async function getChildProfilePageData({
   const { data: allProfessions, error: allProfessionsError } = await supabase
     .from("professions")
     .select(
-      "id, slug, title_i18n, summary_i18n, avg_salary_nok, demand_level, education_level, work_style, key_skills, interest_tags, strength_tags"
+      "id, slug, title_i18n, summary_i18n, avg_salary_nok, demand_level, education_level, work_style, key_skills, interest_tags, strength_tags, development_focus_tags, school_subject_tags, education_notes_i18n"
     )
     .eq("is_active", true);
 

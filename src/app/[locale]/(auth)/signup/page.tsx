@@ -45,7 +45,7 @@ export default async function SignupPage({
       backHref={`/${locale}`}
       backLabel="Back home"
     >
-      <SignupForm locale={locale} />
+      <SignupForm locale={locale} entry={entry} />
 
       <div className="mt-6 text-sm text-stone-500">
         Already have an account?{" "}

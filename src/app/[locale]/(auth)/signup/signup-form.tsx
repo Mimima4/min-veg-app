@@ -1,14 +1,46 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 type Props = {
   locale: string;
+  entry?: string;
 };
 
-export default function SignupForm({ locale }: Props) {
+function getEntryActivationMeta(entry?: string) {
+  switch (entry) {
+    case "trial":
+      return {
+        entrySource: "trial",
+        activationSource: "self_serve_trial",
+        entryParam: "trial",
+      };
+    case "school":
+      return {
+        entrySource: "school_referral",
+        activationSource: "school_led",
+        entryParam: "school",
+      };
+    case "paid":
+      return {
+        entrySource: "paid",
+        activationSource: "self_serve_paid",
+        entryParam: "paid",
+      };
+    default:
+      return {
+        entrySource: "direct",
+        activationSource: "self_serve",
+        entryParam: null,
+      };
+  }
+}
+
+export default function SignupForm({ locale, entry }: Props) {
   const supabase = createClient();
+  const router = useRouter();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,11 +54,22 @@ export default function SignupForm({ locale }: Props) {
     setMessage("");
     setErrorMessage("");
 
-    const { error } = await supabase.auth.signUp({
+    const { entrySource, activationSource, entryParam } =
+      getEntryActivationMeta(entry);
+
+    const createFamilyPath = entryParam
+      ? `/${locale}/app/family/create?entry=${encodeURIComponent(entryParam)}`
+      : `/${locale}/app/family/create`;
+
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/${locale}/app/profile`,
+        emailRedirectTo: `${window.location.origin}${createFamilyPath}`,
+        data: {
+          entry_source: entrySource,
+          activation_source: activationSource,
+        },
       },
     });
 
@@ -37,8 +80,20 @@ export default function SignupForm({ locale }: Props) {
       return;
     }
 
+    if (data?.session) {
+      router.push(createFamilyPath);
+      router.refresh();
+      return;
+    }
+
     setMessage(
-      "Account created. Check your email if confirmation is required."
+      entry === "trial"
+        ? "Check your email to continue your 3-day trial. After confirming your email, return via Continue access—no new account is needed. The trial lasts exactly 3 days and cannot be extended."
+        : entry === "paid"
+          ? "Check your email to continue your paid family setup."
+          : entry === "school"
+            ? "Check your email to continue your school-referred family setup."
+            : "Account created. You'll continue your activation flow after signup confirmation."
     );
   }
 

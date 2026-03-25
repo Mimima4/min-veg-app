@@ -1,5 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { Suspense } from "react";
+import LocaleSwitcher from "@/components/layout/locale-switcher";
 
 type NavLink = {
   href: string;
@@ -23,12 +25,23 @@ export function LocalePageShell({
   navLinks?: NavLink[];
   children?: ReactNode;
 }) {
+  const isArabic = locale === "ar";
+
   return (
-    <main className="min-h-screen bg-stone-50 px-6 py-16">
+    <main
+      dir={isArabic ? "rtl" : "ltr"}
+      className="min-h-screen bg-stone-50 px-6 py-16"
+    >
       <div className="mx-auto max-w-5xl">
-        <div className="text-xs font-medium uppercase tracking-[0.2em] text-stone-500">
-          Locale: {locale.toUpperCase()}
-        </div>
+        <Suspense
+          fallback={
+            <div className="inline-flex min-w-14 items-center justify-center rounded-full border border-stone-300 bg-white px-4 py-2 text-xs font-medium uppercase tracking-[0.18em] text-stone-700">
+              {locale.toUpperCase()}
+            </div>
+          }
+        >
+          <LocaleSwitcher currentLocale={locale} />
+        </Suspense>
 
         <div className="mt-6 space-y-3">
           <h1 className="text-5xl font-semibold tracking-tight text-stone-900 sm:text-6xl">
@@ -72,4 +85,3 @@ export function LocalePageShell({
     </main>
   );
 }
-

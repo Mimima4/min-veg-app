@@ -178,21 +178,33 @@ function isEducationLevel(value: string): value is EducationLevel {
   );
 }
 
+function resolveEducationLocale(locale: string): SupportedLocale {
+  if (locale === "nb" || locale === "nn" || locale === "en") {
+    return locale;
+  }
+
+  return "en";
+}
+
 export function getEducationLevelLabel(
-  value: EducationLevel,
-  locale: SupportedLocale
+  value: string,
+  locale: string
 ): string {
-  return EDUCATION_LEVEL_LABELS[value][locale];
+  if (!isEducationLevel(value)) {
+    return value;
+  }
+
+  return EDUCATION_LEVEL_LABELS[value][resolveEducationLocale(locale)];
 }
 
 export function getEducationRouteCopy(
   value: EducationLevel,
-  locale: SupportedLocale
+  locale: string
 ): {
   routeTitle: string;
   routeDescription: string;
 } {
-  return EDUCATION_ROUTE_COPY[value][locale];
+  return EDUCATION_ROUTE_COPY[value][resolveEducationLocale(locale)];
 }
 
 export function getLikelyEducationLevel({

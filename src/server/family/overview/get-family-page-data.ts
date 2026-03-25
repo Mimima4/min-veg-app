@@ -32,6 +32,7 @@ type ProfessionSummaryRow = {
   slug: string;
   title_i18n: Record<string, string> | null;
   summary_i18n: Record<string, string> | null;
+  education_notes_i18n: Record<string, string> | null;
   key_skills: unknown;
   interest_tags: unknown;
   strength_tags: unknown;
@@ -221,7 +222,7 @@ export async function getFamilyPageData({
   const { data: professions, error: professionsError } = await supabase
     .from("professions")
     .select(
-      "id, slug, title_i18n, summary_i18n, key_skills, interest_tags, strength_tags, development_focus_tags, school_subject_tags, avg_salary_nok, demand_level, education_level, work_style"
+      "id, slug, title_i18n, summary_i18n, key_skills, interest_tags, strength_tags, development_focus_tags, school_subject_tags, education_notes_i18n, avg_salary_nok, demand_level, education_level, work_style"
     )
     .eq("is_active", true);
 
@@ -235,6 +236,10 @@ export async function getFamilyPageData({
   }
 
   const typedProfessions = (professions ?? []) as ProfessionSummaryRow[];
+  const summaryProfessions = typedProfessions.map((profession) => ({
+    ...profession,
+    demand_level: profession.demand_level ?? "unknown",
+  }));
 
   const childCards: FamilyChildOverviewCard[] = typedChildren.map((child) => {
     const planningState = getChildPlanningState({
@@ -249,7 +254,7 @@ export async function getFamilyPageData({
     const summary = getChildSummary({
       interestIds: planningState.interestIds,
       derivedStrengthIds: planningState.derivedStrengthIds,
-      professions: typedProfessions,
+      professions: summaryProfessions,
       desiredIncomeBand: planningState.desiredIncomeBand,
       preferredWorkStyle: planningState.preferredWorkStyle,
       preferredEducationLevel: planningState.preferredEducationLevel,

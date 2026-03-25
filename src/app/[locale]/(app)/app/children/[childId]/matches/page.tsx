@@ -379,10 +379,8 @@ export default async function ChildMatchesPage({
                     profession: {
                       interest_tags: profession.interest_tags,
                       strength_tags: profession.strength_tags,
-                      development_focus_tags:
-                        (profession as ExplorerProfession).development_focus_tags,
-                      school_subject_tags:
-                        (profession as ExplorerProfession).school_subject_tags,
+                      development_focus_tags: profession.development_focus_tags,
+                      school_subject_tags: profession.school_subject_tags,
                       avg_salary_nok: profession.avg_salary_nok,
                       work_style: profession.work_style,
                       education_level: profession.education_level,
@@ -415,8 +413,10 @@ export default async function ChildMatchesPage({
                       )
                     : [];
                   const educationNotes = getLocalizedValue(
-                    ((profession as ExplorerProfession).education_notes_i18n ??
-                      {}) as Record<string, string>,
+                    (profession.education_notes_i18n ?? {}) as Record<
+                      string,
+                      string
+                    >,
                     supportedLocale
                   );
 

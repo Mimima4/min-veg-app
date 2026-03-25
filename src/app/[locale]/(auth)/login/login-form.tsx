@@ -6,9 +6,13 @@ import { createClient } from "@/lib/supabase/client";
 
 type Props = {
   locale: string;
+  mode?: "standard" | "continue";
 };
 
-export default function LoginForm({ locale }: Props) {
+export default function LoginForm({
+  locale,
+  mode = "standard",
+}: Props) {
   const router = useRouter();
   const supabase = createClient();
 
@@ -34,7 +38,11 @@ export default function LoginForm({ locale }: Props) {
       return;
     }
 
-    router.push(`/${locale}/app/profile`);
+    router.push(
+      mode === "continue"
+        ? `/${locale}/continue-access?mode=continue`
+        : `/${locale}/continue-access?mode=standard`
+    );
     router.refresh();
   }
 
@@ -71,7 +79,7 @@ export default function LoginForm({ locale }: Props) {
         disabled={loading}
         className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-stone-900 px-5 py-2.5 text-sm text-white transition hover:bg-stone-800 disabled:opacity-50"
       >
-        {loading ? "Signing in..." : "Sign in"}
+        {loading ? "Signing in..." : mode === "continue" ? "Continue access" : "Sign in"}
       </button>
     </form>
   );

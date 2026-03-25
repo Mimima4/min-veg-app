@@ -17,10 +17,12 @@ import RemoveSavedProfessionButton from "./remove-saved-profession-button";
 import RemoveSavedStudyRouteButton from "./remove-saved-study-route-button";
 import {
   getChildProfilePageData,
-  type DesiredIncomeBand,
-  type PreferredEducationLevel,
-  type PreferredWorkStyle,
 } from "@/server/children/planning/get-child-profile-page-data";
+import type {
+  DesiredIncomeBand,
+  PreferredEducationLevel,
+  PreferredWorkStyle,
+} from "@/server/children/planning/get-child-planning-state";
 
 function TagList({
   title,
@@ -181,7 +183,7 @@ export default async function ChildDetailPage({
             locale={locale}
             childId={child.id}
             initialDisplayName={child.display_name ?? ""}
-            initialBirthYear={child.birth_year}
+            initialBirthYear={child.birth_year ?? new Date().getFullYear()}
             initialSchoolStage={
               child.school_stage as
                 | "barneskole"
@@ -190,7 +192,7 @@ export default async function ChildDetailPage({
                 | "student"
                 | "young_adult"
             }
-            initialCountryCode={child.country_code}
+            initialCountryCode={child.country_code ?? "NO"}
             initialRelocationWillingness={
               child.relocation_willingness as "no" | "maybe" | "yes" | null
             }
