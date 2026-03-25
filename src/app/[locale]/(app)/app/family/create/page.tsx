@@ -15,22 +15,6 @@ function getPageCopy(entry?: string) {
     };
   }
 
-  if (normalized === "paid") {
-    return {
-      title: "Create family account",
-      subtitle:
-        "Create the base family container before continuing into paid setup.",
-    };
-  }
-
-  if (normalized === "school") {
-    return {
-      title: "Create family account",
-      subtitle:
-        "Create the base family container before continuing school-referred setup.",
-    };
-  }
-
   return {
     title: "Create family account",
     subtitle: "Create the base family container for your Min Veg area.",

@@ -27,6 +27,28 @@ export default async function LoginPage({
           Choose your family plan
         </Link>
       </div>
+
+      <div className="mt-6 space-y-3 text-sm text-stone-500">
+        <div>
+          Don&apos;t have an account?{" "}
+          <Link
+            href={`/${locale}/signup`}
+            className="text-stone-700 underline underline-offset-4 hover:text-stone-900"
+          >
+            Create account
+          </Link>
+        </div>
+
+        <div>
+          Forgot your password?{" "}
+          <Link
+            href={`/${locale}/forgot-password`}
+            className="text-stone-700 underline underline-offset-4 hover:text-stone-900"
+          >
+            Reset password
+          </Link>
+        </div>
+      </div>
     </LocalePageShell>
   );
 }

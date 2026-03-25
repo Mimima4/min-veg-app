@@ -1,8 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { resolveAccountActivation } from "@/server/billing/resolve-account-activation";
-import { resolveSubscriptionLifecycleState } from "@/server/billing/resolve-subscription-lifecycle-state";
-
-export type PostLoginMode = "standard" | "continue";
 
 type PendingEntrySource =
   | "trial"
@@ -26,20 +23,7 @@ type FamilyAccessRow = {
   trial_started_at: string | null;
   trial_ends_at: string | null;
   trial_used: boolean | null;
-  current_period_starts_at: string | null;
-  current_period_ends_at: string | null;
-  next_billing_at: string | null;
-  auto_renew_enabled: boolean | null;
-  grace_period_ends_at: string | null;
-  payment_failed_at: string | null;
-  last_payment_status: string | null;
-  canceled_at: string | null;
-  created_at: string;
 };
-
-export type PostLoginResolution =
-  | { kind: "redirect"; href: string }
-  | { kind: "anonymous"; href: string };
 
 function normalizePendingEntrySource(
   value: string | null | undefined
@@ -68,13 +52,13 @@ function normalizePendingEntrySource(
   }
 }
 
-function getContinueDestinationForPendingAccess(
+function getPendingDestination(
   locale: string,
   pendingEntrySource: PendingEntrySource
 ): string {
   switch (pendingEntrySource) {
     case "paid":
-      return `/${locale}/app/family/create?entry=paid`;
+      return `/${locale}/pricing?entry=family`;
     case "school":
     case "school_referral":
     case "kommune":
@@ -90,11 +74,9 @@ function getContinueDestinationForPendingAccess(
 
 export async function resolvePostLoginDestination({
   locale,
-  mode,
 }: {
   locale: string;
-  mode: PostLoginMode;
-}): Promise<PostLoginResolution> {
+}): Promise<string> {
   const supabase = await createClient();
 
   const {
@@ -102,7 +84,7 @@ export async function resolvePostLoginDestination({
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { kind: "anonymous", href: `/${locale}/login` };
+    return `/${locale}/login`;
   }
 
   const pendingEntrySource = normalizePendingEntrySource(
@@ -114,78 +96,37 @@ export async function resolvePostLoginDestination({
   const { data: familyAccount, error } = await supabase
     .from("family_accounts")
     .select(
-      "id, plan_type, status, subscription_state, entry_source, activation_source, plan_code, trial_started_at, trial_ends_at, trial_used, current_period_starts_at, current_period_ends_at, next_billing_at, auto_renew_enabled, grace_period_ends_at, payment_failed_at, last_payment_status, canceled_at, created_at"
+      "id, plan_type, status, subscription_state, entry_source, activation_source, plan_code, trial_started_at, trial_ends_at, trial_used"
     )
     .eq("primary_user_id", user.id)
     .maybeSingle();
 
   if (error) {
-    return {
-      kind: "redirect",
-      href: `/${locale}/pricing?entry=family`,
-    };
+    return `/${locale}/pricing?entry=family`;
   }
 
   if (!familyAccount) {
-    if (mode === "standard") {
-      return {
-        kind: "redirect",
-        href: `/${locale}/continue-access?mode=continue`,
-      };
-    }
-
-    return {
-      kind: "redirect",
-      href: getContinueDestinationForPendingAccess(locale, pendingEntrySource),
-    };
+    return getPendingDestination(locale, pendingEntrySource);
   }
 
   const typedFamilyAccount = familyAccount as FamilyAccessRow;
   const activation = resolveAccountActivation(typedFamilyAccount);
-  const subscriptionLifecycle =
-    resolveSubscriptionLifecycleState(typedFamilyAccount);
-
-  if (subscriptionLifecycle.standardAccessAllowed) {
-    return {
-      kind: "redirect",
-      href: `/${locale}/app/profile`,
-    };
-  }
-
-  if (mode === "standard") {
-    return {
-      kind: "redirect",
-      href: `/${locale}/continue-access?mode=continue`,
-    };
-  }
 
   if (activation.trialState === "active") {
-    return {
-      kind: "redirect",
-      href: `/${locale}/app/family`,
-    };
+    return `/${locale}/app/family`;
   }
 
   if (activation.trialState === "expired") {
-    return {
-      kind: "redirect",
-      href: `/${locale}/pricing?entry=family`,
-    };
+    return `/${locale}/pricing?entry=family`;
   }
 
-  if (subscriptionLifecycle.billingRecoveryRequired) {
-    return {
-      kind: "redirect",
-      href: `/${locale}/pricing?entry=family`,
-    };
+  if (activation.billingStage === "paid" && activation.hasActiveAccess) {
+    return `/${locale}/app/family`;
   }
 
   const entrySource = normalizePendingEntrySource(
     typedFamilyAccount.entry_source ?? pendingEntrySource
   );
 
-  return {
-    kind: "redirect",
-    href: getContinueDestinationForPendingAccess(locale, entrySource),
-  };
+  return getPendingDestination(locale, entrySource);
 }

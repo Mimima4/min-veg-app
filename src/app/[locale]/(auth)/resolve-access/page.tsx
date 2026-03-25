@@ -1,15 +1,12 @@
 import { redirect } from "next/navigation";
 import { resolvePostLoginDestination } from "@/server/billing/resolve-post-login-destination";
 
-export default async function ContinueAccessPage({
+export default async function ResolveAccessPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ mode?: string }>;
 }) {
   const { locale } = await params;
-  await searchParams;
 
   const href = await resolvePostLoginDestination({ locale });
 

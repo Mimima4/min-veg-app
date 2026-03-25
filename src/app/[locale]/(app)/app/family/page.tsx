@@ -1,10 +1,11 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { LocalePageShell } from "@/components/layout/locale-page-shell";
 import AppPrivateNav from "@/components/layout/app-private-nav";
 import UpgradeChildLimitButton from "./upgrade-child-limit-button";
-import TrialStatusBanner from "@/components/billing/trial-status-banner";
+import ResetFamilyStateButton from "./reset-family-state-button";
 import { getFamilyPageData } from "@/server/family/overview/get-family-page-data";
 
 function SummaryMetricLink({
@@ -75,10 +76,11 @@ function formatTrialRemainingLabel(trialEndsAt: string | null): string {
   return `${minutes}m left`;
 }
 
-async function resetTrialFamily(locale: string) {
+async function resetFamilyState(locale: string) {
   "use server";
 
   const supabase = await createClient();
+  const admin = createAdminClient();
 
   const {
     data: { user },
@@ -88,46 +90,66 @@ async function resetTrialFamily(locale: string) {
     redirect(`/${locale}/login`);
   }
 
-  const { data: family } = await supabase
+  const { data: family } = await admin
     .from("family_accounts")
-    .select("id, plan_type, subscription_state")
+    .select("id")
     .eq("primary_user_id", user.id)
     .maybeSingle();
 
   if (!family) {
-    redirect(`/${locale}/app/family`);
+    redirect(`/${locale}/app/family/create?entry=trial`);
   }
 
-  const { data: childRows } = await supabase
+  const { data: childIds } = await admin
     .from("child_profiles")
     .select("id")
     .eq("family_account_id", family.id);
 
-  const childIds = (childRows ?? [])
-    .map((row) => row.id as string)
-    .filter(Boolean);
+  const ids = (childIds ?? []).map((item) => item.id);
 
-  if (childIds.length > 0) {
-    await supabase
+  if (ids.length > 0) {
+    await admin
       .from("child_profession_interests")
       .delete()
-      .in("child_profile_id", childIds);
+      .in("child_profile_id", ids);
 
-    await supabase
+    await admin
       .from("child_saved_education_routes")
       .delete()
-      .in("child_profile_id", childIds);
+      .in("child_profile_id", ids);
+
+    await admin.from("child_profiles").delete().in("id", ids);
   }
 
-  await supabase.from("child_profiles").delete().eq("family_account_id", family.id);
-
-  await supabase
-    .from("family_accounts")
-    .delete()
-    .eq("id", family.id)
-    .eq("primary_user_id", user.id);
+  await admin.from("family_accounts").delete().eq("id", family.id);
 
   redirect(`/${locale}/app/family/create?entry=trial`);
+}
+
+async function expireTrialNow(locale: string) {
+  "use server";
+
+  const supabase = await createClient();
+  const admin = createAdminClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect(`/${locale}/login`);
+  }
+
+  await admin
+    .from("family_accounts")
+    .update({
+      subscription_state: "trial_expired",
+      trial_ends_at: new Date(Date.now() - 60 * 1000).toISOString(),
+    })
+    .eq("primary_user_id", user.id)
+    .eq("plan_type", "trial");
+
+  redirect(`/${locale}/app/family`);
 }
 
 export default async function FamilyPage({
@@ -151,7 +173,6 @@ export default async function FamilyPage({
         subtitle={result.subtitle}
       >
         <AppPrivateNav locale={locale} currentPath="/app/family" />
-
         <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
           {result.message}
         </div>
@@ -193,8 +214,9 @@ export default async function FamilyPage({
   const { familyAccount, entitlements, children } = result.data;
   const trialState = entitlements.activation?.trialState;
   const trialEndsAt = entitlements.activation?.trialEndsAt ?? null;
-  const showTrialBanner = trialState === "active";
-  const showExpiredBanner = trialState === "expired";
+  const isTrialFamily =
+    familyAccount.plan_type === "trial" ||
+    familyAccount.subscription_state === "trialing";
 
   return (
     <LocalePageShell
@@ -205,24 +227,45 @@ export default async function FamilyPage({
       <AppPrivateNav locale={locale} currentPath="/app/family" />
 
       <div className="mt-6 space-y-6">
-        {showTrialBanner ? (
-          <TrialStatusBanner
-            tone="neutral"
-            title="3-day trial active"
-            body={`Time remaining: ${formatTrialRemainingLabel(trialEndsAt)}`}
-            ctaHref={`/${locale}/pricing?entry=family`}
-            ctaLabel="Choose family plan"
-          />
+        {trialState === "active" ? (
+          <div className="rounded-2xl border border-blue-200 bg-blue-50 p-5">
+            <h2 className="text-base font-semibold text-stone-900">
+              3-day trial active
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-blue-900">
+              Time remaining: {formatTrialRemainingLabel(trialEndsAt)}
+            </p>
+
+            <div className="mt-4">
+              <Link
+                href={`/${locale}/pricing?entry=family`}
+                className="inline-flex items-center justify-center rounded-full border border-stone-900 bg-stone-900 px-4 py-2 text-sm text-white transition hover:bg-stone-800"
+              >
+                Choose family plan
+              </Link>
+            </div>
+          </div>
         ) : null}
 
-        {showExpiredBanner ? (
-          <TrialStatusBanner
-            tone="amber"
-            title="Trial ended"
-            body="The 3-day trial has ended. Your family account is still here, but full access now requires a paid family plan."
-            ctaHref={`/${locale}/pricing?entry=family`}
-            ctaLabel="Continue with paid family plan"
-          />
+        {trialState === "expired" ? (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+            <h2 className="text-base font-semibold text-stone-900">
+              Trial ended
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-amber-900">
+              The 3-day trial has ended. Your family data is still here, but
+              full access now requires a paid family plan.
+            </p>
+
+            <div className="mt-4">
+              <Link
+                href={`/${locale}/pricing?entry=family`}
+                className="inline-flex items-center justify-center rounded-full border border-stone-900 bg-stone-900 px-4 py-2 text-sm text-white transition hover:bg-stone-800"
+              >
+                Continue with paid family plan
+              </Link>
+            </div>
+          </div>
         ) : null}
 
         <div className="rounded-2xl border border-stone-200 bg-white p-6">
@@ -231,14 +274,21 @@ export default async function FamilyPage({
               Family account
             </h2>
 
-            <form action={resetTrialFamily.bind(null, locale)}>
-              <button
-                type="submit"
-                className="inline-flex items-center justify-center rounded-full border border-red-300 bg-white px-4 py-2 text-sm text-red-700 transition hover:border-red-400 hover:bg-red-50"
-              >
-                Reset family state
-              </button>
-            </form>
+            <div className="flex flex-wrap gap-2">
+              {isTrialFamily ? (
+                <ResetFamilyStateButton
+                  action={expireTrialNow.bind(null, locale)}
+                  label="Expire trial now"
+                  confirmMessage="Are you sure you want to expire this 3-day trial right now?"
+                />
+              ) : null}
+
+              <ResetFamilyStateButton
+                action={resetFamilyState.bind(null, locale)}
+                label="Reset family state"
+                confirmMessage="Are you sure you want to reset this family state? This will remove the current family container and connected child data for this test flow."
+              />
+            </div>
           </div>
 
           <dl className="mt-5 grid gap-4 sm:grid-cols-2">

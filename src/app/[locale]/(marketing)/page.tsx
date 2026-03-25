@@ -1,12 +1,6 @@
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
 import SignOutButton from "@/components/auth/sign-out-button";
-import LocaleSwitcher from "@/components/layout/locale-switcher";
-import { Suspense } from "react";
-import TrialStatusBanner from "@/components/billing/trial-status-banner";
-import {
-  getMarketingAccountActivationState,
-  type PendingEntrySource,
-} from "@/server/billing/get-marketing-account-activation-state";
 
 type EntryCard = {
   eyebrow: string;
@@ -25,40 +19,23 @@ type MarketingCopy = {
   familyEntrySubtitle: string;
   institutionalTitle: string;
   institutionalSubtitle: string;
-  signedInTitle: string;
-  signedInSubtitle: string;
-  signedInActions: {
-    account: string;
-    family: string;
-    professions: string;
-  };
   footerNote: string;
 };
 
-type MarketingLocale = "nb" | "nn" | "en";
-
-const COPY: Record<MarketingLocale, MarketingCopy> = {
+const COPY: Record<string, MarketingCopy> = {
   nb: {
     heroTitle: "Min Veg",
     heroSubtitle: "Ein roleg, tillitsbasert start på barnet sin neste veg.",
     heroBody:
-     "Min Veg blir bygd som ei Norway-first, parent-first og school-led plattform. Første skjerm skal vere activation-first: demo først, deretter trial gjennom registrering, så betalt familieinngang, og eit eige kommersielt spor for skular og kommunar.",
+      "Min Veg blir bygd som ei Norway-first, parent-first og school-led plattform. Første skjerm skal vere activation-first: demo først, deretter trial gjennom registrering, så betalt familieinngang, og eit eige kommersielt spor for skular og kommunar.",
     familyEntryTitle: "Start som familie",
     familyEntrySubtitle:
       "Demo kjem først. Trial kjem berre gjennom registrering. Betalt familieinngang skal vere tydeleg frå første skjerm.",
     institutionalTitle: "For schools and municipalities",
     institutionalSubtitle:
       "Skule- og eigarinngang er ein eigen kommersiell og institusjonell flyt. Han skal ikkje liggje inne i family entry.",
-    signedInTitle: "Du er allereie logga inn",
-    signedInSubtitle:
-      "Gå vidare frå den eksisterande kontoen. Trial skal ikkje startast på nytt frå første skjerm.",
-    signedInActions: {
-      account: "Open account",
-      family: "Open family",
-      professions: "Open professions",
-    },
     footerNote:
-      "Parent-first. School-led distributirst frå første skjerm. Bygd for web og future native mobile.",
+      "Parent-first. School-led distribution. Paid-first frå første skjerm. Bygd for web og future native mobile.",
   },
   nn: {
     heroTitle: "Min Veg",
@@ -71,14 +48,6 @@ const COPY: Record<MarketingLocale, MarketingCopy> = {
     institutionalTitle: "For schools and municipalities",
     institutionalSubtitle:
       "Skule- og eigarinngang er ein eigen kommersiell og institusjonell flyt. Han skal ikkje liggje inne i family entry.",
-    signedInTitle: "Du er allereie innlogga",
-    signedInSubtitle:
-      "Gå vidare frå den eksisterande kontoen. Trial skal ikkje startast på nytt frå første skjerm.",
-    signedInActions: {
-      account: "Open account",
-      family: "Open family",
-      professions: "Open professions",
-    },
     footerNote:
       "Parent-first. School-led distribution. Paid-first frå første skjerm. Bygd for web og future native mobile.",
   },
@@ -92,40 +61,43 @@ const COPY: Record<MarketingLocale, MarketingCopy> = {
       "Demo comes first. Trial only comes through registration. Paid family entry should be explicit from the first screen.",
     institutionalTitle: "For schools and municipalities",
     institutionalSubtitle:
-      "School and owner entry is a separate commercial and institutional flow. It should live inside the family entry block.",
-    signedInTitle: "You are already signed in",
-    signedInSubtitle:
-      "Continue from the existing account. Trial should not restart from the first screen.",
-    signedInActions: {
-      account: "Open account",
-      family: "Open family",
-      professions: "Open professions",
-    },
+      "School and owner entry is a separate commercial and institutional flow. It should not live inside the family entry block.",
     footerNote:
       "Parent-first. School-led distribution. Paid-first from the first screen. Built for web and future native mobile.",
   },
 };
 
 function getCopy(locale: string): MarketingCopy {
-  return COPY[locale as MarketingLocale] ?? COPY.en;
+  return COPY[locale] ?? COPY.en;
 }
 
-function getFamilyCreateHref(
-  locale: string,
-  pendingEntrySource: PendingEntrySource
-): string {
-  switch (pendingEntrySource) {
-    case "trial":
-      return `/${locale}/app/family/create?entry=trial`;
-    case "paid":
-      return `/${locale}/app/family/create?entry=paid`;
-    case "school_referral":
-      return `/${locale}/app/family/create?entry=school`;
-    case "direct":
-    case null:
-    default:
-      return `/${locale}/app/family/create?entry=trial`;
+function formatTrialRemainingLabel(trialEndsAt: string | null): string {
+  if (!trialEndsAt) {
+    return "—";
   }
+
+  const endsAt = new Date(trialEndsAt);
+  const now = new Date();
+  const diff = endsAt.getTime() - now.getTime();
+
+  if (Number.isNaN(endsAt.getTime()) || diff <= 0) {
+    return "Trial expired";
+  }
+
+  const totalMinutes = Math.ceil(diff / (1000 * 60));
+  const days = Math.floor(totalMinutes / (60 * 24));
+  const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+  const minutes = totalMinutes % 60;
+
+  if (days > 0) {
+    return `${days}d ${hours}h left`;
+  }
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m left`;
+  }
+
+  return `${minutes}m left`;
 }
 
 function EntryCardView({
@@ -153,7 +125,6 @@ function EntryCardView({
       >
         {item.eyebrow}
       </div>
-
       <h2
         className={
           item.primary
@@ -163,7 +134,6 @@ function EntryCardView({
       >
         {item.title}
       </h2>
-
       <p
         className={
           item.primary
@@ -173,7 +143,6 @@ function EntryCardView({
       >
         {item.description}
       </p>
-
       <div
         className={
           item.primary
@@ -194,73 +163,55 @@ export default async function MarketingHome({
 }) {
   const { locale } = await params;
   const copy = getCopy(locale);
-  const accountState = await getMarketingAccountActivationState();
-  const isArabic = locale === "ar";
 
-  const demoCard: EntryCard = {
-    eyebrow: "Controlled preview",
-    title: "Try demo",
-    description:
-      "Open a controlled product overview before moving into registration or paid family entry.",
-    href: "/demo",
-    ctaLabel: "Open demo",
-  };
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  const trialCard: EntryCard =
-    accountState.kind !== "anonymous"
-      ? {
-          eyebrow: "Trial already used",
-          title: "Start 3-day trial",
-          description:
-            "For signed-in users, trial should not start again. This card now routes into paid family selection.",
-          href:
-            accountState.kind === "signed_in_no_family"
-              ? getFamilyCreateHref(locale, accountState.pendingEntrySource)
-              : "/pricing?entry=family",
-          ctaLabel: "Choose family plan",
-        }
-      : {
-          eyebrow: "Short trial",
-          title: "Start 3-day trial",
-          description:
-            "Trial is only available through registration and should become a real account state, not a permanent free tier.",
-          href: "/signup?entry=trial",
-          ctaLabel: "Start trial",
-          primary: true,
-        };
+  const { data: familyAccount } = user
+    ? await supabase
+        .from("family_accounts")
+        .select("id, plan_type, subscription_state, trial_ends_at")
+        .eq("primary_user_id", user.id)
+        .maybeSingle()
+    : { data: null };
 
-  const paidCard: EntryCard = {
-    eyebrow: "Paid family entry",
-    title: "Choose family plan",
-    description:
-      "Go directly into paid family entry with a clear plan selection path from the first screen.",
-    href: "/pricing?entry=family",
-    ctaLabel: "Open family plans",
-  };
-
-  const accountCard: EntryCard =
-    accountState.kind !== "anonymous"
-      ? {
-          eyebrow: "Live account",
-          title: "Open account",
-          description:
-            "Continue from the live account instead of starting a new entry flow.",
-          href: "/app/profile",
-          ctaLabel: "Open account",
-        }
-      : {
-          eyebrow: "Returning user",
-          title: "Sign in",
-          description: "Sign in to continue from an existing account.",
-          href: "/login",
-          ctaLabel: "Sign in",
-        };
+  const isSignedIn = Boolean(user);
 
   const familyEntries: EntryCard[] = [
-    demoCard,
-    trialCard,
-    paidCard,
-    accountCard,
+    {
+      eyebrow: "Controlled preview",
+      title: "Try demo",
+      description:
+        "Open a limited preview before registration or paid family entry.",
+      href: "/demo",
+      ctaLabel: "Open demo",
+    },
+    {
+      eyebrow: "Short trial",
+      title: "Start 3-day trial",
+      description:
+        "Create an account and unlock the family core for a fixed 3-day trial.",
+      href: "/signup?entry=trial",
+      ctaLabel: "Start trial",
+      primary: true,
+    },
+    {
+      eyebrow: "Paid family entry",
+      title: "Choose family plan",
+      description:
+        "Go directly into paid family entry with a clear next step.",
+      href: "/pricing?entry=family",
+      ctaLabel: "Open family plans",
+    },
+    {
+      eyebrow: "Returning user",
+      title: "Sign in",
+      description: "Continue from your existing account state.",
+      href: "/login",
+      ctaLabel: "Sign in",
+    },
   ];
 
   const institutionalEntries: EntryCard[] = [
@@ -268,7 +219,7 @@ export default async function MarketingHome({
       eyebrow: "School-led activation",
       title: "Activate through school",
       description:
-        "Use a separate school-led path when family activation comes from school staff, a counselor, or a parent presentation.",
+        "Use a separate school-led path when family activation comes from school staff or a parent presentation.",
       href: "/signup?entry=school",
       ctaLabel: "School activation",
     },
@@ -283,20 +234,11 @@ export default async function MarketingHome({
   ];
 
   return (
-    <main
-      dir={isArabic ? "rtl" : "ltr"}
-      className="min-h-screen bg-stone-50 px-6 py-16"
-    >
+    <main className="min-h-screen bg-stone-50 px-6 py-16">
       <div className="mx-auto max-w-6xl">
-        <Suspense
-          fallback={
-            <div className="inline-flex min-w-14 items-center justify-center rounded-full border border-stone-300 bg-white px-4 py-2 text-xs font-medium uppercase tracking-[0.18em] text-stone-700">
-              {locale.toUpperCase()}
-            </div>
-          }
-        >
-          <LocaleSwitcher currentLocale={locale} />
-        </Suspense>
+        <div className="inline-flex min-w-14 items-center justify-center rounded-full border border-stone-300 bg-white px-4 py-2 text-xs font-medium uppercase tracking-[0.18em] text-stone-700">
+          {locale.toUpperCase()}
+        </div>
 
         <section className="mt-8 max-w-4xl space-y-5">
           <h1 className="text-5xl font-semibold tracking-tight text-stone-900 sm:text-6xl">
@@ -311,127 +253,130 @@ export default async function MarketingHome({
             {copy.heroBody}
           </p>
 
-          {accountState.kind !== "anonymous" ? (
+          {isSignedIn ? (
             <div className="rounded-2xl border border-stone-200 bg-white px-5 py-4 text-sm text-stone-600">
               Signed in as{" "}
-              <span className="font-medium text-stone-900">
-                {accountState.userEmail}
-              </span>
+              <span className="font-medium text-stone-900">{user?.email}</span>
             </div>
           ) : null}
         </section>
 
-        {accountState.kind !== "anonymous" ? (
+        {isSignedIn ? (
           <section className="mt-10 rounded-2xl border border-stone-200 bg-white p-6">
-            <h2 className="text-lg font-semibold text-stone-900">
-              {copy.signedInTitle}
-            </h2>
-            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-stone-600">
-              {copy.signedInSubtitle}
-            </p>
+            {!familyAccount ? (
+              <>
+                <h2 className="text-lg font-semibold text-stone-900">
+                  Continue as signed-in user
+                </h2>
+                <p className="mt-2 max-w-3xl text-sm leading-relaxed text-stone-600">
+                  Your account is signed in, but no family container exists yet.
+                </p>
 
-            {accountState.kind === "trial_active" ? (
-              <div className="mt-4">
-                <TrialStatusBanner
-                  tone="neutral"
-                  title="Trial active"
-                  body={`Time remaining: ${accountState.trialRemainingLabel}`}
-                />
-              </div>
-            ) : null}
+                <div className="mt-5 flex flex-wrap gap-3">
+                  <Link
+                    href={`/${locale}/app/family/create?entry=trial`}
+                    className="inline-flex items-center justify-center rounded-full border border-stone-900 bg-stone-900 px-5 py-2.5 text-sm text-white transition hover:bg-stone-800"
+                  >
+                    Start 3-day trial
+                  </Link>
 
-            {accountState.kind === "trial_expired" ? (
-              <div className="mt-4">
-                <TrialStatusBanner
-                  tone="amber"
-                  title="Trial ended"
-                  body="The 3-day trial has ended. It cannot be started again. Continue with a paid family plan."
-                  ctaHref={`/${locale}/pricing?entry=family`}
-                  ctaLabel="Choose family plan"
-                />
-              </div>
-            ) : null}
+                  <Link
+                    href={`/${locale}/pricing?entry=family`}
+                    className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-5 py-2.5 text-sm text-stone-900 transition hover:border-stone-400"
+                  >
+                    Choose family plan
+                  </Link>
 
-            {accountState.kind === "signed_in_no_family" ? (
-              <div className="mt-4">
-                <TrialStatusBanner
-                  tone="neutral"
-                  title="Activation not completed"
-                  body="Continue family activation from your existing account."
-                />
-              </div>
-            ) : null}
+                  <SignOutButton locale={locale} />
+                </div>
+              </>
+            ) : (
+              <>
+                {familyAccount.plan_type === "trial" &&
+                familyAccount.subscription_state === "trialing" ? (
+                  <div className="mb-5 rounded-2xl border border-blue-200 bg-blue-50 p-5">
+                    <h2 className="text-base font-semibold text-stone-900">
+                      3-day trial active
+                    </h2>
+                    <p className="mt-2 text-sm leading-relaxed text-blue-900">
+                      Time remaining:{" "}
+                      {formatTrialRemainingLabel(familyAccount.trial_ends_at)}
+                    </p>
+                  </div>
+                ) : null}
 
-            {accountState.kind === "paid_active" ? (
-              <div className="mt-4">
-                <TrialStatusBanner
-                  tone="neutral"
-                  title="Paid family access active"
-                  body="This account already has active family access."
-                />
-              </div>
-            ) : null}
+                <h2 className="text-lg font-semibold text-stone-900">
+                  You are already signed in
+                </h2>
+                <p className="mt-2 max-w-3xl text-sm leading-relaxed text-stone-600">
+                  Continue from your existing account instead of restarting entry
+                  flow.
+                </p>
 
-            <div className="mt-5 flex flex-wrap gap-3">
-              <Link
-                href={`/${locale}/app/profile`}
-                className="inline-flex items-center justify-center rounded-full border border-stone-900 bg-stone-900 px-5 py-2.5 text-sm text-white transition hover:bg-stone-800"
-              >
-                {copy.signedInActions.account}
-              </Link>
+                <div className="mt-5 flex flex-wrap gap-3">
+                  <Link
+                    href={`/${locale}/app/family`}
+                    className="inline-flex items-center justify-center rounded-full border border-stone-900 bg-stone-900 px-5 py-2.5 text-sm text-white transition hover:bg-stone-800"
+                  >
+                    Open family
+                  </Link>
 
-              <Link
-                href={`/${locale}/app/family`}
-                className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-5 py-2.5 text-sm text-stone-900 transition hover:border-stone-400"
-              >
-                {copy.signedInActions.family}
-              </Link>
+                  <Link
+                    href={`/${locale}/app/profile`}
+                    className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-5 py-2.5 text-sm text-stone-900 transition hover:border-stone-400"
+                  >
+                    Open account
+                  </Link>
 
-              <Link
-                href={`/${locale}/app/professions`}
-                className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-5 py-2.5 text-sm text-stone-900 transition hover:border-stone-400"
-              >
-                {copy.signedInActions.professions}
-              </Link>
+                  <Link
+                    href={`/${locale}/app/professions`}
+                    className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-5 py-2.5 text-sm text-stone-900 transition hover:border-stone-400"
+                  >
+                    Open professions
+                  </Link>
 
-              <SignOutButton locale={locale} />
-            </div>
+                  <SignOutButton locale={locale} />
+                </div>
+              </>
+            )}
           </section>
-        ) : null}
+        ) : (
+          <>
+            <section className="mt-12">
+              <div className="max-w-3xl">
+                <h2 className="text-2xl font-semibold tracking-tight text-stone-900">
+                  {copy.familyEntryTitle}
+                </h2>
+                <p className="mt-3 text-sm leading-relaxed text-stone-600">
+                  {copy.familyEntrySubtitle}
+                </p>
+              </div>
 
-        <section className="mt-12">
-          <div className="max-w-3xl">
-            <h2 className="text-2xl font-semibold tracking-tight text-stone-900">
-              {copy.familyEntryTitle}
-            </h2>
-            <p className="mt-3 text-sm leading-relaxed text-stone-600">
-              {copy.familyEntrySubtitle}
-            </p>
-          </div>
+              <div className="mt-6 grid gap-4 md:grid-cols-2">
+                {familyEntries.map((item) => (
+                  <EntryCardView key={item.title} locale={locale} item={item} />
+                ))}
+              </div>
+            </section>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
-            {familyEntries.map((item) => (
-              <EntryCardView key={`${item.title}-${item.href}`} locale={locale} item={item} />
-            ))}
-          </div>
-        </section>
+            <section className="mt-10 rounded-2xl border border-stone-200 bg-white p-6">
+              <div className="max-w-3xl">
+                <h2 className="text-2xl font-semibold tracking-tight text-stone-900">
+                  {copy.institutionalTitle}
+                </h2>
+                <p className="mt-3 text-sm leading-relaxed text-stone-600">
+                  {copy.institutionalSubtitle}
+                </p>
+              </div>
 
-        <section className="mt-10 rounded-2xl border border-stone-200 bg-white p-6">
-          <div className="max-w-3xl">
-            <h2 className="text-2xl font-semibold tracking-tight text-stone-900">
-              {copy.institutionalTitle}
-            </h2>
-            <p className="mt-3 text-sm leading-relaxed text-stone-600">
-              {copy.institutionalSubtitle}
-            </p>
-          </div>
-
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
-            {institutionalEntries.map((item) => (
-              <EntryCardView key={`${item.title}-${item.href}`} locale={locale} item={item} />
-            ))}
-          </div>
-        </section>
+              <div className="mt-6 grid gap-4 md:grid-cols-2">
+                {institutionalEntries.map((item) => (
+                  <EntryCardView key={item.title} locale={locale} item={item} />
+                ))}
+              </div>
+            </section>
+          </>
+        )}
 
         <footer className="mt-14 border-t border-stone-200 pt-6 text-sm text-stone-500">
           {copy.footerNote}

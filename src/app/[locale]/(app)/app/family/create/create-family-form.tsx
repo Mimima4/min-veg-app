@@ -4,108 +4,41 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-type EntryMode = "trial" | "paid" | "school" | "direct";
-type PlanType = "trial" | "family_basic" | "family_plus";
-
 type Props = {
   locale: string;
   userId: string;
   entry?: string;
 };
 
-type EntryConfig = {
-  mode: EntryMode;
+type TrialConfig = {
+  isTrial: boolean;
   title: string;
   description: string;
-  planType: PlanType;
-  planCode: string;
-  status: string;
-  subscriptionState: string;
-  entrySource: string;
-  activationSource: string;
-  maxChildren: number;
-  trialUsed: boolean;
-  isTrial: boolean;
 };
 
-function resolveEntryConfig(entry?: string): EntryConfig {
+function resolveConfig(entry?: string): TrialConfig {
   const normalized = (entry ?? "").trim().toLowerCase();
 
   if (normalized === "trial") {
     return {
-      mode: "trial",
+      isTrial: true,
       title: "3-day trial",
       description:
-        "Your 3-day trial starts when this family account is created.\nThe trial duration is fixed and cannot be extended.\nPaid plan selection comes later only if you upgrade.",
-      planType: "trial",
-      planCode: "trial",
-      status: "active",
-      subscriptionState: "trialing",
-      entrySource: "trial",
-      activationSource: "self_serve_trial",
-      maxChildren: 2,
-      trialUsed: true,
-      isTrial: true,
-    };
-  }
-
-  if (normalized === "paid") {
-    return {
-      mode: "paid",
-      title: "Paid family setup",
-      description:
-        "Create the family container first. Paid billing details can be completed in the next step.",
-      planType: "family_basic",
-      planCode: "family_basic",
-      status: "active",
-      subscriptionState: "inactive",
-      entrySource: "paid",
-      activationSource: "self_serve_paid",
-      maxChildren: 4,
-      trialUsed: false,
-      isTrial: false,
-    };
-  }
-
-  if (normalized === "school") {
-    return {
-      mode: "school",
-      title: "School-referred family setup",
-      description:
-        "Create the family container first. Institutional billing and access are handled separately.",
-      planType: "family_basic",
-      planCode: "family_basic",
-      status: "active",
-      subscriptionState: "inactive",
-      entrySource: "school_referral",
-      activationSource: "school_led",
-      maxChildren: 4,
-      trialUsed: false,
-      isTrial: false,
+        "Your 3-day trial starts when this family account is created. The trial duration is fixed and cannot be extended. Paid plan selection comes later only if you upgrade.",
     };
   }
 
   return {
-    mode: "direct",
+    isTrial: false,
     title: "Create family account",
     description: "Create the base family container for your Min Veg area.",
-    planType: "family_basic",
-    planCode: "family_basic",
-    status: "active",
-    subscriptionState: "inactive",
-    entrySource: "direct",
-    activationSource: "self_serve",
-    maxChildren: 4,
-    trialUsed: false,
-    isTrial: false,
   };
 }
 
 export default function CreateFamilyForm({ locale, userId, entry }: Props) {
   const supabase = createClient();
   const router = useRouter();
-  const config = useMemo(() => resolveEntryConfig(entry), [entry]);
-  const isTrialEntry = config.mode === "trial";
+  const config = useMemo(() => resolveConfig(entry), [entry]);
 
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -116,8 +49,11 @@ export default function CreateFamilyForm({ locale, userId, entry }: Props) {
     setErrorMessage("");
 
     const now = new Date();
+    const trialEndsAt = new Date(
+      now.getTime() + 3 * 24 * 60 * 60 * 1000
+    ).toISOString();
 
-    const payload = isTrialEntry
+    const payload = config.isTrial
       ? {
           primary_user_id: userId,
           plan_type: "trial",
@@ -128,10 +64,8 @@ export default function CreateFamilyForm({ locale, userId, entry }: Props) {
           activation_source: "self_serve_trial",
           max_children: 2,
           trial_used: true,
-          trial_started_at: new Date().toISOString(),
-          trial_ends_at: new Date(
-            Date.now() + 3 * 24 * 60 * 60 * 1000
-          ).toISOString(),
+          trial_started_at: now.toISOString(),
+          trial_ends_at: trialEndsAt,
           current_period_starts_at: null,
           current_period_ends_at: null,
           next_billing_at: null,
@@ -143,25 +77,23 @@ export default function CreateFamilyForm({ locale, userId, entry }: Props) {
         }
       : {
           primary_user_id: userId,
-          plan_type: config.planType,
-          plan_code: config.planCode,
-          status: config.status,
-          subscription_state: config.subscriptionState,
-          entry_source: config.entrySource,
-          activation_source: config.activationSource,
-          max_children: config.maxChildren,
-          trial_used: config.trialUsed,
-          trial_started_at: config.isTrial ? now.toISOString() : null,
-          trial_ends_at: config.isTrial
-            ? new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString()
-            : null,
+          plan_type: "family_basic",
+          plan_code: "family_basic",
+          status: "active",
+          subscription_state: "inactive",
+          entry_source: "direct",
+          activation_source: "self_serve",
+          max_children: 4,
+          trial_used: false,
+          trial_started_at: null,
+          trial_ends_at: null,
           current_period_starts_at: null,
           current_period_ends_at: null,
           next_billing_at: null,
           auto_renew_enabled: false,
           grace_period_ends_at: null,
           payment_failed_at: null,
-          last_payment_status: config.isTrial ? "not_applicable" : "unknown",
+          last_payment_status: "unknown",
           canceled_at: null,
         };
 
@@ -182,21 +114,19 @@ export default function CreateFamilyForm({ locale, userId, entry }: Props) {
     <form onSubmit={handleSubmit} className="mt-8 max-w-xl space-y-5">
       <div className="rounded-2xl border border-stone-200 bg-white p-5">
         <h2 className="text-lg font-semibold text-stone-900">{config.title}</h2>
-        <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-stone-600">
+        <p className="mt-2 text-sm leading-relaxed text-stone-600">
           {config.description}
         </p>
       </div>
 
-      {isTrialEntry ? null : (
-        <div className="space-y-1">
-          <label className="block text-sm text-stone-700">Access mode</label>
-          <div className="w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-stone-900">
-            {config.isTrial ? "3-day trial" : "Family setup"}
-          </div>
+      <div className="space-y-1">
+        <label className="block text-sm text-stone-700">Access mode</label>
+        <div className="w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-stone-900">
+          {config.isTrial ? "3-day trial" : "Family setup"}
         </div>
-      )}
+      </div>
 
-      {isTrialEntry ? null : config.isTrial ? (
+      {config.isTrial ? (
         <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
           Trial access is temporary. You can upgrade later without creating a
           new account.

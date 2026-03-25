@@ -38,11 +38,7 @@ export default function LoginForm({
       return;
     }
 
-    router.push(
-      mode === "continue"
-        ? `/${locale}/continue-access?mode=continue`
-        : `/${locale}/continue-access?mode=standard`
-    );
+    router.push(`/${locale}/resolve-access`);
     router.refresh();
   }
 
