@@ -39,8 +39,8 @@ export type FamilyActivationSnapshot = {
 
 export type AccountActivationState = {
   billingStage: BillingStage;
-  subscriptionLifecycleState: SubscriptionLifecycleState;
   trialState: TrialState;
+  subscriptionLifecycleState: SubscriptionLifecycleState;
   subscriptionState: string | null;
   entrySource: string | null;
   activationSource: string | null;
@@ -49,6 +49,8 @@ export type AccountActivationState = {
   trialEndsAt: string | null;
   trialUsed: boolean;
   trialRemainingMs: number;
+  hasActiveAccess: boolean;
+  shouldRouteToPaid: boolean;
   currentPeriodEndsAt: string | null;
   nextBillingAt: string | null;
   autoRenewEnabled: boolean;
@@ -56,8 +58,6 @@ export type AccountActivationState = {
   paymentFailedAt: string | null;
   canceledAt: string | null;
   lastPaymentStatus: string | null;
-  hasActiveAccess: boolean;
-  shouldRouteToPaid: boolean;
 };
 
 function normalize(value: string | null | undefined): string {
@@ -78,29 +78,66 @@ function parseDate(value: string | null | undefined): Date | null {
   return parsed;
 }
 
-function isInactiveStatus(value: string): boolean {
-  return [
-    "inactive",
-    "canceled",
-    "cancelled",
-    "expired",
-    "suspended",
-    "past_due",
-  ].includes(value);
+function buildResult(
+  snapshot: FamilyActivationSnapshot,
+  params: {
+    billingStage: BillingStage;
+    trialState: TrialState;
+    subscriptionLifecycleState: SubscriptionLifecycleState;
+    hasActiveAccess: boolean;
+    shouldRouteToPaid: boolean;
+    trialUsed: boolean;
+    trialRemainingMs: number;
+  }
+): AccountActivationState {
+  return {
+    billingStage: params.billingStage,
+    trialState: params.trialState,
+    subscriptionLifecycleState: params.subscriptionLifecycleState,
+    subscriptionState: snapshot.subscription_state ?? null,
+    entrySource: snapshot.entry_source ?? null,
+    activationSource: snapshot.activation_source ?? null,
+    planCode: snapshot.plan_code ?? null,
+    trialStartedAt: snapshot.trial_started_at ?? null,
+    trialEndsAt: snapshot.trial_ends_at ?? null,
+    trialUsed: params.trialUsed,
+    trialRemainingMs: params.trialRemainingMs,
+    hasActiveAccess: params.hasActiveAccess,
+    shouldRouteToPaid: params.shouldRouteToPaid,
+    currentPeriodEndsAt: snapshot.current_period_ends_at ?? null,
+    nextBillingAt: snapshot.next_billing_at ?? null,
+    autoRenewEnabled: Boolean(snapshot.auto_renew_enabled),
+    gracePeriodEndsAt: snapshot.grace_period_ends_at ?? null,
+    paymentFailedAt: snapshot.payment_failed_at ?? null,
+    canceledAt: snapshot.canceled_at ?? null,
+    lastPaymentStatus: snapshot.last_payment_status ?? null,
+  };
 }
 
-function resolveSubscriptionLifecycleState(
+export function resolveAccountActivation(
   snapshot: FamilyActivationSnapshot,
-  now: Date
-): SubscriptionLifecycleState {
+  now = new Date()
+): AccountActivationState {
   const planType = normalize(snapshot.plan_type);
   const status = normalize(snapshot.status);
   const subscriptionState = normalize(snapshot.subscription_state);
+  const lastPaymentStatus = normalize(snapshot.last_payment_status);
 
   const trialEndsAtDate = parseDate(snapshot.trial_ends_at);
   const currentPeriodEndsAtDate = parseDate(snapshot.current_period_ends_at);
   const gracePeriodEndsAtDate = parseDate(snapshot.grace_period_ends_at);
   const canceledAtDate = parseDate(snapshot.canceled_at);
+
+  const rawTrialRemainingMs = trialEndsAtDate
+    ? trialEndsAtDate.getTime() - now.getTime()
+    : 0;
+
+  const trialRemainingMs = Math.max(rawTrialRemainingMs, 0);
+
+  const trialUsed =
+    Boolean(snapshot.trial_used) ||
+    Boolean(snapshot.trial_started_at) ||
+    planType.includes("trial");
 
   const looksLikeDemo =
     subscriptionState === "demo" ||
@@ -108,7 +145,15 @@ function resolveSubscriptionLifecycleState(
     status.includes("demo");
 
   if (looksLikeDemo) {
-    return "demo";
+    return buildResult(snapshot, {
+      billingStage: "demo",
+      trialState: "not_trial",
+      subscriptionLifecycleState: "demo",
+      hasActiveAccess: false,
+      shouldRouteToPaid: false,
+      trialUsed,
+      trialRemainingMs,
+    });
   }
 
   const looksLikeTrial =
@@ -121,153 +166,154 @@ function resolveSubscriptionLifecycleState(
   if (looksLikeTrial) {
     const expired =
       subscriptionState === "trial_expired" ||
-      isInactiveStatus(status) ||
+      status === "inactive" ||
+      status === "expired" ||
       (trialEndsAtDate ? trialEndsAtDate.getTime() <= now.getTime() : false);
 
-    return expired ? "trial_expired" : "trialing";
+    return buildResult(snapshot, {
+      billingStage: expired ? "inactive" : "trial",
+      trialState: expired ? "expired" : "active",
+      subscriptionLifecycleState: expired ? "trial_expired" : "trialing",
+      hasActiveAccess: !expired,
+      shouldRouteToPaid: expired,
+      trialUsed: true,
+      trialRemainingMs,
+    });
   }
 
-  const looksCanceled =
-    subscriptionState === "canceled" ||
-    subscriptionState === "cancelled" ||
-    status === "canceled" ||
-    status === "cancelled" ||
-    Boolean(canceledAtDate);
-
-  if (looksCanceled) {
-    const stillInPeriod =
-      currentPeriodEndsAtDate?.getTime() !== undefined &&
-      currentPeriodEndsAtDate.getTime() > now.getTime();
-
-    return stillInPeriod ? "canceled" : "inactive";
-  }
-
-  const looksGrace =
-    subscriptionState === "grace_period" ||
-    status === "grace_period" ||
-    (gracePeriodEndsAtDate ? gracePeriodEndsAtDate.getTime() > now.getTime() : false);
-
-  if (looksGrace) {
-    return "grace_period";
-  }
-
-  const looksPastDue =
-    subscriptionState === "past_due" || status === "past_due";
-
-  if (looksPastDue) {
-    return "past_due";
-  }
-
-  const looksActive =
+  const looksLikePaid =
     subscriptionState === "active" ||
     subscriptionState === "paid" ||
-    status === "active" ||
+    subscriptionState === "grace_period" ||
+    subscriptionState === "past_due" ||
+    subscriptionState === "canceled" ||
+    subscriptionState === "cancelled" ||
     planType.includes("basic") ||
     planType.includes("plus") ||
     planType.includes("young");
 
-  if (looksActive) {
-    const inactive =
-      subscriptionState === "inactive" || isInactiveStatus(status);
+  if (looksLikePaid) {
+    const currentPeriodStillActive = currentPeriodEndsAtDate
+      ? currentPeriodEndsAtDate.getTime() > now.getTime()
+      : false;
 
-    return inactive ? "inactive" : "active";
+    const graceStillActive = gracePeriodEndsAtDate
+      ? gracePeriodEndsAtDate.getTime() > now.getTime()
+      : false;
+
+    const isCanceled =
+      subscriptionState === "canceled" ||
+      subscriptionState === "cancelled" ||
+      status === "canceled" ||
+      status === "cancelled" ||
+      Boolean(canceledAtDate);
+
+    const isPastDue =
+      subscriptionState === "past_due" ||
+      status === "past_due" ||
+      lastPaymentStatus === "failed";
+
+    const isGracePeriod =
+      subscriptionState === "grace_period" ||
+      status === "grace_period" ||
+      (isPastDue && graceStillActive);
+
+    if (isCanceled) {
+      if (currentPeriodStillActive) {
+        return buildResult(snapshot, {
+          billingStage: "paid",
+          trialState: "not_trial",
+          subscriptionLifecycleState: "canceled",
+          hasActiveAccess: true,
+          shouldRouteToPaid: false,
+          trialUsed,
+          trialRemainingMs,
+        });
+      }
+
+      return buildResult(snapshot, {
+        billingStage: "inactive",
+        trialState: "not_trial",
+        subscriptionLifecycleState: "inactive",
+        hasActiveAccess: false,
+        shouldRouteToPaid: true,
+        trialUsed,
+        trialRemainingMs,
+      });
+    }
+
+    if (isGracePeriod) {
+      return buildResult(snapshot, {
+        billingStage: "paid",
+        trialState: "not_trial",
+        subscriptionLifecycleState: "grace_period",
+        hasActiveAccess: true,
+        shouldRouteToPaid: false,
+        trialUsed,
+        trialRemainingMs,
+      });
+    }
+
+    if (isPastDue) {
+      return buildResult(snapshot, {
+        billingStage: "inactive",
+        trialState: "not_trial",
+        subscriptionLifecycleState: "past_due",
+        hasActiveAccess: false,
+        shouldRouteToPaid: true,
+        trialUsed,
+        trialRemainingMs,
+      });
+    }
+
+    if (
+      subscriptionState === "active" ||
+      subscriptionState === "paid" ||
+      status === "active"
+    ) {
+      return buildResult(snapshot, {
+        billingStage: "paid",
+        trialState: "not_trial",
+        subscriptionLifecycleState: "active",
+        hasActiveAccess: true,
+        shouldRouteToPaid: false,
+        trialUsed,
+        trialRemainingMs,
+      });
+    }
+
+    if (subscriptionState === "inactive" || status === "inactive") {
+      return buildResult(snapshot, {
+        billingStage: "inactive",
+        trialState: "not_trial",
+        subscriptionLifecycleState: "inactive",
+        hasActiveAccess: false,
+        shouldRouteToPaid: true,
+        trialUsed,
+        trialRemainingMs,
+      });
+    }
   }
 
-  if (isInactiveStatus(status) || subscriptionState === "inactive") {
-    return "inactive";
+  if (status === "inactive" || subscriptionState === "inactive") {
+    return buildResult(snapshot, {
+      billingStage: "inactive",
+      trialState: trialUsed ? "expired" : "not_trial",
+      subscriptionLifecycleState: "inactive",
+      hasActiveAccess: false,
+      shouldRouteToPaid: true,
+      trialUsed,
+      trialRemainingMs,
+    });
   }
 
-  return "unknown";
-}
-
-export function resolveAccountActivation(
-  snapshot: FamilyActivationSnapshot,
-  now = new Date()
-): AccountActivationState {
-  const trialEndsAtDate = parseDate(snapshot.trial_ends_at);
-  const rawTrialRemainingMs = trialEndsAtDate
-    ? trialEndsAtDate.getTime() - now.getTime()
-    : 0;
-
-  const trialRemainingMs = Math.max(rawTrialRemainingMs, 0);
-
-  const trialUsed =
-    Boolean(snapshot.trial_used) ||
-    Boolean(snapshot.trial_started_at) ||
-    normalize(snapshot.plan_type).includes("trial");
-
-  const subscriptionLifecycleState = resolveSubscriptionLifecycleState(
-    snapshot,
-    now
-  );
-
-  const currentPeriodEndsAt = snapshot.current_period_ends_at ?? null;
-  const nextBillingAt = snapshot.next_billing_at ?? null;
-  const autoRenewEnabled = Boolean(snapshot.auto_renew_enabled);
-  const gracePeriodEndsAt = snapshot.grace_period_ends_at ?? null;
-  const paymentFailedAt = snapshot.payment_failed_at ?? null;
-  const canceledAt = snapshot.canceled_at ?? null;
-  const lastPaymentStatus = snapshot.last_payment_status ?? null;
-
-  const hasActiveAccess =
-    subscriptionLifecycleState === "trialing" ||
-    subscriptionLifecycleState === "active" ||
-    subscriptionLifecycleState === "grace_period" ||
-    (subscriptionLifecycleState === "canceled" &&
-      Boolean(parseDate(currentPeriodEndsAt)) &&
-      parseDate(currentPeriodEndsAt)!.getTime() > now.getTime());
-
-  const isBlockedState =
-    subscriptionLifecycleState === "trial_expired" ||
-    subscriptionLifecycleState === "past_due" ||
-    subscriptionLifecycleState === "inactive";
-
-  const shouldRouteToPaid = isBlockedState;
-
-  const trialState: TrialState =
-    subscriptionLifecycleState === "trialing"
-      ? "active"
-      : subscriptionLifecycleState === "trial_expired"
-        ? "expired"
-        : trialUsed
-          ? "expired"
-          : "not_trial";
-
-  const billingStage: BillingStage =
-    subscriptionLifecycleState === "demo"
-      ? "demo"
-      : subscriptionLifecycleState === "trialing"
-        ? "trial"
-        : subscriptionLifecycleState === "active" ||
-            subscriptionLifecycleState === "grace_period" ||
-            (subscriptionLifecycleState === "canceled" && hasActiveAccess)
-          ? "paid"
-          : subscriptionLifecycleState === "trial_expired" ||
-              subscriptionLifecycleState === "past_due" ||
-              subscriptionLifecycleState === "inactive"
-            ? "inactive"
-            : "unknown";
-
-  return {
-    billingStage,
-    subscriptionLifecycleState,
-    trialState,
-    subscriptionState: snapshot.subscription_state ?? null,
-    entrySource: snapshot.entry_source ?? null,
-    activationSource: snapshot.activation_source ?? null,
-    planCode: snapshot.plan_code ?? null,
-    trialStartedAt: snapshot.trial_started_at ?? null,
-    trialEndsAt: snapshot.trial_ends_at ?? null,
+  return buildResult(snapshot, {
+    billingStage: "unknown",
+    trialState: trialUsed ? "expired" : "not_trial",
+    subscriptionLifecycleState: "unknown",
+    hasActiveAccess: false,
+    shouldRouteToPaid: trialUsed,
     trialUsed,
     trialRemainingMs,
-    currentPeriodEndsAt,
-    nextBillingAt,
-    autoRenewEnabled,
-    gracePeriodEndsAt,
-    paymentFailedAt,
-    canceledAt,
-    lastPaymentStatus,
-    hasActiveAccess,
-    shouldRouteToPaid,
-  };
+  });
 }
