@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import SignOutButton from "@/components/auth/sign-out-button";
 import LocaleSwitcher from "@/components/layout/locale-switcher";
-import { getHomeEntryState } from "@/server/billing/get-home-entry-state";
+import { getUserAccessState } from "@/server/billing/get-user-access-state";
 
 type EntryCard = {
   eyebrow: string;
@@ -73,6 +73,35 @@ function getCopy(locale: string): MarketingCopy {
   return COPY[locale] ?? COPY.en;
 }
 
+function formatTrialRemainingLabel(trialEndsAt: string | null): string {
+  if (!trialEndsAt) {
+    return "—";
+  }
+
+  const endsAt = new Date(trialEndsAt);
+  const now = new Date();
+  const diff = endsAt.getTime() - now.getTime();
+
+  if (Number.isNaN(endsAt.getTime()) || diff <= 0) {
+    return "Trial expired";
+  }
+
+  const totalMinutes = Math.ceil(diff / (1000 * 60));
+  const days = Math.floor(totalMinutes / (60 * 24));
+  const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+  const minutes = totalMinutes % 60;
+
+  if (days > 0) {
+    return `${days}d ${hours}h left`;
+  }
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m left`;
+  }
+
+  return `${minutes}m left`;
+}
+
 function EntryCardView({
   locale,
   item,
@@ -136,10 +165,25 @@ export default async function MarketingHome({
 }) {
   const { locale } = await params;
   const copy = getCopy(locale);
-  const homeState = await getHomeEntryState();
+  const accessState = await getUserAccessState();
+  const signedInIdentity =
+    accessState.displayName ?? accessState.email ?? "user";
   const showEntrySections =
-    homeState.kind === "anonymous" ||
-    homeState.kind === "signed_in_no_family";
+    accessState.kind === "anonymous" ||
+    accessState.kind === "no_family_paid" ||
+    accessState.kind === "no_family_trial_available" ||
+    accessState.kind === "no_family_no_trial" ||
+    accessState.kind === "institutional_pending";
+
+  const showNoFamilyCompactNotice =
+    accessState.kind === "no_family_paid" ||
+    accessState.kind === "no_family_trial_available" ||
+    accessState.kind === "no_family_no_trial" ||
+    accessState.kind === "institutional_pending";
+
+  const canUseTrial = showNoFamilyCompactNotice
+    ? accessState.trialAvailable
+    : false;
 
   const familyEntries: EntryCard[] = [
     {
@@ -177,7 +221,7 @@ export default async function MarketingHome({
   ];
 
   const visibleFamilyEntries =
-    homeState.kind === "signed_in_no_family"
+    showNoFamilyCompactNotice
       ? familyEntries.filter((item) => {
           if (item.title === "Sign in") {
             return false;
@@ -188,7 +232,7 @@ export default async function MarketingHome({
           }
 
           if (item.title === "Start 3-day trial") {
-            return homeState.canUseTrial;
+            return canUseTrial;
           }
 
           return true;
@@ -241,12 +285,12 @@ export default async function MarketingHome({
           </p>
         </section>
 
-        {homeState.kind === "signed_in_no_family" ? (
+        {showNoFamilyCompactNotice ? (
           <div className="mt-10 rounded-2xl border border-stone-200 bg-white p-6">
             <div className="text-sm text-stone-500">
               Signed in as{" "}
               <span className="font-medium text-stone-900">
-                {homeState.email ?? "user"}
+                {signedInIdentity}
               </span>
             </div>
 
@@ -255,8 +299,7 @@ export default async function MarketingHome({
             </h2>
 
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-stone-600">
-              You are signed in. Choose the next available entry option below to
-              continue.
+              Your account is ready. Choose the next step below to continue.
             </p>
 
             <div className="mt-5 flex flex-wrap gap-3">
@@ -313,18 +356,24 @@ export default async function MarketingHome({
             <div className="text-sm text-stone-500">
               Signed in as{" "}
               <span className="font-medium text-stone-900">
-                {homeState.email ?? "user"}
+                {signedInIdentity}
               </span>
             </div>
 
-            {homeState.kind === "trial_active" ? (
+            {accessState.kind === "trial_active" ? (
               <>
                 <div className="mt-5 rounded-2xl border border-blue-200 bg-blue-50 p-5">
                   <h2 className="text-base font-semibold text-stone-900">
                     3-day trial active
                   </h2>
                   <p className="mt-2 text-sm leading-relaxed text-blue-900">
-                    Time remaining: {homeState.trialRemainingLabel}
+                    Time remaining:{" "}
+                    {formatTrialRemainingLabel(
+                      accessState.activation.trialEndsAt
+                    )}
+                  </p>
+                  <p className="mt-2 text-xs leading-relaxed text-blue-900/80">
+                    After the trial ends, your account will stay saved.
                   </p>
                 </div>
 
@@ -348,14 +397,14 @@ export default async function MarketingHome({
               </>
             ) : null}
 
-            {homeState.kind === "trial_expired" ? (
+            {accessState.kind === "trial_expired" ? (
               <>
                 <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-5">
                   <h2 className="text-base font-semibold text-stone-900">
                     Trial ended
                   </h2>
                   <p className="mt-2 text-sm leading-relaxed text-amber-900">
-                    The 3-day trial has ended. Continue with a paid family plan.
+                    Continue with a family plan to keep going.
                   </p>
                 </div>
 
@@ -372,13 +421,13 @@ export default async function MarketingHome({
               </>
             ) : null}
 
-            {homeState.kind === "paid_active" ? (
+            {accessState.kind === "paid_active" ? (
               <>
                 <h2 className="mt-4 text-lg font-semibold text-stone-900">
-                  Paid family access active
+                  Paid access active
                 </h2>
                 <p className="mt-2 max-w-3xl text-sm leading-relaxed text-stone-600">
-                  Continue from your live family account.
+                  Your account is ready. Continue in your family area.
                 </p>
 
                 <div className="mt-5 flex flex-wrap gap-3">
@@ -401,26 +450,30 @@ export default async function MarketingHome({
               </>
             ) : null}
 
-            {homeState.kind === "inactive_access" ? (
+            {accessState.kind === "inactive_access" ? (
               <>
                 <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-5">
                   <h2 className="text-base font-semibold text-stone-900">
                     Access inactive
                   </h2>
                   <p className="mt-2 text-sm leading-relaxed text-amber-900">
-                    This account is signed in, but active access is not currently
-                    available.
+                    Choose a family plan to continue.
                   </p>
                 </div>
 
                 <div className="mt-5 flex flex-wrap gap-3">
                   <Link
                     href={
-                      homeState.entrySource === "school_referral" ||
-                      homeState.entrySource === "school" ||
-                      homeState.entrySource === "kommune" ||
-                      homeState.entrySource === "fylke" ||
-                      homeState.entrySource === "institutional"
+                      (accessState.activation.entrySource ??
+                        accessState.pendingEntrySource) === "school_referral" ||
+                      (accessState.activation.entrySource ??
+                        accessState.pendingEntrySource) === "school" ||
+                      (accessState.activation.entrySource ??
+                        accessState.pendingEntrySource) === "kommune" ||
+                      (accessState.activation.entrySource ??
+                        accessState.pendingEntrySource) === "fylke" ||
+                      (accessState.activation.entrySource ??
+                        accessState.pendingEntrySource) === "institutional"
                         ? `/${locale}/pricing?entry=institutional`
                         : `/${locale}/pricing?entry=family`
                     }

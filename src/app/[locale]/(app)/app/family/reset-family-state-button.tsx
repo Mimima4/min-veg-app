@@ -8,8 +8,8 @@ type Props = {
 
 export default function ResetFamilyStateButton({
   action,
-  label = "Reset family state",
-  confirmMessage = "Are you sure you want to reset this family state? This will remove the current family container and connected child data for this test flow.",
+  label = "Reset family setup",
+  confirmMessage = "Are you sure you want to reset this family setup? This will remove the current family container and connected child data, but keep your account and access state.",
 }: Props) {
   return (
     <form

@@ -7,6 +7,7 @@ import AppPrivateNav from "@/components/layout/app-private-nav";
 import UpgradeChildLimitButton from "./upgrade-child-limit-button";
 import ResetFamilyStateButton from "./reset-family-state-button";
 import { getFamilyPageData } from "@/server/family/overview/get-family-page-data";
+import { getUserAccessState } from "@/server/billing/get-user-access-state";
 
 function SummaryMetricLink({
   label,
@@ -76,7 +77,7 @@ function formatTrialRemainingLabel(trialEndsAt: string | null): string {
   return `${minutes}m left`;
 }
 
-async function resetFamilyState(locale: string) {
+async function resetFamilySetup(locale: string) {
   "use server";
 
   const supabase = await createClient();
@@ -97,7 +98,7 @@ async function resetFamilyState(locale: string) {
     .maybeSingle();
 
   if (!family) {
-    redirect(`/${locale}`);
+    redirect(`/${locale}/app/family`);
   }
 
   const { data: childIds } = await admin
@@ -123,32 +124,6 @@ async function resetFamilyState(locale: string) {
 
   await admin.from("family_accounts").delete().eq("id", family.id);
 
-  redirect(`/${locale}`);
-}
-
-async function expireTrialNow(locale: string) {
-  "use server";
-
-  const supabase = await createClient();
-  const admin = createAdminClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect(`/${locale}/login`);
-  }
-
-  await admin
-    .from("family_accounts")
-    .update({
-      subscription_state: "trial_expired",
-      trial_ends_at: new Date(Date.now() - 60 * 1000).toISOString(),
-    })
-    .eq("primary_user_id", user.id)
-    .eq("plan_type", "trial");
-
   redirect(`/${locale}/app/family`);
 }
 
@@ -158,23 +133,6 @@ export default async function FamilyPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const entrySource =
-    typeof user?.user_metadata?.entry_source === "string"
-      ? user.user_metadata.entry_source
-      : null;
-
-  const trialUsed = Boolean(user?.user_metadata?.trial_used);
-  const trialAvailable = entrySource === "trial" && !trialUsed;
-
-  const hasPermanentPaidAccess =
-    user?.app_metadata?.admin_access === true ||
-    user?.app_metadata?.role === "platform_admin";
 
   const result = await getFamilyPageData({ locale });
 
@@ -198,7 +156,9 @@ export default async function FamilyPage({
   }
 
   if (result.kind === "no_family") {
-    if (hasPermanentPaidAccess) {
+    const accessState = await getUserAccessState();
+
+    if (accessState.kind === "no_family_paid") {
       return (
         <LocalePageShell
           locale={locale}
@@ -229,7 +189,7 @@ export default async function FamilyPage({
       );
     }
 
-    if (trialAvailable) {
+    if (accessState.kind === "no_family_trial_available") {
       return (
         <LocalePageShell
           locale={locale}
@@ -272,8 +232,7 @@ export default async function FamilyPage({
             No family account yet
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-stone-600">
-            Trial is no longer available for this account. Choose a family plan to
-            continue.
+            Choose a family plan to continue.
           </p>
 
           <div className="mt-5">
@@ -292,9 +251,6 @@ export default async function FamilyPage({
   const { familyAccount, entitlements, children } = result.data;
   const trialState = entitlements.activation?.trialState;
   const trialEndsAt = entitlements.activation?.trialEndsAt ?? null;
-  const isTrialFamily =
-    familyAccount.plan_type === "trial" ||
-    familyAccount.subscription_state === "trialing";
 
   return (
     <LocalePageShell
@@ -312,6 +268,9 @@ export default async function FamilyPage({
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-blue-900">
               Time remaining: {formatTrialRemainingLabel(trialEndsAt)}
+            </p>
+            <p className="mt-2 text-xs leading-relaxed text-blue-900/80">
+              After the trial ends, your account will stay saved.
             </p>
 
             <div className="mt-4">
@@ -352,21 +311,7 @@ export default async function FamilyPage({
               Family account
             </h2>
 
-            <div className="flex flex-wrap gap-2">
-              {isTrialFamily ? (
-                <ResetFamilyStateButton
-                  action={expireTrialNow.bind(null, locale)}
-                  label="Expire trial now"
-                  confirmMessage="Are you sure you want to expire this 3-day trial right now?"
-                />
-              ) : null}
-
-              <ResetFamilyStateButton
-                action={resetFamilyState.bind(null, locale)}
-                label="Reset family state"
-                confirmMessage="Are you sure you want to reset this family state? This will remove the current family container and connected child data for this test flow."
-              />
-            </div>
+            <ResetFamilyStateButton action={resetFamilySetup.bind(null, locale)} />
           </div>
 
           <dl className="mt-5 grid gap-4 sm:grid-cols-2">

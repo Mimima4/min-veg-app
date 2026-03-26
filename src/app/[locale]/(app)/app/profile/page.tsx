@@ -5,6 +5,7 @@ import { LocalePageShell } from "@/components/layout/locale-page-shell";
 import AppPrivateNav from "@/components/layout/app-private-nav";
 import SignOutButton from "@/components/auth/sign-out-button";
 import ProfileForm from "./profile-form";
+import { getUserAccessState } from "@/server/billing/get-user-access-state";
 
 export default async function ProfilePage({
   params,
@@ -44,11 +45,63 @@ export default async function ProfilePage({
     );
   }
 
+  const accessState = await getUserAccessState();
+  const hasSavedProfile = Boolean(profile?.display_name?.trim());
+  const nextStep = (() => {
+    switch (accessState.kind) {
+      case "no_family_paid":
+        return {
+          label: "Create family account",
+          href: `/${locale}/app/family/create?entry=paid`,
+          helper:
+            "Your paid access is already active. The next step is creating the family area.",
+        };
+      case "no_family_trial_available":
+        return {
+          label: "Start 3-day trial",
+          href: `/${locale}/app/family/create?entry=trial`,
+          helper:
+            "Trial access is available for this account. Start the trial to create the family area.",
+        };
+      case "no_family_no_trial":
+        return {
+          label: "Choose family plan",
+          href: `/${locale}/pricing?entry=family`,
+          helper:
+            "Trial is no longer available for this account. Choose a family plan to continue.",
+        };
+      case "institutional_pending":
+        return {
+          label: "View institutional pricing",
+          href: `/${locale}/pricing?entry=institutional`,
+          helper:
+            "This account is waiting for an institutional activation path.",
+        };
+      case "paid_active":
+      case "trial_active":
+      case "trial_expired":
+      case "inactive_access":
+        return {
+          label: "Open family",
+          href: `/${locale}/app/family`,
+          helper:
+            "Your family area already exists or is the next place to continue.",
+        };
+      default:
+        return {
+          label: "Open family",
+          href: `/${locale}/app/family`,
+          helper:
+            "Your family area already exists or is the next place to continue.",
+        };
+    }
+  })();
+
   return (
     <LocalePageShell
       locale={locale}
       title="Account"
-      subtitle="Manage your basic account details and interface settings."
+      subtitle="Manage your personal account details and interface settings."
     >
       <AppPrivateNav locale={locale} currentPath="/app/profile" />
 
@@ -56,9 +109,31 @@ export default async function ProfilePage({
         <div className="rounded-2xl border border-stone-200 bg-white p-6">
           <p className="text-sm text-stone-500">Signed in as</p>
           <p className="mt-1 text-base font-medium text-stone-900">
-            {user.email}
+            {profile?.display_name?.trim() || user.email}
           </p>
         </div>
+
+        {hasSavedProfile ? (
+          <div className="rounded-2xl border border-stone-200 bg-white p-6">
+            <h2 className="text-base font-semibold text-stone-900">Next step</h2>
+            <p className="mt-1 text-sm leading-relaxed text-stone-600">
+              Your account is ready. Continue with the next step below.
+            </p>
+
+            <p className="mt-4 text-sm leading-relaxed text-stone-600">
+              {nextStep.helper}
+            </p>
+
+            <div className="mt-4">
+              <Link
+                href={nextStep.href}
+                className="inline-flex items-center justify-center rounded-full border border-stone-900 bg-stone-900 px-5 py-2.5 text-sm text-white transition hover:bg-stone-800"
+              >
+                {nextStep.label}
+              </Link>
+            </div>
+          </div>
+        ) : null}
 
         <ProfileForm
           userId={user.id}
@@ -75,7 +150,7 @@ export default async function ProfilePage({
             Account actions
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-stone-600">
-            Security and session actions for this account.
+            Manage password and session actions for this account.
           </p>
 
           <div className="mt-5 flex flex-wrap gap-3">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { COUNTRY_OPTIONS } from "@/lib/profile/country-options";
 
@@ -20,6 +21,7 @@ export default function ProfileForm({
   initialCountryCode,
 }: Props) {
   const supabase = createClient();
+  const router = useRouter();
 
   const normalizedInitialCountryCode = useMemo(() => {
     const upper = initialCountryCode.trim().toUpperCase();
@@ -68,6 +70,7 @@ export default function ProfileForm({
     }
 
     setMessage("Account saved successfully.");
+    router.refresh();
   }
 
   return (
