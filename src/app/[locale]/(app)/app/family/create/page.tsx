@@ -4,20 +4,19 @@ import { LocalePageShell } from "@/components/layout/locale-page-shell";
 import AppPrivateNav from "@/components/layout/app-private-nav";
 import CreateFamilyForm from "./create-family-form";
 
-function getPageCopy(entry?: string) {
-  const normalized = (entry ?? "").trim().toLowerCase();
+type EntryMode = "trial" | "paid";
 
-  if (normalized === "trial") {
+function getPageCopy(entry: EntryMode) {
+  if (entry === "paid") {
     return {
-      title: "Start 3-day trial",
-      subtitle:
-        "Create the temporary family container for your fixed 3-day trial.",
+      title: "Create family account",
+      subtitle: "Create the family container for your active paid access.",
     };
   }
 
   return {
-    title: "Create family account",
-    subtitle: "Create the base family container for your Min Veg area.",
+    title: "Start 3-day trial",
+    subtitle: "Create the temporary family container for your fixed 3-day trial.",
   };
 }
 
@@ -41,6 +40,34 @@ export default async function CreateFamilyPage({
     redirect(`/${locale}/login`);
   }
 
+  const hasPermanentPaidAccess =
+    user.app_metadata?.admin_access === true ||
+    user.app_metadata?.role === "platform_admin";
+
+  const trialUsed = Boolean(user.user_metadata?.trial_used);
+  const entrySource =
+    typeof user.user_metadata?.entry_source === "string"
+      ? user.user_metadata.entry_source
+      : null;
+
+  const trialAvailable =
+    entrySource === "trial" && !trialUsed && !hasPermanentPaidAccess;
+
+  const requestedEntry: EntryMode | null =
+    entry === "paid" ? "paid" : entry === "trial" ? "trial" : null;
+
+  if (requestedEntry === "paid" && !hasPermanentPaidAccess) {
+    redirect(`/${locale}/app/family`);
+  }
+
+  if (requestedEntry === "trial" && !trialAvailable) {
+    redirect(`/${locale}/app/family`);
+  }
+
+  if (!requestedEntry) {
+    redirect(`/${locale}/app/family`);
+  }
+
   const { data: existingFamily } = await supabase
     .from("family_accounts")
     .select("id")
@@ -51,7 +78,7 @@ export default async function CreateFamilyPage({
     redirect(`/${locale}/app/family`);
   }
 
-  const copy = getPageCopy(entry);
+  const copy = getPageCopy(requestedEntry);
 
   return (
     <LocalePageShell
@@ -62,7 +89,11 @@ export default async function CreateFamilyPage({
       backLabel="Back family overview"
     >
       <AppPrivateNav locale={locale} currentPath="/app/family" />
-      <CreateFamilyForm locale={locale} userId={user.id} entry={entry} />
+      <CreateFamilyForm
+        locale={locale}
+        userId={user.id}
+        entry={requestedEntry}
+      />
     </LocalePageShell>
   );
 }

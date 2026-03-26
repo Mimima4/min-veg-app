@@ -31,6 +31,7 @@ export type HomeEntryState =
       kind: "signed_in_no_family";
       email: string | null;
       pendingEntrySource: PendingEntrySource;
+      canUseTrial: boolean;
     }
   | {
       kind: "trial_active";
@@ -124,6 +125,8 @@ export async function getHomeEntryState(): Promise<HomeEntryState> {
       ? user.user_metadata.entry_source
       : null
   );
+  const trialUsed = Boolean(user.user_metadata?.trial_used);
+  const canUseTrial = pendingEntrySource === "trial" && !trialUsed;
 
   const { data: familyAccount, error } = await supabase
     .from("family_accounts")
@@ -138,6 +141,7 @@ export async function getHomeEntryState(): Promise<HomeEntryState> {
       kind: "signed_in_no_family",
       email: user.email ?? null,
       pendingEntrySource,
+      canUseTrial,
     };
   }
 

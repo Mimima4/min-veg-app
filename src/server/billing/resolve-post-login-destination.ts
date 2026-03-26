@@ -57,18 +57,17 @@ function getPendingDestination(
   pendingEntrySource: PendingEntrySource
 ): string {
   switch (pendingEntrySource) {
-    case "paid":
-      return `/${locale}/pricing?entry=family`;
     case "school":
     case "school_referral":
     case "kommune":
     case "fylke":
     case "institutional":
       return `/${locale}/pricing?entry=institutional`;
+    case "paid":
     case "trial":
     case "direct":
     default:
-      return `/${locale}/app/family/create?entry=trial`;
+      return `/${locale}`;
   }
 }
 
@@ -93,6 +92,10 @@ export async function resolvePostLoginDestination({
       : null
   );
 
+  const hasPermanentPaidAccess =
+    user.app_metadata?.admin_access === true ||
+    user.app_metadata?.role === "platform_admin";
+
   const { data: familyAccount, error } = await supabase
     .from("family_accounts")
     .select(
@@ -105,28 +108,49 @@ export async function resolvePostLoginDestination({
     return `/${locale}/pricing?entry=family`;
   }
 
+  let finalHref: string;
+
   if (!familyAccount) {
-    return getPendingDestination(locale, pendingEntrySource);
+    if (hasPermanentPaidAccess) {
+      finalHref = `/${locale}/app/family`;
+    } else {
+      finalHref = getPendingDestination(locale, pendingEntrySource);
+    }
+
+    return finalHref;
   }
 
   const typedFamilyAccount = familyAccount as FamilyAccessRow;
   const activation = resolveAccountActivation(typedFamilyAccount);
 
   if (activation.trialState === "active") {
-    return `/${locale}/app/family`;
+    finalHref = `/${locale}/app/family`;
+    return finalHref;
   }
 
   if (activation.trialState === "expired") {
-    return `/${locale}/pricing?entry=family`;
+    finalHref = `/${locale}/pricing?entry=family`;
+    return finalHref;
   }
 
   if (activation.billingStage === "paid" && activation.hasActiveAccess) {
-    return `/${locale}/app/family`;
+    finalHref = `/${locale}/app/family`;
+    return finalHref;
   }
 
   const entrySource = normalizePendingEntrySource(
     typedFamilyAccount.entry_source ?? pendingEntrySource
   );
+  const isInstitutionalEntrySource =
+    entrySource === "school" ||
+    entrySource === "school_referral" ||
+    entrySource === "kommune" ||
+    entrySource === "fylke" ||
+    entrySource === "institutional";
 
-  return getPendingDestination(locale, entrySource);
+  finalHref = isInstitutionalEntrySource
+    ? `/${locale}/pricing?entry=institutional`
+    : `/${locale}/pricing?entry=family`;
+
+  return finalHref;
 }

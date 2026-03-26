@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 type Props = {
@@ -9,38 +8,8 @@ type Props = {
   entry?: string;
 };
 
-function getEntryActivationMeta(entry?: string) {
-  switch (entry) {
-    case "trial":
-      return {
-        entrySource: "trial",
-        activationSource: "self_serve_trial",
-        entryParam: "trial",
-      };
-    case "school":
-      return {
-        entrySource: "school_referral",
-        activationSource: "school_led",
-        entryParam: "school",
-      };
-    case "paid":
-      return {
-        entrySource: "paid",
-        activationSource: "self_serve_paid",
-        entryParam: "paid",
-      };
-    default:
-      return {
-        entrySource: "direct",
-        activationSource: "self_serve",
-        entryParam: null,
-      };
-  }
-}
-
 export default function SignupForm({ locale, entry }: Props) {
   const supabase = createClient();
-  const router = useRouter();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -48,27 +17,34 @@ export default function SignupForm({ locale, entry }: Props) {
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
+  function resolveEntrySource(value?: string): "trial" | "school" | "direct" {
+    const normalized = (value ?? "").trim().toLowerCase();
+
+    if (normalized === "trial") {
+      return "trial";
+    }
+
+    if (normalized === "school") {
+      return "school";
+    }
+
+    return "direct";
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
     setMessage("");
     setErrorMessage("");
 
-    const { entrySource, activationSource, entryParam } =
-      getEntryActivationMeta(entry);
-
-    const createFamilyPath = entryParam
-      ? `/${locale}/app/family/create?entry=${encodeURIComponent(entryParam)}`
-      : `/${locale}/app/family/create`;
-
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}${createFamilyPath}`,
+        emailRedirectTo: `${window.location.origin}/${locale}/resolve-access`,
         data: {
-          entry_source: entrySource,
-          activation_source: activationSource,
+          entry_source: resolveEntrySource(entry),
+          trial_used: false,
         },
       },
     });
@@ -77,12 +53,6 @@ export default function SignupForm({ locale, entry }: Props) {
 
     if (error) {
       setErrorMessage(error.message);
-      return;
-    }
-
-    if (data?.session) {
-      router.push(createFamilyPath);
-      router.refresh();
       return;
     }
 

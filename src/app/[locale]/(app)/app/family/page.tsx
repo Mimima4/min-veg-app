@@ -97,7 +97,7 @@ async function resetFamilyState(locale: string) {
     .maybeSingle();
 
   if (!family) {
-    redirect(`/${locale}/app/family/create?entry=trial`);
+    redirect(`/${locale}`);
   }
 
   const { data: childIds } = await admin
@@ -123,7 +123,7 @@ async function resetFamilyState(locale: string) {
 
   await admin.from("family_accounts").delete().eq("id", family.id);
 
-  redirect(`/${locale}/app/family/create?entry=trial`);
+  redirect(`/${locale}`);
 }
 
 async function expireTrialNow(locale: string) {
@@ -159,6 +159,23 @@ export default async function FamilyPage({
 }) {
   const { locale } = await params;
 
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const entrySource =
+    typeof user?.user_metadata?.entry_source === "string"
+      ? user.user_metadata.entry_source
+      : null;
+
+  const trialUsed = Boolean(user?.user_metadata?.trial_used);
+  const trialAvailable = entrySource === "trial" && !trialUsed;
+
+  const hasPermanentPaidAccess =
+    user?.app_metadata?.admin_access === true ||
+    user?.app_metadata?.role === "platform_admin";
+
   const result = await getFamilyPageData({ locale });
 
   if (result.kind === "redirect") {
@@ -181,6 +198,67 @@ export default async function FamilyPage({
   }
 
   if (result.kind === "no_family") {
+    if (hasPermanentPaidAccess) {
+      return (
+        <LocalePageShell
+          locale={locale}
+          title="Family"
+          subtitle="This is where your family account and child profiles will live."
+        >
+          <AppPrivateNav locale={locale} currentPath="/app/family" />
+
+          <div className="mt-6 rounded-2xl border border-stone-200 bg-white p-6">
+            <h2 className="text-lg font-semibold text-stone-900">
+              No family account yet
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-stone-600">
+              Create your family account to start building the parent and child
+              area.
+            </p>
+
+            <div className="mt-5">
+              <Link
+                href={`/${locale}/app/family/create?entry=paid`}
+                className="inline-flex items-center justify-center rounded-full border border-stone-900 bg-stone-900 px-5 py-2.5 text-sm text-white transition hover:bg-stone-800"
+              >
+                Create family account
+              </Link>
+            </div>
+          </div>
+        </LocalePageShell>
+      );
+    }
+
+    if (trialAvailable) {
+      return (
+        <LocalePageShell
+          locale={locale}
+          title="Family"
+          subtitle="This is where your family account and child profiles will live."
+        >
+          <AppPrivateNav locale={locale} currentPath="/app/family" />
+
+          <div className="mt-6 rounded-2xl border border-stone-200 bg-white p-6">
+            <h2 className="text-lg font-semibold text-stone-900">
+              No family account yet
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-stone-600">
+              Start your 3-day trial to create the family area.
+            </p>
+
+            <div className="mt-5">
+              <Link
+                href={`/${locale}/app/family/create?entry=trial`}
+                className="inline-flex items-center justify-center rounded-full border border-stone-900 bg-stone-900 px-5 py-2.5 text-sm text-white transition hover:bg-stone-800"
+              >
+                Start 3-day trial
+              </Link>
+            </div>
+          </div>
+        </LocalePageShell>
+      );
+    }
+
     return (
       <LocalePageShell
         locale={locale}
@@ -194,16 +272,16 @@ export default async function FamilyPage({
             No family account yet
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-stone-600">
-            Create your family account to start building the parent and child
-            area.
+            Trial is no longer available for this account. Choose a family plan to
+            continue.
           </p>
 
           <div className="mt-5">
             <Link
-              href={`/${locale}/app/family/create?entry=trial`}
+              href={`/${locale}/pricing?entry=family`}
               className="inline-flex items-center justify-center rounded-full border border-stone-900 bg-stone-900 px-5 py-2.5 text-sm text-white transition hover:bg-stone-800"
             >
-              Start 3-day trial
+              Choose family plan
             </Link>
           </div>
         </div>
