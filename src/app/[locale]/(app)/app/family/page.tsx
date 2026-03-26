@@ -323,65 +323,9 @@ export default async function FamilyPage({
             </div>
 
             <div>
-              <dt className="text-sm text-stone-500">Status</dt>
-              <dd className="mt-1 text-base text-stone-900">
-                {familyAccount.status}
-              </dd>
-            </div>
-
-            <div>
-              <dt className="text-sm text-stone-500">Billing stage</dt>
-              <dd className="mt-1 text-base text-stone-900">
-                {getBillingStageLabel(entitlements.billingStage)}
-              </dd>
-            </div>
-
-            <div>
-              <dt className="text-sm text-stone-500">Subscription state</dt>
-              <dd className="mt-1 text-base text-stone-900">
-                {familyAccount.subscription_state ?? "—"}
-              </dd>
-            </div>
-
-            <div>
-              <dt className="text-sm text-stone-500">Plan code</dt>
-              <dd className="mt-1 text-base text-stone-900">
-                {familyAccount.plan_code ?? "—"}
-              </dd>
-            </div>
-
-            <div>
-              <dt className="text-sm text-stone-500">Entry source</dt>
-              <dd className="mt-1 text-base text-stone-900">
-                {familyAccount.entry_source ?? "—"}
-              </dd>
-            </div>
-
-            <div>
-              <dt className="text-sm text-stone-500">Activation source</dt>
-              <dd className="mt-1 text-base text-stone-900">
-                {familyAccount.activation_source ?? "—"}
-              </dd>
-            </div>
-
-            <div>
-              <dt className="text-sm text-stone-500">Trial ends</dt>
-              <dd className="mt-1 text-base text-stone-900">
-                {trialEndsAt ? new Date(trialEndsAt).toLocaleString() : "—"}
-              </dd>
-            </div>
-
-            <div>
               <dt className="text-sm text-stone-500">Children</dt>
               <dd className="mt-1 text-base text-stone-900">
                 {entitlements.childCount} / {entitlements.maxChildren}
-              </dd>
-            </div>
-
-            <div>
-              <dt className="text-sm text-stone-500">Remaining child slots</dt>
-              <dd className="mt-1 text-base text-stone-900">
-                {entitlements.remainingChildSlots}
               </dd>
             </div>
 
@@ -391,6 +335,15 @@ export default async function FamilyPage({
                 {new Date(familyAccount.created_at).toLocaleString()}
               </dd>
             </div>
+
+            {trialState === "active" || trialState === "expired" ? (
+              <div>
+                <dt className="text-sm text-stone-500">Trial ends</dt>
+                <dd className="mt-1 text-base text-stone-900">
+                  {trialEndsAt ? new Date(trialEndsAt).toLocaleString() : "—"}
+                </dd>
+              </div>
+            ) : null}
           </dl>
 
           {entitlements.restrictionMessage ? (

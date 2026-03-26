@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { LocalePageShell } from "@/components/layout/locale-page-shell";
 import AppPrivateNav from "@/components/layout/app-private-nav";
 import SignOutButton from "@/components/auth/sign-out-button";
 import ProfileForm from "./profile-form";
+import SubscriptionSettingsForm from "./subscription-settings-form";
 import { getUserAccessState } from "@/server/billing/get-user-access-state";
 
 export default async function ProfilePage({
@@ -14,6 +16,45 @@ export default async function ProfilePage({
 }) {
   const { locale } = await params;
   const supabase = await createClient();
+
+  async function updateAutoRenew(formData: FormData) {
+    "use server";
+
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      redirect(`/${locale}/login`);
+    }
+
+    const { data: family } = await supabase
+      .from("family_accounts")
+      .select("id")
+      .eq("primary_user_id", user.id)
+      .maybeSingle();
+
+    if (!family) {
+      revalidatePath(`/${locale}`);
+      revalidatePath(`/${locale}/app/profile`);
+      revalidatePath(`/${locale}/app/family`);
+      return;
+    }
+
+    const rawValue = formData.get("autoRenewEnabled");
+    const autoRenewEnabled = rawValue === "on";
+
+    await supabase
+      .from("family_accounts")
+      .update({ auto_renew_enabled: autoRenewEnabled })
+      .eq("id", family.id);
+
+    revalidatePath(`/${locale}`);
+    revalidatePath(`/${locale}/app/profile`);
+    revalidatePath(`/${locale}/app/family`);
+  }
 
   const {
     data: { user },
@@ -47,6 +88,9 @@ export default async function ProfilePage({
 
   const accessState = await getUserAccessState();
   const hasSavedProfile = Boolean(profile?.display_name?.trim());
+  const initialAutoRenewEnabled = Boolean(
+    accessState.familyAccount?.auto_renew_enabled ?? false
+  );
   const nextStep = (() => {
     switch (accessState.kind) {
       case "no_family_paid":
@@ -97,6 +141,123 @@ export default async function ProfilePage({
     }
   })();
 
+  const subscriptionCard = (() => {
+    const defaultCard = {
+      subscriptionLabel: "No active subscription",
+      helperText: "Choose a family plan to continue.",
+      canToggleAutoRenew: false,
+      disabledReason: null as string | null,
+    };
+
+    switch (accessState.kind) {
+      case "no_family_paid":
+        return {
+          subscriptionLabel: "Paid access active",
+          helperText: "Create the family account to connect subscription settings.",
+          canToggleAutoRenew: false,
+          disabledReason: "Auto-renew will appear after the family account is created.",
+        };
+      case "no_family_trial_available":
+        return {
+          subscriptionLabel: "Trial available",
+          helperText: "Start the trial to create the family area.",
+          canToggleAutoRenew: false,
+          disabledReason: null,
+        };
+      case "no_family_no_trial":
+        return {
+          subscriptionLabel: "No active subscription",
+          helperText: "Choose a family plan to continue.",
+          canToggleAutoRenew: false,
+          disabledReason: null,
+        };
+      case "institutional_pending":
+        return {
+          subscriptionLabel: "Institutional activation",
+          helperText:
+            "Subscription settings are managed through the institutional setup.",
+          canToggleAutoRenew: false,
+          disabledReason: null,
+        };
+      case "trial_active":
+        return {
+          subscriptionLabel: "3-day trial active",
+          helperText: "After the trial ends, your account will stay saved.",
+          canToggleAutoRenew: false,
+          disabledReason: null,
+        };
+      case "trial_expired":
+        return {
+          subscriptionLabel: "Trial ended",
+          helperText: "Choose a family plan to continue.",
+          canToggleAutoRenew: false,
+          disabledReason: null,
+        };
+      case "paid_active": {
+        const lifecycle = accessState.activation.subscriptionLifecycleState;
+
+        if (lifecycle === "grace_period") {
+          return {
+            subscriptionLabel: "Payment issue — grace period",
+            helperText:
+              "Your access is still active for now. Update payment details soon.",
+            canToggleAutoRenew: true,
+            disabledReason: null,
+          };
+        }
+
+        if (lifecycle === "canceled") {
+          return {
+            subscriptionLabel: "Subscription ends at period end",
+            helperText:
+              "Auto-renew is off. Access stays active until the current period ends.",
+            canToggleAutoRenew: true,
+            disabledReason: null,
+          };
+        }
+
+        return {
+          subscriptionLabel: "Subscription active",
+          helperText: "Your paid access is active.",
+          canToggleAutoRenew: true,
+          disabledReason: null,
+        };
+      }
+      case "inactive_access": {
+        const lifecycle = accessState.activation.subscriptionLifecycleState;
+        const isEligiblePaidFamily =
+          accessState.familyAccount.plan_type !== "trial";
+
+        if (lifecycle === "past_due") {
+          return {
+            subscriptionLabel: "Payment issue",
+            helperText: "Update your payment to restore access.",
+            canToggleAutoRenew: isEligiblePaidFamily,
+            disabledReason: null,
+          };
+        }
+
+        if (lifecycle === "canceled") {
+          return {
+            subscriptionLabel: "Subscription ended",
+            helperText: "Choose a family plan to continue.",
+            canToggleAutoRenew: isEligiblePaidFamily,
+            disabledReason: null,
+          };
+        }
+
+        return {
+          subscriptionLabel: "Subscription inactive",
+          helperText: "Choose a family plan to continue.",
+          canToggleAutoRenew: isEligiblePaidFamily,
+          disabledReason: null,
+        };
+      }
+      default:
+        return defaultCard;
+    }
+  })();
+
   return (
     <LocalePageShell
       locale={locale}
@@ -134,6 +295,15 @@ export default async function ProfilePage({
             </div>
           </div>
         ) : null}
+
+        <SubscriptionSettingsForm
+          action={updateAutoRenew}
+          subscriptionLabel={subscriptionCard.subscriptionLabel}
+          helperText={subscriptionCard.helperText}
+          initialAutoRenewEnabled={initialAutoRenewEnabled}
+          canToggleAutoRenew={subscriptionCard.canToggleAutoRenew}
+          disabledReason={subscriptionCard.disabledReason}
+        />
 
         <ProfileForm
           userId={user.id}

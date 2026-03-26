@@ -1,5 +1,8 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import {
+  getDefaultHrefForAccessState,
+  getUserAccessState,
+} from "@/server/billing/get-user-access-state";
 
 export default async function DashboardPage({
   params,
@@ -7,15 +10,9 @@ export default async function DashboardPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const accessState = await getUserAccessState();
+  const href = getDefaultHrefForAccessState(locale, accessState);
 
-  if (!user) {
-    redirect(`/${locale}/login`);
-  }
-
-  redirect(`/${locale}/app/profile`);
+  redirect(href);
 }

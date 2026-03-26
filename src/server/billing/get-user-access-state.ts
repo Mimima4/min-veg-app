@@ -26,6 +26,13 @@ export type FamilyAccessRow = {
   trial_started_at: string | null;
   trial_ends_at: string | null;
   trial_used: boolean | null;
+  current_period_ends_at: string | null;
+  next_billing_at: string | null;
+  auto_renew_enabled: boolean | null;
+  grace_period_ends_at: string | null;
+  payment_failed_at: string | null;
+  canceled_at: string | null;
+  last_payment_status: string | null;
 };
 
 export type UserAccessState =
@@ -153,7 +160,7 @@ export async function getUserAccessState(): Promise<UserAccessState> {
   const { data: familyAccount } = await supabase
     .from("family_accounts")
     .select(
-      "id, plan_type, status, subscription_state, entry_source, activation_source, plan_code, trial_started_at, trial_ends_at, trial_used"
+      "id, plan_type, status, subscription_state, entry_source, activation_source, plan_code, trial_started_at, trial_ends_at, trial_used, current_period_ends_at, next_billing_at, auto_renew_enabled, grace_period_ends_at, payment_failed_at, canceled_at, last_payment_status"
     )
     .eq("primary_user_id", user.id)
     .maybeSingle();

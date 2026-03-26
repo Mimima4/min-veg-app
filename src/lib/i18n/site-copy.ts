@@ -8,7 +8,7 @@ type SiteCopy = {
     tryDemo: string;
     viewPricing: string;
     createAccount: string;
-    openDashboardPreview: string;
+    openPreview: string;
   };
   features: [
     { title: string; description: string },
@@ -29,7 +29,7 @@ const SITE_COPY: Record<SupportedLocale, SiteCopy> = {
       tryDemo: "Prøv demo",
       viewPricing: "Se priser",
       createAccount: "Opprett konto",
-      openDashboardPreview: "Åpne dashboard",
+      openPreview: "Åpne forhåndsvisning",
     },
     features: [
       {
@@ -61,7 +61,7 @@ const SITE_COPY: Record<SupportedLocale, SiteCopy> = {
       tryDemo: "Prøv demo",
       viewPricing: "Sjå prisar",
       createAccount: "Opprett konto",
-      openDashboardPreview: "Opne dashboard",
+      openPreview: "Opne førehandsvising",
     },
     features: [
       {
@@ -93,7 +93,7 @@ const SITE_COPY: Record<SupportedLocale, SiteCopy> = {
       tryDemo: "Try demo",
       viewPricing: "View pricing",
       createAccount: "Create account",
-      openDashboardPreview: "Open dashboard",
+      openPreview: "Open preview",
     },
     features: [
       {

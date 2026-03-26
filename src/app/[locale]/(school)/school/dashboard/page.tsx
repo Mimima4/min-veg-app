@@ -14,7 +14,7 @@ export default async function SchoolDashboardPage({
       subtitle={`Placeholder page for /${locale}/school/dashboard.`}
       backHref={`/${locale}`}
       navLinks={[
-        { href: `/${locale}/app/dashboard`, label: "App Dashboard" },
+        { href: `/${locale}/app/family`, label: "Family" },
       ]}
     />
   );

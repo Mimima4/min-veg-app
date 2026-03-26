@@ -15,7 +15,7 @@ export default async function OwnerDashboardPage({
       backHref={`/${locale}`}
       navLinks={[
         { href: `/${locale}/admin/dashboard`, label: "Admin Dashboard" },
-        { href: `/${locale}/app/dashboard`, label: "App Dashboard" },
+        { href: `/${locale}/app/family`, label: "Family" },
       ]}
     />
   );
