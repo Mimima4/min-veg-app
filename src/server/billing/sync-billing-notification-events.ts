@@ -4,6 +4,7 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import {
   buildBillingNotificationEvents,
   type BillingNotificationCandidate,
+  type BillingNotificationEventType,
 } from "@/server/billing/build-billing-notification-events";
 
 type FamilyAccountRow = {
@@ -32,11 +33,28 @@ type AuthUserRow = {
   email: string | null;
 };
 
+type ExistingNotificationRow = {
+  id: string;
+  family_account_id: string;
+  dedupe_key: string;
+  event_type: BillingNotificationEventType;
+  status: "pending" | "sent" | "skipped" | "canceled" | "failed";
+};
+
 type SyncResult = {
   scanned: number;
   candidates: number;
   insertedOrUpdated: number;
+  canceled: number;
 };
+
+const MANAGED_EVENT_TYPES: BillingNotificationEventType[] = [
+  "trial_ending_6h",
+  "trial_expired",
+  "renewal_7d",
+  "payment_failed",
+  "grace_period_ending_24h",
+];
 
 function createAdminClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -66,7 +84,7 @@ function toNotificationRow(candidate: BillingNotificationCandidate) {
     dedupe_key: candidate.dedupeKey,
     scheduled_for: candidate.scheduledFor,
     payload: candidate.payload,
-    status: "pending",
+    status: "pending" as const,
   };
 }
 
@@ -99,18 +117,17 @@ export async function syncBillingNotificationEvents(): Promise<SyncResult> {
     );
 
   if (familyError) {
-    throw new Error(
-      `Failed to load family_accounts: ${familyError.message}`
-    );
+    throw new Error(`Failed to load family_accounts: ${familyError.message}`);
   }
 
-  const familyRows = (families ?? []) as FamilyAccountRow[];
+  const familyRows = ((families ?? []) as unknown) as FamilyAccountRow[];
 
   if (familyRows.length === 0) {
     return {
       scanned: 0,
       candidates: 0,
       insertedOrUpdated: 0,
+      canceled: 0,
     };
   }
 
@@ -118,15 +135,16 @@ export async function syncBillingNotificationEvents(): Promise<SyncResult> {
     new Set(familyRows.map((row) => row.primary_user_id).filter(Boolean))
   );
 
-  const { data: authUsers, error: authUsersError } = await admin.auth.admin.listUsers({
-    page: 1,
-    perPage: 1000,
-  });
+  const familyIds = familyRows.map((row) => row.id);
+
+  const { data: authUsers, error: authUsersError } =
+    await admin.auth.admin.listUsers({
+      page: 1,
+      perPage: 1000,
+    });
 
   if (authUsersError) {
-    throw new Error(
-      `Failed to load auth users: ${authUsersError.message}`
-    );
+    throw new Error(`Failed to load auth users: ${authUsersError.message}`);
   }
 
   const authUserMap = new Map<string, AuthUserRow>(
@@ -156,11 +174,54 @@ export async function syncBillingNotificationEvents(): Promise<SyncResult> {
     allCandidates.push(...candidates);
   }
 
+  const expectedDedupeKeys = new Set(allCandidates.map((item) => item.dedupeKey));
+
+  const { data: existingPendingEvents, error: existingPendingEventsError } =
+    await admin
+      .from("billing_notification_events")
+      .select("id, family_account_id, dedupe_key, event_type, status")
+      .in("family_account_id", familyIds)
+      .in("event_type", MANAGED_EVENT_TYPES)
+      .eq("status", "pending");
+
+  if (existingPendingEventsError) {
+    throw new Error(
+      `Failed to load existing billing_notification_events: ${existingPendingEventsError.message}`
+    );
+  }
+
+  const stalePendingEvents = (((existingPendingEvents ?? []) as unknown) as ExistingNotificationRow[])
+    .filter((event) => !expectedDedupeKeys.has(event.dedupe_key));
+
+  let canceled = 0;
+
+  if (stalePendingEvents.length > 0) {
+    const staleIds = stalePendingEvents.map((event) => event.id);
+
+    const { data: canceledRows, error: cancelError } = await admin
+      .from("billing_notification_events")
+      .update({
+        status: "canceled",
+        last_error: "Canceled by reconciliation: event is no longer expected for the current billing state.",
+      })
+      .in("id", staleIds)
+      .select("id");
+
+    if (cancelError) {
+      throw new Error(
+        `Failed to cancel stale billing_notification_events: ${cancelError.message}`
+      );
+    }
+
+    canceled = canceledRows?.length ?? 0;
+  }
+
   if (allCandidates.length === 0) {
     return {
       scanned: familyRows.length,
       candidates: 0,
       insertedOrUpdated: 0,
+      canceled,
     };
   }
 
@@ -184,5 +245,6 @@ export async function syncBillingNotificationEvents(): Promise<SyncResult> {
     scanned: familyRows.length,
     candidates: allCandidates.length,
     insertedOrUpdated: upserted?.length ?? 0,
+    canceled,
   };
 }

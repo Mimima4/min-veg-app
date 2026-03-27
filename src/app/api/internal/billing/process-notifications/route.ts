@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { syncBillingNotificationEvents } from "@/server/billing/sync-billing-notification-events";
+import { processBillingNotificationEvents } from "@/server/billing/process-billing-notification-events";
 
 export const dynamic = "force-dynamic";
 
@@ -39,18 +39,17 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await syncBillingNotificationEvents();
+    const result = await processBillingNotificationEvents();
 
     return NextResponse.json({
       ok: true,
-      scanned: result.scanned,
-      candidates: result.candidates,
-      insertedOrUpdated: result.insertedOrUpdated,
-      canceled: result.canceled,
+      processed: result.processed,
+      sent: result.sent,
+      failed: result.failed,
     });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Unknown sync error.";
+      error instanceof Error ? error.message : "Unknown delivery error.";
 
     return NextResponse.json(
       { ok: false, error: message },
