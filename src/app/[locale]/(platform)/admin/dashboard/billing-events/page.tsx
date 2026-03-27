@@ -100,6 +100,7 @@ export default async function BillingEventsPreviewPage({
     return {
       ...row,
       recipient: getString(payload, "email") ?? "—",
+      recipientName: getString(payload, "recipientName") ?? "—",
       subject: getString(delivery, "subject") ?? rendered.subject,
       previewText: getString(delivery, "previewText") ?? rendered.previewText,
       textBody: getString(delivery, "textBody") ?? rendered.textBody,
@@ -158,6 +159,15 @@ export default async function BillingEventsPreviewPage({
 
               <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
                 <p className="text-xs uppercase tracking-wide text-stone-500">
+                  Recipient name
+                </p>
+                <p className="mt-1 text-sm text-stone-900">
+                  {row.recipientName}
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+                <p className="text-xs uppercase tracking-wide text-stone-500">
                   Scheduled for
                 </p>
                 <p className="mt-1 text-sm text-stone-900">
@@ -171,15 +181,6 @@ export default async function BillingEventsPreviewPage({
                 </p>
                 <p className="mt-1 text-sm text-stone-900">
                   {formatDateTime(row.sent_at)}
-                </p>
-              </div>
-
-              <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-                <p className="text-xs uppercase tracking-wide text-stone-500">
-                  Failed at
-                </p>
-                <p className="mt-1 text-sm text-stone-900">
-                  {formatDateTime(row.failed_at)}
                 </p>
               </div>
 

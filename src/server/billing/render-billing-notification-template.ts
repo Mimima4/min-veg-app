@@ -3,7 +3,10 @@ import "server-only";
 export type BillingNotificationEventType =
   | "trial_ending_6h"
   | "trial_expired"
-  | "renewal_7d"
+  | "subscription_ending_3d"
+  | "subscription_ending_7d"
+  | "subscription_started_success"
+  | "subscription_renewed_success"
   | "payment_failed"
   | "grace_period_ending_24h";
 
@@ -23,13 +26,43 @@ function escapeHtml(value: string): string {
     .replaceAll("'", "&#39;");
 }
 
+function getString(payload: Record<string, unknown> | null, key: string): string | null {
+  if (!payload) {
+    return null;
+  }
+
+  const value = payload[key];
+  return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
+}
+
+function getGreetingName(payload: Record<string, unknown> | null): string | null {
+  const recipientName = getString(payload, "recipientName");
+
+  if (recipientName) {
+    return recipientName;
+  }
+
+  return null;
+}
+
 function renderShell(args: {
   title: string;
+  greetingName: string | null;
   intro: string;
   bodyLines: string[];
   footer?: string;
 }) {
-  const textParts = [args.title, "", args.intro, "", ...args.bodyLines];
+  const greetingLine = args.greetingName ? `Hi ${args.greetingName},` : "Hi,";
+
+  const textParts = [
+    greetingLine,
+    "",
+    args.title,
+    "",
+    args.intro,
+    "",
+    ...args.bodyLines,
+  ];
 
   if (args.footer) {
     textParts.push("", args.footer);
@@ -45,6 +78,9 @@ function renderShell(args: {
       <div style="background:#ffffff;border:1px solid #e7e5e4;border-radius:20px;padding:32px;">
         <p style="margin:0 0 12px;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#78716c;">
           Min Veg
+        </p>
+        <p style="margin:0 0 12px;font-size:15px;line-height:1.7;color:#44403c;">
+          ${escapeHtml(greetingLine)}
         </p>
         <h1 style="margin:0 0 16px;font-size:24px;line-height:1.2;color:#1c1917;">
           ${escapeHtml(args.title)}
@@ -78,188 +114,214 @@ function renderShell(args: {
   return { textBody, htmlBody };
 }
 
-function getString(payload: Record<string, unknown> | null, key: string): string | null {
-  if (!payload) {
-    return null;
-  }
-
-  const value = payload[key];
-  return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
-}
-
 export function renderBillingNotificationTemplate(
   eventType: BillingNotificationEventType,
   payload: Record<string, unknown> | null
 ): BillingNotificationTemplate {
+  const greetingName = getGreetingName(payload);
+
   switch (eventType) {
     case "trial_ending_6h": {
       const trialEndsAt = getString(payload, "trialEndsAt");
-
       const subject = "Your 3-day trial ends soon";
       const previewText =
         "Less than 6 hours remain. Your account will stay saved after the trial ends.";
-      const intro =
-        "Your 3-day trial is almost over. You can continue later with a family plan, and your account will stay saved.";
-      const bodyLines = [
-        trialEndsAt ? `Trial end: ${trialEndsAt}.` : "Less than 6 hours remain in your current trial.",
-        "If you want to keep going without interruption, choose a family plan before the trial ends.",
-      ];
-      const footer =
-        "This is a billing reminder from Min Veg. No action is required if you plan to continue later.";
 
       const shell = renderShell({
         title: subject,
-        intro,
-        bodyLines,
-        footer,
+        greetingName,
+        intro:
+          "Your 3-day trial is almost over. You can continue later with a family plan, and your account will stay saved.",
+        bodyLines: [
+          trialEndsAt
+            ? `Trial end: ${trialEndsAt}.`
+            : "Less than 6 hours remain in your current trial.",
+          "If you want to keep going without interruption, choose a family plan before the trial ends.",
+        ],
+        footer:
+          "This is a billing reminder from Min Veg. No action is required if you plan to continue later.",
       });
 
-      return {
-        subject,
-        previewText,
-        ...shell,
-      };
+      return { subject, previewText, ...shell };
     }
 
     case "trial_expired": {
       const trialEndsAt = getString(payload, "trialEndsAt");
-
       const subject = "Your trial has ended";
       const previewText =
         "Your account is still saved. Continue with a family plan when you are ready.";
-      const intro =
-        "Your 3-day trial has ended, but your account and saved setup are still there.";
-      const bodyLines = [
-        trialEndsAt ? `Trial end: ${trialEndsAt}.` : "The current trial period has ended.",
-        "To continue using the family area, choose a family plan.",
-      ];
-      const footer =
-        "This is a billing reminder from Min Veg. Your account is not deleted after trial expiry.";
 
       const shell = renderShell({
         title: subject,
-        intro,
-        bodyLines,
-        footer,
+        greetingName,
+        intro:
+          "Your 3-day trial has ended, but your account and saved setup are still there.",
+        bodyLines: [
+          trialEndsAt
+            ? `Trial end: ${trialEndsAt}.`
+            : "The current trial period has ended.",
+          "To continue using the family area, choose a family plan.",
+        ],
+        footer:
+          "This is a billing reminder from Min Veg. Your account is not deleted after trial expiry.",
       });
 
-      return {
-        subject,
-        previewText,
-        ...shell,
-      };
+      return { subject, previewText, ...shell };
     }
 
-    case "renewal_7d": {
-      const nextBillingAt = getString(payload, "nextBillingAt");
-
-      const subject = "Your subscription renews soon";
+    case "subscription_ending_3d": {
+      const currentPeriodEndsAt = getString(payload, "currentPeriodEndsAt");
+      const subject = "Your monthly subscription ends soon";
       const previewText =
-        "Your current subscription is scheduled to renew in 7 days.";
-      const intro =
-        "This is a reminder that your subscription is approaching its next renewal date.";
-      const bodyLines = [
-        nextBillingAt ? `Renewal date: ${nextBillingAt}.` : "Your subscription renews in 7 days.",
-        "You can review your subscription settings and auto-renew option in your account.",
-      ];
-      const footer =
-        "This is a billing reminder from Min Veg.";
+        "Your subscription is set to end in 3 days because auto-renew is turned off.";
 
       const shell = renderShell({
         title: subject,
-        intro,
-        bodyLines,
-        footer,
+        greetingName,
+        intro:
+          "Your current monthly subscription is approaching its end date because auto-renew is turned off.",
+        bodyLines: [
+          currentPeriodEndsAt
+            ? `Access end date: ${currentPeriodEndsAt}.`
+            : "Your current subscription ends in 3 days.",
+          "If you want uninterrupted access, renew before the current period ends.",
+        ],
+        footer: "This is a billing reminder from Min Veg.",
       });
 
-      return {
-        subject,
-        previewText,
-        ...shell,
-      };
+      return { subject, previewText, ...shell };
+    }
+
+    case "subscription_ending_7d": {
+      const currentPeriodEndsAt = getString(payload, "currentPeriodEndsAt");
+      const subject = "Your yearly subscription ends soon";
+      const previewText =
+        "Your subscription is set to end in 7 days because auto-renew is turned off.";
+
+      const shell = renderShell({
+        title: subject,
+        greetingName,
+        intro:
+          "Your current yearly subscription is approaching its end date because auto-renew is turned off.",
+        bodyLines: [
+          currentPeriodEndsAt
+            ? `Access end date: ${currentPeriodEndsAt}.`
+            : "Your current subscription ends in 7 days.",
+          "If you want uninterrupted access, renew before the current period ends.",
+        ],
+        footer: "This is a billing reminder from Min Veg.",
+      });
+
+      return { subject, previewText, ...shell };
+    }
+
+    case "subscription_started_success": {
+      const currentPeriodEndsAt = getString(payload, "currentPeriodEndsAt");
+      const subject = "Your subscription is active";
+      const previewText =
+        "Thank you for choosing Min Veg. Your paid subscription is now active.";
+
+      const shell = renderShell({
+        title: subject,
+        greetingName,
+        intro:
+          "Thank you for your trust and for choosing Min Veg. Your paid subscription is now active.",
+        bodyLines: [
+          currentPeriodEndsAt
+            ? `Current period end: ${currentPeriodEndsAt}.`
+            : "Your subscription has been activated successfully.",
+          "You can review subscription settings and auto-renew in your account.",
+        ],
+        footer: "This is a billing confirmation from Min Veg.",
+      });
+
+      return { subject, previewText, ...shell };
+    }
+
+    case "subscription_renewed_success": {
+      const nextBillingAt = getString(payload, "nextBillingAt");
+      const subject = "Your subscription has been renewed";
+      const previewText =
+        "Thank you for your continued trust. Your Min Veg subscription has been renewed.";
+
+      const shell = renderShell({
+        title: subject,
+        greetingName,
+        intro:
+          "Thank you for your continued trust and for choosing Min Veg. Your subscription has been renewed successfully.",
+        bodyLines: [
+          nextBillingAt
+            ? `Next billing date: ${nextBillingAt}.`
+            : "The next subscription period has started successfully.",
+          "This message confirms that the recent payment was for Min Veg.",
+        ],
+        footer: "This is a billing confirmation from Min Veg.",
+      });
+
+      return { subject, previewText, ...shell };
     }
 
     case "payment_failed": {
       const paymentFailedAt = getString(payload, "paymentFailedAt");
-
       const subject = "Payment issue detected";
       const previewText =
         "We could not process your payment. Please update your payment details.";
-      const intro =
-        "We could not complete the latest payment for your subscription.";
-      const bodyLines = [
-        paymentFailedAt
-          ? `Payment failure time: ${paymentFailedAt}.`
-          : "A recent payment attempt failed.",
-        "Please update your payment details to restore or keep access.",
-      ];
-      const footer =
-        "This is a billing reminder from Min Veg.";
 
       const shell = renderShell({
         title: subject,
-        intro,
-        bodyLines,
-        footer,
+        greetingName,
+        intro:
+          "We could not complete the latest payment for your subscription.",
+        bodyLines: [
+          paymentFailedAt
+            ? `Payment failure time: ${paymentFailedAt}.`
+            : "A recent payment attempt failed.",
+          "Please update your payment details to restore or keep access.",
+        ],
+        footer: "This is a billing reminder from Min Veg.",
       });
 
-      return {
-        subject,
-        previewText,
-        ...shell,
-      };
+      return { subject, previewText, ...shell };
     }
 
     case "grace_period_ending_24h": {
       const gracePeriodEndsAt = getString(payload, "gracePeriodEndsAt");
-
       const subject = "Grace period ends soon";
       const previewText =
         "Less than 24 hours remain before access may be restricted.";
-      const intro =
-        "Your account is currently in a grace period because of a payment issue.";
-      const bodyLines = [
-        gracePeriodEndsAt
-          ? `Grace period end: ${gracePeriodEndsAt}.`
-          : "Less than 24 hours remain in the current grace period.",
-        "Please update your payment details to avoid losing access.",
-      ];
-      const footer =
-        "This is a billing reminder from Min Veg.";
 
       const shell = renderShell({
         title: subject,
-        intro,
-        bodyLines,
-        footer,
+        greetingName,
+        intro:
+          "Your account is currently in a grace period because of a payment issue.",
+        bodyLines: [
+          gracePeriodEndsAt
+            ? `Grace period end: ${gracePeriodEndsAt}.`
+            : "Less than 24 hours remain in the current grace period.",
+          "Please update your payment details to avoid losing access.",
+        ],
+        footer: "This is a billing reminder from Min Veg.",
       });
 
-      return {
-        subject,
-        previewText,
-        ...shell,
-      };
+      return { subject, previewText, ...shell };
     }
 
     default: {
       const subject = "Billing notification";
       const previewText = "A billing event requires your attention.";
-      const intro = "A billing event requires your attention.";
-      const bodyLines = ["Please review your subscription settings in your account."];
-      const footer = "This is a billing reminder from Min Veg.";
 
       const shell = renderShell({
         title: subject,
-        intro,
-        bodyLines,
-        footer,
+        greetingName,
+        intro: "A billing event requires your attention.",
+        bodyLines: [
+          "Please review your subscription settings in your account.",
+        ],
+        footer: "This is a billing reminder from Min Veg.",
       });
 
-      return {
-        subject,
-        previewText,
-        ...shell,
-      };
+      return { subject, previewText, ...shell };
     }
   }
 }

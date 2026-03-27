@@ -1,6 +1,8 @@
 import "server-only";
 
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import {
+  createClient as createSupabaseClient,
+} from "@supabase/supabase-js";
 import {
   buildBillingNotificationEvents,
   type BillingNotificationCandidate,
@@ -19,6 +21,7 @@ type FamilyAccountRow = {
   trial_started_at: string | null;
   trial_ends_at: string | null;
   trial_used: boolean | null;
+  current_period_starts_at: string | null;
   current_period_ends_at: string | null;
   next_billing_at: string | null;
   auto_renew_enabled: boolean | null;
@@ -31,6 +34,11 @@ type FamilyAccountRow = {
 type AuthUserRow = {
   id: string;
   email: string | null;
+};
+
+type UserProfileRow = {
+  id: string;
+  display_name: string | null;
 };
 
 type ExistingNotificationRow = {
@@ -51,7 +59,10 @@ type SyncResult = {
 const MANAGED_EVENT_TYPES: BillingNotificationEventType[] = [
   "trial_ending_6h",
   "trial_expired",
-  "renewal_7d",
+  "subscription_ending_3d",
+  "subscription_ending_7d",
+  "subscription_started_success",
+  "subscription_renewed_success",
   "payment_failed",
   "grace_period_ending_24h",
 ];
@@ -74,6 +85,25 @@ function createAdminClient() {
       persistSession: false,
     },
   });
+}
+
+function getRecipientName(args: {
+  displayName: string | null;
+  email: string | null;
+}): string | null {
+  const displayName = args.displayName?.trim();
+
+  if (displayName) {
+    return displayName;
+  }
+
+  const email = args.email?.trim();
+
+  if (email) {
+    return email;
+  }
+
+  return null;
 }
 
 function toNotificationRow(candidate: BillingNotificationCandidate) {
@@ -106,6 +136,7 @@ export async function syncBillingNotificationEvents(): Promise<SyncResult> {
         "trial_started_at",
         "trial_ends_at",
         "trial_used",
+        "current_period_starts_at",
         "current_period_ends_at",
         "next_billing_at",
         "auto_renew_enabled",
@@ -113,6 +144,7 @@ export async function syncBillingNotificationEvents(): Promise<SyncResult> {
         "payment_failed_at",
         "canceled_at",
         "last_payment_status",
+        "created_at",
       ].join(", ")
     );
 
@@ -159,15 +191,33 @@ export async function syncBillingNotificationEvents(): Promise<SyncResult> {
       ])
   );
 
+  const { data: profiles, error: profilesError } = await admin
+    .from("user_profiles")
+    .select("id, display_name")
+    .in("id", userIds);
+
+  if (profilesError) {
+    throw new Error(`Failed to load user_profiles: ${profilesError.message}`);
+  }
+
+  const profileMap = new Map<string, UserProfileRow>(
+    (((profiles ?? []) as unknown) as UserProfileRow[]).map((profile) => [
+      profile.id,
+      profile,
+    ])
+  );
+
   const allCandidates: BillingNotificationCandidate[] = [];
 
   for (const family of familyRows) {
     const authUser = authUserMap.get(family.primary_user_id);
+    const profile = profileMap.get(family.primary_user_id);
 
     const candidates = buildBillingNotificationEvents({
       familyAccountId: family.id,
       primaryUserId: family.primary_user_id,
       email: authUser?.email ?? null,
+      recipientName: profile?.display_name?.trim() || null,
       snapshot: family,
     });
 
@@ -190,7 +240,7 @@ export async function syncBillingNotificationEvents(): Promise<SyncResult> {
     );
   }
 
-  const stalePendingEvents = (((existingPendingEvents ?? []) as unknown) as ExistingNotificationRow[])
+  const stalePendingEvents = ((((existingPendingEvents ?? []) as unknown) as ExistingNotificationRow[]))
     .filter((event) => !expectedDedupeKeys.has(event.dedupe_key));
 
   let canceled = 0;
@@ -202,7 +252,8 @@ export async function syncBillingNotificationEvents(): Promise<SyncResult> {
       .from("billing_notification_events")
       .update({
         status: "canceled",
-        last_error: "Canceled by reconciliation: event is no longer expected for the current billing state.",
+        last_error:
+          "Canceled by reconciliation: event is no longer expected for the current billing state.",
       })
       .in("id", staleIds)
       .select("id");
