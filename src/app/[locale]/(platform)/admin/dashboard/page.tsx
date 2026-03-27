@@ -1,8 +1,10 @@
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
 import { LocalePageShell } from "@/components/layout/locale-page-shell";
+import IngestBillingSubscriptionEventForm from "./ingest-billing-subscription-event-form";
 import ProcessBillingEventsForm from "./process-billing-events-form";
 import SyncBillingEventsForm from "./sync-billing-events-form";
+import { ingestBillingSubscriptionEvent } from "@/server/billing/ingest-billing-subscription-event";
 import { processBillingNotificationEvents } from "@/server/billing/process-billing-notification-events";
 import { syncBillingNotificationEvents } from "@/server/billing/sync-billing-notification-events";
 
@@ -25,6 +27,44 @@ export default async function AdminDashboardPage({
 
     await processBillingNotificationEvents();
     revalidatePath(`/${locale}/admin/dashboard`);
+  }
+
+  async function runBillingSubscriptionEventIngest(formData: FormData) {
+    "use server";
+
+    const email = String(formData.get("email") ?? "").trim();
+    const eventType = String(formData.get("eventType") ?? "").trim();
+    const billingCycleRaw = String(formData.get("billingCycle") ?? "").trim();
+    const externalEventId = String(formData.get("externalEventId") ?? "").trim();
+    const currentPeriodStartsAt = String(
+      formData.get("currentPeriodStartsAt") ?? ""
+    ).trim();
+    const currentPeriodEndsAt = String(
+      formData.get("currentPeriodEndsAt") ?? ""
+    ).trim();
+
+    await ingestBillingSubscriptionEvent({
+      email,
+      eventType: eventType as
+        | "subscription_started_success"
+        | "subscription_renewed_success"
+        | "payment_failed"
+        | "payment_recovered"
+        | "auto_renew_disabled"
+        | "auto_renew_enabled"
+        | "cancellation_scheduled",
+      billingCycle:
+        billingCycleRaw === "monthly" || billingCycleRaw === "yearly"
+          ? billingCycleRaw
+          : null,
+      externalEventId: externalEventId || null,
+      currentPeriodStartsAt: currentPeriodStartsAt || null,
+      currentPeriodEndsAt: currentPeriodEndsAt || null,
+      source: "admin_manual",
+    });
+
+    revalidatePath(`/${locale}/admin/dashboard`);
+    revalidatePath(`/${locale}/admin/dashboard/billing-events`);
   }
 
   return (
@@ -82,6 +122,22 @@ export default async function AdminDashboardPage({
             >
               Open billing email previews
             </Link>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-stone-200 bg-white p-6">
+          <h2 className="text-lg font-semibold text-stone-900">
+            Billing subscription event ingest
+          </h2>
+          <p className="mt-2 text-sm leading-relaxed text-stone-600">
+            Record a billing subscription event and sync notification candidates
+            from it.
+          </p>
+
+          <div className="mt-5">
+            <IngestBillingSubscriptionEventForm
+              action={runBillingSubscriptionEventIngest}
+            />
           </div>
         </div>
       </div>

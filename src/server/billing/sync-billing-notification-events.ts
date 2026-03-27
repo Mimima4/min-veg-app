@@ -8,6 +8,10 @@ import {
   type BillingNotificationCandidate,
   type BillingNotificationEventType,
 } from "@/server/billing/build-billing-notification-events";
+import {
+  buildBillingSuccessNotificationEvents,
+  type BillingSubscriptionHistoryRow,
+} from "@/server/billing/build-billing-success-notification-events";
 
 type FamilyAccountRow = {
   id: string;
@@ -67,6 +71,11 @@ const MANAGED_EVENT_TYPES: BillingNotificationEventType[] = [
   "grace_period_ending_24h",
 ];
 
+const SUCCESS_EVENT_TYPES = [
+  "subscription_started_success",
+  "subscription_renewed_success",
+] as const;
+
 function createAdminClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -87,25 +96,6 @@ function createAdminClient() {
   });
 }
 
-function getRecipientName(args: {
-  displayName: string | null;
-  email: string | null;
-}): string | null {
-  const displayName = args.displayName?.trim();
-
-  if (displayName) {
-    return displayName;
-  }
-
-  const email = args.email?.trim();
-
-  if (email) {
-    return email;
-  }
-
-  return null;
-}
-
 function toNotificationRow(candidate: BillingNotificationCandidate) {
   return {
     family_account_id: candidate.familyAccountId,
@@ -120,6 +110,10 @@ function toNotificationRow(candidate: BillingNotificationCandidate) {
 
 export async function syncBillingNotificationEvents(): Promise<SyncResult> {
   const admin = createAdminClient();
+  const nowIso = new Date().toISOString();
+  const sevenDaysAgoIso = new Date(
+    Date.now() - 7 * 24 * 60 * 60 * 1000
+  ).toISOString();
 
   const { data: families, error: familyError } = await admin
     .from("family_accounts")
@@ -144,7 +138,6 @@ export async function syncBillingNotificationEvents(): Promise<SyncResult> {
         "payment_failed_at",
         "canceled_at",
         "last_payment_status",
-        "created_at",
       ].join(", ")
     );
 
@@ -154,94 +147,144 @@ export async function syncBillingNotificationEvents(): Promise<SyncResult> {
 
   const familyRows = ((families ?? []) as unknown) as FamilyAccountRow[];
 
-  if (familyRows.length === 0) {
-    return {
-      scanned: 0,
-      candidates: 0,
-      insertedOrUpdated: 0,
-      canceled: 0,
-    };
+  const { data: successEvents, error: successEventsError } = await admin
+    .from("billing_subscription_events")
+    .select(
+      "id, family_account_id, primary_user_id, event_type, event_at, current_period_starts_at, current_period_ends_at, billing_cycle, payload"
+    )
+    .in("event_type", [...SUCCESS_EVENT_TYPES])
+    .gte("event_at", sevenDaysAgoIso)
+    .lte("event_at", nowIso)
+    .order("event_at", { ascending: false });
+
+  if (successEventsError) {
+    throw new Error(
+      `Failed to load billing_subscription_events: ${successEventsError.message}`
+    );
   }
+
+  const successRows =
+    (((successEvents ?? []) as unknown) as BillingSubscriptionHistoryRow[]) ?? [];
 
   const userIds = Array.from(
-    new Set(familyRows.map((row) => row.primary_user_id).filter(Boolean))
+    new Set(
+      [
+        ...familyRows.map((row) => row.primary_user_id),
+        ...successRows.map((row) => row.primary_user_id),
+      ].filter(Boolean)
+    )
   );
 
-  const familyIds = familyRows.map((row) => row.id);
-
-  const { data: authUsers, error: authUsersError } =
-    await admin.auth.admin.listUsers({
-      page: 1,
-      perPage: 1000,
-    });
-
-  if (authUsersError) {
-    throw new Error(`Failed to load auth users: ${authUsersError.message}`);
-  }
-
-  const authUserMap = new Map<string, AuthUserRow>(
-    (authUsers.users ?? [])
-      .filter((user) => userIds.includes(user.id))
-      .map((user) => [
-        user.id,
-        {
-          id: user.id,
-          email: user.email ?? null,
-        },
-      ])
-  );
-
-  const { data: profiles, error: profilesError } = await admin
-    .from("user_profiles")
-    .select("id, display_name")
-    .in("id", userIds);
-
-  if (profilesError) {
-    throw new Error(`Failed to load user_profiles: ${profilesError.message}`);
-  }
-
-  const profileMap = new Map<string, UserProfileRow>(
-    (((profiles ?? []) as unknown) as UserProfileRow[]).map((profile) => [
-      profile.id,
-      profile,
+  const familyIds = Array.from(
+    new Set([
+      ...familyRows.map((row) => row.id),
+      ...successRows.map((row) => row.family_account_id),
     ])
   );
 
-  const allCandidates: BillingNotificationCandidate[] = [];
+  const authUserMap = new Map<string, AuthUserRow>();
+
+  if (userIds.length > 0) {
+    const { data: authUsers, error: authUsersError } =
+      await admin.auth.admin.listUsers({
+        page: 1,
+        perPage: 1000,
+      });
+
+    if (authUsersError) {
+      throw new Error(`Failed to load auth users: ${authUsersError.message}`);
+    }
+
+    for (const user of authUsers.users ?? []) {
+      if (!userIds.includes(user.id)) {
+        continue;
+      }
+
+      authUserMap.set(user.id, {
+        id: user.id,
+        email: user.email ?? null,
+      });
+    }
+  }
+
+  let profiles: UserProfileRow[] = [];
+
+  if (userIds.length > 0) {
+    const { data: profileRows, error: profilesError } = await admin
+      .from("user_profiles")
+      .select("id, display_name")
+      .in("id", userIds);
+
+    if (profilesError) {
+      throw new Error(`Failed to load user_profiles: ${profilesError.message}`);
+    }
+
+    profiles = (((profileRows ?? []) as unknown) as UserProfileRow[]) ?? [];
+  }
+
+  const recipientNameByUserId = new Map<string, string | null>();
+
+  for (const profile of profiles) {
+    recipientNameByUserId.set(profile.id, profile.display_name?.trim() || null);
+  }
+
+  const emailByUserId = new Map<string, string | null>();
+
+  for (const [userId, authUser] of authUserMap) {
+    emailByUserId.set(userId, authUser.email ?? null);
+  }
+
+  const profileMap = new Map<string, UserProfileRow>(
+    profiles.map((profile) => [profile.id, profile])
+  );
+
+  const stateCandidates: BillingNotificationCandidate[] = [];
 
   for (const family of familyRows) {
-    const authUser = authUserMap.get(family.primary_user_id);
     const profile = profileMap.get(family.primary_user_id);
 
     const candidates = buildBillingNotificationEvents({
       familyAccountId: family.id,
       primaryUserId: family.primary_user_id,
-      email: authUser?.email ?? null,
+      email: emailByUserId.get(family.primary_user_id) ?? null,
       recipientName: profile?.display_name?.trim() || null,
       snapshot: family,
     });
 
-    allCandidates.push(...candidates);
+    stateCandidates.push(...candidates);
   }
+
+  const successCandidates = buildBillingSuccessNotificationEvents({
+    rows: successRows,
+    emailByUserId,
+    recipientNameByUserId,
+  });
+
+  const allCandidates = [...stateCandidates, ...successCandidates];
 
   const expectedDedupeKeys = new Set(allCandidates.map((item) => item.dedupeKey));
 
-  const { data: existingPendingEvents, error: existingPendingEventsError } =
-    await admin
-      .from("billing_notification_events")
-      .select("id, family_account_id, dedupe_key, event_type, status")
-      .in("family_account_id", familyIds)
-      .in("event_type", MANAGED_EVENT_TYPES)
-      .eq("status", "pending");
+  let stalePendingEvents: ExistingNotificationRow[] = [];
 
-  if (existingPendingEventsError) {
-    throw new Error(
-      `Failed to load existing billing_notification_events: ${existingPendingEventsError.message}`
-    );
+  if (familyIds.length > 0) {
+    const { data: existingPendingEvents, error: existingPendingEventsError } =
+      await admin
+        .from("billing_notification_events")
+        .select("id, family_account_id, dedupe_key, event_type, status")
+        .in("family_account_id", familyIds)
+        .in("event_type", MANAGED_EVENT_TYPES)
+        .eq("status", "pending");
+
+    if (existingPendingEventsError) {
+      throw new Error(
+        `Failed to load existing billing_notification_events: ${existingPendingEventsError.message}`
+      );
+    }
+
+    stalePendingEvents =
+      ((((existingPendingEvents ?? []) as unknown) as ExistingNotificationRow[]))
+        .filter((event) => !expectedDedupeKeys.has(event.dedupe_key));
   }
-
-  const stalePendingEvents = ((((existingPendingEvents ?? []) as unknown) as ExistingNotificationRow[]))
-    .filter((event) => !expectedDedupeKeys.has(event.dedupe_key));
 
   let canceled = 0;
 

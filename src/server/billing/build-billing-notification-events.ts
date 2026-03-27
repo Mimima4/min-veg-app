@@ -113,11 +113,7 @@ function getReminderSchedule({
     return null;
   }
 
-  if (reminderTime.getTime() > now.getTime()) {
-    return reminderTime;
-  }
-
-  return now;
+  return reminderTime;
 }
 
 export function buildBillingNotificationEvents({

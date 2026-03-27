@@ -219,18 +219,18 @@ export function renderBillingNotificationTemplate(
       const currentPeriodEndsAt = getString(payload, "currentPeriodEndsAt");
       const subject = "Your subscription is active";
       const previewText =
-        "Thank you for choosing Min Veg. Your paid subscription is now active.";
+        "Thank you for your trust and for choosing Min Veg. This confirms your first successful paid activation.";
 
       const shell = renderShell({
         title: subject,
         greetingName,
         intro:
-          "Thank you for your trust and for choosing Min Veg. Your paid subscription is now active.",
+          "Thank you for your trust and for choosing Min Veg. This message confirms the successful activation of your paid subscription.",
         bodyLines: [
           currentPeriodEndsAt
-            ? `Current period end: ${currentPeriodEndsAt}.`
-            : "Your subscription has been activated successfully.",
-          "You can review subscription settings and auto-renew in your account.",
+            ? `Current billing period end: ${currentPeriodEndsAt}.`
+            : "Your paid subscription has been activated successfully.",
+          "You can review subscription settings and auto-renew in your account at any time.",
         ],
         footer: "This is a billing confirmation from Min Veg.",
       });
@@ -239,21 +239,21 @@ export function renderBillingNotificationTemplate(
     }
 
     case "subscription_renewed_success": {
-      const nextBillingAt = getString(payload, "nextBillingAt");
+      const currentPeriodEndsAt = getString(payload, "currentPeriodEndsAt");
       const subject = "Your subscription has been renewed";
       const previewText =
-        "Thank you for your continued trust. Your Min Veg subscription has been renewed.";
+        "Payment for Min Veg was processed successfully. Thank you for your continued trust and for choosing the app.";
 
       const shell = renderShell({
         title: subject,
         greetingName,
         intro:
-          "Thank you for your continued trust and for choosing Min Veg. Your subscription has been renewed successfully.",
+          "Your payment for Min Veg was processed successfully, and your subscription has been renewed. Thank you for your continued trust and for choosing the app.",
         bodyLines: [
-          nextBillingAt
-            ? `Next billing date: ${nextBillingAt}.`
-            : "The next subscription period has started successfully.",
-          "This message confirms that the recent payment was for Min Veg.",
+          currentPeriodEndsAt
+            ? `Current billing period end: ${currentPeriodEndsAt}.`
+            : "A new paid subscription period has started successfully.",
+          "This confirmation helps you identify that the recent charge was for Min Veg.",
         ],
         footer: "This is a billing confirmation from Min Veg.",
       });
