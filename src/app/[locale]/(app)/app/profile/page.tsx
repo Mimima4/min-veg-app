@@ -8,6 +8,7 @@ import SignOutButton from "@/components/auth/sign-out-button";
 import ProfileForm from "./profile-form";
 import SubscriptionSettingsForm from "./subscription-settings-form";
 import { getUserAccessState } from "@/server/billing/get-user-access-state";
+import { requireAppAccess } from "@/server/billing/require-app-access";
 
 export default async function ProfilePage({
   params,
@@ -15,6 +16,15 @@ export default async function ProfilePage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+  const gate = await requireAppAccess({
+    locale,
+    pathname: `/${locale}/app/profile`,
+  });
+
+  if (gate.readonly) {
+    redirect(`/${locale}/app/family`);
+  }
+
   const supabase = await createClient();
 
   async function updateAutoRenew(formData: FormData) {

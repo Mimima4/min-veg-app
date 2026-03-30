@@ -8,16 +8,32 @@ import UpgradeChildLimitButton from "./upgrade-child-limit-button";
 import ResetFamilyStateButton from "./reset-family-state-button";
 import { getFamilyPageData } from "@/server/family/overview/get-family-page-data";
 import { getUserAccessState } from "@/server/billing/get-user-access-state";
+import { requireAppAccess } from "@/server/billing/require-app-access";
 
 function SummaryMetricLink({
   label,
   value,
   href,
+  disabled = false,
 }: {
   label: string;
   value: string | number;
   href: string;
+  disabled?: boolean;
 }) {
+  if (disabled) {
+    return (
+      <div className="rounded-2xl border border-stone-200 bg-white p-4 opacity-70">
+        <div className="text-[11px] font-medium uppercase tracking-[0.16em] text-stone-500">
+          {label}
+        </div>
+        <div className="mt-2 text-2xl font-semibold tracking-tight text-stone-900">
+          {value}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Link
       href={href}
@@ -77,6 +93,31 @@ function formatTrialRemainingLabel(trialEndsAt: string | null): string {
   return `${minutes}m left`;
 }
 
+function inferBillingCycle(
+  planCode: string | null | undefined,
+  planType: string | null | undefined
+): "monthly" | "yearly" | null {
+  const normalized = `${planCode ?? ""} ${planType ?? ""}`.toLowerCase();
+
+  if (normalized.includes("yearly") || normalized.includes("annual")) {
+    return "yearly";
+  }
+
+  if (normalized.includes("monthly") || normalized.includes("month")) {
+    return "monthly";
+  }
+
+  return null;
+}
+
+function DisabledActionPill({ label }: { label: string }) {
+  return (
+    <div className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-stone-100 px-4 py-2 text-sm text-stone-600 opacity-70">
+      {label}
+    </div>
+  );
+}
+
 async function resetFamilySetup(locale: string) {
   "use server";
 
@@ -133,6 +174,10 @@ export default async function FamilyPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+  const gate = await requireAppAccess({
+    locale,
+    pathname: `/${locale}/app/family`,
+  });
 
   const result = await getFamilyPageData({ locale });
 
@@ -251,6 +296,16 @@ export default async function FamilyPage({
   const { familyAccount, entitlements, children } = result.data;
   const trialState = entitlements.activation?.trialState;
   const trialEndsAt = entitlements.activation?.trialEndsAt ?? null;
+  const lifecycleState = entitlements.activation.subscriptionLifecycleState;
+  const billingCycle = inferBillingCycle(
+    familyAccount.plan_code,
+    familyAccount.plan_type
+  );
+  const graceTimer = billingCycle === "yearly" ? "72h" : "24h";
+  const canceledAccessEndsAt = entitlements.activation.currentPeriodEndsAt;
+  const isGracePeriod = lifecycleState === "grace_period";
+  const isCanceledWithAccess =
+    lifecycleState === "canceled" && entitlements.activation.hasActiveAccess;
 
   return (
     <LocalePageShell
@@ -274,12 +329,16 @@ export default async function FamilyPage({
             </p>
 
             <div className="mt-4">
-              <Link
-                href={`/${locale}/pricing?entry=family`}
-                className="inline-flex items-center justify-center rounded-full border border-stone-900 bg-stone-900 px-4 py-2 text-sm text-white transition hover:bg-stone-800"
-              >
-                Choose family plan
-              </Link>
+              {gate.readonly ? (
+                <DisabledActionPill label="Choose family plan" />
+              ) : (
+                <Link
+                  href={`/${locale}/pricing?entry=family`}
+                  className="inline-flex items-center justify-center rounded-full border border-stone-900 bg-stone-900 px-4 py-2 text-sm text-white transition hover:bg-stone-800"
+                >
+                  Choose family plan
+                </Link>
+              )}
             </div>
           </div>
         ) : null}
@@ -295,12 +354,16 @@ export default async function FamilyPage({
             </p>
 
             <div className="mt-4">
-              <Link
-                href={`/${locale}/pricing?entry=family`}
-                className="inline-flex items-center justify-center rounded-full border border-stone-900 bg-stone-900 px-4 py-2 text-sm text-white transition hover:bg-stone-800"
-              >
-                Continue with paid family plan
-              </Link>
+              {gate.readonly ? (
+                <DisabledActionPill label="Continue with paid family plan" />
+              ) : (
+                <Link
+                  href={`/${locale}/pricing?entry=family`}
+                  className="inline-flex items-center justify-center rounded-full border border-stone-900 bg-stone-900 px-4 py-2 text-sm text-white transition hover:bg-stone-800"
+                >
+                  Continue with paid family plan
+                </Link>
+              )}
             </div>
           </div>
         ) : null}
@@ -311,7 +374,10 @@ export default async function FamilyPage({
               Family account
             </h2>
 
-            <ResetFamilyStateButton action={resetFamilySetup.bind(null, locale)} />
+            <ResetFamilyStateButton
+              action={resetFamilySetup.bind(null, locale)}
+              disabled={gate.readonly}
+            />
           </div>
 
           <dl className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -346,6 +412,29 @@ export default async function FamilyPage({
             ) : null}
           </dl>
 
+          {isGracePeriod ? (
+            <div className="mt-5 rounded-xl border border-yellow-300 bg-yellow-50 p-4 text-sm text-stone-800">
+              <p>This account is in a grace period. Access may stop soon.</p>
+              <p className="mt-1 text-stone-600">Timer: {graceTimer}</p>
+            </div>
+          ) : null}
+
+          {isCanceledWithAccess ? (
+            <div className="mt-5 rounded-xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-700">
+              Access remains active until{" "}
+              {canceledAccessEndsAt
+                ? new Date(canceledAccessEndsAt).toLocaleString()
+                : "—"}
+            </div>
+          ) : null}
+
+          {gate.readonly ? (
+            <div className="mt-5 rounded-xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-700">
+              This account is not active. You can view data, but actions are
+              disabled.
+            </div>
+          ) : null}
+
           {entitlements.restrictionMessage ? (
             <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
               {entitlements.restrictionMessage}
@@ -364,7 +453,9 @@ export default async function FamilyPage({
               </p>
             </div>
 
-            {entitlements.canCreateChild ? (
+            {gate.readonly ? (
+              <DisabledActionPill label="Create child profile" />
+            ) : entitlements.canCreateChild ? (
               <Link
                 href={`/${locale}/app/children/create`}
                 className="inline-flex items-center justify-center rounded-full border border-stone-900 bg-stone-900 px-5 py-2.5 text-sm text-white transition hover:bg-stone-800"
@@ -434,44 +525,58 @@ export default async function FamilyPage({
                             label="Current signals"
                             value={child.currentSignalsCount}
                             href={child.currentSignalsHref}
+                            disabled={gate.readonly}
                           />
                           <SummaryMetricLink
                             label="Derived strengths"
                             value={child.derivedStrengthCount}
                             href={child.derivedStrengthsHref}
+                            disabled={gate.readonly}
                           />
                           <SummaryMetricLink
                             label="Matching professions"
                             value={child.matchingProfessionCount}
                             href={child.matchingProfessionsHref}
+                            disabled={gate.readonly}
                           />
                           <SummaryMetricLink
                             label="Saved professions"
                             value={child.savedProfessionCount}
                             href={child.savedProfessionsHref}
+                            disabled={gate.readonly}
                           />
                           <SummaryMetricLink
                             label="Saved study routes"
                             value={child.savedStudyRouteCount}
                             href={child.savedStudyRoutesHref}
+                            disabled={gate.readonly}
                           />
                         </div>
                       </div>
 
                       <div className="flex w-full flex-col gap-2 lg:min-w-[12.5rem]">
-                        <Link
-                          href={child.profileHref}
-                          className="inline-flex w-full items-center justify-center rounded-full border border-stone-900 bg-stone-900 px-4 py-2 text-sm text-white transition hover:bg-stone-800"
-                        >
-                          Open child profile
-                        </Link>
+                        {gate.readonly ? (
+                          <>
+                            <DisabledActionPill label="Open child profile" />
+                            <DisabledActionPill label="Open child summary" />
+                          </>
+                        ) : (
+                          <>
+                            <Link
+                              href={child.profileHref}
+                              className="inline-flex w-full items-center justify-center rounded-full border border-stone-900 bg-stone-900 px-4 py-2 text-sm text-white transition hover:bg-stone-800"
+                            >
+                              Open child profile
+                            </Link>
 
-                        <Link
-                          href={child.summaryHref}
-                          className="inline-flex w-full items-center justify-center rounded-full border border-stone-300 bg-white px-4 py-2 text-sm text-stone-900 transition hover:border-stone-400"
-                        >
-                          Open child summary
-                        </Link>
+                            <Link
+                              href={child.summaryHref}
+                              className="inline-flex w-full items-center justify-center rounded-full border border-stone-300 bg-white px-4 py-2 text-sm text-stone-900 transition hover:border-stone-400"
+                            >
+                              Open child summary
+                            </Link>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>

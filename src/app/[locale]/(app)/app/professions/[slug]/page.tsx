@@ -13,6 +13,7 @@ import {
   getSchoolSubjectLabel,
 } from "@/lib/planning/profession-tag-catalog";
 import SaveProfessionForChildForm from "./save-profession-for-child-form";
+import { requireAppAccess } from "@/server/billing/require-app-access";
 
 function formatSalary(value: number | null) {
   if (!value) return "—";
@@ -73,6 +74,14 @@ export default async function ProfessionDetailPage({
   params: Promise<{ locale: string; slug: string }>;
 }) {
   const { locale, slug } = await params;
+  const gate = await requireAppAccess({
+    locale,
+    pathname: `/${locale}/app/professions/${slug}`,
+  });
+  if (gate.readonly) {
+    redirect(`/${locale}/app/family`);
+  }
+
   const supabase = await createClient();
 
   const {

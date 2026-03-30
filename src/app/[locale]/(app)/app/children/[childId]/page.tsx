@@ -23,6 +23,7 @@ import type {
   PreferredEducationLevel,
   PreferredWorkStyle,
 } from "@/server/children/planning/get-child-planning-state";
+import { requireAppAccess } from "@/server/billing/require-app-access";
 
 function TagList({
   title,
@@ -126,6 +127,13 @@ export default async function ChildDetailPage({
   params: Promise<{ locale: string; childId: string }>;
 }) {
   const { locale, childId } = await params;
+  const gate = await requireAppAccess({
+    locale,
+    pathname: `/${locale}/app/children/${childId}`,
+  });
+  if (gate.readonly) {
+    redirect(`/${locale}/app/family`);
+  }
 
   const result = await getChildProfilePageData({ locale, childId });
 

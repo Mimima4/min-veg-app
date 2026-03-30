@@ -17,7 +17,7 @@
 do $$
 declare
   target_email text := 'lenkevich85@gmail.com';
-  preset_name text := 'grace_period';
+  preset_name text := 'canceled_ended';
 
   target_user_id uuid;
   existing_family_id uuid;

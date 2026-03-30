@@ -45,6 +45,37 @@ function getGreetingName(payload: Record<string, unknown> | null): string | null
   return null;
 }
 
+function formatDateTimeForNorway(value: string | null): string | null {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = new Date(value);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+
+  const formatted = new Intl.DateTimeFormat("nb-NO", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "Europe/Oslo",
+  }).format(parsed);
+
+  return formatted;
+}
+
+function getFormattedDateTime(
+  payload: Record<string, unknown> | null,
+  key: string
+): string | null {
+  return formatDateTimeForNorway(getString(payload, key));
+}
+
 function renderShell(args: {
   title: string;
   greetingName: string | null;
@@ -122,7 +153,7 @@ export function renderBillingNotificationTemplate(
 
   switch (eventType) {
     case "trial_ending_6h": {
-      const trialEndsAt = getString(payload, "trialEndsAt");
+      const trialEndsAt = getFormattedDateTime(payload, "trialEndsAt");
       const subject = "Your 3-day trial ends soon";
       const previewText =
         "Less than 6 hours remain. Your account will stay saved after the trial ends.";
@@ -146,7 +177,7 @@ export function renderBillingNotificationTemplate(
     }
 
     case "trial_expired": {
-      const trialEndsAt = getString(payload, "trialEndsAt");
+      const trialEndsAt = getFormattedDateTime(payload, "trialEndsAt");
       const subject = "Your trial has ended";
       const previewText =
         "Your account is still saved. Continue with a family plan when you are ready.";
@@ -170,7 +201,7 @@ export function renderBillingNotificationTemplate(
     }
 
     case "subscription_ending_3d": {
-      const currentPeriodEndsAt = getString(payload, "currentPeriodEndsAt");
+      const currentPeriodEndsAt = getFormattedDateTime(payload, "currentPeriodEndsAt");
       const subject = "Your monthly subscription ends soon";
       const previewText =
         "Your subscription is set to end in 3 days because auto-renew is turned off.";
@@ -193,7 +224,7 @@ export function renderBillingNotificationTemplate(
     }
 
     case "subscription_ending_7d": {
-      const currentPeriodEndsAt = getString(payload, "currentPeriodEndsAt");
+      const currentPeriodEndsAt = getFormattedDateTime(payload, "currentPeriodEndsAt");
       const subject = "Your yearly subscription ends soon";
       const previewText =
         "Your subscription is set to end in 7 days because auto-renew is turned off.";
@@ -216,7 +247,7 @@ export function renderBillingNotificationTemplate(
     }
 
     case "subscription_started_success": {
-      const currentPeriodEndsAt = getString(payload, "currentPeriodEndsAt");
+      const currentPeriodEndsAt = getFormattedDateTime(payload, "currentPeriodEndsAt");
       const subject = "Your subscription is active";
       const previewText =
         "Thank you for your trust and for choosing Min Veg. This confirms your first successful paid activation.";
@@ -239,7 +270,7 @@ export function renderBillingNotificationTemplate(
     }
 
     case "subscription_renewed_success": {
-      const currentPeriodEndsAt = getString(payload, "currentPeriodEndsAt");
+      const currentPeriodEndsAt = getFormattedDateTime(payload, "currentPeriodEndsAt");
       const subject = "Your subscription has been renewed";
       const previewText =
         "Payment for Min Veg was processed successfully. Thank you for your continued trust and for choosing the app.";
@@ -262,7 +293,7 @@ export function renderBillingNotificationTemplate(
     }
 
     case "payment_failed": {
-      const paymentFailedAt = getString(payload, "paymentFailedAt");
+      const paymentFailedAt = getFormattedDateTime(payload, "paymentFailedAt");
       const subject = "Payment issue detected";
       const previewText =
         "We could not process your payment. Please update your payment details.";
@@ -285,7 +316,7 @@ export function renderBillingNotificationTemplate(
     }
 
     case "grace_period_ending_24h": {
-      const gracePeriodEndsAt = getString(payload, "gracePeriodEndsAt");
+      const gracePeriodEndsAt = getFormattedDateTime(payload, "gracePeriodEndsAt");
       const subject = "Grace period ends soon";
       const previewText =
         "Less than 24 hours remain before access may be restricted.";

@@ -16,11 +16,17 @@ create table if not exists public.billing_subscription_events (
     )
   ),
   event_at timestamptz not null default now(),
+  plan_code text null,
+  subscription_state text null,
   current_period_starts_at timestamptz null,
   current_period_ends_at timestamptz null,
-  billing_cycle text null check (
-    billing_cycle in ('monthly', 'yearly')
-  ),
+  next_billing_at timestamptz null,
+  auto_renew_enabled boolean null,
+  grace_period_ends_at timestamptz null,
+  payment_failed_at timestamptz null,
+  last_payment_status text null,
+  canceled_at timestamptz null,
+  billing_cycle text null check (billing_cycle in ('monthly', 'yearly')),
   source text not null default 'system',
   external_event_id text null,
   payload jsonb not null default '{}'::jsonb,
@@ -29,14 +35,16 @@ create table if not exists public.billing_subscription_events (
 );
 
 create unique index if not exists billing_subscription_events_external_event_idx
-  on public.billing_subscription_events(external_event_id)
-  where external_event_id is not null;
+  on public.billing_subscription_events(external_event_id);
 
 create index if not exists billing_subscription_events_family_idx
   on public.billing_subscription_events(family_account_id, event_at desc);
 
 create index if not exists billing_subscription_events_user_idx
   on public.billing_subscription_events(primary_user_id, event_at desc);
+
+create index if not exists billing_subscription_events_family_projection_idx
+  on public.billing_subscription_events(family_account_id, event_at desc, created_at desc);
 
 create or replace function public.set_billing_subscription_events_updated_at()
 returns trigger

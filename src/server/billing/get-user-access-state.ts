@@ -289,15 +289,14 @@ export function getDefaultHrefForAccessState(
     case "paid_active":
     case "trial_active":
     case "no_family_paid":
-      return `/${locale}/app/family`;
-    case "trial_expired":
-    case "inactive_access":
-      return `/${locale}/pricing?entry=family`;
-    case "institutional_pending":
-      return `/${locale}/pricing?entry=institutional`;
     case "no_family_trial_available":
     case "no_family_no_trial":
+      return `/${locale}/app/family`;
+    case "institutional_pending":
+    case "trial_expired":
+    case "inactive_access":
+      return `/${locale}/resolve-access`;
     default:
-      return `/${locale}`;
+      return `/${locale}/app/family`;
   }
 }

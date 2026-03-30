@@ -7,6 +7,7 @@ import CompareProfessionButton from "@/components/planning/compare-profession-bu
 import CompareProfessionsButton from "@/components/planning/compare-professions-button";
 import SaveProfessionToChildButton from "../save-profession-to-child-button";
 import { getChildSummaryPageData } from "@/server/children/summary/get-child-summary-page-data";
+import { requireAppAccess } from "@/server/billing/require-app-access";
 
 function TagList({
   title,
@@ -93,6 +94,13 @@ export default async function ChildSummaryPage({
   params: Promise<{ locale: string; childId: string }>;
 }) {
   const { locale, childId } = await params;
+  const gate = await requireAppAccess({
+    locale,
+    pathname: `/${locale}/app/children/${childId}/summary`,
+  });
+  if (gate.readonly) {
+    redirect(`/${locale}/app/family`);
+  }
 
   const result = await getChildSummaryPageData({ locale, childId });
 

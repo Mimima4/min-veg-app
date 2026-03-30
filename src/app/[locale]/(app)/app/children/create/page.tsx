@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getAccountEntitlements } from "@/server/billing/get-account-entitlements";
 import UpgradeChildLimitButton from "../../family/upgrade-child-limit-button";
 import CreateChildForm from "./create-child-form";
+import { requireAppAccess } from "@/server/billing/require-app-access";
 
 export default async function CreateChildPage({
   params,
@@ -12,6 +13,14 @@ export default async function CreateChildPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+  const gate = await requireAppAccess({
+    locale,
+    pathname: `/${locale}/app/children/create`,
+  });
+  if (gate.readonly) {
+    redirect(`/${locale}/app/family`);
+  }
+
   const supabase = await createClient();
 
   const entitlementsResult = await getAccountEntitlements({

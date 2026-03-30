@@ -18,6 +18,13 @@ export type FamilyAccountRow = {
   trial_started_at: string | null;
   trial_ends_at: string | null;
   trial_used: boolean | null;
+  current_period_ends_at: string | null;
+  next_billing_at: string | null;
+  auto_renew_enabled: boolean | null;
+  grace_period_ends_at: string | null;
+  payment_failed_at: string | null;
+  canceled_at: string | null;
+  last_payment_status: string | null;
   max_children: number | null;
   created_at: string;
 };
@@ -66,7 +73,7 @@ export async function getAccountEntitlements({
   const { data: familyAccount, error: familyError } = await supabase
     .from("family_accounts")
     .select(
-      "id, plan_type, status, subscription_state, entry_source, activation_source, plan_code, trial_started_at, trial_ends_at, trial_used, max_children, created_at"
+      "id, plan_type, status, subscription_state, entry_source, activation_source, plan_code, trial_started_at, trial_ends_at, trial_used, current_period_ends_at, next_billing_at, auto_renew_enabled, grace_period_ends_at, payment_failed_at, canceled_at, last_payment_status, max_children, created_at"
     )
     .eq("primary_user_id", user.id)
     .maybeSingle();

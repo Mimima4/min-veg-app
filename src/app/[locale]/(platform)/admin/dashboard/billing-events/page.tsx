@@ -101,10 +101,14 @@ export default async function BillingEventsPreviewPage({
       ...row,
       recipient: getString(payload, "email") ?? "—",
       recipientName: getString(payload, "recipientName") ?? "—",
-      subject: getString(delivery, "subject") ?? rendered.subject,
-      previewText: getString(delivery, "previewText") ?? rendered.previewText,
-      textBody: getString(delivery, "textBody") ?? rendered.textBody,
-      htmlBody: getString(delivery, "htmlBody") ?? rendered.htmlBody,
+      subject: rendered.subject,
+      previewText: rendered.previewText,
+      textBody: rendered.textBody,
+      htmlBody: rendered.htmlBody,
+      deliveredSubject: getString(delivery, "subject"),
+      deliveredPreviewText: getString(delivery, "previewText"),
+      deliveredTextBody: getString(delivery, "textBody"),
+      deliveredHtmlBody: getString(delivery, "htmlBody"),
       provider: getString(delivery, "provider"),
       messageId: getString(delivery, "messageId"),
       processedAt: getString(delivery, "processedAt"),
@@ -216,11 +220,22 @@ export default async function BillingEventsPreviewPage({
             ) : null}
 
             <div className="mt-5">
-              <p className="text-sm font-medium text-stone-900">Text preview</p>
+              <p className="text-sm font-medium text-stone-900">Current template preview</p>
               <pre className="mt-2 overflow-x-auto rounded-xl border border-stone-200 bg-stone-50 p-4 text-xs leading-6 text-stone-700 whitespace-pre-wrap">
                 {row.textBody}
               </pre>
             </div>
+
+            {row.deliveredTextBody && row.deliveredTextBody !== row.textBody ? (
+              <div className="mt-5">
+                <p className="text-sm font-medium text-stone-900">
+                  Delivered snapshot
+                </p>
+                <pre className="mt-2 overflow-x-auto rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs leading-6 text-stone-700 whitespace-pre-wrap">
+                  {row.deliveredTextBody}
+                </pre>
+              </div>
+            ) : null}
           </div>
         ))}
       </div>

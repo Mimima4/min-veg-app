@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+
 import { ingestBillingSubscriptionEvent } from "@/server/billing/ingest-billing-subscription-event";
 import type { BillingSubscriptionEventType } from "@/server/billing/record-billing-subscription-event";
 
@@ -50,6 +51,37 @@ function parseEventType(value: unknown): BillingSubscriptionEventType {
   throw new Error(`Unsupported billing subscription event type: ${value}`);
 }
 
+function parseNullableBoolean(value: unknown): boolean | null {
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const normalized = value.trim().toLowerCase();
+
+  if (normalized === "true") {
+    return true;
+  }
+
+  if (normalized === "false") {
+    return false;
+  }
+
+  return null;
+}
+
+function parseNullableText(value: unknown): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+}
+
 export async function POST(request: Request) {
   const expectedSecret = process.env.BILLING_SYNC_SECRET;
 
@@ -73,24 +105,25 @@ export async function POST(request: Request) {
     const body = asRecord(await request.json());
 
     const result = await ingestBillingSubscriptionEvent({
-      email: typeof body.email === "string" ? body.email : "",
+      email: parseNullableText(body.email) ?? "",
       eventType: parseEventType(body.eventType),
-      eventAt: typeof body.eventAt === "string" ? body.eventAt : null,
-      currentPeriodStartsAt:
-        typeof body.currentPeriodStartsAt === "string"
-          ? body.currentPeriodStartsAt
-          : null,
-      currentPeriodEndsAt:
-        typeof body.currentPeriodEndsAt === "string"
-          ? body.currentPeriodEndsAt
-          : null,
+      eventAt: parseNullableText(body.eventAt),
+      planCode: parseNullableText(body.planCode),
+      subscriptionState: parseNullableText(body.subscriptionState),
+      currentPeriodStartsAt: parseNullableText(body.currentPeriodStartsAt),
+      currentPeriodEndsAt: parseNullableText(body.currentPeriodEndsAt),
+      nextBillingAt: parseNullableText(body.nextBillingAt),
       billingCycle:
         body.billingCycle === "monthly" || body.billingCycle === "yearly"
           ? body.billingCycle
           : null,
-      source: typeof body.source === "string" ? body.source : "internal_ingest",
-      externalEventId:
-        typeof body.externalEventId === "string" ? body.externalEventId : null,
+      autoRenewEnabled: parseNullableBoolean(body.autoRenewEnabled),
+      gracePeriodEndsAt: parseNullableText(body.gracePeriodEndsAt),
+      paymentFailedAt: parseNullableText(body.paymentFailedAt),
+      lastPaymentStatus: parseNullableText(body.lastPaymentStatus),
+      canceledAt: parseNullableText(body.canceledAt),
+      source: parseNullableText(body.source) ?? "internal_ingest",
+      externalEventId: parseNullableText(body.externalEventId),
       payload: asRecord(body.payload),
     });
 
@@ -99,6 +132,7 @@ export async function POST(request: Request) {
       subscriptionEventId: result.subscriptionEventId,
       familyAccountId: result.familyAccountId,
       primaryUserId: result.primaryUserId,
+      projectedBillingSnapshot: result.projectedBillingSnapshot,
       sync: result.syncResult,
     });
   } catch (error) {

@@ -30,6 +30,7 @@ import {
   matchesWorkStyle,
 } from "@/lib/planning/profession-fit-utils";
 import SaveProfessionToChildButton from "../save-profession-to-child-button";
+import { requireAppAccess } from "@/server/billing/require-app-access";
 
 type ExplorerProfession = {
   id: string;
@@ -129,6 +130,14 @@ export default async function ChildMatchesPage({
   params: Promise<{ locale: string; childId: string }>;
 }) {
   const { locale, childId } = await params;
+  const gate = await requireAppAccess({
+    locale,
+    pathname: `/${locale}/app/children/${childId}/matches`,
+  });
+  if (gate.readonly) {
+    redirect(`/${locale}/app/family`);
+  }
+
   const supabase = await createClient();
 
   const {

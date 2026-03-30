@@ -19,6 +19,7 @@ import {
   getSchoolSubjectLabel,
 } from "@/lib/planning/profession-tag-catalog";
 import SaveProfessionToChildButton from "../save-profession-to-child-button";
+import { requireAppAccess } from "@/server/billing/require-app-access";
 
 function TagList({
   title,
@@ -81,6 +82,14 @@ export default async function ChildComparePage({
   searchParams: Promise<{ ids?: string | string[] }>;
 }) {
   const { locale, childId } = await params;
+  const gate = await requireAppAccess({
+    locale,
+    pathname: `/${locale}/app/children/${childId}/compare`,
+  });
+  if (gate.readonly) {
+    redirect(`/${locale}/app/family`);
+  }
+
   const resolvedSearchParams = await searchParams;
   const supabase = await createClient();
 

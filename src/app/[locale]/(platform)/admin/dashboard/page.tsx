@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
 import { LocalePageShell } from "@/components/layout/locale-page-shell";
+import { createAdminClient } from "@/lib/supabase/admin";
 import IngestBillingSubscriptionEventForm from "./ingest-billing-subscription-event-form";
 import ProcessBillingEventsForm from "./process-billing-events-form";
 import SyncBillingEventsForm from "./sync-billing-events-form";
@@ -8,12 +9,53 @@ import { ingestBillingSubscriptionEvent } from "@/server/billing/ingest-billing-
 import { processBillingNotificationEvents } from "@/server/billing/process-billing-notification-events";
 import { syncBillingNotificationEvents } from "@/server/billing/sync-billing-notification-events";
 
+type ProviderAuditHealthRow = {
+  id: string;
+  status: string;
+  replay_count: number | null;
+  received_at: string;
+};
+
 export default async function AdminDashboardPage({
   params,
 }: {
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+
+  const admin = createAdminClient();
+  const { data: auditData, error: auditError } = await admin
+    .from("provider_billing_event_audits")
+    .select("id, status, replay_count, received_at")
+    .order("received_at", { ascending: false })
+    .limit(200);
+
+  const auditRows: ProviderAuditHealthRow[] = auditError
+    ? []
+    : (((auditData ?? []) as unknown) as ProviderAuditHealthRow[]);
+
+  let processedCount = 0;
+  let failedCount = 0;
+  let rejectedCount = 0;
+  let replayUsedCount = 0;
+
+  for (const row of auditRows) {
+    if (row.status === "processed") {
+      processedCount += 1;
+    }
+    if (row.status === "failed") {
+      failedCount += 1;
+    }
+    if (row.status === "rejected") {
+      rejectedCount += 1;
+    }
+    if ((row.replay_count ?? 0) > 0) {
+      replayUsedCount += 1;
+    }
+  }
+
+  const needsAttentionCount = failedCount + rejectedCount;
+  const auditsEmpty = !auditError && auditRows.length === 0;
 
   async function runBillingEventSync() {
     "use server";
@@ -75,6 +117,7 @@ export default async function AdminDashboardPage({
       backHref={`/${locale}`}
       navLinks={[
         { href: `/${locale}/owner/dashboard`, label: "Owner Dashboard" },
+        { href: `/${locale}/admin/dashboard/provider-events`, label: "Provider Events" },
       ]}
     >
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
@@ -138,6 +181,95 @@ export default async function AdminDashboardPage({
             <IngestBillingSubscriptionEventForm
               action={runBillingSubscriptionEventIngest}
             />
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-stone-200 bg-white p-6 lg:col-span-2">
+          <h2 className="text-lg font-semibold text-stone-900">
+            Provider event health
+          </h2>
+          <p className="mt-2 text-sm leading-relaxed text-stone-600">
+            Quick visibility into recent webhook and provider processing state
+            (last 200 audit rows). Open a slice on the audits page with one click.
+          </p>
+
+          {auditError ? (
+            <p className="mt-3 text-xs text-stone-500">
+              Unable to load provider audit summary: {auditError.message}
+            </p>
+          ) : null}
+
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            <Link
+              href={`/${locale}/admin/dashboard/provider-events?preset=processed`}
+              className="rounded-xl border border-stone-200 bg-stone-50 p-4 transition hover:bg-stone-100"
+            >
+              <p className="text-2xl font-semibold tabular-nums text-stone-900">
+                {processedCount}
+              </p>
+              <p className="mt-1 text-sm text-stone-600">Processed</p>
+            </Link>
+            <Link
+              href={`/${locale}/admin/dashboard/provider-events?preset=failed`}
+              className="rounded-xl border border-stone-200 bg-stone-50 p-4 transition hover:bg-stone-100"
+            >
+              <p className="text-2xl font-semibold tabular-nums text-stone-900">
+                {failedCount}
+              </p>
+              <p className="mt-1 text-sm text-stone-600">Failed</p>
+            </Link>
+            <Link
+              href={`/${locale}/admin/dashboard/provider-events?preset=rejected`}
+              className="rounded-xl border border-stone-200 bg-stone-50 p-4 transition hover:bg-stone-100"
+            >
+              <p className="text-2xl font-semibold tabular-nums text-stone-900">
+                {rejectedCount}
+              </p>
+              <p className="mt-1 text-sm text-stone-600">Rejected</p>
+            </Link>
+            <Link
+              href={`/${locale}/admin/dashboard/provider-events?preset=needs-attention`}
+              className="rounded-xl border border-stone-200 bg-stone-50 p-4 transition hover:bg-stone-100"
+            >
+              <p className="text-2xl font-semibold tabular-nums text-stone-900">
+                {needsAttentionCount}
+              </p>
+              <p className="mt-1 text-sm text-stone-600">Needs attention</p>
+            </Link>
+            <Link
+              href={`/${locale}/admin/dashboard/provider-events?preset=replay-used`}
+              className="rounded-xl border border-stone-200 bg-stone-50 p-4 transition hover:bg-stone-100"
+            >
+              <p className="text-2xl font-semibold tabular-nums text-stone-900">
+                {replayUsedCount}
+              </p>
+              <p className="mt-1 text-sm text-stone-600">Replay used</p>
+            </Link>
+          </div>
+
+          {auditsEmpty ? (
+            <p className="mt-3 text-xs text-stone-500">
+              No provider audit events yet.
+            </p>
+          ) : null}
+        </div>
+
+        <div className="rounded-2xl border border-stone-200 bg-white p-6 lg:col-span-2">
+          <h2 className="text-lg font-semibold text-stone-900">
+            Provider event audits
+          </h2>
+          <p className="mt-2 text-sm leading-relaxed text-stone-600">
+            Open a read-only page for provider/webhook audit events, replay history,
+            mapping results, and processing errors.
+          </p>
+
+          <div className="mt-5">
+            <Link
+              href={`/${locale}/admin/dashboard/provider-events`}
+              className="inline-flex items-center justify-center rounded-full border border-stone-900 bg-stone-900 px-5 py-2.5 text-sm text-white transition hover:bg-stone-800"
+            >
+              Open provider event audits
+            </Link>
           </div>
         </div>
       </div>

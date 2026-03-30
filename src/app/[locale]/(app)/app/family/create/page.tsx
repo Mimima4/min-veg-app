@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { LocalePageShell } from "@/components/layout/locale-page-shell";
 import AppPrivateNav from "@/components/layout/app-private-nav";
 import CreateFamilyForm from "./create-family-form";
+import { requireAppAccess } from "@/server/billing/require-app-access";
 
 type EntryMode = "trial" | "paid";
 
@@ -28,6 +29,14 @@ export default async function CreateFamilyPage({
   searchParams: Promise<{ entry?: string }>;
 }) {
   const { locale } = await params;
+  const gate = await requireAppAccess({
+    locale,
+    pathname: `/${locale}/app/family/create`,
+  });
+  if (gate.readonly) {
+    redirect(`/${locale}/app/family`);
+  }
+
   const { entry } = await searchParams;
 
   const supabase = await createClient();

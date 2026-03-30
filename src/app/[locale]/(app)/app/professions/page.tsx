@@ -4,6 +4,7 @@ import { LocalePageShell } from "@/components/layout/locale-page-shell";
 import AppPrivateNav from "@/components/layout/app-private-nav";
 import type { SupportedLocale } from "@/lib/i18n/site-copy";
 import ProfessionsBrowser from "./professions-browser";
+import { requireAppAccess } from "@/server/billing/require-app-access";
 
 export default async function ProfessionsPage({
   params,
@@ -11,6 +12,14 @@ export default async function ProfessionsPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+  const gate = await requireAppAccess({
+    locale,
+    pathname: `/${locale}/app/professions`,
+  });
+  if (gate.readonly) {
+    redirect(`/${locale}/app/family`);
+  }
+
   const supabase = await createClient();
 
   const {

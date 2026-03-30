@@ -17,6 +17,7 @@ import {
   getProfessionStudyOptions,
   type ProfessionStudyOptionRow,
 } from "@/server/professions/study-options/get-profession-study-options";
+import { requireAppAccess } from "@/server/billing/require-app-access";
 
 function getStudyModeLabel(value: string, locale: SupportedLocale) {
   const labels = {
@@ -424,6 +425,13 @@ export default async function ChildEducationRoutePage({
   params: Promise<{ locale: string; childId: string; slug: string }>;
 }) {
   const { locale, childId, slug } = await params;
+  const gate = await requireAppAccess({
+    locale,
+    pathname: `/${locale}/app/children/${childId}/education/${slug}`,
+  });
+  if (gate.readonly) {
+    redirect(`/${locale}/app/family`);
+  }
 
   const result = await getProfessionStudyOptions({
     locale,

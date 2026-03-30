@@ -1,8 +1,10 @@
 import "server-only";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { projectBillingSubscriptionSnapshotToFamilyAccount } from "@/server/billing/project-billing-subscription-snapshot";
 import {
   recordBillingSubscriptionEvent,
+  type BillingSubscriptionCycle,
   type BillingSubscriptionEventType,
 } from "@/server/billing/record-billing-subscription-event";
 import { syncBillingNotificationEvents } from "@/server/billing/sync-billing-notification-events";
@@ -21,9 +23,17 @@ type Input = {
   email: string;
   eventType: BillingSubscriptionEventType;
   eventAt?: string | null;
+  planCode?: string | null;
+  subscriptionState?: string | null;
   currentPeriodStartsAt?: string | null;
   currentPeriodEndsAt?: string | null;
-  billingCycle?: "monthly" | "yearly" | null;
+  nextBillingAt?: string | null;
+  billingCycle?: BillingSubscriptionCycle | null;
+  autoRenewEnabled?: boolean | null;
+  gracePeriodEndsAt?: string | null;
+  paymentFailedAt?: string | null;
+  lastPaymentStatus?: string | null;
+  canceledAt?: string | null;
   source?: string;
   externalEventId?: string | null;
   payload?: Record<string, unknown>;
@@ -33,9 +43,19 @@ function normalizeEmail(value: string): string {
   return value.trim().toLowerCase();
 }
 
-function ensureAllowedEventType(
-  value: string
-): BillingSubscriptionEventType {
+function normalizeOptionalText(value: string | null | undefined): string | null {
+  const normalized = value?.trim();
+  return normalized && normalized.length > 0 ? normalized : null;
+}
+
+function normalizeOptionalLowerText(
+  value: string | null | undefined
+): string | null {
+  const normalized = value?.trim().toLowerCase();
+  return normalized && normalized.length > 0 ? normalized : null;
+}
+
+function ensureAllowedEventType(value: string): BillingSubscriptionEventType {
   if (ALLOWED_EVENT_TYPES.includes(value as BillingSubscriptionEventType)) {
     return value as BillingSubscriptionEventType;
   }
@@ -59,7 +79,6 @@ function normalizeOptionalIso(value: string | null | undefined): string | null {
 
 export async function ingestBillingSubscriptionEvent(input: Input) {
   const admin = createAdminClient();
-
   const email = normalizeEmail(input.email);
   const eventType = ensureAllowedEventType(input.eventType);
 
@@ -97,28 +116,68 @@ export async function ingestBillingSubscriptionEvent(input: Input) {
     throw new Error(`No family account found for ${email}.`);
   }
 
+  const normalizedPlanCode = normalizeOptionalLowerText(
+    input.planCode ?? familyAccount.plan_code ?? null
+  );
+  const normalizedSubscriptionState = normalizeOptionalLowerText(
+    input.subscriptionState ?? null
+  );
+  const normalizedEventAt = normalizeOptionalIso(input.eventAt ?? null);
+  const normalizedCurrentPeriodStartsAt = normalizeOptionalIso(
+    input.currentPeriodStartsAt ?? null
+  );
+  const normalizedCurrentPeriodEndsAt = normalizeOptionalIso(
+    input.currentPeriodEndsAt ?? null
+  );
+  const normalizedNextBillingAt = normalizeOptionalIso(
+    input.nextBillingAt ?? null
+  );
+  const normalizedGracePeriodEndsAt = normalizeOptionalIso(
+    input.gracePeriodEndsAt ?? null
+  );
+  const normalizedPaymentFailedAt = normalizeOptionalIso(
+    input.paymentFailedAt ?? null
+  );
+  const normalizedCanceledAt = normalizeOptionalIso(input.canceledAt ?? null);
+  const normalizedLastPaymentStatus = normalizeOptionalLowerText(
+    input.lastPaymentStatus ?? null
+  );
+
   const event = await recordBillingSubscriptionEvent({
     familyAccountId: familyAccount.id,
     primaryUserId: familyAccount.primary_user_id,
     eventType,
-    eventAt: normalizeOptionalIso(input.eventAt ?? null) ?? undefined,
-    currentPeriodStartsAt: normalizeOptionalIso(
-      input.currentPeriodStartsAt ?? null
-    ),
-    currentPeriodEndsAt: normalizeOptionalIso(
-      input.currentPeriodEndsAt ?? null
-    ),
+    eventAt: normalizedEventAt ?? undefined,
+    planCode: normalizedPlanCode,
+    subscriptionState: normalizedSubscriptionState,
+    currentPeriodStartsAt: normalizedCurrentPeriodStartsAt,
+    currentPeriodEndsAt: normalizedCurrentPeriodEndsAt,
+    nextBillingAt: normalizedNextBillingAt,
     billingCycle: input.billingCycle ?? null,
-    source: input.source ?? "internal_ingest",
-    externalEventId:
-      input.externalEventId && input.externalEventId.trim().length > 0
-        ? input.externalEventId.trim()
-        : null,
+    autoRenewEnabled: input.autoRenewEnabled ?? null,
+    gracePeriodEndsAt: normalizedGracePeriodEndsAt,
+    paymentFailedAt: normalizedPaymentFailedAt,
+    lastPaymentStatus: normalizedLastPaymentStatus,
+    canceledAt: normalizedCanceledAt,
+    source: normalizeOptionalText(input.source) ?? "internal_ingest",
+    externalEventId: normalizeOptionalText(input.externalEventId) ?? null,
     payload: {
-      planCode: familyAccount.plan_code ?? null,
+      planCode: normalizedPlanCode,
+      subscriptionState: normalizedSubscriptionState,
+      currentPeriodStartsAt: normalizedCurrentPeriodStartsAt,
+      currentPeriodEndsAt: normalizedCurrentPeriodEndsAt,
+      nextBillingAt: normalizedNextBillingAt,
+      autoRenewEnabled: input.autoRenewEnabled ?? null,
+      gracePeriodEndsAt: normalizedGracePeriodEndsAt,
+      paymentFailedAt: normalizedPaymentFailedAt,
+      lastPaymentStatus: normalizedLastPaymentStatus,
+      canceledAt: normalizedCanceledAt,
       ...(input.payload ?? {}),
     },
   });
+
+  const projectedBillingSnapshot =
+    await projectBillingSubscriptionSnapshotToFamilyAccount(familyAccount.id);
 
   const syncResult = await syncBillingNotificationEvents();
 
@@ -126,6 +185,7 @@ export async function ingestBillingSubscriptionEvent(input: Input) {
     subscriptionEventId: event.id,
     familyAccountId: familyAccount.id,
     primaryUserId: familyAccount.primary_user_id,
+    projectedBillingSnapshot,
     syncResult,
   };
 }
