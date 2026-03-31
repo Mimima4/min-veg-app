@@ -54,6 +54,15 @@ export type AccountEntitlements = {
   billingDiagnostics: {
     hasPaymentMismatch: boolean;
     reason: string | null;
+    reconciliationStatus:
+      | "consistent"
+      | "payment_missing"
+      | "payment_unapplied"
+      | "unknown";
+    reconciliationRecommendation:
+      | "no_action"
+      | "review_required"
+      | "safe_reconcile_payment_to_billing";
   };
 };
 
@@ -157,6 +166,15 @@ export async function getAccountEntitlements({
 
   let hasPaymentMismatch = false;
   let paymentMismatchReason: string | null = null;
+  let reconciliationStatus:
+    | "consistent"
+    | "payment_missing"
+    | "payment_unapplied"
+    | "unknown" = "consistent";
+  let reconciliationRecommendation:
+    | "no_action"
+    | "review_required"
+    | "safe_reconcile_payment_to_billing" = "no_action";
 
   const hasValidPayment = paymentFacts.paymentAnswers.hasValidProviderPayment;
   const lastPaymentStatus = typedFamilyAccount.last_payment_status;
@@ -165,6 +183,19 @@ export async function getAccountEntitlements({
     hasPaymentMismatch = true;
     paymentMismatchReason =
       "Valid payment exists but last_payment_status is failed";
+    reconciliationStatus = "payment_unapplied";
+  } else if (!hasValidPayment && lastPaymentStatus === "failed") {
+    reconciliationStatus = "payment_missing";
+  } else if (!hasValidPayment && lastPaymentStatus && lastPaymentStatus !== "failed") {
+    reconciliationStatus = "unknown";
+  }
+
+  if (hasPaymentMismatch) {
+    if (reconciliationStatus === "payment_unapplied") {
+      reconciliationRecommendation = "safe_reconcile_payment_to_billing";
+    } else {
+      reconciliationRecommendation = "review_required";
+    }
   }
 
   const { count: childCount, error: childCountError } = await supabase
@@ -228,6 +259,8 @@ export async function getAccountEntitlements({
       billingDiagnostics: {
         hasPaymentMismatch,
         reason: paymentMismatchReason,
+        reconciliationStatus,
+        reconciliationRecommendation,
       },
     },
   };

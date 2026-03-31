@@ -6,9 +6,11 @@ import { LocalePageShell } from "@/components/layout/locale-page-shell";
 import { createAdminClient } from "@/lib/supabase/admin";
 import IngestBillingSubscriptionEventForm from "./ingest-billing-subscription-event-form";
 import ProcessBillingEventsForm from "./process-billing-events-form";
+import ReconcilePaymentUnappliedForm from "./reconcile-payment-unapplied-form";
 import SyncBillingEventsForm from "./sync-billing-events-form";
 import { ingestBillingSubscriptionEvent } from "@/server/billing/ingest-billing-subscription-event";
 import { processBillingNotificationEvents } from "@/server/billing/process-billing-notification-events";
+import { reconcilePaymentUnapplied } from "@/server/billing/reconcile-payment-unapplied";
 import { syncBillingNotificationEvents } from "@/server/billing/sync-billing-notification-events";
 
 type ProviderAuditHealthRow = {
@@ -111,8 +113,27 @@ export default async function AdminDashboardPage({
     revalidatePath(`/${locale}/admin/dashboard/billing-events`);
   }
 
+  async function runPaymentUnappliedReconciliation() {
+    "use server";
 
-  const paymentFacts = await getPaymentFactsForBillingSubject({
+    await reconcilePaymentUnapplied({
+      locale,
+      familyAccountId: "61e089f7-1f53-40f6-871d-ce22ee67d9cd",
+    });
+
+    revalidatePath(`/${locale}/admin/dashboard`);
+  }
+
+
+  
+  const { data: reconciliationAudits } = await admin
+    .from("billing_reconciliation_audits")
+    .select("action, provider, previous_last_payment_status, new_last_payment_status, created_at")
+    .eq("family_account_id", "61e089f7-1f53-40f6-871d-ce22ee67d9cd")
+    .order("created_at", { ascending: false })
+    .limit(3);
+
+const paymentFacts = await getPaymentFactsForBillingSubject({
     billingSubjectType: "family",
     billingSubjectId: "61e089f7-1f53-40f6-871d-ce22ee67d9cd",
   });
@@ -193,8 +214,49 @@ export default async function AdminDashboardPage({
             <IngestBillingSubscriptionEventForm
               action={runBillingSubscriptionEventIngest}
             />
+
           </div>
         </div>
+
+          
+        <div className="rounded-2xl border border-stone-200 bg-white p-6">
+          <h2 className="text-lg font-semibold text-stone-900">
+            Reconciliation audit (latest)
+          </h2>
+          <p className="mt-2 text-sm text-stone-600">
+            Last reconciliation actions for this family account.
+          </p>
+
+          <div className="mt-4 space-y-3 text-sm text-stone-900">
+            {!reconciliationAudits || reconciliationAudits.length === 0 ? (
+              <p className="text-stone-500">
+                No reconciliation actions yet.
+              </p>
+            ) : (
+              reconciliationAudits.map((row, idx) => (
+                <div key={idx} className="rounded-xl border border-stone-200 p-3">
+                  <p>
+                    <span className="font-medium text-stone-600">Action:</span>{" "}
+                    {row.action}
+                  </p>
+                  <p>
+                    <span className="font-medium text-stone-600">Provider:</span>{" "}
+                    {row.provider ?? "—"}
+                  </p>
+                  <p>
+                    <span className="font-medium text-stone-600">Change:</span>{" "}
+                    {row.previous_last_payment_status ?? "—"} → {row.new_last_payment_status ?? "—"}
+                  </p>
+                  <p>
+                    <span className="font-medium text-stone-600">At:</span>{" "}
+                    {row.created_at}
+                  </p>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
 
         <div className="rounded-2xl border border-stone-200 bg-white p-6 lg:col-span-2">
           <h2 className="text-lg font-semibold text-stone-900">
@@ -278,7 +340,30 @@ export default async function AdminDashboardPage({
               <span className="font-medium text-stone-600">Latest payment at:</span>{" "}
               {paymentFacts.paymentAnswers.latestPaymentAt ?? "—"}
             </p>
+            <p>
+              <span className="font-medium text-stone-600">Reconciliation:</span>{" "}
+              {accountEntitlements.kind === "ok"
+                ? accountEntitlements.data.billingDiagnostics.reconciliationStatus
+                : "—"}
+            </p>
+            <p>
+              <span className="font-medium text-stone-600">Recommendation:</span>{" "}
+              {accountEntitlements.kind === "ok"
+                ? accountEntitlements.data.billingDiagnostics.reconciliationRecommendation
+                : "—"}
+            </p>
           </div>
+
+          {accountEntitlements.kind === "ok" &&
+          accountEntitlements.data.billingDiagnostics.reconciliationStatus === "payment_unapplied" &&
+          accountEntitlements.data.billingDiagnostics.reconciliationRecommendation ===
+            "safe_reconcile_payment_to_billing" ? (
+            <div className="mt-5">
+              <ReconcilePaymentUnappliedForm
+                action={runPaymentUnappliedReconciliation}
+              />
+            </div>
+          ) : null}
         </div>
 
         <div className="rounded-2xl border border-stone-200 bg-white p-6 lg:col-span-2">
