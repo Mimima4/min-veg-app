@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import {
   resolveAccountActivation,
   type AccountActivationState,
@@ -61,6 +62,7 @@ export async function getAccountEntitlements({
   supabase?: SupabaseServerClient;
 }): Promise<AccountEntitlementsResult> {
   const supabase = providedSupabase ?? (await createClient());
+  const admin = createAdminClient();
 
   const {
     data: { user },
@@ -70,28 +72,74 @@ export async function getAccountEntitlements({
     return { kind: "redirect", href: `/${locale}/login` };
   }
 
-  const { data: familyAccount, error: familyError } = await supabase
-    .from("family_accounts")
-    .select(
-      "id, plan_type, status, subscription_state, entry_source, activation_source, plan_code, trial_started_at, trial_ends_at, trial_used, current_period_ends_at, next_billing_at, auto_renew_enabled, grace_period_ends_at, payment_failed_at, canceled_at, last_payment_status, max_children, created_at"
-    )
-    .eq("primary_user_id", user.id)
+  const familyAccountSelect =
+    "id, plan_type, status, subscription_state, entry_source, activation_source, plan_code, trial_started_at, trial_ends_at, trial_used, current_period_ends_at, next_billing_at, auto_renew_enabled, grace_period_ends_at, payment_failed_at, canceled_at, last_payment_status, max_children, created_at";
+
+  let familyAccount: FamilyAccountRow | null = null;
+
+  const { data: linkedPartnerRow, error: linkedPartnerError } = await admin
+    .from("family_partner_links")
+    .select("family_account_id, primary_user_id, partner_user_id, status")
+    .eq("partner_user_id", user.id)
+    .eq("status", "linked")
     .maybeSingle();
 
-  if (familyError) {
+  if (linkedPartnerError) {
     return {
       kind: "error",
       title: "Account access",
       subtitle: "There was a problem loading your account entitlements.",
-      message: familyError.message,
+      message: linkedPartnerError.message,
     };
+  }
+
+  if (linkedPartnerRow?.family_account_id) {
+    const { data: linkedFamilyAccount, error: linkedFamilyError } = await admin
+      .from("family_accounts")
+      .select(familyAccountSelect)
+      .eq("id", linkedPartnerRow.family_account_id)
+      .maybeSingle();
+
+    if (linkedFamilyError) {
+      return {
+        kind: "error",
+        title: "Account access",
+        subtitle: "There was a problem loading your account entitlements.",
+        message: linkedFamilyError.message,
+      };
+    }
+
+    if (!linkedFamilyAccount) {
+      return { kind: "no_family" };
+    }
+
+    familyAccount = linkedFamilyAccount as FamilyAccountRow;
+  }
+
+  if (!familyAccount) {
+    const { data: primaryFamilyAccount, error: familyError } = await supabase
+      .from("family_accounts")
+      .select(familyAccountSelect)
+      .eq("primary_user_id", user.id)
+      .maybeSingle();
+
+    if (familyError) {
+      return {
+        kind: "error",
+        title: "Account access",
+        subtitle: "There was a problem loading your account entitlements.",
+        message: familyError.message,
+      };
+    }
+
+    familyAccount = primaryFamilyAccount as FamilyAccountRow | null;
   }
 
   if (!familyAccount) {
     return { kind: "no_family" };
   }
 
-  const typedFamilyAccount = familyAccount as FamilyAccountRow;
+  const typedFamilyAccount = familyAccount;
   const activation = resolveAccountActivation(typedFamilyAccount);
 
   const { count: childCount, error: childCountError } = await supabase

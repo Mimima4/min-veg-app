@@ -1,8 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import {
   resolveAccountActivation,
   type AccountActivationState,
 } from "@/server/billing/resolve-account-activation";
+import { syncFamilyPartnerLinkForUser } from "@/server/family/partner/sync-family-partner-link-for-user";
 
 export type PendingEntrySource =
   | "trial"
@@ -35,8 +37,18 @@ export type FamilyAccessRow = {
   last_payment_status: string | null;
 };
 
+type AccessBase = {
+  email: string | null;
+  displayName: string | null;
+  pendingEntrySource: PendingEntrySource;
+  hasPermanentPaidAccess: boolean;
+  trialUsed: boolean;
+  trialAvailable: boolean;
+  isFamilyPartner: boolean;
+};
+
 export type UserAccessState =
-  | {
+  | (AccessBase & {
       kind: "anonymous";
       email: null;
       displayName: null;
@@ -46,33 +58,22 @@ export type UserAccessState =
       trialAvailable: false;
       familyAccount: null;
       activation: null;
-    }
-  | {
+      isFamilyPartner: false;
+    })
+  | (AccessBase & {
       kind:
         | "no_family_paid"
         | "no_family_trial_available"
         | "no_family_no_trial"
         | "institutional_pending";
-      email: string | null;
-      displayName: string | null;
-      pendingEntrySource: PendingEntrySource;
-      hasPermanentPaidAccess: boolean;
-      trialUsed: boolean;
-      trialAvailable: boolean;
       familyAccount: null;
       activation: null;
-    }
-  | {
+    })
+  | (AccessBase & {
       kind: "trial_active" | "trial_expired" | "paid_active" | "inactive_access";
-      email: string | null;
-      displayName: string | null;
-      pendingEntrySource: PendingEntrySource;
-      hasPermanentPaidAccess: boolean;
-      trialUsed: boolean;
-      trialAvailable: boolean;
       familyAccount: FamilyAccessRow;
       activation: AccountActivationState;
-    };
+    });
 
 function normalizePendingEntrySource(
   value: string | null | undefined
@@ -113,6 +114,63 @@ export function isInstitutionalEntrySource(
   );
 }
 
+function buildAccessStateFromFamilyAccount(args: {
+  userEmail: string | null;
+  displayName: string | null;
+  pendingEntrySource: PendingEntrySource;
+  hasPermanentPaidAccess: boolean;
+  trialUsed: boolean;
+  familyAccount: FamilyAccessRow;
+  isFamilyPartner: boolean;
+}): UserAccessState {
+  const activation = resolveAccountActivation(args.familyAccount);
+
+  const sharedBase: AccessBase = {
+    email: args.userEmail,
+    displayName: args.displayName,
+    pendingEntrySource: args.pendingEntrySource,
+    hasPermanentPaidAccess: args.hasPermanentPaidAccess,
+    trialUsed: args.trialUsed,
+    trialAvailable: false,
+    isFamilyPartner: args.isFamilyPartner,
+  };
+
+  if (activation.trialState === "active") {
+    return {
+      kind: "trial_active",
+      ...sharedBase,
+      familyAccount: args.familyAccount,
+      activation,
+    };
+  }
+
+  if (activation.trialState === "expired") {
+    return {
+      kind: "trial_expired",
+      ...sharedBase,
+      trialUsed: true,
+      familyAccount: args.familyAccount,
+      activation,
+    };
+  }
+
+  if (activation.billingStage === "paid" && activation.hasActiveAccess) {
+    return {
+      kind: "paid_active",
+      ...sharedBase,
+      familyAccount: args.familyAccount,
+      activation,
+    };
+  }
+
+  return {
+    kind: "inactive_access",
+    ...sharedBase,
+    familyAccount: args.familyAccount,
+    activation,
+  };
+}
+
 export async function getUserAccessState(): Promise<UserAccessState> {
   const supabase = await createClient();
 
@@ -131,8 +189,15 @@ export async function getUserAccessState(): Promise<UserAccessState> {
       trialAvailable: false,
       familyAccount: null,
       activation: null,
+      isFamilyPartner: false,
     };
   }
+
+  await syncFamilyPartnerLinkForUser({
+    userId: user.id,
+    email: user.email,
+  });
+  const admin = createAdminClient();
 
   const { data: profile } = await supabase
     .from("user_profiles")
@@ -157,6 +222,35 @@ export async function getUserAccessState(): Promise<UserAccessState> {
   const trialAvailable =
     pendingEntrySource === "trial" && !trialUsed && !hasPermanentPaidAccess;
 
+  const { data: linkedPartnerRow } = await admin
+    .from("family_partner_links")
+    .select("family_account_id, primary_user_id, partner_user_id, status")
+    .eq("partner_user_id", user.id)
+    .eq("status", "linked")
+    .maybeSingle();
+
+  if (linkedPartnerRow?.family_account_id) {
+    const { data: linkedFamilyAccount } = await admin
+      .from("family_accounts")
+      .select(
+        "id, plan_type, status, subscription_state, entry_source, activation_source, plan_code, trial_started_at, trial_ends_at, trial_used, current_period_ends_at, next_billing_at, auto_renew_enabled, grace_period_ends_at, payment_failed_at, canceled_at, last_payment_status"
+      )
+      .eq("id", linkedPartnerRow.family_account_id)
+      .maybeSingle();
+
+    if (linkedFamilyAccount) {
+      return buildAccessStateFromFamilyAccount({
+        userEmail: user.email ?? null,
+        displayName,
+        pendingEntrySource,
+        hasPermanentPaidAccess: false,
+        trialUsed,
+        familyAccount: linkedFamilyAccount as FamilyAccessRow,
+        isFamilyPartner: true,
+      });
+    }
+  }
+
   const { data: familyAccount } = await supabase
     .from("family_accounts")
     .select(
@@ -177,6 +271,7 @@ export async function getUserAccessState(): Promise<UserAccessState> {
         trialAvailable: false,
         familyAccount: null,
         activation: null,
+        isFamilyPartner: false,
       };
     }
 
@@ -191,6 +286,7 @@ export async function getUserAccessState(): Promise<UserAccessState> {
         trialAvailable,
         familyAccount: null,
         activation: null,
+        isFamilyPartner: false,
       };
     }
 
@@ -205,6 +301,7 @@ export async function getUserAccessState(): Promise<UserAccessState> {
         trialAvailable: false,
         familyAccount: null,
         activation: null,
+        isFamilyPartner: false,
       };
     }
 
@@ -218,65 +315,19 @@ export async function getUserAccessState(): Promise<UserAccessState> {
       trialAvailable: false,
       familyAccount: null,
       activation: null,
+      isFamilyPartner: false,
     };
   }
 
-  const typedFamilyAccount = familyAccount as FamilyAccessRow;
-  const activation = resolveAccountActivation(typedFamilyAccount);
-
-  if (activation.trialState === "active") {
-    return {
-      kind: "trial_active",
-      email: user.email ?? null,
-      displayName,
-      pendingEntrySource,
-      hasPermanentPaidAccess,
-      trialUsed,
-      trialAvailable: false,
-      familyAccount: typedFamilyAccount,
-      activation,
-    };
-  }
-
-  if (activation.trialState === "expired") {
-    return {
-      kind: "trial_expired",
-      email: user.email ?? null,
-      displayName,
-      pendingEntrySource,
-      hasPermanentPaidAccess,
-      trialUsed: true,
-      trialAvailable: false,
-      familyAccount: typedFamilyAccount,
-      activation,
-    };
-  }
-
-  if (activation.billingStage === "paid" && activation.hasActiveAccess) {
-    return {
-      kind: "paid_active",
-      email: user.email ?? null,
-      displayName,
-      pendingEntrySource,
-      hasPermanentPaidAccess,
-      trialUsed,
-      trialAvailable: false,
-      familyAccount: typedFamilyAccount,
-      activation,
-    };
-  }
-
-  return {
-    kind: "inactive_access",
-    email: user.email ?? null,
+  return buildAccessStateFromFamilyAccount({
+    userEmail: user.email ?? null,
     displayName,
     pendingEntrySource,
     hasPermanentPaidAccess,
     trialUsed,
-    trialAvailable: false,
-    familyAccount: typedFamilyAccount,
-    activation,
-  };
+    familyAccount: familyAccount as FamilyAccessRow,
+    isFamilyPartner: false,
+  });
 }
 
 export function getDefaultHrefForAccessState(
@@ -292,9 +343,9 @@ export function getDefaultHrefForAccessState(
     case "no_family_trial_available":
     case "no_family_no_trial":
       return `/${locale}/app/family`;
-    case "institutional_pending":
     case "trial_expired":
     case "inactive_access":
+    case "institutional_pending":
       return `/${locale}/resolve-access`;
     default:
       return `/${locale}/app/family`;

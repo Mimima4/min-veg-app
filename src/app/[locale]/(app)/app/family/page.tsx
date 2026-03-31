@@ -49,21 +49,6 @@ function SummaryMetricLink({
   );
 }
 
-function getBillingStageLabel(value: string): string {
-  switch (value) {
-    case "demo":
-      return "Demo";
-    case "trial":
-      return "Trial";
-    case "paid":
-      return "Paid";
-    case "inactive":
-      return "Inactive";
-    default:
-      return "Unknown";
-  }
-}
-
 function formatTrialRemainingLabel(trialEndsAt: string | null): string {
   if (!trialEndsAt) {
     return "—";
@@ -91,6 +76,75 @@ function formatTrialRemainingLabel(trialEndsAt: string | null): string {
   }
 
   return `${minutes}m left`;
+}
+
+/** Human-readable time remaining until `endsAtIso`, or null if unknown / already passed. */
+function formatRemainingUntilLabel(endsAtIso: string | null): string | null {
+  if (!endsAtIso) {
+    return null;
+  }
+
+  const endsAt = new Date(endsAtIso);
+  const now = new Date();
+  const diff = endsAt.getTime() - now.getTime();
+
+  if (Number.isNaN(endsAt.getTime()) || diff <= 0) {
+    return null;
+  }
+
+  const totalMinutes = Math.ceil(diff / (1000 * 60));
+  const days = Math.floor(totalMinutes / (60 * 24));
+  const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+  const minutes = totalMinutes % 60;
+
+  if (days > 0) {
+    return `${days}d ${hours}h left`;
+  }
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m left`;
+  }
+
+  return `${minutes}m left`;
+}
+
+function formatCountdown(endsAtIso: string | null): string {
+  return formatRemainingUntilLabel(endsAtIso) ?? "—";
+}
+
+function accessContinuesUntilHumanLabel(endsAtIso: string | null): string {
+  if (!endsAtIso) {
+    return "—";
+  }
+
+  const remaining = formatRemainingUntilLabel(endsAtIso);
+  if (remaining) {
+    return remaining;
+  }
+
+  return formatDateTime(endsAtIso);
+}
+
+function formatDateTime(value: string | null): string {
+  if (!value) {
+    return "—";
+  }
+
+  const parsed = new Date(value);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+
+  return parsed.toLocaleString("nb-NO", {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Europe/Oslo",
+    hour12: false,
+  });
 }
 
 function inferBillingCycle(
@@ -174,7 +228,7 @@ export default async function FamilyPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const gate = await requireAppAccess({
+  await requireAppAccess({
     locale,
     pathname: `/${locale}/app/family`,
   });
@@ -294,6 +348,54 @@ export default async function FamilyPage({
   }
 
   const { familyAccount, entitlements, children } = result.data;
+  const accessState = await getUserAccessState();
+  const isFamilyPartner = accessState.isFamilyPartner === true;
+  const admin = createAdminClient();
+  const readonlyFamilyAccess =
+    accessState.kind === "trial_expired" ||
+    accessState.kind === "inactive_access";
+
+  const { data: parentLink } = await admin
+    .from("family_partner_links")
+    .select("primary_user_id, partner_user_id, partner_email, status")
+    .eq("family_account_id", familyAccount.id)
+    .maybeSingle();
+
+  let primaryParentLabel =
+    accessState.displayName?.trim() || accessState.email || "—";
+  let familyPartnerLabel = "Not added yet";
+
+  if (parentLink?.primary_user_id) {
+    const { data: primaryProfile } = await admin
+      .from("user_profiles")
+      .select("display_name, email")
+      .eq("id", parentLink.primary_user_id)
+      .maybeSingle();
+
+    primaryParentLabel =
+      primaryProfile?.display_name?.trim() ||
+      primaryProfile?.email ||
+      primaryParentLabel;
+  }
+
+  if (parentLink?.status === "linked") {
+    if (parentLink.partner_user_id) {
+      const { data: partnerProfile } = await admin
+        .from("user_profiles")
+        .select("display_name, email")
+        .eq("id", parentLink.partner_user_id)
+        .maybeSingle();
+
+      familyPartnerLabel =
+        partnerProfile?.display_name?.trim() ||
+        partnerProfile?.email ||
+        parentLink.partner_email ||
+        "Not added yet";
+    } else if (parentLink.partner_email) {
+      familyPartnerLabel = parentLink.partner_email;
+    }
+  }
+
   const trialState = entitlements.activation?.trialState;
   const trialEndsAt = entitlements.activation?.trialEndsAt ?? null;
   const lifecycleState = entitlements.activation.subscriptionLifecycleState;
@@ -301,9 +403,41 @@ export default async function FamilyPage({
     familyAccount.plan_code,
     familyAccount.plan_type
   );
-  const graceTimer = billingCycle === "yearly" ? "72h" : "24h";
+  const gracePeriodEndsAt = entitlements.activation.gracePeriodEndsAt ?? null;
+  const graceCountdown = formatRemainingUntilLabel(gracePeriodEndsAt);
+  const graceFallbackDate =
+    !graceCountdown && gracePeriodEndsAt
+      ? formatDateTime(gracePeriodEndsAt)
+      : null;
+  const gracePeriodSecondaryLine = (() => {
+    if (graceCountdown || graceFallbackDate) {
+      return null;
+    }
+    const periodEnd = entitlements.activation.currentPeriodEndsAt ?? null;
+    if (!periodEnd) {
+      return null;
+    }
+    const rem = formatRemainingUntilLabel(periodEnd);
+    if (rem) {
+      return { prefix: "Access may stop in:", value: rem };
+    }
+    return {
+      prefix: "Current paid period reference:",
+      value: formatDateTime(periodEnd),
+    };
+  })();
+
+  const graceBillingCycleNote =
+    billingCycle === "monthly"
+      ? "For monthly plans, the grace window after a failed payment is often around 24 hours — exact timing depends on your provider."
+      : billingCycle === "yearly"
+        ? "For yearly plans, the grace window after a failed payment is often around 72 hours — exact timing depends on your provider."
+        : null;
+
   const canceledAccessEndsAt = entitlements.activation.currentPeriodEndsAt;
-  const isGracePeriod = lifecycleState === "grace_period";
+  const isGracePeriod =
+    lifecycleState === "grace_period" ||
+    (entitlements.activation.billingStage as string) === "grace";
   const isCanceledWithAccess =
     lifecycleState === "canceled" && entitlements.activation.hasActiveAccess;
 
@@ -322,14 +456,14 @@ export default async function FamilyPage({
               3-day trial active
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-blue-900">
-              Time remaining: {formatTrialRemainingLabel(trialEndsAt)}
+              Trial ends in: {formatCountdown(trialEndsAt)}
             </p>
             <p className="mt-2 text-xs leading-relaxed text-blue-900/80">
               After the trial ends, your account will stay saved.
             </p>
 
             <div className="mt-4">
-              {gate.readonly ? (
+              {readonlyFamilyAccess || isFamilyPartner ? (
                 <DisabledActionPill label="Choose family plan" />
               ) : (
                 <Link
@@ -354,7 +488,7 @@ export default async function FamilyPage({
             </p>
 
             <div className="mt-4">
-              {gate.readonly ? (
+              {readonlyFamilyAccess || isFamilyPartner ? (
                 <DisabledActionPill label="Continue with paid family plan" />
               ) : (
                 <Link
@@ -376,7 +510,7 @@ export default async function FamilyPage({
 
             <ResetFamilyStateButton
               action={resetFamilySetup.bind(null, locale)}
-              disabled={gate.readonly}
+              disabled={readonlyFamilyAccess}
             />
           </div>
 
@@ -398,7 +532,7 @@ export default async function FamilyPage({
             <div>
               <dt className="text-sm text-stone-500">Created at</dt>
               <dd className="mt-1 text-base text-stone-900">
-                {new Date(familyAccount.created_at).toLocaleString()}
+                {formatDateTime(familyAccount.created_at)}
               </dd>
             </div>
 
@@ -406,32 +540,104 @@ export default async function FamilyPage({
               <div>
                 <dt className="text-sm text-stone-500">Trial ends</dt>
                 <dd className="mt-1 text-base text-stone-900">
-                  {trialEndsAt ? new Date(trialEndsAt).toLocaleString() : "—"}
+                  {formatDateTime(trialEndsAt)}
                 </dd>
               </div>
             ) : null}
           </dl>
 
+          <div className="mt-5 rounded-xl border border-stone-200 bg-stone-50 p-4">
+            <h3 className="text-sm font-semibold text-stone-900">Parents</h3>
+            <dl className="mt-3 space-y-2 text-sm">
+              <div>
+                <dt className="text-stone-500">Primary parent</dt>
+                <dd className="text-stone-900">{primaryParentLabel}</dd>
+              </div>
+              <div>
+                <dt className="text-stone-500">Family partner</dt>
+                <dd className="text-stone-900">{familyPartnerLabel}</dd>
+              </div>
+            </dl>
+          </div>
+
           {isGracePeriod ? (
-            <div className="mt-5 rounded-xl border border-yellow-300 bg-yellow-50 p-4 text-sm text-stone-800">
-              <p>This account is in a grace period. Access may stop soon.</p>
-              <p className="mt-1 text-stone-600">Timer: {graceTimer}</p>
+            <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-stone-800">
+              <h3 className="font-semibold text-stone-900">
+                Grace period active
+              </h3>
+              <p className="mt-2 leading-relaxed text-stone-700">
+                Your access is still active for now, but it may stop soon if
+                payment is not resolved.
+              </p>
+              <p className="mt-3 text-stone-800">
+                <span className="text-stone-600">Access ends in:&nbsp;</span>
+                <span className="font-medium">
+                  {formatCountdown(
+                    gracePeriodEndsAt ?? entitlements.activation.currentPeriodEndsAt
+                  )}
+                </span>
+              </p>
+              {graceCountdown ? (
+                <p className="mt-3 text-stone-800">
+                  <span className="text-stone-600">
+                    Access may stop in:&nbsp;
+                  </span>
+                  <span className="font-medium">{graceCountdown}</span>
+                </p>
+              ) : graceFallbackDate ? (
+                <p className="mt-3 text-stone-700">
+                  <span className="text-stone-600">Grace reference:&nbsp;</span>
+                  {graceFallbackDate}
+                </p>
+              ) : gracePeriodSecondaryLine ? (
+                <p className="mt-3 text-stone-800">
+                  <span className="text-stone-600">
+                    {gracePeriodSecondaryLine.prefix}&nbsp;
+                  </span>
+                  <span className="font-medium">
+                    {gracePeriodSecondaryLine.value}
+                  </span>
+                </p>
+              ) : null}
+              {graceBillingCycleNote ? (
+                <p className="mt-3 text-xs leading-relaxed text-stone-600">
+                  {graceBillingCycleNote}
+                </p>
+              ) : null}
             </div>
           ) : null}
 
           {isCanceledWithAccess ? (
             <div className="mt-5 rounded-xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-700">
-              Access remains active until{" "}
-              {canceledAccessEndsAt
-                ? new Date(canceledAccessEndsAt).toLocaleString()
-                : "—"}
+              <h3 className="font-semibold text-stone-900">
+                Access remains active
+              </h3>
+              <p className="mt-2 leading-relaxed text-stone-600">
+                Auto-renew is off. Your access stays active until the end of the
+                current paid period.
+              </p>
+              <p className="mt-3 text-stone-700">
+                <span className="text-stone-600">Access active until:&nbsp;</span>
+                {formatDateTime(canceledAccessEndsAt)}
+              </p>
+              <p className="mt-3 text-stone-800">
+                <span className="text-stone-600">
+                  Countdown:&nbsp;
+                </span>
+                <span className="font-medium">
+                  {formatCountdown(canceledAccessEndsAt)}
+                </span>
+              </p>
             </div>
           ) : null}
 
-          {gate.readonly ? (
-            <div className="mt-5 rounded-xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-700">
-              This account is not active. You can view data, but actions are
-              disabled.
+          {readonlyFamilyAccess ? (
+            <div className="mt-5 rounded-xl border border-stone-200 bg-white p-4 text-sm text-stone-700">
+              <p className="leading-relaxed">
+                This account is currently in read-only access. You can review
+                family information, but actions and deeper planning routes are
+                disabled.
+              </p>
             </div>
           ) : null}
 
@@ -453,8 +659,14 @@ export default async function FamilyPage({
               </p>
             </div>
 
-            {gate.readonly ? (
-              <DisabledActionPill label="Create child profile" />
+            {readonlyFamilyAccess ? (
+              entitlements.canCreateChild ? (
+                <DisabledActionPill label="Create child profile" />
+              ) : entitlements.needsUpgradeForMoreChildren ? (
+                <DisabledActionPill label="Child limit reached" />
+              ) : (
+                <DisabledActionPill label="Child creation unavailable" />
+              )
             ) : entitlements.canCreateChild ? (
               <Link
                 href={`/${locale}/app/children/create`}
@@ -463,7 +675,11 @@ export default async function FamilyPage({
                 Create child profile
               </Link>
             ) : entitlements.needsUpgradeForMoreChildren ? (
+              isFamilyPartner ? (
+                <DisabledActionPill label="Child limit reached" />
+              ) : (
               <UpgradeChildLimitButton locale={locale} />
+              )
             ) : (
               <div className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-stone-100 px-4 py-2 text-sm text-stone-600">
                 Child creation unavailable
@@ -525,37 +741,37 @@ export default async function FamilyPage({
                             label="Current signals"
                             value={child.currentSignalsCount}
                             href={child.currentSignalsHref}
-                            disabled={gate.readonly}
+                            disabled={readonlyFamilyAccess}
                           />
                           <SummaryMetricLink
                             label="Derived strengths"
                             value={child.derivedStrengthCount}
                             href={child.derivedStrengthsHref}
-                            disabled={gate.readonly}
+                            disabled={readonlyFamilyAccess}
                           />
                           <SummaryMetricLink
                             label="Matching professions"
                             value={child.matchingProfessionCount}
                             href={child.matchingProfessionsHref}
-                            disabled={gate.readonly}
+                            disabled={readonlyFamilyAccess}
                           />
                           <SummaryMetricLink
                             label="Saved professions"
                             value={child.savedProfessionCount}
                             href={child.savedProfessionsHref}
-                            disabled={gate.readonly}
+                            disabled={readonlyFamilyAccess}
                           />
                           <SummaryMetricLink
                             label="Saved study routes"
                             value={child.savedStudyRouteCount}
                             href={child.savedStudyRoutesHref}
-                            disabled={gate.readonly}
+                            disabled={readonlyFamilyAccess}
                           />
                         </div>
                       </div>
 
                       <div className="flex w-full flex-col gap-2 lg:min-w-[12.5rem]">
-                        {gate.readonly ? (
+                        {readonlyFamilyAccess ? (
                           <>
                             <DisabledActionPill label="Open child profile" />
                             <DisabledActionPill label="Open child summary" />

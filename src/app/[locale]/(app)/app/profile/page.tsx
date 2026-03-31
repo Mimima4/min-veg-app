@@ -2,13 +2,36 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { COUNTRY_OPTIONS } from "@/lib/profile/country-options";
 import { LocalePageShell } from "@/components/layout/locale-page-shell";
 import AppPrivateNav from "@/components/layout/app-private-nav";
 import SignOutButton from "@/components/auth/sign-out-button";
 import ProfileForm from "./profile-form";
 import SubscriptionSettingsForm from "./subscription-settings-form";
+import FamilyPartnerSettingsSection from "./family-partner-settings";
 import { getUserAccessState } from "@/server/billing/get-user-access-state";
 import { requireAppAccess } from "@/server/billing/require-app-access";
+import { getFamilyPartnerSettings } from "@/server/family/partner/get-family-partner-settings";
+import { sendFamilyPartnerInvitation } from "@/server/family/partner/send-family-partner-invitation";
+
+function interfaceLanguageLabel(code: string | null | undefined): string {
+  switch (code) {
+    case "nb":
+      return "nb — Bokmål";
+    case "nn":
+      return "nn — Nynorsk";
+    case "en":
+      return "en — English";
+    default:
+      return "—";
+  }
+}
+
+function countryLabelForCode(code: string | null | undefined): string {
+  const upper = (code ?? "").trim().toUpperCase();
+  const match = COUNTRY_OPTIONS.find((c) => c.code === upper);
+  return match?.label ?? (upper || "—");
+}
 
 export default async function ProfilePage({
   params,
@@ -16,14 +39,10 @@ export default async function ProfilePage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const gate = await requireAppAccess({
+  await requireAppAccess({
     locale,
     pathname: `/${locale}/app/profile`,
   });
-
-  if (gate.readonly) {
-    redirect(`/${locale}/app/family`);
-  }
 
   const supabase = await createClient();
 
@@ -66,6 +85,117 @@ export default async function ProfilePage({
     revalidatePath(`/${locale}/app/family`);
   }
 
+  async function saveFamilyPartner(formData: FormData) {
+    "use server";
+
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      redirect(`/${locale}/login`);
+    }
+
+    const { data: senderProfile } = await supabase
+      .from("user_profiles")
+      .select("display_name")
+      .eq("id", user.id)
+      .maybeSingle();
+    const senderDisplayName = senderProfile?.display_name?.trim() || null;
+
+    const accessState = await getUserAccessState();
+    const paidActiveLike =
+      accessState.kind === "paid_active" ||
+      accessState.kind === "no_family_paid";
+
+    if (!paidActiveLike) {
+      revalidatePath(`/${locale}/app/profile`);
+      revalidatePath(`/${locale}/app/family`);
+      return;
+    }
+
+    const familyAccountId = accessState.familyAccount?.id;
+    if (!familyAccountId) {
+      return;
+    }
+
+    const partnerEmail = String(formData.get("partnerEmail") ?? "")
+      .trim()
+      .toLowerCase();
+
+    if (!partnerEmail) {
+      return;
+    }
+
+    // Basic email validation: must contain "@"
+    if (!partnerEmail.includes("@")) {
+      return;
+    }
+
+    // Prevent linking to the same email as the current user.
+    const userEmail = user.email?.trim().toLowerCase();
+    if (userEmail && partnerEmail === userEmail) {
+      return;
+    }
+
+    const { data: existingRow } = await supabase
+      .from("family_partner_links")
+      .select("id, partner_email, replace_used")
+      .eq("family_account_id", familyAccountId)
+      .maybeSingle();
+
+    const nowIso = new Date().toISOString();
+
+    if (!existingRow) {
+      await supabase.from("family_partner_links").insert({
+        family_account_id: familyAccountId,
+        primary_user_id: user.id,
+        partner_email: partnerEmail,
+        status: "pending_link",
+        replace_used: false,
+      });
+
+      await sendFamilyPartnerInvitation({
+        locale,
+        recipientEmail: partnerEmail,
+        senderDisplayName,
+      });
+    } else {
+      const existingEmail = existingRow.partner_email?.toLowerCase() ?? null;
+
+      if (existingEmail && existingEmail === partnerEmail) {
+        // Same email: keep the current linked row untouched.
+      } else {
+        if (existingRow.replace_used === true) {
+          return;
+        }
+
+        await supabase
+          .from("family_partner_links")
+          .update({
+            partner_email: partnerEmail,
+            partner_user_id: null,
+            status: "pending_link",
+            linked_at: null,
+            invited_at: nowIso,
+            replace_used: true,
+          })
+          .eq("id", existingRow.id);
+
+        await sendFamilyPartnerInvitation({
+          locale,
+          recipientEmail: partnerEmail,
+          senderDisplayName,
+        });
+      }
+    }
+
+    revalidatePath(`/${locale}/app/profile`);
+    revalidatePath(`/${locale}/app/family`);
+  }
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -97,6 +227,11 @@ export default async function ProfilePage({
   }
 
   const accessState = await getUserAccessState();
+  const isFamilyPartner = accessState.isFamilyPartner === true;
+  const readonlyProfileAccess =
+    accessState.kind === "trial_expired" ||
+    accessState.kind === "inactive_access";
+  const familyPartnerSettings = await getFamilyPartnerSettings();
   const hasSavedProfile = Boolean(profile?.display_name?.trim());
   const initialAutoRenewEnabled = Boolean(
     accessState.familyAccount?.auto_renew_enabled ?? false
@@ -268,6 +403,16 @@ export default async function ProfilePage({
     }
   })();
 
+  const subscriptionSettings =
+    readonlyProfileAccess
+      ? {
+          ...subscriptionCard,
+          canToggleAutoRenew: false,
+          disabledReason:
+            "Subscription changes are unavailable while this account is in read-only access.",
+        }
+      : subscriptionCard;
+
   return (
     <LocalePageShell
       locale={locale}
@@ -280,11 +425,21 @@ export default async function ProfilePage({
         <div className="rounded-2xl border border-stone-200 bg-white p-6">
           <p className="text-sm text-stone-500">Signed in as</p>
           <p className="mt-1 text-base font-medium text-stone-900">
-            {profile?.display_name?.trim() || user.email}
+            {profile?.display_name?.trim() || "Your account"}
           </p>
         </div>
 
-        {hasSavedProfile ? (
+        {readonlyProfileAccess ? (
+          <div className="rounded-2xl border border-stone-200 bg-stone-50 p-6">
+            <h2 className="text-base font-semibold text-stone-900">
+              Read-only access
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-stone-600">
+              You can review account and family information, but changes and
+              deeper product actions are currently disabled.
+            </p>
+          </div>
+        ) : hasSavedProfile ? (
           <div className="rounded-2xl border border-stone-200 bg-white p-6">
             <h2 className="text-base font-semibold text-stone-900">Next step</h2>
             <p className="mt-1 text-sm leading-relaxed text-stone-600">
@@ -306,24 +461,71 @@ export default async function ProfilePage({
           </div>
         ) : null}
 
-        <SubscriptionSettingsForm
-          action={updateAutoRenew}
-          subscriptionLabel={subscriptionCard.subscriptionLabel}
-          helperText={subscriptionCard.helperText}
-          initialAutoRenewEnabled={initialAutoRenewEnabled}
-          canToggleAutoRenew={subscriptionCard.canToggleAutoRenew}
-          disabledReason={subscriptionCard.disabledReason}
+        {!isFamilyPartner ? (
+          <SubscriptionSettingsForm
+            action={updateAutoRenew}
+            subscriptionLabel={subscriptionSettings.subscriptionLabel}
+            helperText={subscriptionSettings.helperText}
+            initialAutoRenewEnabled={initialAutoRenewEnabled}
+            canToggleAutoRenew={subscriptionSettings.canToggleAutoRenew}
+            disabledReason={subscriptionSettings.disabledReason}
+          />
+        ) : null}
+
+        <FamilyPartnerSettingsSection
+          locale={locale}
+          settings={familyPartnerSettings}
+          action={saveFamilyPartner}
         />
 
-        <ProfileForm
-          userId={user.id}
-          userEmail={user.email ?? ""}
-          initialDisplayName={profile?.display_name ?? ""}
-          initialInterfaceLanguage={
-            (profile?.interface_language as "nb" | "nn" | "en") ?? "nb"
-          }
-          initialCountryCode={profile?.country_code ?? "NO"}
-        />
+        {readonlyProfileAccess ? (
+          <div className="rounded-2xl border border-stone-200 bg-white p-6">
+            <h2 className="text-base font-semibold text-stone-900">
+              Profile
+            </h2>
+            <dl className="mt-4 space-y-4 text-sm">
+              <div>
+                <dt className="text-stone-500">Display name</dt>
+                <dd className="mt-1 font-medium text-stone-900">
+                  {profile?.display_name?.trim() || "—"}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-stone-500">Email</dt>
+                <dd className="mt-1 font-medium text-stone-900">
+                  {user.email ?? "—"}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-stone-500">Interface language</dt>
+                <dd className="mt-1 font-medium text-stone-900">
+                  {interfaceLanguageLabel(
+                    profile?.interface_language as string | undefined
+                  )}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-stone-500">Country</dt>
+                <dd className="mt-1 font-medium text-stone-900">
+                  {countryLabelForCode(profile?.country_code)}
+                </dd>
+              </div>
+            </dl>
+            <p className="mt-5 text-xs leading-relaxed text-stone-500">
+              Profile editing is unavailable in read-only access.
+            </p>
+          </div>
+        ) : (
+          <ProfileForm
+            userId={user.id}
+            userEmail={user.email ?? ""}
+            initialDisplayName={profile?.display_name ?? ""}
+            initialInterfaceLanguage={
+              (profile?.interface_language as "nb" | "nn" | "en") ?? "nb"
+            }
+            initialCountryCode={profile?.country_code ?? "NO"}
+          />
+        )}
 
         <div className="rounded-2xl border border-stone-200 bg-white p-6">
           <h2 className="text-base font-semibold text-stone-900">
