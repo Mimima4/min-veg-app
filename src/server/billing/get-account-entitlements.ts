@@ -1,6 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
+  getPaymentFactsForBillingSubject,
+  type PaymentFactsForBillingSubject,
+} from "@/server/billing/get-payment-facts-for-billing-subject";
+import {
   resolveAccountActivation,
   type AccountActivationState,
   type BillingStage,
@@ -36,6 +40,7 @@ export type EntitlementRestrictionReason =
 
 export type AccountEntitlements = {
   familyAccount: FamilyAccountRow;
+  paymentFacts: PaymentFactsForBillingSubject;
   activation: AccountActivationState;
   billingStage: BillingStage;
   childCount: number;
@@ -46,6 +51,10 @@ export type AccountEntitlements = {
   needsUpgradeForMoreChildren: boolean;
   restrictionReason: EntitlementRestrictionReason | null;
   restrictionMessage: string | null;
+  billingDiagnostics: {
+    hasPaymentMismatch: boolean;
+    reason: string | null;
+  };
 };
 
 export type AccountEntitlementsResult =
@@ -141,6 +150,22 @@ export async function getAccountEntitlements({
 
   const typedFamilyAccount = familyAccount;
   const activation = resolveAccountActivation(typedFamilyAccount);
+  const paymentFacts = await getPaymentFactsForBillingSubject({
+    billingSubjectType: "family",
+    billingSubjectId: typedFamilyAccount.id,
+  });
+
+  let hasPaymentMismatch = false;
+  let paymentMismatchReason: string | null = null;
+
+  const hasValidPayment = paymentFacts.paymentAnswers.hasValidProviderPayment;
+  const lastPaymentStatus = typedFamilyAccount.last_payment_status;
+
+  if (hasValidPayment && lastPaymentStatus === "failed") {
+    hasPaymentMismatch = true;
+    paymentMismatchReason =
+      "Valid payment exists but last_payment_status is failed";
+  }
 
   const { count: childCount, error: childCountError } = await supabase
     .from("child_profiles")
@@ -189,6 +214,7 @@ export async function getAccountEntitlements({
     kind: "ok",
     data: {
       familyAccount: typedFamilyAccount,
+      paymentFacts,
       activation,
       billingStage: activation.billingStage,
       childCount: resolvedChildCount,
@@ -199,6 +225,10 @@ export async function getAccountEntitlements({
       needsUpgradeForMoreChildren: familyAccessActive && childLimitReached,
       restrictionReason,
       restrictionMessage,
+      billingDiagnostics: {
+        hasPaymentMismatch,
+        reason: paymentMismatchReason,
+      },
     },
   };
 }

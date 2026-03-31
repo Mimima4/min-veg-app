@@ -1,3 +1,5 @@
+import { getPaymentFactsForBillingSubject } from "@/server/billing/get-payment-facts-for-billing-subject";
+import { getAccountEntitlements } from "@/server/billing/get-account-entitlements";
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
 import { LocalePageShell } from "@/components/layout/locale-page-shell";
@@ -109,6 +111,16 @@ export default async function AdminDashboardPage({
     revalidatePath(`/${locale}/admin/dashboard/billing-events`);
   }
 
+
+  const paymentFacts = await getPaymentFactsForBillingSubject({
+    billingSubjectType: "family",
+    billingSubjectId: "61e089f7-1f53-40f6-871d-ce22ee67d9cd",
+  });
+
+  const accountEntitlements = await getAccountEntitlements({
+    locale,
+  });
+
   return (
     <LocalePageShell
       locale={locale}
@@ -186,6 +198,91 @@ export default async function AdminDashboardPage({
 
         <div className="rounded-2xl border border-stone-200 bg-white p-6 lg:col-span-2">
           <h2 className="text-lg font-semibold text-stone-900">
+            Payment summary
+          </h2>
+          <p className="mt-2 text-sm leading-relaxed text-stone-600">
+            Read-only summary of payment facts for the current test family billing subject.
+          </p>
+
+          <div className="mt-5 grid gap-3 md:grid-cols-3">
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-stone-500">
+                Latest valid payment
+              </p>
+              <p className="mt-2 text-sm text-stone-900">
+                Provider: {paymentFacts.latestValidPayment?.provider ?? "—"}
+              </p>
+              <p className="mt-1 text-sm text-stone-900">
+                Amount: {paymentFacts.latestValidPayment ? `${paymentFacts.latestValidPayment.amount} ${paymentFacts.latestValidPayment.currency}` : "—"}
+              </p>
+              <p className="mt-1 text-sm text-stone-900">
+                Paid at: {paymentFacts.latestValidPayment?.paidAt ?? "—"}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-stone-500">
+                Latest intent
+              </p>
+              <p className="mt-2 text-sm text-stone-900">
+                Plan: {paymentFacts.latestIntent?.planCode ?? "—"}
+              </p>
+              <p className="mt-1 text-sm text-stone-900">
+                Cycle: {paymentFacts.latestIntent?.billingCycle ?? "—"}
+              </p>
+              <p className="mt-1 text-sm text-stone-900">
+                Status: {paymentFacts.latestIntent?.status ?? "—"}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-stone-500">
+                Payment answers
+              </p>
+              <p className="mt-2 text-sm text-stone-900">
+                Valid payment: {paymentFacts.paymentAnswers.hasValidProviderPayment ? "Yes" : "No"}
+              </p>
+              <p className="mt-1 text-sm text-stone-900">
+                Blocked intent: {paymentFacts.paymentAnswers.hasBlockedIntent ? "Yes" : "No"}
+              </p>
+              <p className="mt-1 text-sm text-stone-900">
+                Latest payment at: {paymentFacts.paymentAnswers.latestPaymentAt ?? "—"}
+              </p>
+            </div>
+          </div>
+        </div>
+
+
+        <div className="rounded-2xl border border-stone-200 bg-white p-6">
+          <h2 className="text-lg font-semibold text-stone-900">
+            Billing diagnostics
+          </h2>
+          <p className="mt-2 text-sm leading-relaxed text-stone-600">
+            Compact read-only summary from the billing contour for the current test family.
+          </p>
+
+          <div className="mt-5 space-y-2 text-sm text-stone-900">
+            <p>
+              <span className="font-medium text-stone-600">Mismatch:</span>{" "}
+              {accountEntitlements.kind === "ok" && accountEntitlements.data.billingDiagnostics.hasPaymentMismatch
+                ? "Yes"
+                : "No"}
+            </p>
+            <p>
+              <span className="font-medium text-stone-600">Reason:</span>{" "}
+              {accountEntitlements.kind === "ok"
+                ? accountEntitlements.data.billingDiagnostics.reason ?? "—"
+                : "—"}
+            </p>
+            <p>
+              <span className="font-medium text-stone-600">Latest payment at:</span>{" "}
+              {paymentFacts.paymentAnswers.latestPaymentAt ?? "—"}
+            </p>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-stone-200 bg-white p-6 lg:col-span-2">
+          <h2 className="text-lg font-semibold text-stone-900">
             Provider event health
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-stone-600">
@@ -246,6 +343,7 @@ export default async function AdminDashboardPage({
               <p className="mt-1 text-sm text-stone-600">Replay used</p>
             </Link>
           </div>
+
 
           {auditsEmpty ? (
             <p className="mt-3 text-xs text-stone-500">
