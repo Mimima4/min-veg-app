@@ -139,6 +139,8 @@ export async function POST(request: Request) {
   let signatureMode: ProviderBillingEventAuditSignatureMode = "not_checked";
   let signatureVerified = false;
   let webhookSecretConfigured = false;
+  let auditWasReplay = false;
+  let auditReplayCount = 0;
 
   try {
     const rawBody = await request.text();
@@ -164,6 +166,8 @@ export async function POST(request: Request) {
       });
 
       auditId = receivedAudit.id;
+      auditWasReplay = receivedAudit.wasReplay;
+      auditReplayCount = receivedAudit.replayCount;
     }
 
     const provider = assertProviderAllowed(providerInput);
@@ -222,12 +226,19 @@ export async function POST(request: Request) {
         billingSubscriptionEventId: result.subscriptionEventId,
         syncResult: result.syncResult,
         error: null,
+        replayReason: auditWasReplay
+          ? "Webhook received again; provider event was reprocessed through the same idempotent billing pipeline."
+          : null,
       });
     }
 
     return NextResponse.json({
       ok: true,
       auditId,
+      audit: {
+        isReplay: auditWasReplay,
+        replayCount: auditReplayCount,
+      },
       security: {
         provider,
         signatureMode,
@@ -259,6 +270,9 @@ export async function POST(request: Request) {
           signatureVerified,
           webhookSecretConfigured,
           error: message,
+          replayReason: auditWasReplay
+            ? "Webhook received again; latest replay attempt did not complete successfully."
+            : null,
         });
       } catch {
         // keep original error response
@@ -266,7 +280,15 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json(
-      { ok: false, auditId, error: message },
+      {
+        ok: false,
+        auditId,
+        audit: {
+          isReplay: auditWasReplay,
+          replayCount: auditReplayCount,
+        },
+        error: message,
+      },
       { status: 500 }
     );
   }
