@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { syncPaymentIntentFromProviderPayment } from "@/server/billing/sync-intent-from-provider";
 
 type ProviderPaymentStatus = "pending" | "paid" | "failed" | "refunded";
 
@@ -134,6 +135,11 @@ export async function recordProviderPayment(input: RecordProviderPaymentInput) {
   if (error) {
     throw new Error(`Failed to record provider payment: ${error.message}`);
   }
+
+  await syncPaymentIntentFromProviderPayment({
+    paymentIntentId,
+    providerPaymentStatus: input.paymentStatus,
+  });
 
   return {
     wasReplay: false,
