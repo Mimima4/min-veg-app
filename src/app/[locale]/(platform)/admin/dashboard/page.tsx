@@ -119,6 +119,7 @@ export default async function AdminDashboardPage({
     await reconcilePaymentUnapplied({
       familyAccountId: "61e089f7-1f53-40f6-871d-ce22ee67d9cd",
       performedByUserId: null,
+      performedByType: "admin",
     });
 
     revalidatePath(`/${locale}/admin/dashboard`);
@@ -128,7 +129,7 @@ export default async function AdminDashboardPage({
   
   const { data: reconciliationAudits } = await admin
     .from("billing_reconciliation_audits")
-    .select("action, provider, previous_last_payment_status, new_last_payment_status, created_at")
+    .select("action, provider, previous_last_payment_status, new_last_payment_status, performed_by_type, created_at")
     .eq("family_account_id", "61e089f7-1f53-40f6-871d-ce22ee67d9cd")
     .order("created_at", { ascending: false })
     .limit(3);
@@ -246,6 +247,10 @@ const paymentFacts = await getPaymentFactsForBillingSubject({
                   <p>
                     <span className="font-medium text-stone-600">Change:</span>{" "}
                     {row.previous_last_payment_status ?? "—"} → {row.new_last_payment_status ?? "—"}
+                  </p>
+                  <p>
+                    <span className="font-medium text-stone-600">By:</span>{" "}
+                    {row.performed_by_type ?? "—"}
                   </p>
                   <p>
                     <span className="font-medium text-stone-600">At:</span>{" "}

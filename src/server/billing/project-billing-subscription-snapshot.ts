@@ -300,6 +300,32 @@ function resolveStatusFromSubscriptionState(subscriptionState: string): string {
   }
 }
 
+function isEffectiveEvent(
+  row: BillingSubscriptionProjectionRow,
+  now: Date
+): boolean {
+  const eventAt = parseDate(row.event_at);
+
+  if (!eventAt) {
+    return true;
+  }
+
+  return eventAt.getTime() <= now.getTime();
+}
+
+function getEffectiveProjectionRows(
+  rows: BillingSubscriptionProjectionRow[],
+  now: Date
+): BillingSubscriptionProjectionRow[] {
+  const effectiveRows = rows.filter((row) => isEffectiveEvent(row, now));
+
+  if (effectiveRows.length > 0) {
+    return effectiveRows;
+  }
+
+  return rows;
+}
+
 function buildProjectedSnapshot(
   rows: BillingSubscriptionProjectionRow[],
   familyAccount: FamilyAccountBillingRow
@@ -426,7 +452,7 @@ export async function projectBillingSubscriptionSnapshotToFamilyAccount(
     .eq("family_account_id", familyAccountId)
     .order("event_at", { ascending: false })
     .order("created_at", { ascending: false })
-    .limit(25);
+    .limit(50);
 
   if (eventsError) {
     throw new Error(
@@ -435,9 +461,13 @@ export async function projectBillingSubscriptionSnapshotToFamilyAccount(
   }
 
   const projectionRows = ((events ?? []) as unknown) as BillingSubscriptionProjectionRow[];
+  const effectiveProjectionRows = getEffectiveProjectionRows(
+    projectionRows,
+    new Date()
+  );
 
   const projected = buildProjectedSnapshot(
-    projectionRows,
+    effectiveProjectionRows,
     familyAccount as FamilyAccountBillingRow
   );
 

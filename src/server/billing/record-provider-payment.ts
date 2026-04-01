@@ -3,6 +3,9 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { syncPaymentIntentFromProviderPayment } from "@/server/billing/sync-intent-from-provider";
 import { autoReconcileSafePaymentMismatch } from "@/server/billing/auto-reconcile-safe-payment-mismatch";
+import { autoSyncBillingPeriod } from "@/server/billing/auto-sync-billing-period";
+import { autoSyncSuccessSubscriptionEvent } from "@/server/billing/auto-sync-success-subscription-event";
+import { createScheduledPlanChange } from "@/server/billing/create-scheduled-plan-change";
 
 type ProviderPaymentStatus = "pending" | "paid" | "failed" | "refunded";
 
@@ -55,7 +58,7 @@ export async function recordProviderPayment(input: RecordProviderPaymentInput) {
 
   const { data: paymentIntent, error: paymentIntentError } = await supabase
     .from("payment_intents")
-    .select("id, status")
+    .select("id, account_type, account_id, plan_code, billing_cycle, status")
     .eq("id", paymentIntentId)
     .single();
 
@@ -144,7 +147,7 @@ export async function recordProviderPayment(input: RecordProviderPaymentInput) {
 
   const { data: paymentIntentRow, error: paymentIntentRowError } = await supabase
     .from("payment_intents")
-    .select("account_type, account_id")
+    .select("account_type, account_id, plan_code, billing_cycle, status")
     .eq("id", paymentIntentId)
     .single();
 
@@ -154,10 +157,55 @@ export async function recordProviderPayment(input: RecordProviderPaymentInput) {
     );
   }
 
-  if (paymentIntentRow.account_type === "family") {
+  if (paymentIntentRow.account_type === "family" && input.paymentStatus === "paid") {
+    const { data: familyAccount, error: familyAccountError } = await supabase
+      .from("family_accounts")
+      .select("id, plan_code, next_billing_at")
+      .eq("id", paymentIntentRow.account_id)
+      .single();
+
+    if (familyAccountError || !familyAccount) {
+      throw new Error(
+        `Failed to read family account for scheduled plan evaluation: ${familyAccountError?.message ?? "not found"}`
+      );
+    }
+
     await autoReconcileSafePaymentMismatch({
       familyAccountId: paymentIntentRow.account_id,
     });
+
+    await autoSyncBillingPeriod({
+      paymentIntentId,
+      paidAt: input.paidAt ?? data.paid_at ?? null,
+    });
+
+    await autoSyncSuccessSubscriptionEvent({
+      paymentIntentId,
+      provider,
+      providerPaymentId,
+      providerEventId,
+      eventAt: input.paidAt ?? data.paid_at ?? null,
+      source: "provider_payment_auto_sync",
+    });
+
+    const currentPlanCode = familyAccount.plan_code?.trim().toLowerCase() ?? null;
+    const paidPlanCode = paymentIntentRow.plan_code?.trim().toLowerCase() ?? null;
+
+    if (
+      currentPlanCode &&
+      paidPlanCode &&
+      currentPlanCode !== paidPlanCode &&
+      familyAccount.next_billing_at
+    ) {
+      await createScheduledPlanChange({
+        familyAccountId: familyAccount.id,
+        targetPlanCode: paidPlanCode,
+        targetBillingCycle: paymentIntentRow.billing_cycle,
+        effectiveAt: familyAccount.next_billing_at,
+        createdBy: "system",
+        source: "provider_payment",
+      });
+    }
   }
 
   return {

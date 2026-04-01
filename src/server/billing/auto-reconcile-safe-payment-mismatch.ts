@@ -19,6 +19,7 @@ export async function autoReconcileSafePaymentMismatch(params: {
     return reconcilePaymentUnapplied({
       familyAccountId: params.familyAccountId,
       performedByUserId: null,
+      performedByType: "system",
     });
   }
 

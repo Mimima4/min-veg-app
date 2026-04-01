@@ -6,6 +6,7 @@ import { getFamilyBillingDiagnostics } from "@/server/billing/get-family-billing
 type ReconcilePaymentUnappliedInput = {
   familyAccountId: string;
   performedByUserId?: string | null;
+  performedByType?: "system" | "admin";
 };
 
 export async function reconcilePaymentUnapplied(
@@ -59,6 +60,7 @@ export async function reconcilePaymentUnapplied(
       provider: diagnostics.latestValidPayment.provider,
       provider_payment_id: diagnostics.latestValidPayment.providerPaymentId,
       performed_by_user_id: input.performedByUserId ?? null,
+      performed_by_type: input.performedByType ?? "system",
     });
 
   if (auditError) {
