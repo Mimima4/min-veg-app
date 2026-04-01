@@ -117,8 +117,8 @@ export default async function AdminDashboardPage({
     "use server";
 
     await reconcilePaymentUnapplied({
-      locale,
       familyAccountId: "61e089f7-1f53-40f6-871d-ce22ee67d9cd",
+      performedByUserId: null,
     });
 
     revalidatePath(`/${locale}/admin/dashboard`);

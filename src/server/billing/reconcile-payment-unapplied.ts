@@ -1,12 +1,11 @@
 import "server-only";
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getPaymentFactsForBillingSubject } from "@/server/billing/get-payment-facts-for-billing-subject";
-import { getAccountEntitlements } from "@/server/billing/get-account-entitlements";
+import { getFamilyBillingDiagnostics } from "@/server/billing/get-family-billing-diagnostics";
 
 type ReconcilePaymentUnappliedInput = {
-  locale: string;
   familyAccountId: string;
+  performedByUserId?: string | null;
 };
 
 export async function reconcilePaymentUnapplied(
@@ -14,45 +13,30 @@ export async function reconcilePaymentUnapplied(
 ) {
   const admin = createAdminClient();
 
-  const entitlements = await getAccountEntitlements({
-    locale: input.locale,
+  const diagnostics = await getFamilyBillingDiagnostics({
+    familyAccountId: input.familyAccountId,
   });
 
-  if (entitlements.kind !== "ok") {
-    throw new Error("Account entitlements are not available for reconciliation");
-  }
-
-  const { familyAccount, billingDiagnostics } = entitlements.data;
-
-  if (familyAccount.id !== input.familyAccountId) {
-    throw new Error("Family account does not match current entitlement context");
-  }
-
-  if (!billingDiagnostics.hasPaymentMismatch) {
+  if (!diagnostics.hasPaymentMismatch) {
     throw new Error("No payment mismatch exists for this family account");
   }
 
-  if (billingDiagnostics.reconciliationStatus !== "payment_unapplied") {
+  if (diagnostics.reconciliationStatus !== "payment_unapplied") {
     throw new Error("Reconciliation is only allowed for payment_unapplied cases");
   }
 
   if (
-    billingDiagnostics.reconciliationRecommendation !==
+    diagnostics.reconciliationRecommendation !==
     "safe_reconcile_payment_to_billing"
   ) {
     throw new Error("Reconciliation recommendation is not safe for this case");
   }
 
-  const paymentFacts = await getPaymentFactsForBillingSubject({
-    billingSubjectType: "family",
-    billingSubjectId: input.familyAccountId,
-  });
-
-  if (!paymentFacts.latestValidPayment) {
+  if (!diagnostics.latestValidPayment) {
     throw new Error("No latest valid payment exists for this family account");
   }
 
-  const previousStatus = entitlements.data.familyAccount.last_payment_status;
+  const previousStatus = diagnostics.lastPaymentStatus;
 
   const { error } = await admin
     .from("family_accounts")
@@ -72,8 +56,9 @@ export async function reconcilePaymentUnapplied(
       action: "payment_unapplied_reconciled",
       previous_last_payment_status: previousStatus,
       new_last_payment_status: "paid",
-      provider: paymentFacts.latestValidPayment.provider,
-      provider_payment_id: paymentFacts.latestValidPayment.providerPaymentId,
+      provider: diagnostics.latestValidPayment.provider,
+      provider_payment_id: diagnostics.latestValidPayment.providerPaymentId,
+      performed_by_user_id: input.performedByUserId ?? null,
     });
 
   if (auditError) {
@@ -85,8 +70,8 @@ export async function reconcilePaymentUnapplied(
     repairedField: "last_payment_status",
     repairedValue: "paid",
     familyAccountId: input.familyAccountId,
-    provider: paymentFacts.latestValidPayment.provider,
-    providerPaymentId: paymentFacts.latestValidPayment.providerPaymentId,
-    paidAt: paymentFacts.latestValidPayment.paidAt,
+    provider: diagnostics.latestValidPayment.provider,
+    providerPaymentId: diagnostics.latestValidPayment.providerPaymentId,
+    paidAt: diagnostics.latestValidPayment.paidAt,
   };
 }

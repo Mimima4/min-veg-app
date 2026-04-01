@@ -2,6 +2,7 @@ import "server-only";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { syncPaymentIntentFromProviderPayment } from "@/server/billing/sync-intent-from-provider";
+import { autoReconcileSafePaymentMismatch } from "@/server/billing/auto-reconcile-safe-payment-mismatch";
 
 type ProviderPaymentStatus = "pending" | "paid" | "failed" | "refunded";
 
@@ -140,6 +141,24 @@ export async function recordProviderPayment(input: RecordProviderPaymentInput) {
     paymentIntentId,
     providerPaymentStatus: input.paymentStatus,
   });
+
+  const { data: paymentIntentRow, error: paymentIntentRowError } = await supabase
+    .from("payment_intents")
+    .select("account_type, account_id")
+    .eq("id", paymentIntentId)
+    .single();
+
+  if (paymentIntentRowError) {
+    throw new Error(
+      `Failed to read payment intent owner after provider payment insert: ${paymentIntentRowError.message}`
+    );
+  }
+
+  if (paymentIntentRow.account_type === "family") {
+    await autoReconcileSafePaymentMismatch({
+      familyAccountId: paymentIntentRow.account_id,
+    });
+  }
 
   return {
     wasReplay: false,
