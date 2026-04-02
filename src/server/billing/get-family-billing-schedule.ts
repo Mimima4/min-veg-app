@@ -20,6 +20,26 @@ type BillingSubscriptionEventRow = {
   created_at: string;
 };
 
+type ScheduledPlanChangeRow = {
+  id: string;
+  family_account_id: string;
+  target_plan_code: string;
+  target_billing_cycle: string;
+  effective_at: string;
+  target_current_period_starts_at: string | null;
+  target_current_period_ends_at: string | null;
+  target_next_billing_at: string | null;
+  status: string;
+  created_by: string;
+  source: string | null;
+  canceled_at: string | null;
+  cancel_reason: string | null;
+  applied_at: string | null;
+  applied_subscription_event_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 type FamilyAccountRow = {
   id: string;
   plan_type: string | null;
@@ -68,14 +88,6 @@ function isFutureEvent(row: BillingSubscriptionEventRow, now: Date): boolean {
   return eventAt.getTime() > now.getTime();
 }
 
-function isScheduledPlanEvent(row: BillingSubscriptionEventRow): boolean {
-  return (
-    row.event_type === "subscription_started_success" ||
-    row.event_type === "subscription_renewed_success" ||
-    row.event_type === "payment_recovered"
-  );
-}
-
 function isRiskEvent(row: BillingSubscriptionEventRow): boolean {
   return (
     row.event_type === "payment_failed" ||
@@ -85,7 +97,7 @@ function isRiskEvent(row: BillingSubscriptionEventRow): boolean {
   );
 }
 
-function mapEvent(row: BillingSubscriptionEventRow) {
+function mapRiskEvent(row: BillingSubscriptionEventRow) {
   return {
     eventId: row.id,
     eventType: row.event_type,
@@ -103,22 +115,43 @@ function mapEvent(row: BillingSubscriptionEventRow) {
   };
 }
 
-function isCommercialPlanTransition(
-  row: BillingSubscriptionEventRow,
-  currentPlanCode: string | null
-): boolean {
-  const rowPlanCode = normalizeLowerText(row.plan_code);
-  const activePlanCode = normalizeLowerText(currentPlanCode);
+function resolveMaxChildrenFromPlanCode(planCode: string | null, fallback: number | null) {
+  switch (normalizeLowerText(planCode)) {
+    case "family_basic":
+    case "school_referred_family_basic":
+      return 4;
+    case "family_plus":
+    case "school_referred_family_plus":
+      return 6;
+    default:
+      return fallback ?? 0;
+  }
+}
 
-  if (!rowPlanCode) {
-    return false;
+function addBillingCycle(startIso: string, billingCycle: string | null) {
+  const start = new Date(startIso);
+
+  if (Number.isNaN(start.getTime())) {
+    return {
+      currentPeriodStartsAt: startIso,
+      currentPeriodEndsAt: null,
+      nextBillingAt: null,
+    };
   }
 
-  if (!activePlanCode) {
-    return true;
+  const end = new Date(start);
+
+  if (normalizeLowerText(billingCycle) === "yearly") {
+    end.setUTCFullYear(end.getUTCFullYear() + 1);
+  } else {
+    end.setUTCMonth(end.getUTCMonth() + 1);
   }
 
-  return rowPlanCode !== activePlanCode;
+  return {
+    currentPeriodStartsAt: start.toISOString(),
+    currentPeriodEndsAt: end.toISOString(),
+    nextBillingAt: end.toISOString(),
+  };
 }
 
 export async function getFamilyBillingSchedule(params: {
@@ -154,6 +187,58 @@ export async function getFamilyBillingSchedule(params: {
     );
   }
 
+  const currentFamilyAccount =
+    (familyAccount as unknown) as FamilyAccountRow;
+
+  const { data: scheduledRows, error: scheduledRowsError } = await admin
+    .from("billing_scheduled_plan_changes")
+    .select("*")
+    .eq("family_account_id", params.familyAccountId)
+    .eq("status", "scheduled")
+    .order("effective_at", { ascending: true });
+
+  if (scheduledRowsError) {
+    throw new Error(
+      `Failed to load scheduled plan changes: ${scheduledRowsError.message}`
+    );
+  }
+
+  const scheduledPlanChanges =
+    ((scheduledRows ?? []) as unknown) as ScheduledPlanChangeRow[];
+  const scheduled = scheduledPlanChanges[0] ?? null;
+
+  const isRealPlanChange =
+    scheduled != null &&
+    normalizeLowerText(scheduled.target_plan_code) !==
+      normalizeLowerText(currentFamilyAccount.plan_code);
+
+  const nextScheduledPlanTransition =
+    isRealPlanChange && scheduled
+      ? {
+          eventId: scheduled.id,
+          eventType: "scheduled_plan_transition",
+          effectiveAt: scheduled.effective_at,
+          planCode: scheduled.target_plan_code,
+          subscriptionState: "active",
+          currentPeriodStartsAt: normalizeText(
+            scheduled.target_current_period_starts_at
+          ),
+          currentPeriodEndsAt: normalizeText(
+            scheduled.target_current_period_ends_at
+          ),
+          nextBillingAt: normalizeText(scheduled.target_next_billing_at),
+          billingCycle: normalizeText(scheduled.target_billing_cycle),
+          autoRenewEnabled: currentFamilyAccount.auto_renew_enabled,
+          lastPaymentStatus: "paid",
+          source: normalizeText(scheduled.source),
+          externalEventId: null,
+          maxChildren: resolveMaxChildrenFromPlanCode(
+            scheduled.target_plan_code,
+            currentFamilyAccount.max_children
+          ),
+        }
+      : null;
+
   const { data: events, error: eventsError } = await admin
     .from("billing_subscription_events")
     .select(
@@ -186,23 +271,66 @@ export async function getFamilyBillingSchedule(params: {
   }
 
   const rows = ((events ?? []) as unknown) as BillingSubscriptionEventRow[];
-  const currentFamilyAccount =
-    (familyAccount as unknown) as FamilyAccountRow;
-
   const futureRows = rows.filter((row) => isFutureEvent(row, now));
+  const nextRiskEvent = futureRows.find((row) => isRiskEvent(row)) ?? null;
 
-  const nextRenewalSnapshot =
-    futureRows.find((row) => isScheduledPlanEvent(row)) ?? null;
+  const nextRenewalSnapshot = (() => {
+    if (isRealPlanChange && scheduled) {
+      return {
+        eventId: scheduled.id,
+        eventType: "scheduled_plan_transition",
+        effectiveAt: scheduled.effective_at,
+        planCode: scheduled.target_plan_code,
+        subscriptionState: "active",
+        currentPeriodStartsAt: normalizeText(
+          scheduled.target_current_period_starts_at
+        ),
+        currentPeriodEndsAt: normalizeText(
+          scheduled.target_current_period_ends_at
+        ),
+        nextBillingAt: normalizeText(scheduled.target_next_billing_at),
+        billingCycle: normalizeText(scheduled.target_billing_cycle),
+        autoRenewEnabled: currentFamilyAccount.auto_renew_enabled,
+        lastPaymentStatus: "paid",
+        source: normalizeText(scheduled.source),
+        externalEventId: null,
+      };
+    }
 
-  const nextScheduledPlanTransition =
-    futureRows.find(
-      (row) =>
-        isScheduledPlanEvent(row) &&
-        isCommercialPlanTransition(row, currentFamilyAccount.plan_code)
-    ) ?? null;
+    if (
+      currentFamilyAccount.auto_renew_enabled &&
+      currentFamilyAccount.next_billing_at
+    ) {
+      const billingCycle =
+        normalizeLowerText(currentFamilyAccount.plan_code) === "family_plus" ||
+        normalizeLowerText(currentFamilyAccount.plan_code) === "family_basic"
+          ? "monthly"
+          : "monthly";
 
-  const nextRiskEvent =
-    futureRows.find((row) => isRiskEvent(row)) ?? null;
+      const projected = addBillingCycle(
+        currentFamilyAccount.next_billing_at,
+        billingCycle
+      );
+
+      return {
+        eventId: null,
+        eventType: "projected_renewal",
+        effectiveAt: currentFamilyAccount.next_billing_at,
+        planCode: currentFamilyAccount.plan_code,
+        subscriptionState: "active",
+        currentPeriodStartsAt: projected.currentPeriodStartsAt,
+        currentPeriodEndsAt: projected.currentPeriodEndsAt,
+        nextBillingAt: projected.nextBillingAt,
+        billingCycle,
+        autoRenewEnabled: currentFamilyAccount.auto_renew_enabled,
+        lastPaymentStatus: currentFamilyAccount.last_payment_status,
+        source: "projected_from_current_snapshot",
+        externalEventId: null,
+      };
+    }
+
+    return null;
+  })();
 
   return {
     current: {
@@ -218,12 +346,8 @@ export async function getFamilyBillingSchedule(params: {
       autoRenewEnabled: currentFamilyAccount.auto_renew_enabled,
       lastPaymentStatus: currentFamilyAccount.last_payment_status,
     },
-    nextRenewalSnapshot: nextRenewalSnapshot
-      ? mapEvent(nextRenewalSnapshot)
-      : null,
-    nextScheduledPlanTransition: nextScheduledPlanTransition
-      ? mapEvent(nextScheduledPlanTransition)
-      : null,
-    nextRiskEvent: nextRiskEvent ? mapEvent(nextRiskEvent) : null,
+    nextRenewalSnapshot,
+    nextScheduledPlanTransition,
+    nextRiskEvent: nextRiskEvent ? mapRiskEvent(nextRiskEvent) : null,
   };
 }

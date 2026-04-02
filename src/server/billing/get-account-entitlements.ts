@@ -9,6 +9,7 @@ import {
   type AccountActivationState,
   type BillingStage,
 } from "@/server/billing/resolve-account-activation";
+import { getFamilyBillingSchedule } from "@/server/billing/get-family-billing-schedule";
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
 
@@ -43,6 +44,9 @@ export type AccountEntitlements = {
   paymentFacts: PaymentFactsForBillingSubject;
   activation: AccountActivationState;
   billingStage: BillingStage;
+  billingSchedule: Awaited<
+    ReturnType<typeof getFamilyBillingSchedule>
+  >;
   childCount: number;
   maxChildren: number;
   remainingChildSlots: number;
@@ -159,9 +163,14 @@ export async function getAccountEntitlements({
 
   const typedFamilyAccount = familyAccount;
   const activation = resolveAccountActivation(typedFamilyAccount);
+
   const paymentFacts = await getPaymentFactsForBillingSubject({
     billingSubjectType: "family",
     billingSubjectId: typedFamilyAccount.id,
+  });
+
+  const billingSchedule = await getFamilyBillingSchedule({
+    familyAccountId: typedFamilyAccount.id,
   });
 
   let hasPaymentMismatch = false;
@@ -213,7 +222,10 @@ export async function getAccountEntitlements({
   }
 
   const resolvedChildCount = childCount ?? 0;
-  const resolvedMaxChildren = Math.max(typedFamilyAccount.max_children ?? 0, 0);
+  const resolvedMaxChildren = Math.max(
+    billingSchedule.current.maxChildren ?? typedFamilyAccount.max_children ?? 0,
+    0
+  );
   const remainingChildSlots = Math.max(
     resolvedMaxChildren - resolvedChildCount,
     0
@@ -248,6 +260,7 @@ export async function getAccountEntitlements({
       paymentFacts,
       activation,
       billingStage: activation.billingStage,
+      billingSchedule,
       childCount: resolvedChildCount,
       maxChildren: resolvedMaxChildren,
       remainingChildSlots,

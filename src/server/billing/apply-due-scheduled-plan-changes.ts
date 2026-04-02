@@ -3,6 +3,7 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { projectBillingSubscriptionSnapshotToFamilyAccount } from "@/server/billing/project-billing-subscription-snapshot";
 import { recordBillingSubscriptionEvent } from "@/server/billing/record-billing-subscription-event";
+import { recordBillingLedgerEntry } from "@/server/billing/record-billing-ledger-entry";
 
 type ScheduledPlanChangeRow = {
   id: string;
@@ -165,6 +166,26 @@ export async function applyDueScheduledPlanChanges(params?: { now?: Date }) {
         `Failed to mark scheduled plan change as applied: ${changeUpdateError.message}`
       );
     }
+
+    const ledgerEntry = await recordBillingLedgerEntry({
+      familyAccountId: row.family_account_id,
+      entryType: "scheduled_plan_change_applied",
+      direction: "neutral",
+      amount: null,
+      currency: null,
+      planCode: row.target_plan_code,
+      billingCycle: row.target_billing_cycle,
+      occurredAt: row.effective_at,
+      source: "scheduled_plan_change_apply",
+      scheduledPlanChangeId: row.id,
+      billingSubscriptionEventId: subscriptionEvent.id,
+      externalReference: `scheduled-plan-change-apply:${row.id}`,
+      payload: {
+        targetCurrentPeriodStartsAt: row.target_current_period_starts_at,
+        targetCurrentPeriodEndsAt: row.target_current_period_ends_at,
+        targetNextBillingAt: row.target_next_billing_at,
+      },
+    });
 
     await projectBillingSubscriptionSnapshotToFamilyAccount(row.family_account_id);
 

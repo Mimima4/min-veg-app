@@ -6,6 +6,9 @@ import { autoReconcileSafePaymentMismatch } from "@/server/billing/auto-reconcil
 import { autoSyncBillingPeriod } from "@/server/billing/auto-sync-billing-period";
 import { autoSyncSuccessSubscriptionEvent } from "@/server/billing/auto-sync-success-subscription-event";
 import { createScheduledPlanChange } from "@/server/billing/create-scheduled-plan-change";
+import { recordBillingLedgerEntry } from "@/server/billing/record-billing-ledger-entry";
+import { enqueueTripletexExport } from "@/server/billing/enqueue-tripletex-export";
+import { inferBillingCustomerType, normalizeNorwayMva } from "@/server/billing/normalize-billing-accounting";
 
 type ProviderPaymentStatus = "pending" | "paid" | "failed" | "refunded";
 
@@ -158,18 +161,6 @@ export async function recordProviderPayment(input: RecordProviderPaymentInput) {
   }
 
   if (paymentIntentRow.account_type === "family" && input.paymentStatus === "paid") {
-    const { data: familyAccount, error: familyAccountError } = await supabase
-      .from("family_accounts")
-      .select("id, plan_code, next_billing_at")
-      .eq("id", paymentIntentRow.account_id)
-      .single();
-
-    if (familyAccountError || !familyAccount) {
-      throw new Error(
-        `Failed to read family account for scheduled plan evaluation: ${familyAccountError?.message ?? "not found"}`
-      );
-    }
-
     await autoReconcileSafePaymentMismatch({
       familyAccountId: paymentIntentRow.account_id,
     });
@@ -186,6 +177,75 @@ export async function recordProviderPayment(input: RecordProviderPaymentInput) {
       providerEventId,
       eventAt: input.paidAt ?? data.paid_at ?? null,
       source: "provider_payment_auto_sync",
+    });
+
+    const { data: familyAccount, error: familyAccountError } = await supabase
+      .from("family_accounts")
+      .select(
+        "id, plan_code, next_billing_at, current_period_starts_at, current_period_ends_at"
+      )
+      .eq("id", paymentIntentRow.account_id)
+      .single();
+
+    if (familyAccountError || !familyAccount) {
+      throw new Error(
+        `Failed to read family account for scheduled plan evaluation: ${familyAccountError?.message ?? "not found"}`
+      );
+    }
+
+    const customerType = inferBillingCustomerType({
+      customerOrgNumber: null,
+    });
+
+    const accounting = normalizeNorwayMva({
+      grossAmount: input.amount,
+      customerType,
+    });
+
+    const periodStart =
+      familyAccount.current_period_starts_at ??
+      familyAccount.next_billing_at ??
+      input.paidAt ??
+      data.paid_at ??
+      new Date().toISOString();
+
+    const periodEnd =
+      familyAccount.current_period_ends_at ??
+      familyAccount.next_billing_at ??
+      null;
+
+    const ledgerEntry = await recordBillingLedgerEntry({
+      familyAccountId: familyAccount.id,
+      entryType: "provider_payment_received",
+      direction: "credit",
+      amount: input.amount,
+      currency,
+      planCode: paymentIntentRow.plan_code,
+      billingCycle: paymentIntentRow.billing_cycle,
+      occurredAt: input.paidAt ?? data.paid_at ?? new Date().toISOString(),
+      source: "provider_payment",
+      provider,
+      providerPaymentId,
+      paymentIntentId,
+      externalReference: `provider-payment:${provider}:${providerPaymentId}`,
+      payload: {
+        providerEventId,
+        rawPayload: input.rawPayload ?? {},
+      },
+      grossAmount: accounting.grossAmount,
+      netAmount: accounting.netAmount,
+      mvaAmount: accounting.mvaAmount,
+      mvaRate: accounting.mvaRate,
+      mvaCode: accounting.mvaCode,
+      customerType,
+      customerOrgNumber: null,
+      customerReference: familyAccount.id,
+      periodStart,
+      periodEnd,
+    });
+
+    await enqueueTripletexExport({
+      ledgerEntryId: ledgerEntry.id,
     });
 
     const currentPlanCode = familyAccount.plan_code?.trim().toLowerCase() ?? null;
