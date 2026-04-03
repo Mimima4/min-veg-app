@@ -2,13 +2,7 @@ import "server-only";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { syncPaymentIntentFromProviderPayment } from "@/server/billing/sync-intent-from-provider";
-import { autoReconcileSafePaymentMismatch } from "@/server/billing/auto-reconcile-safe-payment-mismatch";
-import { autoSyncBillingPeriod } from "@/server/billing/auto-sync-billing-period";
-import { autoSyncSuccessSubscriptionEvent } from "@/server/billing/auto-sync-success-subscription-event";
-import { createScheduledPlanChange } from "@/server/billing/create-scheduled-plan-change";
-import { recordBillingLedgerEntry } from "@/server/billing/record-billing-ledger-entry";
-import { enqueueTripletexExport } from "@/server/billing/enqueue-tripletex-export";
-import { inferBillingCustomerType, normalizeNorwayMva } from "@/server/billing/normalize-billing-accounting";
+import { continueProviderPaymentOrchestration } from "@/server/billing/continue-provider-payment-orchestration";
 
 type ProviderPaymentStatus = "pending" | "paid" | "failed" | "refunded";
 
@@ -34,6 +28,91 @@ function normalizeText(value: string, field: string): string {
   return normalized;
 }
 
+async function upsertOrchestrationRun(params: {
+  paymentIntentId: string;
+  providerPaymentId: string;
+  status: "processing" | "completed" | "failed";
+  error?: string | null;
+}) {
+  const supabase = createAdminClient();
+  const nowIso = new Date().toISOString();
+
+  if (params.status === "failed") {
+    const { data: existingRun, error: existingRunError } = await supabase
+      .from("billing_orchestration_runs")
+      .select("id, retry_count")
+      .eq("payment_intent_id", params.paymentIntentId)
+      .eq("provider_payment_id", params.providerPaymentId)
+      .maybeSingle();
+
+    if (existingRunError) {
+      throw new Error(
+        `Failed to read existing billing orchestration run for failure update: ${existingRunError.message}`
+      );
+    }
+
+    const nextRetryDate = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+
+    const payload = {
+      payment_intent_id: params.paymentIntentId,
+      provider_payment_id: params.providerPaymentId,
+      status: "failed" as const,
+      error: params.error ?? "Unknown orchestration error",
+      retry_count: (existingRun?.retry_count ?? 0) + 1,
+      retryable: true,
+      last_error_at: nowIso,
+      next_retry_at: nextRetryDate,
+      completed_at: null,
+    };
+
+    const { error } = await supabase
+      .from("billing_orchestration_runs")
+      .upsert(payload, {
+        onConflict: "payment_intent_id,provider_payment_id",
+      });
+
+    if (error) {
+      throw new Error(
+        `Failed to upsert failed billing orchestration run: ${error.message}`
+      );
+    }
+
+    return;
+  }
+
+  const payload =
+    params.status === "completed"
+      ? {
+          payment_intent_id: params.paymentIntentId,
+          provider_payment_id: params.providerPaymentId,
+          status: params.status,
+          error: null,
+          completed_at: nowIso,
+          retryable: true,
+          next_retry_at: null,
+          last_error_at: null,
+        }
+      : {
+          payment_intent_id: params.paymentIntentId,
+          provider_payment_id: params.providerPaymentId,
+          status: params.status,
+          error: null,
+          retryable: true,
+        };
+
+  const { error } = await supabase
+    .from("billing_orchestration_runs")
+    .upsert(payload, {
+      onConflict: "payment_intent_id,provider_payment_id",
+    });
+
+  if (error) {
+    throw new Error(
+      `Failed to upsert billing orchestration run: ${error.message}`
+    );
+  }
+}
+
 export async function recordProviderPayment(input: RecordProviderPaymentInput) {
   const supabase = createAdminClient();
 
@@ -55,221 +134,200 @@ export async function recordProviderPayment(input: RecordProviderPaymentInput) {
     throw new Error("Invalid paymentStatus");
   }
 
-  if (typeof input.amount !== "number" || Number.isNaN(input.amount) || input.amount <= 0) {
+  if (
+    typeof input.amount !== "number" ||
+    Number.isNaN(input.amount) ||
+    input.amount <= 0
+  ) {
     throw new Error("Invalid amount");
   }
 
-  const { data: paymentIntent, error: paymentIntentError } = await supabase
-    .from("payment_intents")
-    .select("id, account_type, account_id, plan_code, billing_cycle, status")
-    .eq("id", paymentIntentId)
-    .single();
-
-  if (paymentIntentError || !paymentIntent) {
-    throw new Error("Payment intent not found");
-  }
-
-  const { data: existingByPaymentId, error: existingByPaymentIdError } = await supabase
-    .from("provider_payments")
-    .select("*")
-    .eq("provider", provider)
+  const { data: existingRun, error: existingRunError } = await supabase
+    .from("billing_orchestration_runs")
+    .select("id, status, completed_at, error")
+    .eq("payment_intent_id", paymentIntentId)
     .eq("provider_payment_id", providerPaymentId)
     .maybeSingle();
 
-  if (existingByPaymentIdError) {
+  if (existingRunError) {
     throw new Error(
-      `Failed to load existing provider payment by provider_payment_id: ${existingByPaymentIdError.message}`
+      `Failed to inspect billing orchestration run: ${existingRunError.message}`
     );
   }
 
-  if (existingByPaymentId) {
-    if (existingByPaymentId.payment_intent_id !== paymentIntentId) {
+  if (existingRun?.status === "completed") {
+    const { data: existingProviderPayment, error: existingProviderPaymentError } =
+      await supabase
+        .from("provider_payments")
+        .select("*")
+        .eq("payment_intent_id", paymentIntentId)
+        .eq("provider", provider)
+        .eq("provider_payment_id", providerPaymentId)
+        .maybeSingle();
+
+    if (existingProviderPaymentError) {
       throw new Error(
-        "This provider payment is already linked to a different payment intent"
+        `Failed to read existing provider payment after completed orchestration: ${existingProviderPaymentError.message}`
       );
     }
 
     return {
       wasReplay: true,
-      providerPayment: existingByPaymentId,
+      providerPayment: existingProviderPayment,
     };
   }
 
-  if (providerEventId) {
-    const { data: existingByEventId, error: existingByEventIdError } = await supabase
-      .from("provider_payments")
-      .select("*")
-      .eq("provider", provider)
-      .eq("provider_event_id", providerEventId)
-      .maybeSingle();
+  await upsertOrchestrationRun({
+    paymentIntentId,
+    providerPaymentId,
+    status: "processing",
+  });
 
-    if (existingByEventIdError) {
+  try {
+    const { data: paymentIntent, error: paymentIntentError } = await supabase
+      .from("payment_intents")
+      .select("id, account_type, account_id, plan_code, billing_cycle, status")
+      .eq("id", paymentIntentId)
+      .single();
+
+    if (paymentIntentError || !paymentIntent) {
+      throw new Error("Payment intent not found");
+    }
+
+    const { data: existingByPaymentId, error: existingByPaymentIdError } =
+      await supabase
+        .from("provider_payments")
+        .select("*")
+        .eq("provider", provider)
+        .eq("provider_payment_id", providerPaymentId)
+        .maybeSingle();
+
+    if (existingByPaymentIdError) {
       throw new Error(
-        `Failed to load existing provider payment by provider_event_id: ${existingByEventIdError.message}`
+        `Failed to load existing provider payment by provider_payment_id: ${existingByPaymentIdError.message}`
       );
     }
 
-    if (existingByEventId) {
-      if (existingByEventId.payment_intent_id !== paymentIntentId) {
+    if (existingByPaymentId) {
+      if (existingByPaymentId.payment_intent_id !== paymentIntentId) {
         throw new Error(
-          "This provider event is already linked to a different payment intent"
+          "This provider payment is already linked to a different payment intent"
         );
       }
 
+      await upsertOrchestrationRun({
+        paymentIntentId,
+        providerPaymentId,
+        status: "completed",
+      });
+
       return {
         wasReplay: true,
-        providerPayment: existingByEventId,
+        providerPayment: existingByPaymentId,
       };
     }
-  }
 
-  const { data, error } = await supabase
-    .from("provider_payments")
-    .insert({
-      payment_intent_id: paymentIntentId,
-      provider,
-      provider_payment_id: providerPaymentId,
-      provider_event_id: providerEventId,
-      amount: input.amount,
-      currency,
-      payment_status: input.paymentStatus,
-      paid_at: input.paidAt ?? null,
-      raw_payload: input.rawPayload ?? {},
-    })
-    .select()
-    .single();
+    if (providerEventId) {
+      const { data: existingByEventId, error: existingByEventIdError } =
+        await supabase
+          .from("provider_payments")
+          .select("*")
+          .eq("provider", provider)
+          .eq("provider_event_id", providerEventId)
+          .maybeSingle();
 
-  if (error) {
-    throw new Error(`Failed to record provider payment: ${error.message}`);
-  }
+      if (existingByEventIdError) {
+        throw new Error(
+          `Failed to load existing provider payment by provider_event_id: ${existingByEventIdError.message}`
+        );
+      }
 
-  await syncPaymentIntentFromProviderPayment({
-    paymentIntentId,
-    providerPaymentStatus: input.paymentStatus,
-  });
+      if (existingByEventId) {
+        if (existingByEventId.payment_intent_id !== paymentIntentId) {
+          throw new Error(
+            "This provider event is already linked to a different payment intent"
+          );
+        }
 
-  const { data: paymentIntentRow, error: paymentIntentRowError } = await supabase
-    .from("payment_intents")
-    .select("account_type, account_id, plan_code, billing_cycle, status")
-    .eq("id", paymentIntentId)
-    .single();
+        await upsertOrchestrationRun({
+          paymentIntentId,
+          providerPaymentId,
+          status: "completed",
+        });
 
-  if (paymentIntentRowError) {
-    throw new Error(
-      `Failed to read payment intent owner after provider payment insert: ${paymentIntentRowError.message}`
-    );
-  }
+        return {
+          wasReplay: true,
+          providerPayment: existingByEventId,
+        };
+      }
+    }
 
-  if (paymentIntentRow.account_type === "family" && input.paymentStatus === "paid") {
-    await autoReconcileSafePaymentMismatch({
-      familyAccountId: paymentIntentRow.account_id,
-    });
-
-    await autoSyncBillingPeriod({
-      paymentIntentId,
-      paidAt: input.paidAt ?? data.paid_at ?? null,
-    });
-
-    await autoSyncSuccessSubscriptionEvent({
-      paymentIntentId,
-      provider,
-      providerPaymentId,
-      providerEventId,
-      eventAt: input.paidAt ?? data.paid_at ?? null,
-      source: "provider_payment_auto_sync",
-    });
-
-    const { data: familyAccount, error: familyAccountError } = await supabase
-      .from("family_accounts")
-      .select(
-        "id, plan_code, next_billing_at, current_period_starts_at, current_period_ends_at"
-      )
-      .eq("id", paymentIntentRow.account_id)
+    const { data, error } = await supabase
+      .from("provider_payments")
+      .insert({
+        payment_intent_id: paymentIntentId,
+        provider,
+        provider_payment_id: providerPaymentId,
+        provider_event_id: providerEventId,
+        amount: input.amount,
+        currency,
+        payment_status: input.paymentStatus,
+        paid_at: input.paidAt ?? null,
+        raw_payload: input.rawPayload ?? {},
+      })
+      .select()
       .single();
 
-    if (familyAccountError || !familyAccount) {
+    if (error) {
+      throw new Error(`Failed to record provider payment: ${error.message}`);
+    }
+
+    await syncPaymentIntentFromProviderPayment({
+      paymentIntentId,
+      providerPaymentStatus: input.paymentStatus,
+    });
+
+    const { data: paymentIntentRow, error: paymentIntentRowError } = await supabase
+      .from("payment_intents")
+      .select("account_type, account_id, plan_code, billing_cycle, status")
+      .eq("id", paymentIntentId)
+      .single();
+
+    if (paymentIntentRowError) {
       throw new Error(
-        `Failed to read family account for scheduled plan evaluation: ${familyAccountError?.message ?? "not found"}`
+        `Failed to read payment intent owner after provider payment insert: ${paymentIntentRowError.message}`
       );
     }
 
-    const customerType = inferBillingCustomerType({
-      customerOrgNumber: null,
-    });
-
-    const accounting = normalizeNorwayMva({
-      grossAmount: input.amount,
-      customerType,
-    });
-
-    const periodStart =
-      familyAccount.current_period_starts_at ??
-      familyAccount.next_billing_at ??
-      input.paidAt ??
-      data.paid_at ??
-      new Date().toISOString();
-
-    const periodEnd =
-      familyAccount.current_period_ends_at ??
-      familyAccount.next_billing_at ??
-      null;
-
-    const ledgerEntry = await recordBillingLedgerEntry({
-      familyAccountId: familyAccount.id,
-      entryType: "provider_payment_received",
-      direction: "credit",
-      amount: input.amount,
-      currency,
-      planCode: paymentIntentRow.plan_code,
-      billingCycle: paymentIntentRow.billing_cycle,
-      occurredAt: input.paidAt ?? data.paid_at ?? new Date().toISOString(),
-      source: "provider_payment",
-      provider,
-      providerPaymentId,
-      paymentIntentId,
-      externalReference: `provider-payment:${provider}:${providerPaymentId}`,
-      payload: {
+    if (paymentIntentRow.account_type === "family" && input.paymentStatus === "paid") {
+      await continueProviderPaymentOrchestration({
+        paymentIntentId,
+        provider,
+        providerPaymentId,
         providerEventId,
+        paidAt: input.paidAt ?? data.paid_at ?? null,
         rawPayload: input.rawPayload ?? {},
-      },
-      grossAmount: accounting.grossAmount,
-      netAmount: accounting.netAmount,
-      mvaAmount: accounting.mvaAmount,
-      mvaRate: accounting.mvaRate,
-      mvaCode: accounting.mvaCode,
-      customerType,
-      customerOrgNumber: null,
-      customerReference: familyAccount.id,
-      periodStart,
-      periodEnd,
-    });
-
-    await enqueueTripletexExport({
-      ledgerEntryId: ledgerEntry.id,
-    });
-
-    const currentPlanCode = familyAccount.plan_code?.trim().toLowerCase() ?? null;
-    const paidPlanCode = paymentIntentRow.plan_code?.trim().toLowerCase() ?? null;
-
-    if (
-      currentPlanCode &&
-      paidPlanCode &&
-      currentPlanCode !== paidPlanCode &&
-      familyAccount.next_billing_at
-    ) {
-      await createScheduledPlanChange({
-        familyAccountId: familyAccount.id,
-        targetPlanCode: paidPlanCode,
-        targetBillingCycle: paymentIntentRow.billing_cycle,
-        effectiveAt: familyAccount.next_billing_at,
-        createdBy: "system",
-        source: "provider_payment",
       });
     }
-  }
 
-  return {
-    wasReplay: false,
-    providerPayment: data,
-  };
+    await upsertOrchestrationRun({
+      paymentIntentId,
+      providerPaymentId,
+      status: "completed",
+    });
+
+    return {
+      wasReplay: false,
+      providerPayment: data,
+    };
+  } catch (error) {
+    await upsertOrchestrationRun({
+      paymentIntentId,
+      providerPaymentId,
+      status: "failed",
+      error: error instanceof Error ? error.message : "Unknown orchestration error",
+    });
+
+    throw error;
+  }
 }

@@ -19,6 +19,11 @@ function requireText(value: string, field: string): string {
   return normalized;
 }
 
+function normalizeLower(value: string | null | undefined): string | null {
+  const normalized = value?.trim().toLowerCase();
+  return normalized && normalized.length > 0 ? normalized : null;
+}
+
 function parseDateOrNull(value: string | null | undefined): Date | null {
   if (!value) {
     return null;
@@ -61,7 +66,7 @@ export async function autoSyncBillingPeriod(
 
   const { data: paymentIntent, error: paymentIntentError } = await admin
     .from("payment_intents")
-    .select("id, account_type, account_id, billing_cycle, status")
+    .select("id, account_type, account_id, plan_code, billing_cycle, status")
     .eq("id", paymentIntentId)
     .single();
 
@@ -101,7 +106,7 @@ export async function autoSyncBillingPeriod(
   const { data: familyAccount, error: familyAccountError } = await admin
     .from("family_accounts")
     .select(
-      "id, current_period_starts_at, current_period_ends_at, next_billing_at"
+      "id, plan_code, current_period_starts_at, current_period_ends_at, next_billing_at"
     )
     .eq("id", paymentIntent.account_id)
     .single();
@@ -112,9 +117,28 @@ export async function autoSyncBillingPeriod(
     );
   }
 
-  const paidAtDate =
-    parseDateOrNull(input.paidAt) ??
-    new Date();
+  const currentPlanCode = normalizeLower(familyAccount.plan_code);
+  const paymentPlanCode = normalizeLower(paymentIntent.plan_code);
+
+  if (
+    currentPlanCode &&
+    paymentPlanCode &&
+    currentPlanCode !== paymentPlanCode
+  ) {
+    return {
+      ok: true,
+      skipped: true,
+      reason: "plan_change_deferred",
+      familyAccountId: familyAccount.id,
+      currentPlanCode,
+      paymentPlanCode,
+      currentPeriodStartsAt: familyAccount.current_period_starts_at,
+      currentPeriodEndsAt: familyAccount.current_period_ends_at,
+      nextBillingAt: familyAccount.next_billing_at,
+    };
+  }
+
+  const paidAtDate = parseDateOrNull(input.paidAt) ?? new Date();
 
   const currentPeriodEndsAtDate = parseDateOrNull(
     familyAccount.current_period_ends_at

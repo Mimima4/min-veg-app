@@ -138,7 +138,6 @@ export async function autoSyncSuccessSubscriptionEvent(input: Input) {
     `provider_payment:${provider}:${providerPaymentId}:success_snapshot`;
 
   const effectiveEventAt =
-    normalizeOptionalIso(familyAccount.current_period_starts_at) ??
     normalizeOptionalIso(input.eventAt) ??
     new Date().toISOString();
 

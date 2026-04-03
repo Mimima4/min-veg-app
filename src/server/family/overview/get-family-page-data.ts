@@ -6,6 +6,7 @@ import {
   type AccountEntitlements,
   type FamilyAccountRow,
 } from "@/server/billing/get-account-entitlements";
+import { applySchoolReferralCampaign } from "@/server/billing/apply-school-referral-campaign";
 import {
   getChildPlanningState,
   type DesiredIncomeBand,
@@ -146,6 +147,11 @@ export async function getFamilyPageData({
   }
 
   const entitlements = entitlementsResult.data;
+
+  await applySchoolReferralCampaign({
+    familyAccountId: entitlements.familyAccount.id,
+  });
+
   const childIds: string[] = [];
 
   const { data: children, error: childrenError } = await supabase

@@ -5,13 +5,10 @@ import Link from "next/link";
 import { LocalePageShell } from "@/components/layout/locale-page-shell";
 import { createAdminClient } from "@/lib/supabase/admin";
 import IngestBillingSubscriptionEventForm from "./ingest-billing-subscription-event-form";
-import ProcessBillingEventsForm from "./process-billing-events-form";
 import ReconcilePaymentUnappliedForm from "./reconcile-payment-unapplied-form";
-import SyncBillingEventsForm from "./sync-billing-events-form";
 import { ingestBillingSubscriptionEvent } from "@/server/billing/ingest-billing-subscription-event";
-import { processBillingNotificationEvents } from "@/server/billing/process-billing-notification-events";
 import { reconcilePaymentUnapplied } from "@/server/billing/reconcile-payment-unapplied";
-import { syncBillingNotificationEvents } from "@/server/billing/sync-billing-notification-events";
+import { getSchoolReferralCampaignsSummary } from "@/server/billing/get-school-referral-campaigns-summary";
 
 type ProviderAuditHealthRow = {
   id: string;
@@ -26,6 +23,8 @@ export default async function AdminDashboardPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+
+  const campaigns = await getSchoolReferralCampaignsSummary();
 
   const admin = createAdminClient();
   const { data: auditData, error: auditError } = await admin
@@ -60,20 +59,6 @@ export default async function AdminDashboardPage({
 
   const needsAttentionCount = failedCount + rejectedCount;
   const auditsEmpty = !auditError && auditRows.length === 0;
-
-  async function runBillingEventSync() {
-    "use server";
-
-    await syncBillingNotificationEvents();
-    revalidatePath(`/${locale}/admin/dashboard`);
-  }
-
-  async function runBillingEventProcessing() {
-    "use server";
-
-    await processBillingNotificationEvents();
-    revalidatePath(`/${locale}/admin/dashboard`);
-  }
 
   async function runBillingSubscriptionEventIngest(formData: FormData) {
     "use server";
@@ -155,34 +140,6 @@ const paymentFacts = await getPaymentFactsForBillingSubject({
       ]}
     >
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        <div className="rounded-2xl border border-stone-200 bg-white p-6">
-          <h2 className="text-lg font-semibold text-stone-900">
-            Billing notification sync
-          </h2>
-          <p className="mt-2 text-sm leading-relaxed text-stone-600">
-            Create, refresh, and reconcile pending billing notification events from
-            the current family account state.
-          </p>
-
-          <div className="mt-5">
-            <SyncBillingEventsForm action={runBillingEventSync} />
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-stone-200 bg-white p-6">
-          <h2 className="text-lg font-semibold text-stone-900">
-            Billing notification delivery
-          </h2>
-          <p className="mt-2 text-sm leading-relaxed text-stone-600">
-            Process pending billing notification events and mark them as sent or
-            failed.
-          </p>
-
-          <div className="mt-5">
-            <ProcessBillingEventsForm action={runBillingEventProcessing} />
-          </div>
-        </div>
-
         <div className="rounded-2xl border border-stone-200 bg-white p-6">
           <h2 className="text-lg font-semibold text-stone-900">
             Billing email previews
@@ -459,6 +416,50 @@ const paymentFacts = await getPaymentFactsForBillingSubject({
               Open provider event audits
             </Link>
           </div>
+        </div>
+      </div>
+
+      <div className="mt-8">
+        <h2 className="text-lg font-semibold text-stone-900">
+          School referral campaigns
+        </h2>
+
+        <div className="mt-4 overflow-hidden rounded-2xl border border-stone-200">
+          <table className="min-w-full text-sm">
+            <thead className="bg-stone-50 text-left text-stone-600">
+              <tr>
+                <th className="px-4 py-2">Campaign</th>
+                <th className="px-4 py-2">Valid until</th>
+                <th className="px-4 py-2">Tier</th>
+                <th className="px-4 py-2">Total</th>
+                <th className="px-4 py-2">Active</th>
+                <th className="px-4 py-2">Consumed</th>
+              </tr>
+            </thead>
+
+            <tbody className="divide-y">
+              {campaigns.map((c) => (
+                <tr key={c.id} className="bg-white">
+                  <td className="px-4 py-2 font-medium text-stone-900">
+                    {c.campaignCode}
+                  </td>
+                  <td className="px-4 py-2 text-stone-600">
+                    {new Date(c.validUntil).toLocaleString()}
+                  </td>
+                  <td className="px-4 py-2 text-stone-600">
+                    {c.pricingTier}
+                  </td>
+                  <td className="px-4 py-2">{c.totalContexts}</td>
+                  <td className="px-4 py-2 text-blue-600">
+                    {c.activeContexts}
+                  </td>
+                  <td className="px-4 py-2 text-green-600">
+                    {c.consumedContexts}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </LocalePageShell>

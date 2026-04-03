@@ -60,6 +60,11 @@ type SyncResult = {
   canceled: number;
 };
 
+type SyncOptions = {
+  familyAccountIds?: string[];
+  successSubscriptionEventIds?: string[];
+};
+
 const MANAGED_EVENT_TYPES: BillingNotificationEventType[] = [
   "trial_ending_6h",
   "trial_expired",
@@ -108,14 +113,16 @@ function toNotificationRow(candidate: BillingNotificationCandidate) {
   };
 }
 
-export async function syncBillingNotificationEvents(): Promise<SyncResult> {
+export async function syncBillingNotificationEvents(
+  options: SyncOptions = {}
+): Promise<SyncResult> {
   const admin = createAdminClient();
   const nowIso = new Date().toISOString();
   const sevenDaysAgoIso = new Date(
     Date.now() - 7 * 24 * 60 * 60 * 1000
   ).toISOString();
 
-  const { data: families, error: familyError } = await admin
+  let familyQuery = admin
     .from("family_accounts")
     .select(
       [
@@ -141,20 +148,41 @@ export async function syncBillingNotificationEvents(): Promise<SyncResult> {
       ].join(", ")
     );
 
+  if (options.familyAccountIds && options.familyAccountIds.length > 0) {
+    familyQuery = familyQuery.in("id", options.familyAccountIds);
+  }
+
+  const { data: families, error: familyError } = await familyQuery;
+
   if (familyError) {
     throw new Error(`Failed to load family_accounts: ${familyError.message}`);
   }
 
   const familyRows = ((families ?? []) as unknown) as FamilyAccountRow[];
 
-  const { data: successEvents, error: successEventsError } = await admin
+  let successQuery = admin
     .from("billing_subscription_events")
     .select(
       "id, family_account_id, primary_user_id, event_type, event_at, current_period_starts_at, current_period_ends_at, billing_cycle, payload"
     )
-    .in("event_type", [...SUCCESS_EVENT_TYPES])
-    .gte("event_at", sevenDaysAgoIso)
-    .lte("event_at", nowIso)
+    .in("event_type", [...SUCCESS_EVENT_TYPES]);
+
+  if (
+    options.successSubscriptionEventIds &&
+    options.successSubscriptionEventIds.length > 0
+  ) {
+    successQuery = successQuery.in("id", options.successSubscriptionEventIds);
+  } else {
+    successQuery = successQuery
+      .gte("event_at", sevenDaysAgoIso)
+      .lte("event_at", nowIso);
+  }
+
+  if (options.familyAccountIds && options.familyAccountIds.length > 0) {
+    successQuery = successQuery.in("family_account_id", options.familyAccountIds);
+  }
+
+  const { data: successEvents, error: successEventsError } = await successQuery
     .order("event_at", { ascending: false });
 
   if (successEventsError) {

@@ -11,6 +11,11 @@ export type BillingNotificationRow = {
   family_account_id: string;
   event_type: BillingNotificationEventType;
   payload: Record<string, unknown> | null;
+  status?: "pending" | "sent" | "skipped" | "canceled" | "failed";
+  retry_count?: number | null;
+  retryable?: boolean | null;
+  next_retry_at?: string | null;
+  scheduled_for?: string | null;
 };
 
 export type BillingDeliveryResult =

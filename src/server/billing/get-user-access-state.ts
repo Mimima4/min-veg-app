@@ -4,6 +4,7 @@ import {
   resolveAccountActivation,
   type AccountActivationState,
 } from "@/server/billing/resolve-account-activation";
+import { getActiveComplimentaryAccessGrant } from "@/server/billing/get-active-complimentary-access-grant";
 import { syncFamilyPartnerLinkForUser } from "@/server/family/partner/sync-family-partner-link-for-user";
 
 export type PendingEntrySource =
@@ -114,7 +115,7 @@ export function isInstitutionalEntrySource(
   );
 }
 
-function buildAccessStateFromFamilyAccount(args: {
+async function buildAccessStateFromFamilyAccount(args: {
   userEmail: string | null;
   displayName: string | null;
   pendingEntrySource: PendingEntrySource;
@@ -122,8 +123,11 @@ function buildAccessStateFromFamilyAccount(args: {
   trialUsed: boolean;
   familyAccount: FamilyAccessRow;
   isFamilyPartner: boolean;
-}): UserAccessState {
+}): Promise<UserAccessState> {
   const activation = resolveAccountActivation(args.familyAccount);
+  const complimentaryGrant = await getActiveComplimentaryAccessGrant({
+    familyAccountId: args.familyAccount.id,
+  });
 
   const sharedBase: AccessBase = {
     email: args.userEmail,
@@ -134,6 +138,30 @@ function buildAccessStateFromFamilyAccount(args: {
     trialAvailable: false,
     isFamilyPartner: args.isFamilyPartner,
   };
+
+  if (activation.billingStage === "paid" && activation.hasActiveAccess) {
+    return {
+      kind: "paid_active",
+      ...sharedBase,
+      familyAccount: args.familyAccount,
+      activation,
+    };
+  }
+
+  if (complimentaryGrant) {
+    return {
+      kind: "paid_active",
+      ...sharedBase,
+      familyAccount: args.familyAccount,
+      activation: {
+        ...activation,
+        billingStage: "paid",
+        subscriptionLifecycleState: "active",
+        hasActiveAccess: true,
+        shouldRouteToPaid: false,
+      },
+    };
+  }
 
   if (activation.trialState === "active") {
     return {
@@ -149,15 +177,6 @@ function buildAccessStateFromFamilyAccount(args: {
       kind: "trial_expired",
       ...sharedBase,
       trialUsed: true,
-      familyAccount: args.familyAccount,
-      activation,
-    };
-  }
-
-  if (activation.billingStage === "paid" && activation.hasActiveAccess) {
-    return {
-      kind: "paid_active",
-      ...sharedBase,
       familyAccount: args.familyAccount,
       activation,
     };
@@ -239,7 +258,7 @@ export async function getUserAccessState(): Promise<UserAccessState> {
       .maybeSingle();
 
     if (linkedFamilyAccount) {
-      return buildAccessStateFromFamilyAccount({
+      return await buildAccessStateFromFamilyAccount({
         userEmail: user.email ?? null,
         displayName,
         pendingEntrySource,
@@ -319,7 +338,7 @@ export async function getUserAccessState(): Promise<UserAccessState> {
     };
   }
 
-  return buildAccessStateFromFamilyAccount({
+  return await buildAccessStateFromFamilyAccount({
     userEmail: user.email ?? null,
     displayName,
     pendingEntrySource,

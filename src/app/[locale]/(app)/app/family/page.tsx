@@ -8,6 +8,8 @@ import UpgradeChildLimitButton from "./upgrade-child-limit-button";
 import ResetFamilyStateButton from "./reset-family-state-button";
 import { getFamilyPageData } from "@/server/family/overview/get-family-page-data";
 import { getUserAccessState } from "@/server/billing/get-user-access-state";
+import { getActiveComplimentaryAccessGrant } from "@/server/billing/get-active-complimentary-access-grant";
+import { getFamilySchoolOffer } from "@/server/billing/get-family-school-offer";
 import { requireAppAccess } from "@/server/billing/require-app-access";
 
 function SummaryMetricLink({
@@ -440,6 +442,26 @@ export default async function FamilyPage({
     (entitlements.activation.billingStage as string) === "grace";
   const isCanceledWithAccess =
     lifecycleState === "canceled" && entitlements.activation.hasActiveAccess;
+  const activeComplimentaryGrant = await getActiveComplimentaryAccessGrant({
+    familyAccountId: familyAccount.id,
+  });
+  const schoolOffer = await getFamilySchoolOffer({
+    familyAccountId: familyAccount.id,
+  });
+  const accessSourceLabel = activeComplimentaryGrant
+    ? "Complimentary"
+    : trialState === "active" || trialState === "expired"
+      ? "Trial"
+      : entitlements.activation.hasActiveAccess
+        ? "Paid"
+        : "Inactive";
+  const activeUntilLabel = activeComplimentaryGrant
+    ? activeComplimentaryGrant.ends_at
+      ? formatDateTime(activeComplimentaryGrant.ends_at)
+      : "Permanent"
+    : trialState === "active" || trialState === "expired"
+      ? formatDateTime(trialEndsAt)
+      : formatDateTime(entitlements.activation.currentPeriodEndsAt ?? null);
 
   return (
     <LocalePageShell
@@ -517,8 +539,13 @@ export default async function FamilyPage({
           <dl className="mt-5 grid gap-4 sm:grid-cols-2">
             <div>
               <dt className="text-sm text-stone-500">Plan type</dt>
-              <dd className="mt-1 text-base text-stone-900">
-                {familyAccount.plan_type}
+              <dd className="mt-1 text-base">
+                <Link
+                  href={`/${locale}/pricing?entry=family`}
+                  className="font-medium text-blue-600 transition hover:text-blue-700 hover:underline"
+                >
+                  {familyAccount.plan_type}
+                </Link>
               </dd>
             </div>
 
@@ -536,11 +563,25 @@ export default async function FamilyPage({
               </dd>
             </div>
 
-            {trialState === "active" || trialState === "expired" ? (
+            <div>
+              <dt className="text-sm text-stone-500">Access source</dt>
+              <dd className="mt-1 text-base text-stone-900">
+                {accessSourceLabel}
+              </dd>
+            </div>
+
+            <div>
+              <dt className="text-sm text-stone-500">Active until</dt>
+              <dd className="mt-1 text-base text-stone-900">
+                {activeUntilLabel}
+              </dd>
+            </div>
+
+            {schoolOffer ? (
               <div>
-                <dt className="text-sm text-stone-500">Trial ends</dt>
+                <dt className="text-sm text-stone-500">School offer active until</dt>
                 <dd className="mt-1 text-base text-stone-900">
-                  {formatDateTime(trialEndsAt)}
+                  {formatDateTime(schoolOffer.validUntil)}
                 </dd>
               </div>
             ) : null}

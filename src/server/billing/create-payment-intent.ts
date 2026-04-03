@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { resolveSchoolReferralPricing } from "@/server/billing/resolve-school-referral-pricing";
 
 type CreatePaymentIntentInput = {
   accountType: "family" | "school" | "kommune" | "fylke";
@@ -82,6 +83,27 @@ export async function createPaymentIntent(input: CreatePaymentIntentInput) {
     throw new Error("Invalid amount");
   }
 
+  let resolvedAmount = amount;
+  let pricingSource: string | null = null;
+  let pricingContextId: string | null = null;
+  let pricingContextType: string | null = null;
+
+  if (accountType === "family") {
+    const schoolReferralPricing = await resolveSchoolReferralPricing({
+      familyAccountId: accountId,
+      billingCycle,
+      baseAmount: amount,
+    });
+
+    resolvedAmount = schoolReferralPricing.finalAmount;
+
+    if (schoolReferralPricing.discountApplied) {
+      pricingSource = "school_referral";
+      pricingContextId = schoolReferralPricing.referralContextId;
+      pricingContextType = "school_referral_context";
+    }
+  }
+
   const windowStartIso = getWindowStartIso(24);
 
   const { count, error: countError } = await supabase
@@ -112,10 +134,13 @@ export async function createPaymentIntent(input: CreatePaymentIntentInput) {
       account_id: accountId,
       plan_code: planCode,
       billing_cycle: billingCycle,
-      amount,
+      amount: resolvedAmount,
       currency,
       status: policyDecision.status,
       policy_block_reason: policyDecision.policyBlockReason,
+      pricing_source: pricingSource,
+      pricing_context_id: pricingContextId,
+      pricing_context_type: pricingContextType,
     })
     .select()
     .single();
