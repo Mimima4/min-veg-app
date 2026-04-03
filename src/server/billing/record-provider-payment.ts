@@ -2,7 +2,10 @@ import "server-only";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { syncPaymentIntentFromProviderPayment } from "@/server/billing/sync-intent-from-provider";
-import { continueProviderPaymentOrchestration } from "@/server/billing/continue-provider-payment-orchestration";
+import {
+  runProviderPaymentOrchestration,
+  upsertBillingOrchestrationRun,
+} from "@/server/billing/provider-payment-orchestration-run";
 
 type ProviderPaymentStatus = "pending" | "paid" | "failed" | "refunded";
 
@@ -26,91 +29,6 @@ function normalizeText(value: string, field: string): string {
   }
 
   return normalized;
-}
-
-async function upsertOrchestrationRun(params: {
-  paymentIntentId: string;
-  providerPaymentId: string;
-  status: "processing" | "completed" | "failed";
-  error?: string | null;
-}) {
-  const supabase = createAdminClient();
-  const nowIso = new Date().toISOString();
-
-  if (params.status === "failed") {
-    const { data: existingRun, error: existingRunError } = await supabase
-      .from("billing_orchestration_runs")
-      .select("id, retry_count")
-      .eq("payment_intent_id", params.paymentIntentId)
-      .eq("provider_payment_id", params.providerPaymentId)
-      .maybeSingle();
-
-    if (existingRunError) {
-      throw new Error(
-        `Failed to read existing billing orchestration run for failure update: ${existingRunError.message}`
-      );
-    }
-
-    const nextRetryDate = new Date(Date.now() + 5 * 60 * 1000).toISOString();
-
-    const payload = {
-      payment_intent_id: params.paymentIntentId,
-      provider_payment_id: params.providerPaymentId,
-      status: "failed" as const,
-      error: params.error ?? "Unknown orchestration error",
-      retry_count: (existingRun?.retry_count ?? 0) + 1,
-      retryable: true,
-      last_error_at: nowIso,
-      next_retry_at: nextRetryDate,
-      completed_at: null,
-    };
-
-    const { error } = await supabase
-      .from("billing_orchestration_runs")
-      .upsert(payload, {
-        onConflict: "payment_intent_id,provider_payment_id",
-      });
-
-    if (error) {
-      throw new Error(
-        `Failed to upsert failed billing orchestration run: ${error.message}`
-      );
-    }
-
-    return;
-  }
-
-  const payload =
-    params.status === "completed"
-      ? {
-          payment_intent_id: params.paymentIntentId,
-          provider_payment_id: params.providerPaymentId,
-          status: params.status,
-          error: null,
-          completed_at: nowIso,
-          retryable: true,
-          next_retry_at: null,
-          last_error_at: null,
-        }
-      : {
-          payment_intent_id: params.paymentIntentId,
-          provider_payment_id: params.providerPaymentId,
-          status: params.status,
-          error: null,
-          retryable: true,
-        };
-
-  const { error } = await supabase
-    .from("billing_orchestration_runs")
-    .upsert(payload, {
-      onConflict: "payment_intent_id,provider_payment_id",
-    });
-
-  if (error) {
-    throw new Error(
-      `Failed to upsert billing orchestration run: ${error.message}`
-    );
-  }
 }
 
 export async function recordProviderPayment(input: RecordProviderPaymentInput) {
@@ -177,7 +95,7 @@ export async function recordProviderPayment(input: RecordProviderPaymentInput) {
     };
   }
 
-  await upsertOrchestrationRun({
+  await upsertBillingOrchestrationRun({
     paymentIntentId,
     providerPaymentId,
     status: "processing",
@@ -215,7 +133,7 @@ export async function recordProviderPayment(input: RecordProviderPaymentInput) {
         );
       }
 
-      await upsertOrchestrationRun({
+      await upsertBillingOrchestrationRun({
         paymentIntentId,
         providerPaymentId,
         status: "completed",
@@ -249,7 +167,7 @@ export async function recordProviderPayment(input: RecordProviderPaymentInput) {
           );
         }
 
-        await upsertOrchestrationRun({
+        await upsertBillingOrchestrationRun({
           paymentIntentId,
           providerPaymentId,
           status: "completed",
@@ -300,7 +218,7 @@ export async function recordProviderPayment(input: RecordProviderPaymentInput) {
     }
 
     if (paymentIntentRow.account_type === "family" && input.paymentStatus === "paid") {
-      await continueProviderPaymentOrchestration({
+      await runProviderPaymentOrchestration({
         paymentIntentId,
         provider,
         providerPaymentId,
@@ -308,20 +226,20 @@ export async function recordProviderPayment(input: RecordProviderPaymentInput) {
         paidAt: input.paidAt ?? data.paid_at ?? null,
         rawPayload: input.rawPayload ?? {},
       });
+    } else {
+      await upsertBillingOrchestrationRun({
+        paymentIntentId,
+        providerPaymentId,
+        status: "completed",
+      });
     }
-
-    await upsertOrchestrationRun({
-      paymentIntentId,
-      providerPaymentId,
-      status: "completed",
-    });
 
     return {
       wasReplay: false,
       providerPayment: data,
     };
   } catch (error) {
-    await upsertOrchestrationRun({
+    await upsertBillingOrchestrationRun({
       paymentIntentId,
       providerPaymentId,
       status: "failed",

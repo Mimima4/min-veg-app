@@ -204,37 +204,55 @@ export async function continueProviderPaymentOrchestration(
     familyAccountAfter.next_billing_at ??
     null;
 
-  const ledgerEntry = await recordBillingLedgerEntry({
-    familyAccountId: familyAccountAfter.id,
-    entryType: "provider_payment_received",
-    direction: "credit",
-    amount: providerPayment.amount,
-    currency: providerPayment.currency,
-    planCode: paymentIntentRow.plan_code,
-    billingCycle: paymentIntentRow.billing_cycle,
-    occurredAt: input.paidAt ?? providerPayment.paid_at ?? new Date().toISOString(),
-    source: "provider_payment",
-    provider: input.provider,
-    providerPaymentId: input.providerPaymentId,
-    paymentIntentId: input.paymentIntentId,
-    externalReference: `provider-payment:${input.provider}:${input.providerPaymentId}`,
-    payload: {
-      providerEventId: input.providerEventId ?? null,
-      rawPayload: input.rawPayload ?? providerPayment.raw_payload ?? {},
-      deferredPlanChangeId: scheduledPlanChange?.id ?? null,
-      deferredPlanChangeEffectiveAt: scheduledPlanChange?.effective_at ?? null,
-    },
-    grossAmount: accounting.grossAmount,
-    netAmount: accounting.netAmount,
-    mvaAmount: accounting.mvaAmount,
-    mvaRate: accounting.mvaRate,
-    mvaCode: accounting.mvaCode,
-    customerType,
-    customerOrgNumber: null,
-    customerReference: familyAccountAfter.id,
-    periodStart,
-    periodEnd,
-  });
+  const ledgerExternalReference = `provider-payment:${input.provider}:${input.providerPaymentId}`;
+
+  const { data: existingLedgerEntry, error: existingLedgerEntryError } =
+    await supabase
+      .from("billing_ledger_entries")
+      .select("id")
+      .eq("external_reference", ledgerExternalReference)
+      .maybeSingle();
+
+  if (existingLedgerEntryError) {
+    throw new Error(
+      `Failed to inspect existing billing ledger entry for orchestration: ${existingLedgerEntryError.message}`
+    );
+  }
+
+  const ledgerEntry = existingLedgerEntry
+    ? existingLedgerEntry
+    : await recordBillingLedgerEntry({
+        familyAccountId: familyAccountAfter.id,
+        entryType: "provider_payment_received",
+        direction: "credit",
+        amount: providerPayment.amount,
+        currency: providerPayment.currency,
+        planCode: paymentIntentRow.plan_code,
+        billingCycle: paymentIntentRow.billing_cycle,
+        occurredAt:
+          input.paidAt ?? providerPayment.paid_at ?? new Date().toISOString(),
+        source: "provider_payment",
+        provider: input.provider,
+        providerPaymentId: input.providerPaymentId,
+        paymentIntentId: input.paymentIntentId,
+        externalReference: ledgerExternalReference,
+        payload: {
+          providerEventId: input.providerEventId ?? null,
+          rawPayload: input.rawPayload ?? providerPayment.raw_payload ?? {},
+          deferredPlanChangeId: scheduledPlanChange?.id ?? null,
+          deferredPlanChangeEffectiveAt: scheduledPlanChange?.effective_at ?? null,
+        },
+        grossAmount: accounting.grossAmount,
+        netAmount: accounting.netAmount,
+        mvaAmount: accounting.mvaAmount,
+        mvaRate: accounting.mvaRate,
+        mvaCode: accounting.mvaCode,
+        customerType,
+        customerOrgNumber: null,
+        customerReference: familyAccountAfter.id,
+        periodStart,
+        periodEnd,
+      });
 
   await enqueueTripletexExport({
     ledgerEntryId: ledgerEntry.id,

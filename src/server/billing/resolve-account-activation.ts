@@ -19,6 +19,7 @@ export type SubscriptionLifecycleState =
   | "unknown";
 
 export type FamilyActivationSnapshot = {
+  account_type?: string | null;
   plan_type: string | null;
   status: string | null;
   subscription_state: string | null;
@@ -125,7 +126,6 @@ export function resolveAccountActivation(
 
   const trialEndsAtDate = parseDate(snapshot.trial_ends_at);
   const currentPeriodEndsAtDate = parseDate(snapshot.current_period_ends_at);
-  const gracePeriodEndsAtDate = parseDate(snapshot.grace_period_ends_at);
   const canceledAtDate = parseDate(snapshot.canceled_at);
 
   const rawTrialRemainingMs = trialEndsAtDate
@@ -197,10 +197,6 @@ export function resolveAccountActivation(
       ? currentPeriodEndsAtDate.getTime() > now.getTime()
       : false;
 
-    const graceStillActive = gracePeriodEndsAtDate
-      ? gracePeriodEndsAtDate.getTime() > now.getTime()
-      : false;
-
     const isCanceled =
       subscriptionState === "canceled" ||
       subscriptionState === "cancelled" ||
@@ -213,10 +209,35 @@ export function resolveAccountActivation(
       status === "past_due" ||
       lastPaymentStatus === "failed";
 
-    const isGracePeriod =
-      subscriptionState === "grace_period" ||
-      status === "grace_period" ||
-      (isPastDue && graceStillActive);
+    const accountType = normalize(snapshot.account_type);
+    const isFamily =
+      snapshot.account_type === undefined || snapshot.account_type === null
+        ? true
+        : accountType === "family";
+
+    const nowTs = now.getTime();
+    const gracePeriodEndsAt = snapshot.grace_period_ends_at ?? null;
+
+    let graceStillActive = false;
+
+    if (isPastDue && gracePeriodEndsAt) {
+      const graceEnd = new Date(gracePeriodEndsAt).getTime();
+      graceStillActive = nowTs <= graceEnd;
+    }
+
+    // 🔒 family-specific short hidden grace
+    let familyGraceStillActive = false;
+
+    if (isFamily && isPastDue && gracePeriodEndsAt) {
+      const graceEnd = new Date(gracePeriodEndsAt).getTime();
+      familyGraceStillActive = nowTs <= graceEnd;
+    }
+
+    const isGracePeriod = isFamily
+      ? familyGraceStillActive
+      : subscriptionState === "grace_period" ||
+        status === "grace_period" ||
+        graceStillActive;
 
     if (isCanceled) {
       if (currentPeriodStillActive) {

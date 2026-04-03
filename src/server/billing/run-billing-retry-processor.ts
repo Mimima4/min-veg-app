@@ -1,7 +1,7 @@
 import "server-only";
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { continueProviderPaymentOrchestration } from "@/server/billing/continue-provider-payment-orchestration";
+import { runProviderPaymentOrchestration } from "@/server/billing/provider-payment-orchestration-run";
 
 export async function runBillingRetryProcessor(args?: {
   limit?: number;
@@ -29,6 +29,8 @@ export async function runBillingRetryProcessor(args?: {
   }
 
   const runs = data ?? [];
+  let succeeded = 0;
+  let failed = 0;
 
   for (const run of runs) {
     try {
@@ -42,15 +44,12 @@ export async function runBillingRetryProcessor(args?: {
           .eq("provider_payment_id", run.provider_payment_id)
           .maybeSingle();
 
-      if (providerPaymentError) {
+      if (providerPaymentError || !providerPayment) {
+        failed += 1;
         continue;
       }
 
-      if (!providerPayment) {
-        continue;
-      }
-
-      await continueProviderPaymentOrchestration({
+      await runProviderPaymentOrchestration({
         paymentIntentId: providerPayment.payment_intent_id,
         provider: providerPayment.provider,
         providerPaymentId: providerPayment.provider_payment_id,
@@ -63,12 +62,16 @@ export async function runBillingRetryProcessor(args?: {
             ? (providerPayment.raw_payload as Record<string, unknown>)
             : {},
       });
+
+      succeeded += 1;
     } catch {
-      // Ничего не делаем: failed bookkeeping уже есть в orchestration contour
+      failed += 1;
     }
   }
 
   return {
     processed: runs.length,
+    succeeded,
+    failed,
   };
 }

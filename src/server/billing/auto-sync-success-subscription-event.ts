@@ -13,6 +13,21 @@ type Input = {
   source?: string | null;
 };
 
+type FamilyAccountSuccessSyncRow = {
+  id: string;
+  primary_user_id: string | null;
+  auto_renew_enabled: boolean | null;
+  current_period_starts_at: string | null;
+  current_period_ends_at: string | null;
+  next_billing_at: string | null;
+  subscription_state: string | null;
+  status: string | null;
+  grace_period_ends_at: string | null;
+  payment_failed_at: string | null;
+  last_payment_status: string | null;
+  canceled_at: string | null;
+};
+
 function requireText(value: string, field: string): string {
   const normalized = value.trim();
 
@@ -40,6 +55,11 @@ function normalizeOptionalIso(value: string | null | undefined): string | null {
   }
 
   return parsed.toISOString();
+}
+
+function normalizeLower(value: string | null | undefined): string | null {
+  const normalized = value?.trim().toLowerCase();
+  return normalized && normalized.length > 0 ? normalized : null;
 }
 
 export async function autoSyncSuccessSubscriptionEvent(input: Input) {
@@ -91,17 +111,39 @@ export async function autoSyncSuccessSubscriptionEvent(input: Input) {
     );
   }
 
-  const { data: familyAccount, error: familyAccountError } = await admin
+  const { data: familyAccountRow, error: familyAccountError } = await admin
     .from("family_accounts")
     .select(
-      "id, primary_user_id, auto_renew_enabled, current_period_starts_at, current_period_ends_at, next_billing_at"
+      [
+        "id",
+        "primary_user_id",
+        "auto_renew_enabled",
+        "current_period_starts_at",
+        "current_period_ends_at",
+        "next_billing_at",
+        "subscription_state",
+        "status",
+        "grace_period_ends_at",
+        "payment_failed_at",
+        "last_payment_status",
+        "canceled_at",
+      ].join(", ")
     )
     .eq("id", paymentIntent.account_id)
     .single();
 
-  if (familyAccountError || !familyAccount) {
+  if (familyAccountError || !familyAccountRow) {
     throw new Error(
       `Failed to load family account for subscription sync: ${familyAccountError?.message ?? "not found"}`
+    );
+  }
+
+  const familyAccount =
+    familyAccountRow as unknown as FamilyAccountSuccessSyncRow;
+
+  if (!familyAccount.primary_user_id) {
+    throw new Error(
+      "Family account must have primary_user_id before creating success subscription event"
     );
   }
 
@@ -110,6 +152,14 @@ export async function autoSyncSuccessSubscriptionEvent(input: Input) {
       "Billing period must be synced before creating success subscription event"
     );
   }
+
+  const normalizedSubscriptionState = normalizeLower(familyAccount.subscription_state);
+  const normalizedLastPaymentStatus = normalizeLower(familyAccount.last_payment_status);
+
+  const isRecoveryState =
+    normalizedSubscriptionState === "past_due" ||
+    normalizedSubscriptionState === "grace_period" ||
+    normalizedLastPaymentStatus === "failed";
 
   const { count: existingSuccessEventCount, error: existingSuccessEventCountError } =
     await admin
@@ -128,14 +178,39 @@ export async function autoSyncSuccessSubscriptionEvent(input: Input) {
     );
   }
 
-  const eventType =
-    (existingSuccessEventCount ?? 0) > 0
+  const eventType = isRecoveryState
+    ? "payment_recovered"
+    : (existingSuccessEventCount ?? 0) > 0
       ? "subscription_renewed_success"
       : "subscription_started_success";
 
-  const externalEventId =
+  // 🔒 Duplicate success-event guard
+
+  const existingEventId =
     providerEventId ??
     `provider_payment:${provider}:${providerPaymentId}:success_snapshot`;
+
+  const { data: existingEvent } = await admin
+    .from("billing_subscription_events")
+    .select("id, event_type")
+    .eq("external_event_id", existingEventId)
+    .maybeSingle();
+
+  if (existingEvent) {
+    // 🔁 Deterministic retry — возвращаем уже существующий результат
+    const projectedBillingSnapshot =
+      await projectBillingSubscriptionSnapshotToFamilyAccount(familyAccount.id);
+
+    return {
+      ok: true,
+      eventType: existingEvent.event_type,
+      subscriptionEventId: existingEvent.id,
+      familyAccountId: familyAccount.id,
+      projectedBillingSnapshot,
+      recoveryDetected: isRecoveryState,
+      reused: true,
+    };
+  }
 
   const effectiveEventAt =
     normalizeOptionalIso(input.eventAt) ??
@@ -154,8 +229,14 @@ export async function autoSyncSuccessSubscriptionEvent(input: Input) {
     billingCycle: paymentIntent.billing_cycle,
     autoRenewEnabled: familyAccount.auto_renew_enabled,
     lastPaymentStatus: "paid",
+    gracePeriodEndsAt: null,
+    paymentFailedAt: null,
+    canceledAt:
+      eventType === "payment_recovered"
+        ? null
+        : familyAccount.canceled_at,
     source,
-    externalEventId,
+    externalEventId: existingEventId,
     payload: {
       trigger: "successful_provider_payment",
       paymentIntentId: paymentIntent.id,
@@ -169,6 +250,12 @@ export async function autoSyncSuccessSubscriptionEvent(input: Input) {
       currentPeriodStartsAt: familyAccount.current_period_starts_at,
       currentPeriodEndsAt: familyAccount.current_period_ends_at,
       nextBillingAt: familyAccount.next_billing_at,
+      previousSubscriptionState: familyAccount.subscription_state,
+      previousStatus: familyAccount.status,
+      previousGracePeriodEndsAt: familyAccount.grace_period_ends_at,
+      previousPaymentFailedAt: familyAccount.payment_failed_at,
+      previousLastPaymentStatus: familyAccount.last_payment_status,
+      recoveryDetected: isRecoveryState,
     },
   });
 
@@ -181,5 +268,6 @@ export async function autoSyncSuccessSubscriptionEvent(input: Input) {
     subscriptionEventId: event.id,
     familyAccountId: familyAccount.id,
     projectedBillingSnapshot,
+    recoveryDetected: isRecoveryState,
   };
 }

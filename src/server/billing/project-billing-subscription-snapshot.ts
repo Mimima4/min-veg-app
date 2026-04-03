@@ -9,6 +9,7 @@ type BillingSubscriptionProjectionRow = {
   event_type: BillingSubscriptionEventType;
   event_at: string;
   plan_code: string | null;
+  billing_cycle: string | null;
   subscription_state: string | null;
   current_period_starts_at: string | null;
   current_period_ends_at: string | null;
@@ -33,6 +34,7 @@ type FamilyAccountBillingRow = {
 
 type StringProjectionKey =
   | "plan_code"
+  | "billing_cycle"
   | "subscription_state"
   | "current_period_starts_at"
   | "current_period_ends_at"
@@ -245,6 +247,7 @@ function resolveLatestSubscriptionState(args: {
   fallbackState: string | null;
   currentPeriodEndsAt: string | null;
   gracePeriodEndsAt: string | null;
+  now?: Date;
 }): string {
   const explicit = normalizeLowerText(args.latest.subscription_state);
 
@@ -252,7 +255,7 @@ function resolveLatestSubscriptionState(args: {
     return explicit;
   }
 
-  const now = new Date();
+  const now = args.now ?? new Date();
   const currentPeriodEndsAtDate = parseDate(args.currentPeriodEndsAt);
   const gracePeriodEndsAtDate = parseDate(args.gracePeriodEndsAt);
 
@@ -363,7 +366,7 @@ function buildProjectedSnapshot(
     ) ??
     (autoRenewEnabled ? currentPeriodEndsAt : null);
 
-  const gracePeriodEndsAt = resolveLatestGracePeriodEndsAt(
+  let gracePeriodEndsAt = resolveLatestGracePeriodEndsAt(
     latest,
     getLatestNonNullString(rows, "grace_period_ends_at")
   );
@@ -383,12 +386,41 @@ function buildProjectedSnapshot(
     getLatestNonNullString(rows, "last_payment_status")
   );
 
-  const subscriptionState = resolveLatestSubscriptionState({
+  const projectionNow = new Date();
+
+  let subscriptionState = resolveLatestSubscriptionState({
     latest,
     fallbackState: familyAccount.subscription_state,
     currentPeriodEndsAt,
     gracePeriodEndsAt,
+    now: projectionNow,
   });
+
+  const billingCycleRaw = getLatestNonNullString(rows, "billing_cycle");
+  const isMonthly = billingCycleRaw?.trim().toLowerCase() === "monthly";
+  const isYearly = billingCycleRaw?.trim().toLowerCase() === "yearly";
+
+  if (subscriptionState === "past_due") {
+    const baseTime = new Date(
+      paymentFailedAt ?? projectionNow
+    ).getTime();
+
+    const graceMs = isMonthly
+      ? 3 * 60 * 60 * 1000
+      : isYearly
+        ? 24 * 60 * 60 * 1000
+        : 0;
+
+    gracePeriodEndsAt = new Date(baseTime + graceMs).toISOString();
+
+    subscriptionState = resolveLatestSubscriptionState({
+      latest,
+      fallbackState: familyAccount.subscription_state,
+      currentPeriodEndsAt,
+      gracePeriodEndsAt,
+      now: projectionNow,
+    });
+  }
 
   return {
     projectedFromEventId: latest.id,
@@ -437,6 +469,7 @@ export async function projectBillingSubscriptionSnapshotToFamilyAccount(
         "event_type",
         "event_at",
         "plan_code",
+        "billing_cycle",
         "subscription_state",
         "current_period_starts_at",
         "current_period_ends_at",
