@@ -239,7 +239,9 @@ export async function getUserAccessState(): Promise<UserAccessState> {
     user.app_metadata?.role === "platform_admin";
 
   const trialAvailable =
-    pendingEntrySource === "trial" && !trialUsed && !hasPermanentPaidAccess;
+    !trialUsed &&
+    !hasPermanentPaidAccess &&
+    !isInstitutionalEntrySource(pendingEntrySource);
 
   const { data: linkedPartnerRow } = await admin
     .from("family_partner_links")

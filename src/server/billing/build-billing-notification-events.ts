@@ -23,6 +23,7 @@ export type BillingNotificationCandidate = {
 };
 
 type ExtendedSnapshot = FamilyActivationSnapshot & {
+  account_type?: string | null;
   current_period_starts_at?: string | null;
   current_period_ends_at?: string | null;
 };
@@ -207,7 +208,12 @@ export function buildBillingNotificationEvents({
     }
   }
 
+  const accountType =
+    snapshot.account_type?.trim().toLowerCase() || "family";
+  const isFamily = accountType === "family";
+
   if (
+    !isFamily &&
     activation.subscriptionLifecycleState === "grace_period" &&
     gracePeriodEndsAt
   ) {

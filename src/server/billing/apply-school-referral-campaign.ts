@@ -40,18 +40,21 @@ export async function applySchoolReferralCampaign(args: {
     return { applied: false, reason: "campaign_not_active" as const };
   }
 
-  const { data: existingContext, error: existingContextError } = await admin
+  const { data: existingContexts, error: existingContextError } = await admin
     .from("school_referral_contexts")
-    .select("id")
+    .select("id, created_at")
     .eq("family_account_id", args.familyAccountId)
     .eq("campaign_id", campaign.id)
-    .maybeSingle();
+    .order("created_at", { ascending: false })
+    .limit(1);
 
   if (existingContextError) {
     throw new Error(
       `Failed to check existing school referral context: ${existingContextError.message}`
     );
   }
+
+  const existingContext = existingContexts?.[0] ?? null;
 
   if (existingContext) {
     return {

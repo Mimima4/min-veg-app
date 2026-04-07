@@ -59,8 +59,19 @@ export default async function CreateFamilyPage({
       ? user.user_metadata.entry_source
       : null;
 
+  const normalizedEntrySource = (entrySource ?? "").trim().toLowerCase();
+
+  const isInstitutionalEntrySource =
+    normalizedEntrySource === "school" ||
+    normalizedEntrySource === "school_referral" ||
+    normalizedEntrySource === "kommune" ||
+    normalizedEntrySource === "fylke" ||
+    normalizedEntrySource === "institutional";
+
   const trialAvailable =
-    entrySource === "trial" && !trialUsed && !hasPermanentPaidAccess;
+    !trialUsed &&
+    !hasPermanentPaidAccess &&
+    !isInstitutionalEntrySource;
 
   const requestedEntry: EntryMode | null =
     entry === "paid" ? "paid" : entry === "trial" ? "trial" : null;

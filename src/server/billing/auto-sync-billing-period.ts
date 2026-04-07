@@ -120,10 +120,21 @@ export async function autoSyncBillingPeriod(
   const currentPlanCode = normalizeLower(familyAccount.plan_code);
   const paymentPlanCode = normalizeLower(paymentIntent.plan_code);
 
+  const paidAtDate = parseDateOrNull(input.paidAt) ?? new Date();
+
+  const currentPeriodEndsAtDate = parseDateOrNull(
+    familyAccount.current_period_ends_at
+  );
+
+  const hasExistingPeriodBoundary =
+    currentPeriodEndsAtDate !== null &&
+    currentPeriodEndsAtDate.getTime() > paidAtDate.getTime();
+
   if (
     currentPlanCode &&
     paymentPlanCode &&
-    currentPlanCode !== paymentPlanCode
+    currentPlanCode !== paymentPlanCode &&
+    hasExistingPeriodBoundary
   ) {
     return {
       ok: true,
@@ -138,17 +149,7 @@ export async function autoSyncBillingPeriod(
     };
   }
 
-  const paidAtDate = parseDateOrNull(input.paidAt) ?? new Date();
-
-  const currentPeriodEndsAtDate = parseDateOrNull(
-    familyAccount.current_period_ends_at
-  );
-
-  const shouldExtendFromExistingPeriod =
-    currentPeriodEndsAtDate !== null &&
-    currentPeriodEndsAtDate.getTime() > paidAtDate.getTime();
-
-  const nextPeriodStart = shouldExtendFromExistingPeriod
+  const nextPeriodStart = hasExistingPeriodBoundary
     ? currentPeriodEndsAtDate
     : paidAtDate;
 
@@ -157,6 +158,12 @@ export async function autoSyncBillingPeriod(
   const nextPeriodStartsAtIso = toIso(nextPeriodStart);
   const nextPeriodEndsAtIso = toIso(nextPeriodEnd);
   const nextBillingAtIso = nextPeriodEndsAtIso;
+
+  const shouldPromotePlanImmediately =
+    currentPlanCode !== null &&
+    paymentPlanCode !== null &&
+    currentPlanCode !== paymentPlanCode &&
+    !hasExistingPeriodBoundary;
 
   const noChangesNeeded =
     familyAccount.current_period_starts_at === nextPeriodStartsAtIso &&
@@ -175,13 +182,19 @@ export async function autoSyncBillingPeriod(
     };
   }
 
+  const updatePayload: Record<string, string> = {
+    current_period_starts_at: nextPeriodStartsAtIso,
+    current_period_ends_at: nextPeriodEndsAtIso,
+    next_billing_at: nextBillingAtIso,
+  };
+
+  if (shouldPromotePlanImmediately && paymentPlanCode) {
+    updatePayload.plan_code = paymentPlanCode;
+  }
+
   const { error: updateError } = await admin
     .from("family_accounts")
-    .update({
-      current_period_starts_at: nextPeriodStartsAtIso,
-      current_period_ends_at: nextPeriodEndsAtIso,
-      next_billing_at: nextBillingAtIso,
-    })
+    .update(updatePayload)
     .eq("id", familyAccount.id);
 
   if (updateError) {
@@ -195,7 +208,7 @@ export async function autoSyncBillingPeriod(
     updated: true,
     familyAccountId: familyAccount.id,
     billingCycle,
-    anchor: shouldExtendFromExistingPeriod ? "existing_period_end" : "paid_at",
+    anchor: hasExistingPeriodBoundary ? "existing_period_end" : "paid_at",
     currentPeriodStartsAt: nextPeriodStartsAtIso,
     currentPeriodEndsAt: nextPeriodEndsAtIso,
     nextBillingAt: nextBillingAtIso,
