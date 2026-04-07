@@ -351,6 +351,7 @@ Proven performance / evidence
 * старые неудачи постепенно теряют влияние;
 * устойчивые повторяющиеся сигналы затухают медленнее.
 Это защищает от “ошибок прошлого”.
+Time decay применяется в developmental interpretation layer и не отменяет formal cumulative admission reality.
 18.7. Late bloomer / emerging talent detection
 Система должна отслеживать ускоренный рост в конкретной области.
 Если у ребёнка:
@@ -576,6 +577,7 @@ Soft penalties
 
 25. Источники данных
 Для production readiness блок должен собирать максимально широкий и объективный набор норвежских источников.
+Принцип: official и integrated data при наличии имеют приоритет; unsupported/non-integrated sources не могут подаваться как automated truth.
 Education structure / route logic
 * Udir
 * vilbli
@@ -772,8 +774,9 @@ Kommune / fylke / owner
 * late bloomer detection;
 * controlled exploration layer;
 * другое учреждение = другой маршрут;
-* Feide-first ingestion;
-* batch import whole class;
+* Feide-first identity/access direction;
+* school evidence automation только в рамках confirmed integrations / vendor cooperation / institutional agreements;
+* batch import whole class как product requirement в пределах supported ingestion boundary;
 * production-first, not MVP-first.
 
 34. Что ещё остаётся открытым, но не ломает модель
@@ -783,7 +786,7 @@ docs/architecture/route-engine-next-steps.md
 Это ожидаемые рабочие уточнения, а не пересмотр основы.
 
 35. Финальная формулировка блока
-Route / Path Engine — это Norway-first, production-ready decision layer, который на основе агрегированного профиля ребёнка, возраста и школьного этапа, семейных ограничений, образовательной структуры, доступности мест, конкуренции и рынка труда строит, оценивает, обновляет и сохраняет реалистичные пути к сохранённым профессиям, показывает альтернативные маршруты и доступные профессии из выбранного пути, автоматически пересчитывается при изменении данных и проектируется как shared backend/domain block для web и будущих native clients.
+Route / Path Engine — это Norway-first, production-ready decision-support layer, который на основе агрегированного профиля ребёнка, возраста и школьного этапа, семейных ограничений, образовательной структуры, доступности мест, конкуренции и рынка труда строит, оценивает, обновляет и сохраняет реалистичные пути к сохранённым профессиям, объясняет результаты, помогает интерпретировать риски и альтернативы, поддерживает принятие решений, показывает альтернативные маршруты и доступные профессии из выбранного пути, автоматически пересчитывается при изменении данных и проектируется как shared backend/domain block для web и будущих native clients.
 
 36. Адаптация под native
 Адаптировать сам концепт не нужно.
