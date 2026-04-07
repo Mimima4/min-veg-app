@@ -1,3 +1,4 @@
+Status: LOCKED BASELINE v1 (Production direction confirmed)
 Route / Path Engine — Production Spec (Actualized)
 0. Статус блока
 Статус: production-minded прототип, проектируемый сразу как боевой блок.
@@ -644,15 +645,9 @@ Kommune / fylke / owner
 * production-first, not MVP-first.
 
 34. Что ещё остаётся открытым, но не ломает модель
-Это уже не дыры, а следующие слои точной калибровки:
-1. точные формулы внутри подфакторов Fit;
-2. точные decision thresholds между optimal / recommended / alternative;
-3. geography granularity rules;
-4. competition model specifically for VGS layer;
-5. exact normalization rules across evidence sources;
-6. окончательная technical map stage codes;
-7. подробная ingestion implementation схема;
-8. explanation text layer.
+Это уже не дыры, а следующие слои точной калибровки.
+Детали вынесены в отдельный документ:
+docs/architecture/route-engine-next-steps.md
 Это ожидаемые рабочие уточнения, а не пересмотр основы.
 
 35. Финальная формулировка блока
