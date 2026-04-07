@@ -456,6 +456,76 @@ Soft penalties
 * география хуже совпадает;
 * путь менее прямой.
 
+24A. Route / Path Engine — Pedagogical Safety, Explainability, Stability and Progressive Activation
+Это обязательный guardrail layer внутри основного Route Engine spec.
+Это не appendix, не optional note и не future add-on.
+Этот раздел — единый source of truth для safety/explainability/stability правил.
+Повторяющиеся упоминания в других секциях считаются только контекстом и не могут противоречить этому слою.
+
+1. Pedagogical Safety Layer
+* Route engine не может коммуницироваться как финальный verdict о ребёнке.
+* Формулировки в UI и API должны быть guidance-oriented, а не label-oriented.
+* Нельзя использовать language patterns, которые фиксируют ребёнка как “неподходящего навсегда”.
+
+2. Explainability Layer
+* Каждый route outcome должен иметь объяснение: какие факторы повысили/понизили результат.
+* Объяснение должно быть traceable до групп факторов (fit, feasibility, constraints, relevance, efficiency, demand).
+* Система обязана давать понятные причины изменения статуса между optimal/recommended/alternative.
+
+3. Feasibility Communication Layer
+* Feasibility должен показываться как риск и условия, а не как запрет мечты.
+* Низкий feasibility требует явной коммуникации причин (competition, capacity, geography, progression risk).
+* При низком feasibility система обязана показывать, что можно изменить, чтобы улучшить реализм маршрута.
+
+4. Interest vs Evidence Conflict Layer
+* Интерес ребёнка не удаляется из модели при конфликте с evidence.
+* Конфликт интереса и evidence решается через понижение ранга/статуса и альтернативы, а не через стирание aspiration.
+* В конфликтных кейсах система обязана сохранить видимость выбранной профессии и объяснить компромисс.
+
+5. Stability Layer
+* Route UX должен быть стабильным для семьи и не менять рекомендацию без значимого изменения входных данных.
+* Незначительные колебания сигналов не должны вызывать резкие прыжки статусов.
+* Смена статуса должна сопровождаться объяснением “что изменилось”.
+
+6. Progressive Activation Layer
+* Более чувствительные и сложные блоки активируются прогрессивно по stage/age readiness.
+* До достаточной зрелости контекста система не должна перегружать семью heavy analytical layers.
+* Progressive activation — обязательное правило product behavior, а не UI-опция.
+
+7. Data Realism Layer
+* Route engine обязан явно различать: что подтверждено данными, а что является допущением.
+* Missing data не может маскироваться как high-confidence conclusion.
+* При недостатке данных система должна честно снижать уверенность и сообщать об этом.
+
+8. Legal / Governance Layer
+* Route engine работает как decision-support, не как автоматизированное административное решение о доступе ребёнка.
+* Human oversight обязателен для high-impact интерпретаций и спорных кейсов.
+* Все критичные правила ранжирования и фильтрации должны быть audit-friendly и governance-ready.
+
+9. Offline Bridge Layer
+* Система должна поддерживать “bridge to human conversation”: родитель/ребёнок/школа могут обсуждать route outcome офлайн.
+* Объяснения должны быть пригодны для переноса в консультацию с counselor/teacher без потери смысла.
+* Route output не должен закрывать возможность профессиональной человеческой корректировки.
+
+10. Time Decay and Late Bloomer Safety
+* Time decay обязателен, чтобы старые слабые сигналы не замораживали траекторию.
+* Late bloomer detection обязателен, чтобы ускоренный прогресс мог поднять релевантность путей.
+* Система не должна закреплять “ранний снимок” ребёнка как постоянный прогноз.
+
+11. Innovation Value Guardrail
+* Любая новая модель/фактор допускается только если улучшает explainability, stability или realism, а не усложняет ради новизны.
+* Инновации не могут нарушать педагогическую безопасность и human-oversight требования.
+* При конфликте “сложнее модель vs яснее решение” приоритет у ясности и управляемости.
+
+12. Profession-layer realism teaser
+* В profession-facing слое должны быть краткие реалистичные подсказки: путь возможен, при каких условиях, с какими рисками.
+* Teaser не должен обещать outcome без route-level контекста.
+* Teaser обязан сохранять aspiration, но не создавать ложную определённость.
+
+13. Final rule of this layer
+* Если любое локальное правило в Route Engine конфликтует с этим guardrail layer, приоритет всегда у этого слоя.
+* Любая имплементация scoring, ranking, UI copy, ingestion и automation должна быть проверяема на соответствие пунктам 1–12 до production rollout.
+
 25. Источники данных
 Для production readiness блок должен собирать максимально широкий и объективный набор норвежских источников.
 Education structure / route logic
