@@ -467,6 +467,15 @@ Soft penalties
 * Формулировки в UI и API должны быть guidance-oriented, а не label-oriented.
 * Нельзя использовать language patterns, которые фиксируют ребёнка как “неподходящего навсегда”.
 
+1A. 3-layer interpretation model (mandatory)
+* Любая интерпретация route outcome обязана раскладываться на три слоя:
+  * Aspiration layer (куда ребёнок и семья хотят двигаться),
+  * Readiness layer (текущая подготовленность и динамика),
+  * Admission reality layer (формальные и рыночные ограничения входа).
+* Эти три слоя не схлопываются в один final verdict.
+* Ни UI, ни API, ни внутренние decision outputs не должны трактовать их как “один итоговый приговор”.
+* Конфликт между слоями решается через explainability и alternatives, а не через стирание aspiration layer.
+
 2. Explainability Layer
 * Каждый route outcome должен иметь объяснение: какие факторы повысили/понизили результат.
 * Объяснение должно быть traceable до групп факторов (fit, feasibility, constraints, relevance, efficiency, demand).
@@ -476,6 +485,9 @@ Soft penalties
 * Feasibility должен показываться как риск и условия, а не как запрет мечты.
 * Низкий feasibility требует явной коммуникации причин (competition, capacity, geography, progression risk).
 * При низком feasibility система обязана показывать, что можно изменить, чтобы улучшить реализм маршрута.
+* Hard rule: warning without improvement guidance is incomplete guidance.
+* Обязательный output block: What improves this route.
+* Block What improves this route должен содержать конкретные, выполнимые улучшения, а не общие советы.
 
 4. Interest vs Evidence Conflict Layer
 * Интерес ребёнка не удаляется из модели при конфликте с evidence.
@@ -486,16 +498,40 @@ Soft penalties
 * Route UX должен быть стабильным для семьи и не менять рекомендацию без значимого изменения входных данных.
 * Незначительные колебания сигналов не должны вызывать резкие прыжки статусов.
 * Смена статуса должна сопровождаться объяснением “что изменилось”.
+* Для каждой выбранной профессии должен существовать Baseline Route как reference snapshot.
+* Recalculation делится на:
+  * silent recalculation (внутренний пересчёт без видимого изменения),
+  * visible change (изменение, показанное семье).
+* Not every recomputation becomes visible.
+* Material route shift (изменение ключевого шага, статуса маршрута или критичных предупреждений) должен быть явно помечен и объяснён.
+* Должен применяться weekly visibility threshold: мелкие weekly флуктуации не публикуются как отдельные “новые решения”.
 
 6. Progressive Activation Layer
 * Более чувствительные и сложные блоки активируются прогрессивно по stage/age readiness.
 * До достаточной зрелости контекста система не должна перегружать семью heavy analytical layers.
 * Progressive activation — обязательное правило product behavior, а не UI-опция.
+* Demo и trial — разные activation states и не должны смешиваться в одной логике ожиданий.
+* First meaningful route must appear before heavy setup.
+* Advanced evidence не может быть mandatory upfront.
+* Система обязана поддерживать quick-start route и enriched route как разные режимы зрелости маршрута.
+* Magic moment rule: пользователь должен увидеть практическую ценность маршрута до глубокого онбординга данных.
 
 7. Data Realism Layer
 * Route engine обязан явно различать: что подтверждено данными, а что является допущением.
 * Missing data не может маскироваться как high-confidence conclusion.
 * При недостатке данных система должна честно снижать уверенность и сообщать об этом.
+* Feide трактуется как identity/access federation, а не как grade/test source.
+* School evidence automation зависит от внешних интеграций, vendor cooperation и institutional agreements.
+* V1 ingestion boundary обязан быть явно ограничен и задокументирован.
+* No fake automation promise: нельзя обещать автоматический сбор данных, если для него нет подтверждённого интеграционного контура.
+
+7A. Confidence Framing
+* Route confidence states обязательны:
+  * early signal,
+  * developing picture,
+  * stronger evidence-backed route.
+* Certainty must scale with evidence quality.
+* При низком качестве/полноте evidence система не может коммуницировать high certainty.
 
 8. Legal / Governance Layer
 * Route engine работает как decision-support, не как автоматизированное административное решение о доступе ребёнка.
@@ -506,16 +542,28 @@ Soft penalties
 * Система должна поддерживать “bridge to human conversation”: родитель/ребёнок/школа могут обсуждать route outcome офлайн.
 * Объяснения должны быть пригодны для переноса в консультацию с counselor/teacher без потери смысла.
 * Route output не должен закрывать возможность профессиональной человеческой корректировки.
+* Consultation Export — обязательный supported output layer.
+* Consultation Export включает:
+  * selected profession,
+  * current route,
+  * assumptions,
+  * warnings,
+  * route explanation,
+  * alternatives,
+  * open discussion points.
 
 10. Time Decay and Late Bloomer Safety
 * Time decay обязателен, чтобы старые слабые сигналы не замораживали траекторию.
 * Late bloomer detection обязателен, чтобы ускоренный прогресс мог поднять релевантность путей.
 * Система не должна закреплять “ранний снимок” ребёнка как постоянный прогноз.
+* Time decay может влиять на developmental interpretation, но не может стирать formal cumulative admission reality.
+* Emerging talent — development signal, а не identity label и не deterministic tag.
 
 11. Innovation Value Guardrail
 * Любая новая модель/фактор допускается только если улучшает explainability, stability или realism, а не усложняет ради новизны.
 * Инновации не могут нарушать педагогическую безопасность и human-oversight требования.
 * При конфликте “сложнее модель vs яснее решение” приоритет у ясности и управляемости.
+* Route Engine обязан выявлять non-obvious but plausible adjacent paths, а не только структурировать уже очевидные выборы семьи.
 
 12. Profession-layer realism teaser
 * В profession-facing слое должны быть краткие реалистичные подсказки: путь возможен, при каких условиях, с какими рисками.
@@ -524,7 +572,7 @@ Soft penalties
 
 13. Final rule of this layer
 * Если любое локальное правило в Route Engine конфликтует с этим guardrail layer, приоритет всегда у этого слоя.
-* Любая имплементация scoring, ranking, UI copy, ingestion и automation должна быть проверяема на соответствие пунктам 1–12 до production rollout.
+* Любая имплементация scoring, ranking, UI copy, ingestion и automation должна быть проверяема на соответствие пунктам 1–12 и подпунктам 1A/7A до production rollout.
 
 25. Источники данных
 Для production readiness блок должен собирать максимально широкий и объективный набор норвежских источников.
@@ -546,12 +594,18 @@ Labour market / demand
 Identity / integration layer
 Primary automation priority:
 * Feide
+Feide используется как identity/access federation слой.
+Feide не является direct source для grades/tests и не должен трактоваться как такой источник.
 Дополнительно нужно учитывать official institution-level identifiers:
 * organization-level identifiers,
 * municipality/county references,
 * school registry identity where relevant.
 Class-level ingestion
 Teacher / rådgiver должен иметь возможность запускать импорт сразу по целому классу, а не по одному ребёнку.
+Ограничение v1:
+* automation school evidence работает только в границах подтверждённых интеграций, vendor cooperation и institutional agreements;
+* неподключённые источники остаются manual/semi-structured;
+* запрещено обещать full automation вне подтверждённого integration perimeter.
 
 26. Refresh logic
 Weekly recalculation
@@ -577,6 +631,10 @@ Monthly external refresh
 * salaries/stability layers;
 * competition / admission pressure;
 * education availability data.
+Operational visibility rule:
+* не каждый пересчёт становится видимым изменением для семьи;
+* видимыми становятся только material route shifts по правилам секции 24A (Stability Layer);
+* мелкие weekly флуктуации остаются в silent recalculation.
 
 27. Data model базового production слоя
 Минимально согласованный доменный набор:
@@ -636,6 +694,7 @@ Monthly external refresh
 * критически слабый feasibility не может стать optimal;
 * жёсткие family constraints сильнее рекомендаций системы;
 * parent input учитывается всегда, но после 8 класса не должен перекрикивать объективные результаты.
+* интерпретация конфликтов обязана сохранять разделение Aspiration/Readiness/Admission Reality слоёв из секции 24A.
 
 30. Automation readiness
 Этот блок должен мыслиться как автоматически работающий.
@@ -648,6 +707,9 @@ Monthly external refresh
 * demand и competition overlays автоматически обновляются.
 Это не должен быть “ручной инструмент для оператора”.
 Школьный слой может подавать данные и запускать импорт, но decision engine должен работать автоматически.
+Ограничение:
+* automation readiness не означает universal data availability;
+* если integration evidence отсутствует, система обязана работать в guarded mode с явно сниженной confidence framing (см. 24A).
 
 31. Роли и слои пользователей
 Family
