@@ -1,5 +1,11 @@
 # Route / Path Engine — Domain Validity v1
 
+**Status:** SUPPORTING SPEC  
+**Relationship:** This document elaborates a specific stage of the primary master spec.  
+**Conflict rule:** In case of conflict, `route-engine-master-spec.md` is the governing reference, unless this file explicitly defines a narrower locked rule for its own scope (canonical stage types/codes, transition matrix, structural invalidation, legacy boundary).
+
+---
+
 **Статус:** LOCKED BASELINE v1  
 **Назначение:** зафиксировать domain validity layer для Route / Path Engine:
 - canonical stage types

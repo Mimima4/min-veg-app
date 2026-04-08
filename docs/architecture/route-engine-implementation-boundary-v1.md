@@ -1,5 +1,11 @@
 # Route / Path Engine — Implementation Boundary v1
 
+**Status:** DERIVED IMPLEMENTATION NOTE  
+**Relationship:** This document is a condensed implementation-facing boundary note derived from the master spec.  
+**Rule:** It must not contradict `docs/architecture/route-engine-master-spec.md`.
+
+---
+
 **Статус:** pre-implementation execution boundary  
 **Назначение:** зафиксировать точный первый кодовый объём Route / Path Engine
 

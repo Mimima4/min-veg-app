@@ -1,5 +1,11 @@
 # Route Engine Next Steps
 
+**Status:** OPEN DECISIONS / EXECUTION BACKLOG  
+**Scope:** This file is not a source of locked baseline truth.  
+**Purpose:** It tracks unresolved, future or implementation-sequencing topics.
+
+---
+
 Этот документ разгружает основной production spec и фиксирует слои точной калибровки, которые остаются открытыми, но не меняют базовую архитектуру.
 
 ## Thresholds

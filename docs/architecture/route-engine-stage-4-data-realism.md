@@ -1,5 +1,11 @@
 # Route Engine — Stage 4: Data Realism & Ingestion (v1)
 
+**Status:** SUPPORTING SPEC  
+**Relationship:** This document elaborates a specific stage of the primary master spec.  
+**Conflict rule:** In case of conflict, `route-engine-master-spec.md` is the governing reference, unless this file explicitly defines a narrower locked rule for its own scope (data trust tiers, ingestion boundary, Feide role, confidence framing in Stage 4).
+
+---
+
 ## 1. Статус блока
 
 Статус: LOCKED v1

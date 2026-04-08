@@ -1,5 +1,11 @@
 # Route / Path Engine — Adult / Transition Layer
 
+**Status:** FUTURE / NON-V1 LAYER  
+**Scope:** Not part of baseline Route Engine v1  
+**Use:** Referenced for future expansion only  
+
+---
+
 **Статус:** FUTURE LAYER (not part of baseline v1)  
 **Назначение:** зафиксировать будущее направление расширения Route Engine для adult users, career switching и requalification paths.
 

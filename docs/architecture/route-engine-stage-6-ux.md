@@ -1,5 +1,11 @@
 # Route Engine — Stage 6: UX / Interaction Contract (v1)
 
+**Status:** SUPPORTING SPEC  
+**Relationship:** This document elaborates a specific stage of the primary master spec.  
+**Conflict rule:** In case of conflict, `route-engine-master-spec.md` is the governing reference, unless this file explicitly defines a narrower locked rule for its own scope (UX thresholds, interaction patterns, copy rules in Stage 6).
+
+---
+
 ## 1. Статус блока
 
 Статус: LOCKED v1

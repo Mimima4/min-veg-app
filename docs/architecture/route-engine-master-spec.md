@@ -1,5 +1,11 @@
 # Route Engine — Master Specification v1
 
+**Status:** PRIMARY SOURCE OF TRUTH  
+**Scope:** Route Engine baseline v1  
+**Purpose:** This document consolidates stages 1–6 and is the main reference for product, design and implementation alignment.
+
+---
+
 ## 0. Canonical document map
 
 Этот документ — production-level точка входа и обзор этапов 1–6. Детальные правила живут в связанных spec-файлах:
@@ -15,7 +21,7 @@
 | Stage 5 — legal / operational readiness | `docs/architecture/route-engine-stage-5-operational.md` |
 | Stage 6 — UX / interaction contract | `docs/architecture/route-engine-stage-6-ux.md` |
 
-При конфликте формулировок приоритет у детального stage-документа в таблице; master spec задаёт только каркас и навигацию.
+**Приоритет при противоречиях:** этот master spec — главный ориентир для baseline v1. Supporting stage-документы детализируют свой scope; если в supporting spec явно зафиксировано более узкое **locked**-правило в границах этого scope (например, матрица переходов Stage 2 или числовой UX-порог Stage 6), оно действует внутри этого scope. Иначе при расхождении с master выигрывает формулировка master spec.
 
 ---
 
@@ -293,3 +299,19 @@ Route = структурированный объект, который серв
 ## 11. Final Principle
 
 Route Engine — это система, которая делает сложную образовательную реальность понятной, управляемой и прозрачной, не перегружая пользователя и не забирая у него контроль.
+
+---
+
+## Supporting Documents
+
+| Файл | Роль |
+|------|------|
+| `docs/architecture/route-engine-domain-validity-v1.md` | Supporting stage spec (Stage 2 — domain validity, locked rules в своём scope) |
+| `docs/architecture/route-engine-stage-4-data-realism.md` | Supporting stage spec (Stage 4 — data realism & ingestion) |
+| `docs/architecture/route-engine-stage-5-operational.md` | Supporting stage spec (Stage 5 — legal / operational readiness) |
+| `docs/architecture/route-engine-stage-6-ux.md` | Supporting stage spec (Stage 6 — UX / interaction contract) |
+| `docs/architecture/route-engine-adult-transition-layer.md` | Future layer (не baseline v1) |
+| `docs/architecture/route-engine-next-steps.md` | Backlog / open decisions (не locked baseline) |
+| `docs/architecture/route-engine-implementation-boundary-v1.md` | Derived implementation note (сжатый execution-facing boundary) |
+
+Дополнительно (не в таблице выше как отдельная роль, но связаны): `docs/architecture/route-path-engine-production-spec.md` (Stage 1 — расширенный production baseline + guardrails), `docs/domain/route-stage-model.md` (справочник stage type / code).
