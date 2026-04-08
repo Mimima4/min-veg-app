@@ -617,15 +617,51 @@ Weekly recalculation
 * route ranking;
 * available professions from route;
 * relevance of saved routes.
-Event-triggered recalculation
-Сразу после:
-* school file;
-* grade update;
-* test result;
-* profile update;
-* save-to-profile changes;
-* new saved profession;
-* major school-side evidence update.
+### Event-triggered recalculation (material-only)
+
+Пересчёт выполняется сразу только при поступлении существенных (material) изменений данных.
+
+К таким изменениям относятся:
+
+- успешная обработка (ingestion) значимого school evidence
+  (оценки, тесты, полноценные отчёты)
+
+- успешная обработка значимых обновлений academic данных
+  (не единичные/частичные изменения, а влияющие на профиль ребёнка)
+
+- изменения профиля, влияющие на route assumptions
+  (ограничения, география, ключевые настройки)
+
+- действия пользователя внутри Route
+  (смена фильтров, выбор шагов, смена профессии)
+
+---
+
+### Важно
+
+Не каждое обновление school data запускает мгновенный пересчёт.
+
+Если данные:
+
+- частичные
+- сырые
+- не прошли нормализацию
+- не оказывают существенного влияния
+
+-> они обрабатываются в рамках планового (weekly) пересчёта.
+
+---
+
+### Принцип
+
+Event-triggered recalculation применяется только тогда, когда:
+
+-> новые данные реально могут изменить маршрут
+
+Во всех остальных случаях:
+
+-> используется controlled recalculation (weekly),
+чтобы избежать дерготни системы и перегрузки.
 Monthly external refresh
 Раз в месяц обновляются:
 * labour market signals;
@@ -811,3 +847,22 @@ Web и native могут рисовать маршрут по-разному, н
 Короткий вывод
 Концепт адаптировать не нужно.Нужно с самого начала держать его как shared backend/domain block, а не как web-only feature.
 
+---
+
+37. Implementation boundary (v1)
+
+Execution scope первой реализации Route / Path Engine зафиксирован отдельно:
+
+docs/architecture/route-engine-implementation-boundary-v1.md
+
+Этот документ определяет:
+* что именно входит в первый production execution slice,
+* что сознательно не реализуется в v1,
+* порядок реализации и технические границы.
+
+Главный spec остаётся source of truth для:
+* продуктовой логики,
+* доменной модели,
+* педагогических и governance правил.
+
+Implementation boundary документ не изменяет core spec, а ограничивает первую фазу реализации.
