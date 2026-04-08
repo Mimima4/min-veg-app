@@ -10,6 +10,8 @@
 
 Этот документ обязателен для backend/domain implementation и не может нарушаться UI или локальной page logic.
 
+Связанный справочник stage type / stage code: `docs/domain/route-stage-model.md`.
+
 ---
 
 ## 1. Canonical stage-type map v1

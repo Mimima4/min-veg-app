@@ -247,7 +247,7 @@ Route Engine:
 - не вводит в заблуждение
 - не показывает некорректные данные
 
-## 10. Implementation boundary (v1)
+## 11. Implementation boundary (v1) — детализация
 
 ### Входит в v1:
 
