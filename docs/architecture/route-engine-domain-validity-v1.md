@@ -263,3 +263,75 @@ See:
 Любые изменения:
 - только через явное обновление spec
 - не через неявную backend/UI логику
+
+---
+
+## Route Directionality and Available Professions Semantics
+
+### Route directionality (locked rule)
+
+Route construction is strictly target-driven.
+
+The system must always follow:
+
+saved profession → route → steps → programmes → institutions
+
+The system must never treat programmes or institutions as the origin of route construction.
+
+Programme-level logic is only valid as part of a route that is already anchored to a saved profession.
+
+---
+
+### Route target (source of truth)
+
+A Route:
+
+- is always anchored to a saved profession,
+- cannot exist without a saved profession,
+- cannot be initiated from programme exploration,
+- cannot be initiated from education structures.
+
+Saved profession is the only valid entry point for Route Engine.
+
+---
+
+### Available professions (definition)
+
+Available professions are:
+
+- professions that become reachable through the currently selected route,
+- derived from already selected steps, programmes, and transitions,
+- secondary outcomes of the route.
+
+They are not:
+
+- a source of route construction,
+- a replacement for the target profession,
+- an automatic route switch,
+- a parallel route definition.
+
+---
+
+### Available professions (interaction rules)
+
+Available professions:
+
+- must be displayed as "also reachable via this route",
+- must not automatically replace the current route target,
+- must lead to the profession catalog for exploration,
+- must require explicit user action to become a new route target,
+- must not mutate the current route state implicitly.
+
+---
+
+### Product constraint
+
+The Route Engine must never degrade into:
+
+programme → professions → route logic
+
+This is considered a violation of the Route Engine baseline.
+
+All route logic must remain:
+
+target-driven, decision-support, and backend-controlled.

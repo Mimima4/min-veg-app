@@ -1,0 +1,397 @@
+import { createClient } from "@/lib/supabase/server";
+import type { StudyRouteReadModel } from "@/lib/routes/route-types";
+import { buildStudyRouteSnapshotContext } from "./build-study-route-snapshot-context";
+import { getStudyRouteDetail } from "./get-study-route-detail";
+import { RouteDomainError } from "./route-errors";
+
+type Params = {
+  childId: string;
+  targetProfessionId: string;
+  locale?: string;
+  createdByType?: string;
+  createdByUserId?: string | null;
+};
+
+type ProfessionRow = {
+  id: string;
+  slug: string;
+  title_i18n: Record<string, string> | null;
+};
+
+type ProgramLinkRow = {
+  profession_slug: string;
+  program_slug: string;
+  fit_band: "strong" | "broader";
+};
+
+type EducationProgramRow = {
+  slug: string;
+  title: string;
+  institution_id: string;
+};
+
+type InstitutionRow = {
+  id: string;
+  slug: string;
+  name: string;
+};
+
+export async function createInitialStudyRoute(
+  params: Params
+): Promise<StudyRouteReadModel> {
+  const supabase = await createClient();
+  const locale = params.locale ?? "en";
+  const createdByType = params.createdByType ?? "parent";
+  const createdByUserId = params.createdByUserId ?? null;
+
+  const [{ data: child }, { data: profession, error: professionError }] =
+    await Promise.all([
+      supabase.from("child_profiles").select("id").eq("id", params.childId).maybeSingle(),
+      supabase
+        .from("professions")
+        .select("id, slug, title_i18n")
+        .eq("id", params.targetProfessionId)
+        .eq("is_active", true)
+        .maybeSingle(),
+    ]);
+
+  if (!child) {
+    throw new RouteDomainError("route_access_denied", "Child profile not found", {
+      childId: params.childId,
+    });
+  }
+
+  if (professionError) {
+    throw new RouteDomainError(
+      "internal_error",
+      `Failed to load target profession for route creation: ${professionError.message}`
+    );
+  }
+
+  if (!profession) {
+    throw new RouteDomainError(
+      "route_not_found",
+      "Target profession is missing or inactive",
+      { targetProfessionId: params.targetProfessionId }
+    );
+  }
+
+  const { data: savedLink, error: savedLinkError } = await supabase
+    .from("child_profession_interests")
+    .select("id")
+    .eq("child_profile_id", params.childId)
+    .eq("profession_id", params.targetProfessionId)
+    .maybeSingle();
+
+  if (savedLinkError) {
+    throw new RouteDomainError(
+      "internal_error",
+      `Failed to verify saved profession before route creation: ${savedLinkError.message}`
+    );
+  }
+
+  if (!savedLink) {
+    throw new RouteDomainError(
+      "profession_not_saved_for_child",
+      "Cannot create route because the profession is not saved for this child",
+      {
+        childId: params.childId,
+        targetProfessionId: params.targetProfessionId,
+      }
+    );
+  }
+
+  const { data: existingRoute, error: existingRouteError } = await supabase
+    .from("study_routes")
+    .select("id")
+    .eq("child_id", params.childId)
+    .eq("target_profession_id", params.targetProfessionId)
+    .is("archived_at", null)
+    .maybeSingle();
+
+  if (existingRouteError) {
+    throw new RouteDomainError(
+      "internal_error",
+      `Failed to check existing route before creation: ${existingRouteError.message}`
+    );
+  }
+
+  if (existingRoute) {
+    return getStudyRouteDetail({
+      childId: params.childId,
+      routeId: existingRoute.id,
+      locale,
+    });
+  }
+
+  const { data: route, error: routeError } = await supabase
+    .from("study_routes")
+    .insert({
+      child_id: params.childId,
+      target_profession_id: params.targetProfessionId,
+      status: "saved",
+      created_by_type: createdByType,
+      created_by_user_id: createdByUserId,
+    })
+    .select(
+      "id, child_id, target_profession_id, status, current_variant_id, last_meaningful_change_at"
+    )
+    .single();
+
+  if (routeError || !route) {
+    throw new RouteDomainError(
+      "internal_error",
+      `Failed to create study route: ${routeError?.message ?? "Unknown error"}`
+    );
+  }
+
+  const { data: variant, error: variantError } = await supabase
+    .from("study_route_variants")
+    .insert({
+      route_id: route.id,
+      variant_label: "Initial route",
+      variant_reason: "Initial route creation",
+      is_current: true,
+      status: "saved",
+      created_by_type: createdByType,
+      created_by_user_id: createdByUserId,
+    })
+    .select("id")
+    .single();
+
+  if (variantError || !variant) {
+    throw new RouteDomainError(
+      "internal_error",
+      `Failed to create study route variant: ${variantError?.message ?? "Unknown error"}`
+    );
+  }
+
+  const professionRow = profession as ProfessionRow;
+  const snapshotContext = await buildStudyRouteSnapshotContext({
+    locale,
+    childId: params.childId,
+    routeId: route.id,
+    routeVariantId: variant.id,
+    targetProfessionId: params.targetProfessionId,
+  });
+
+  const { data: programLinks, error: programLinksError } = await supabase
+    .from("profession_program_links")
+    .select("profession_slug, program_slug, fit_band")
+    .eq("profession_slug", professionRow.slug)
+    .order("fit_band", { ascending: true });
+
+  if (programLinksError) {
+    throw new RouteDomainError(
+      "internal_error",
+      `Failed to load profession-program links for initial route: ${programLinksError.message}`
+    );
+  }
+
+  let selectedProgram:
+    | {
+        slug: string;
+        title: string;
+        institution: InstitutionRow | null;
+        fitBand: "strong" | "broader";
+      }
+    | null = null;
+
+  const typedLinks = (programLinks ?? []) as ProgramLinkRow[];
+
+  if (typedLinks.length > 0) {
+    const preferredLink =
+      typedLinks.find((link) => link.fit_band === "strong") ?? typedLinks[0];
+
+    const { data: program, error: programError } = await supabase
+      .from("education_programs")
+      .select("slug, title, institution_id")
+      .eq("slug", preferredLink.program_slug)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (programError) {
+      throw new RouteDomainError(
+        "internal_error",
+        `Failed to load education program for initial route: ${programError.message}`
+      );
+    }
+
+    if (program) {
+      const typedProgram = program as EducationProgramRow;
+
+      let institution: InstitutionRow | null = null;
+
+      const { data: institutionRow, error: institutionError } = await supabase
+        .from("education_institutions")
+        .select("id, slug, name")
+        .eq("id", typedProgram.institution_id)
+        .eq("is_active", true)
+        .maybeSingle();
+
+      if (institutionError) {
+        throw new RouteDomainError(
+          "internal_error",
+          `Failed to load education institution for initial route: ${institutionError.message}`
+        );
+      }
+
+      if (institutionRow) {
+        institution = institutionRow as InstitutionRow;
+      }
+
+      selectedProgram = {
+        slug: typedProgram.slug,
+        title: typedProgram.title,
+        institution,
+        fitBand: preferredLink.fit_band,
+      };
+    }
+  }
+
+  const initialSteps = [
+    {
+      stepId: "profession-entry",
+      stepType: "profession_entry",
+      stageCode: "target_profession",
+      title: snapshotContext.currentProfession.title,
+      subtitle: "Target profession",
+      description: "Initial saved profession target for route creation.",
+      programme: null,
+      institution: null,
+      regionContext: null,
+      timing: null,
+      requirementsSummary: null,
+      feasibilityBadge: null,
+      warnings: [],
+      isEditable: true,
+      stepOptionsCount: null,
+      meta: {
+        currentProfessionSlug: professionRow.slug,
+      },
+    },
+    ...(selectedProgram
+      ? [
+          {
+            stepId: "programme-selection",
+            stepType: "programme_selection",
+            stageCode: "education_programme",
+            title: selectedProgram.title,
+            subtitle:
+              selectedProgram.fitBand === "strong"
+                ? "Strong linked programme"
+                : "Broader linked programme",
+            description: "Programme selected from the current target profession pathway.",
+            programme: {
+              slug: selectedProgram.slug,
+              title: selectedProgram.title,
+            },
+            institution: selectedProgram.institution
+              ? {
+                  id: selectedProgram.institution.id,
+                  slug: selectedProgram.institution.slug,
+                  title: selectedProgram.institution.name,
+                }
+              : null,
+            regionContext: null,
+            timing: null,
+            requirementsSummary: null,
+            feasibilityBadge:
+              selectedProgram.fitBand === "strong" ? "Strong match" : "Broader option",
+            warnings: [],
+            isEditable: true,
+            stepOptionsCount: typedLinks.length,
+            meta: {
+              currentProfessionSlug: professionRow.slug,
+            },
+          },
+        ]
+      : []),
+  ];
+
+  const initialSignals = {
+    fitSummary:
+      snapshotContext.planning.interestIds.length > 0
+        ? "Early fit signal"
+        : "Low-signal route",
+    confidenceSummary:
+      snapshotContext.planning.derivedStrengthIds.length > 0
+        ? "Developing confidence"
+        : "Low confidence",
+    feasibilitySummary:
+      selectedProgram && snapshotContext.planning.preferredEducationLevel
+        ? "Initial route has a valid target profession and linked programme"
+        : selectedProgram
+          ? "Route has a linked programme, but still needs more planning depth"
+          : "Route exists, but no linked programme has been selected yet",
+    warnings: snapshotContext.planning.interestIds.length === 0
+      ? [
+          {
+            code: "missing_interests",
+            label: "Interest profile is still thin",
+            severity: "medium",
+          },
+        ]
+      : [],
+    improvementGuidance:
+      snapshotContext.planning.interestIds.length === 0
+        ? [
+            {
+              code: "add_interests",
+              label: "Add interest signals",
+            },
+          ]
+        : [],
+    evidenceComposition: {
+      hasParentInput:
+        snapshotContext.planning.interestIds.length > 0 ||
+        Boolean(snapshotContext.planning.preferredEducationLevel) ||
+        Boolean(snapshotContext.planning.desiredIncomeBand) ||
+        Boolean(snapshotContext.planning.preferredWorkStyle),
+      hasSchoolEvidence: false,
+      hasDerivedSignals: snapshotContext.planning.derivedStrengthIds.length > 0,
+    },
+  };
+
+  const { error: snapshotError } = await supabase.from("study_route_snapshots").insert({
+    route_variant_id: variant.id,
+    snapshot_version: 1,
+    snapshot_kind: "initial",
+    generation_reason: "initial_route_creation",
+    stage_context: snapshotContext,
+    selected_steps_payload: initialSteps,
+    signals_payload: initialSignals,
+    available_professions_payload: [],
+    alternatives_teaser_payload: [],
+    is_current_snapshot: true,
+  });
+
+  if (snapshotError) {
+    throw new RouteDomainError(
+      "internal_error",
+      `Failed to create initial study route snapshot: ${snapshotError.message}`
+    );
+  }
+
+  const { error: routeUpdateError } = await supabase
+    .from("study_routes")
+    .update({
+      current_variant_id: variant.id,
+      updated_at: new Date().toISOString(),
+      last_meaningful_change_at: new Date().toISOString(),
+    })
+    .eq("id", route.id);
+
+  if (routeUpdateError) {
+    throw new RouteDomainError(
+      "internal_error",
+      `Failed to finalize study route after snapshot creation: ${routeUpdateError.message}`
+    );
+  }
+
+  return getStudyRouteDetail({
+    childId: params.childId,
+    routeId: route.id,
+    locale,
+  });
+}
