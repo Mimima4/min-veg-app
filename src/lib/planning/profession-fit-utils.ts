@@ -13,10 +13,14 @@ export type PreferredWorkStyle =
 
 export type PreferredEducationLevel =
   | "open"
+  | "upper_secondary"
+  | "apprenticeship"
   | "certificate"
   | "vocational"
+  | "vocational_college"
   | "bachelor"
   | "master"
+  | "professional_degree"
   | "flexible";
 
 export function matchesIncomeBand(

@@ -26,6 +26,18 @@ export default function RemoveSavedProfessionButton({
 
     setLoading(true);
 
+    const { error: routeDeleteError } = await supabase
+      .from("study_routes")
+      .delete()
+      .eq("child_id", childId)
+      .eq("target_profession_id", professionId);
+
+    if (routeDeleteError) {
+      setLoading(false);
+      alert(routeDeleteError.message);
+      return;
+    }
+
     const { error } = await supabase
       .from("child_profession_interests")
       .delete()

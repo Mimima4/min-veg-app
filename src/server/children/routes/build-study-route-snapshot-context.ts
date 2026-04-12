@@ -2,6 +2,10 @@ import { createClient } from "@/lib/supabase/server";
 import { getLocalizedValue } from "@/lib/i18n/get-localized-value";
 import type { SupportedLocale } from "@/lib/i18n/site-copy";
 import type { StudyRouteSnapshotContext } from "@/lib/routes/route-types";
+import {
+  getChildPlanningState,
+  type ChildPlanningSourceRow,
+} from "@/server/children/planning/get-child-planning-state";
 
 type Params = {
   locale: string;
@@ -11,25 +15,11 @@ type Params = {
   targetProfessionId: string;
 };
 
-type ChildPlanningRow = {
-  interests: unknown;
-  desired_income_band: string | null;
-  preferred_work_style: string | null;
-  preferred_education_level: string | null;
-  derived_strengths?: unknown;
-};
-
 type ProfessionRow = {
   id: string;
   slug: string;
   title_i18n: Record<string, string> | null;
 };
-
-function toStringArray(value: unknown): string[] {
-  return Array.isArray(value)
-    ? value.filter((item): item is string => typeof item === "string")
-    : [];
-}
 
 export async function buildStudyRouteSnapshotContext(
   params: Params
@@ -42,7 +32,7 @@ export async function buildStudyRouteSnapshotContext(
       supabase
         .from("child_profiles")
         .select(
-          "interests, desired_income_band, preferred_work_style, preferred_education_level, derived_strengths"
+          "interests, observed_traits, desired_income_band, preferred_work_style, preferred_education_level, preferred_municipality_codes"
         )
         .eq("id", params.childId)
         .maybeSingle(),
@@ -61,7 +51,9 @@ export async function buildStudyRouteSnapshotContext(
   }
 
   if (!child) {
-    throw new Error(`Child profile ${params.childId} not found for study route snapshot context`);
+    throw new Error(
+      `Child profile ${params.childId} not found for study route snapshot context`
+    );
   }
 
   if (professionError) {
@@ -76,8 +68,9 @@ export async function buildStudyRouteSnapshotContext(
     );
   }
 
-  const childRow = child as ChildPlanningRow;
+  const childRow = child as ChildPlanningSourceRow;
   const professionRow = profession as ProfessionRow;
+  const planningState = getChildPlanningState(childRow);
 
   return {
     locale: params.locale,
@@ -92,11 +85,11 @@ export async function buildStudyRouteSnapshotContext(
         professionRow.slug,
     },
     planning: {
-      interestIds: toStringArray(childRow.interests),
-      derivedStrengthIds: toStringArray(childRow.derived_strengths),
-      desiredIncomeBand: childRow.desired_income_band,
-      preferredWorkStyle: childRow.preferred_work_style,
-      preferredEducationLevel: childRow.preferred_education_level,
+      interestIds: planningState.interestIds,
+      derivedStrengthIds: planningState.derivedStrengthIds,
+      desiredIncomeBand: planningState.desiredIncomeBand,
+      preferredWorkStyle: planningState.preferredWorkStyle,
+      preferredEducationLevel: planningState.preferredEducationLevel,
     },
   };
 }

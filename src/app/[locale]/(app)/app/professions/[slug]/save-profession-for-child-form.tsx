@@ -57,14 +57,37 @@ export default function SaveProfessionForChildForm({
         }
       );
 
-    setLoading(false);
-
     if (error) {
+      setLoading(false);
       setErrorMessage(error.message);
       return;
     }
 
-    setMessage("Profession saved for child.");
+    const routeResponse = await fetch("/api/internal/routes/create-initial-study-route", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        childId: selectedChildId,
+        targetProfessionId: professionId,
+        locale,
+      }),
+    });
+
+    const routePayload = await routeResponse.json().catch(() => null);
+
+    setLoading(false);
+
+    if (!routeResponse.ok || !routePayload?.ok) {
+      setErrorMessage(
+        routePayload?.error?.message ??
+          "The profession was saved, but the initial route could not be created."
+      );
+      return;
+    }
+
+    setMessage("Profession saved for child and initial route created.");
     router.refresh();
   }
 
@@ -94,7 +117,7 @@ export default function SaveProfessionForChildForm({
       </div>
 
       {isAlreadySaved ? (
-        <p className="text-sm text-amber-700">
+        <p className="text-sm text-emerald-700">
           This profession is already saved for the selected child.
         </p>
       ) : null}

@@ -404,6 +404,7 @@ export default async function ChildSummaryPage({
                           </Link>
 
                           <SaveProfessionToChildButton
+                            locale={locale}
                             childId={child.id}
                             professionId={profession.id}
                             isSaved={profession.isSaved}

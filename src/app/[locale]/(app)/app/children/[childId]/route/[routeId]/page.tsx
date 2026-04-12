@@ -5,7 +5,7 @@ import { getStudyRouteDetail } from "@/server/children/routes/get-study-route-de
 import RouteStepsPanel from "../route-steps-panel";
 import RouteSignalsPanel from "../route-signals-panel";
 import RouteAvailableProfessionsPanel from "../route-available-professions-panel";
-import RouteAlternativesPanel from "../route-alternatives-panel";
+import AlternativeRoutesCollapsible from "../alternative-routes-collapsible";
 
 export default async function StudyRouteDetailPage({
   params,
@@ -26,7 +26,7 @@ export default async function StudyRouteDetailPage({
         title="Route"
         subtitle="You need to sign in to view this route."
       >
-        <AppPrivateNav locale={locale} currentPath="/app/children" />
+        <AppPrivateNav locale={locale} currentPath="/app/route" />
       </LocalePageShell>
     );
   }
@@ -45,7 +45,7 @@ export default async function StudyRouteDetailPage({
       backHref={`/${locale}/app/children/${childId}/route`}
       backLabel="Back routes"
     >
-      <AppPrivateNav locale={locale} currentPath="/app/children" />
+      <AppPrivateNav locale={locale} currentPath="/app/route" />
 
       <div className="mt-6 rounded-2xl border border-stone-200 bg-white p-6">
         <div className="flex items-start justify-between gap-4">
@@ -105,12 +105,12 @@ export default async function StudyRouteDetailPage({
 
       <div className="mt-6 grid gap-6">
         <RouteStepsPanel steps={route.steps} />
+        <AlternativeRoutesCollapsible alternatives={route.alternativeRoutes} />
         <RouteSignalsPanel signals={route.signals} />
         <RouteAvailableProfessionsPanel
           locale={locale}
           availableProfessions={route.availableProfessions}
         />
-        <RouteAlternativesPanel alternatives={route.alternativeRoutes} />
       </div>
     </LocalePageShell>
   );

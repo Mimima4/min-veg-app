@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import type { StudyRouteReadModel } from "@/lib/routes/route-types";
+import type { StudyRouteReadModel, StudyRouteSnapshotStep } from "@/lib/routes/route-types";
 import { buildStudyRouteSnapshotContext } from "./build-study-route-snapshot-context";
 import { getStudyRouteDetail } from "./get-study-route-detail";
 import { RouteDomainError } from "./route-errors";
@@ -28,6 +28,7 @@ type EducationProgramRow = {
   slug: string;
   title: string;
   institution_id: string;
+  education_level: string | null;
 };
 
 type InstitutionRow = {
@@ -199,14 +200,30 @@ export async function createInitialStudyRoute(
 
   const typedLinks = (programLinks ?? []) as ProgramLinkRow[];
 
+  let initialSteps: StudyRouteSnapshotStep[] = [];
+
   if (typedLinks.length > 0) {
-    const preferredLink =
-      typedLinks.find((link) => link.fit_band === "strong") ?? typedLinks[0];
+    // 1. Берём только strong links
+    const strongLinks = typedLinks.filter(
+      (link) => link.fit_band === "strong"
+    );
+
+    // 2. Детерминированный порядок (чтобы не зависеть от БД)
+    const sortedStrongLinks = strongLinks.sort((a, b) =>
+      a.program_slug.localeCompare(b.program_slug)
+    );
+
+    // 3. Выбор
+    const bestLink =
+      sortedStrongLinks[0] ??
+      typedLinks.sort((a, b) =>
+        a.program_slug.localeCompare(b.program_slug)
+      )[0];
 
     const { data: program, error: programError } = await supabase
       .from("education_programs")
-      .select("slug, title, institution_id")
-      .eq("slug", preferredLink.program_slug)
+      .select("slug, title, institution_id, education_level")
+      .eq("slug", bestLink.program_slug)
       .eq("is_active", true)
       .maybeSingle();
 
@@ -244,70 +261,59 @@ export async function createInitialStudyRoute(
         slug: typedProgram.slug,
         title: typedProgram.title,
         institution,
-        fitBand: preferredLink.fit_band,
+        fitBand: bestLink.fit_band,
       };
+
+      const steps: StudyRouteSnapshotStep[] = [
+        {
+          type: "programme_selection",
+          title: typedProgram.title,
+          institution_name: institution?.name ?? null,
+          education_level: typedProgram.education_level ?? "",
+          fit_band: bestLink.fit_band,
+          program_slug: bestLink.program_slug,
+          current_profession_slug: professionRow.slug,
+        },
+      ];
+
+      if (professionRow.slug === "electrician") {
+        steps.push(
+          {
+            type: "progression_step",
+            title: "Apprenticeship (læretid)",
+            institution_name: null,
+            education_level: "apprenticeship",
+            fit_band: "strong",
+            program_slug: null,
+            current_profession_slug: professionRow.slug,
+          },
+          {
+            type: "outcome_step",
+            title: "Fagbrev (Electrician)",
+            institution_name: null,
+            education_level: "certificate",
+            fit_band: "strong",
+            program_slug: null,
+            current_profession_slug: professionRow.slug,
+          }
+        );
+      }
+
+      if (professionRow.slug === "doctor") {
+        steps.push({
+          type: "outcome_step",
+          title: "Licensed doctor",
+          institution_name: null,
+          education_level: "professional_degree",
+          fit_band: "strong",
+          program_slug: null,
+          current_profession_slug: professionRow.slug,
+        });
+      }
+
+      initialSteps = steps;
     }
   }
-
-  const initialSteps = [
-    {
-      stepId: "profession-entry",
-      stepType: "profession_entry",
-      stageCode: "target_profession",
-      title: snapshotContext.currentProfession.title,
-      subtitle: "Target profession",
-      description: "Initial saved profession target for route creation.",
-      programme: null,
-      institution: null,
-      regionContext: null,
-      timing: null,
-      requirementsSummary: null,
-      feasibilityBadge: null,
-      warnings: [],
-      isEditable: true,
-      stepOptionsCount: null,
-      meta: {
-        currentProfessionSlug: professionRow.slug,
-      },
-    },
-    ...(selectedProgram
-      ? [
-          {
-            stepId: "programme-selection",
-            stepType: "programme_selection",
-            stageCode: "education_programme",
-            title: selectedProgram.title,
-            subtitle:
-              selectedProgram.fitBand === "strong"
-                ? "Strong linked programme"
-                : "Broader linked programme",
-            description: "Programme selected from the current target profession pathway.",
-            programme: {
-              slug: selectedProgram.slug,
-              title: selectedProgram.title,
-            },
-            institution: selectedProgram.institution
-              ? {
-                  id: selectedProgram.institution.id,
-                  slug: selectedProgram.institution.slug,
-                  title: selectedProgram.institution.name,
-                }
-              : null,
-            regionContext: null,
-            timing: null,
-            requirementsSummary: null,
-            feasibilityBadge:
-              selectedProgram.fitBand === "strong" ? "Strong match" : "Broader option",
-            warnings: [],
-            isEditable: true,
-            stepOptionsCount: typedLinks.length,
-            meta: {
-              currentProfessionSlug: professionRow.slug,
-            },
-          },
-        ]
-      : []),
-  ];
 
   const initialSignals = {
     fitSummary:

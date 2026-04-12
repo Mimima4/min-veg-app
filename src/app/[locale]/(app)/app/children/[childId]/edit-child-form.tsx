@@ -38,10 +38,14 @@ type PreferredWorkStyle =
 
 type PreferredEducationLevel =
   | "open"
+  | "upper_secondary"
+  | "apprenticeship"
   | "certificate"
   | "vocational"
+  | "vocational_college"
   | "bachelor"
   | "master"
+  | "professional_degree"
   | "flexible";
 
 type Props = {
@@ -179,6 +183,16 @@ const EDUCATION_LEVEL_LABELS: Record<
     nn: "Open",
     en: "Open",
   },
+  upper_secondary: {
+    nb: "Videregående",
+    nn: "Vidaregåande",
+    en: "Upper secondary",
+  },
+  apprenticeship: {
+    nb: "Lærlingskap",
+    nn: "Lærlingskap",
+    en: "Apprenticeship",
+  },
   certificate: {
     nb: "Sertifikat",
     nn: "Sertifikat",
@@ -189,6 +203,11 @@ const EDUCATION_LEVEL_LABELS: Record<
     nn: "Yrkesfagleg",
     en: "Vocational",
   },
+  vocational_college: {
+    nb: "Fagskole",
+    nn: "Fagskule",
+    en: "Vocational college",
+  },
   bachelor: {
     nb: "Bachelor",
     nn: "Bachelor",
@@ -198,6 +217,11 @@ const EDUCATION_LEVEL_LABELS: Record<
     nb: "Master",
     nn: "Master",
     en: "Master",
+  },
+  professional_degree: {
+    nb: "Profesjonsgrad",
+    nn: "Profesjonsgrad",
+    en: "Professional degree",
   },
   flexible: {
     nb: "Fleksibel",

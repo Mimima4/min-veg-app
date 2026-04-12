@@ -2,9 +2,10 @@ import { createClient } from "@/lib/supabase/server";
 import { getLocalizedValue } from "@/lib/i18n/get-localized-value";
 import type { SupportedLocale } from "@/lib/i18n/site-copy";
 import type {
-  ChildStudyRoutesOverview,
   ChildStudyRouteOverviewItem,
+  ChildStudyRoutesOverview,
 } from "@/lib/routes/route-types";
+import { resolveStudyRouteState } from "./resolve-study-route-state";
 
 type Params = {
   childId: string;
@@ -12,10 +13,24 @@ type Params = {
   childDisplayName?: string | null;
 };
 
+type RouteRow = {
+  id: string;
+  target_profession_id: string;
+  status: ChildStudyRouteOverviewItem["status"];
+  updated_at: string;
+  current_variant_id: string | null;
+};
+
 type ProfessionRow = {
   id: string;
   slug: string;
   title_i18n: Record<string, string> | null;
+};
+
+type SnapshotRow = {
+  route_variant_id: string;
+  selected_steps_payload: unknown;
+  signals_payload: unknown;
 };
 
 export async function getChildStudyRoutesOverview(
@@ -31,7 +46,8 @@ export async function getChildStudyRoutesOverview(
         id,
         target_profession_id,
         status,
-        updated_at
+        updated_at,
+        current_variant_id
       `
     )
     .eq("child_id", params.childId)
@@ -42,8 +58,18 @@ export async function getChildStudyRoutesOverview(
     throw new Error(`Failed to fetch study routes overview: ${error.message}`);
   }
 
+  const typedRoutes = (routes ?? []) as RouteRow[];
+
   const professionIds = Array.from(
-    new Set((routes ?? []).map((route) => route.target_profession_id).filter(Boolean))
+    new Set(typedRoutes.map((route) => route.target_profession_id).filter(Boolean))
+  );
+
+  const variantIds = Array.from(
+    new Set(
+      typedRoutes
+        .map((route) => route.current_variant_id)
+        .filter((value): value is string => Boolean(value))
+    )
   );
 
   let professionMap = new Map<string, ProfessionRow>();
@@ -69,7 +95,30 @@ export async function getChildStudyRoutesOverview(
     );
   }
 
-  const mapped: ChildStudyRouteOverviewItem[] = (routes ?? []).map((route) => {
+  let snapshotMap = new Map<string, SnapshotRow>();
+
+  if (variantIds.length > 0) {
+    const { data: snapshots, error: snapshotsError } = await supabase
+      .from("study_route_snapshots")
+      .select("route_variant_id, selected_steps_payload, signals_payload")
+      .in("route_variant_id", variantIds)
+      .eq("is_current_snapshot", true);
+
+    if (snapshotsError) {
+      throw new Error(
+        `Failed to fetch snapshots for study routes overview: ${snapshotsError.message}`
+      );
+    }
+
+    snapshotMap = new Map(
+      ((snapshots ?? []) as SnapshotRow[]).map((snapshot) => [
+        snapshot.route_variant_id,
+        snapshot,
+      ])
+    );
+  }
+
+  const mapped: ChildStudyRouteOverviewItem[] = typedRoutes.map((route) => {
     const profession = professionMap.get(route.target_profession_id);
 
     if (!profession) {
@@ -82,6 +131,15 @@ export async function getChildStudyRoutesOverview(
       getLocalizedValue(profession.title_i18n ?? {}, supportedLocale) ||
       profession.slug;
 
+    const snapshot = route.current_variant_id
+      ? snapshotMap.get(route.current_variant_id)
+      : undefined;
+
+    const resolvedState = resolveStudyRouteState({
+      selectedStepsPayload: snapshot?.selected_steps_payload,
+      snapshotSignals: snapshot?.signals_payload,
+    });
+
     return {
       routeId: route.id,
       targetProfessionId: route.target_profession_id,
@@ -89,10 +147,10 @@ export async function getChildStudyRoutesOverview(
       professionTitle,
       routeLabel: professionTitle,
       status: route.status,
-      overallFitLabel: null,
-      feasibilityLabel: null,
-      warningsCount: 0,
-      newRouteAvailable: false,
+      overallFitLabel: resolvedState.headerSummary.overallFitLabel,
+      feasibilityLabel: resolvedState.headerSummary.feasibilityLabel,
+      warningsCount: resolvedState.warningsCount,
+      newRouteAvailable: resolvedState.newRouteAvailable,
       updatedAt: route.updated_at,
     };
   });

@@ -8,12 +8,14 @@ type Props = {
   childId: string;
   professionId: string;
   isSaved: boolean;
+  locale: string;
 };
 
 export default function SaveProfessionToChildButton({
   childId,
   professionId,
   isSaved,
+  locale,
 }: Props) {
   const supabase = createClient();
   const router = useRouter();
@@ -24,22 +26,43 @@ export default function SaveProfessionToChildButton({
 
     setLoading(true);
 
-    const { error } = await supabase
-      .from("child_profession_interests")
-      .upsert(
-        {
-          child_profile_id: childId,
-          profession_id: professionId,
-        },
-        {
-          onConflict: "child_profile_id,profession_id",
-        }
-      );
+    const { error } = await supabase.from("child_profession_interests").upsert(
+      {
+        child_profile_id: childId,
+        profession_id: professionId,
+      },
+      {
+        onConflict: "child_profile_id,profession_id",
+      }
+    );
+
+    if (error) {
+      setLoading(false);
+      alert(error.message);
+      return;
+    }
+
+    const routeResponse = await fetch("/api/internal/routes/create-initial-study-route", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        childId,
+        targetProfessionId: professionId,
+        locale,
+      }),
+    });
+
+    const routePayload = await routeResponse.json().catch(() => null);
 
     setLoading(false);
 
-    if (error) {
-      alert(error.message);
+    if (!routeResponse.ok || !routePayload?.ok) {
+      alert(
+        routePayload?.error?.message ??
+          "The profession was saved, but the initial route could not be created."
+      );
       return;
     }
 

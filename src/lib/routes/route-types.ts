@@ -6,6 +6,39 @@ import type {
 import type { StudyRouteStep } from "./route-step-types";
 import type { StudyRouteSignals } from "./route-signal-types";
 
+/** Persisted snapshot rows (programme / progression / outcome). */
+export type StudyRouteSnapshotStep =
+  | {
+      type: "programme_selection";
+      title: string;
+      institution_name: string | null;
+      education_level: string;
+      fit_band: string;
+      program_slug: string;
+      current_profession_slug: string;
+    }
+  | {
+      type: "progression_step";
+      title: string;
+      institution_name: string | null;
+      education_level: string;
+      fit_band: string;
+      program_slug: string | null;
+      current_profession_slug: string;
+    }
+  | {
+      type: "outcome_step";
+      title: string;
+      institution_name: string | null;
+      education_level: string;
+      fit_band: string;
+      program_slug: string | null;
+      current_profession_slug: string;
+    };
+
+/** Steps returned in read model: legacy step shape or persisted snapshot rows. */
+export type StudyRouteReadModelStep = StudyRouteStep | StudyRouteSnapshotStep;
+
 export type StudyRouteIdentity = {
   routeId: string;
   childId: string;
@@ -99,7 +132,7 @@ export type StudyRouteSnapshotContext = {
 export type StudyRouteReadModel = {
   identity: StudyRouteIdentity;
   header: StudyRouteHeaderSummary;
-  steps: StudyRouteStep[];
+  steps: StudyRouteReadModelStep[];
   signals: StudyRouteSignals;
   availableProfessions: StudyRouteAvailableProfessionsBlock;
   alternativeRoutes: StudyRouteAlternativeTeaser[];

@@ -386,6 +386,7 @@ export default async function ChildComparePage({
                   </Link>
 
                   <SaveProfessionToChildButton
+                    locale={locale}
                     childId={child.id}
                     professionId={profession!.id}
                     isSaved={savedProfessionIds.has(profession!.id)}

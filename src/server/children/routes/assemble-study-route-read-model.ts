@@ -4,12 +4,9 @@ import type {
   StudyRouteReadModel,
   StudyRouteSnapshotContext,
 } from "@/lib/routes/route-types";
-import type {
-  StudyRouteImprovementGuidance,
-  StudyRouteWarning,
-} from "@/lib/routes/route-signal-types";
 import { getStudyRouteAlternatives } from "./get-study-route-alternatives";
 import { getStudyRouteAvailableProfessions } from "./get-study-route-available-professions";
+import { resolveStudyRouteState } from "./resolve-study-route-state";
 
 type AssembleParams = {
   locale?: string;
@@ -35,98 +32,6 @@ type AssembleParams = {
   snapshotContext?: StudyRouteSnapshotContext | null;
 };
 
-function buildDerivedSignals(snapshotContext?: StudyRouteSnapshotContext | null) {
-  const warnings: StudyRouteWarning[] = [];
-  const improvementGuidance: StudyRouteImprovementGuidance[] = [];
-
-  const planning = snapshotContext?.planning;
-
-  const hasInterests = (planning?.interestIds?.length ?? 0) > 0;
-  const hasStrengths = (planning?.derivedStrengthIds?.length ?? 0) > 0;
-  const hasEducationPreference = Boolean(planning?.preferredEducationLevel);
-  const hasIncomeBand = Boolean(planning?.desiredIncomeBand);
-  const hasWorkStyle = Boolean(planning?.preferredWorkStyle);
-
-  if (!hasInterests) {
-    warnings.push({
-      code: "missing_interests",
-      label: "Interest profile is still thin",
-      description:
-        "The child profile has no recorded interests yet, so the route remains less grounded.",
-      severity: "medium",
-    });
-    improvementGuidance.push({
-      code: "add_interests",
-      label: "Add interest signals",
-      description:
-        "Select the child’s strongest interests to improve route guidance and profession adjacency quality.",
-    });
-  }
-
-  if (!hasStrengths) {
-    warnings.push({
-      code: "missing_strengths",
-      label: "Derived strengths are limited",
-      description:
-        "The route has limited strength signals and therefore weaker confidence.",
-      severity: "medium",
-    });
-    improvementGuidance.push({
-      code: "improve_strength_signals",
-      label: "Strengthen the child profile",
-      description:
-        "Add observed traits and planning inputs so the route can reflect stronger evidence.",
-    });
-  }
-
-  if (!hasEducationPreference) {
-    improvementGuidance.push({
-      code: "set_education_preference",
-      label: "Set an education preference",
-      description:
-        "Adding a preferred education level will make future route variants more realistic.",
-    });
-  }
-
-  const evidenceCount = [
-    hasInterests,
-    hasStrengths,
-    hasEducationPreference || hasIncomeBand || hasWorkStyle,
-  ].filter(Boolean).length;
-
-  let fitSummary: string | null = null;
-  let confidenceSummary: string | null = null;
-  let feasibilitySummary: string | null = null;
-
-  if (evidenceCount >= 3) {
-    fitSummary = "Good baseline fit";
-    confidenceSummary = "Moderate confidence";
-    feasibilitySummary = "Initial route is feasible at baseline level";
-  } else if (evidenceCount === 2) {
-    fitSummary = "Early fit signal";
-    confidenceSummary = "Developing confidence";
-    feasibilitySummary = "Route is usable, but still needs more profile depth";
-  } else {
-    fitSummary = "Low-signal route";
-    confidenceSummary = "Low confidence";
-    feasibilitySummary = "Route exists, but realism is still limited by missing planning signals";
-  }
-
-  return {
-    fitSummary,
-    confidenceSummary,
-    feasibilitySummary,
-    warnings,
-    improvementGuidance,
-    evidenceComposition: {
-      hasParentInput:
-        hasInterests || hasEducationPreference || hasIncomeBand || hasWorkStyle,
-      hasSchoolEvidence: false,
-      hasDerivedSignals: hasStrengths,
-    },
-  };
-}
-
 export async function assembleStudyRouteReadModel(
   params: AssembleParams
 ): Promise<StudyRouteReadModel> {
@@ -145,30 +50,11 @@ export async function assembleStudyRouteReadModel(
     ? params.currentSnapshot.selected_steps_payload
     : [];
 
-  const derivedSignals = buildDerivedSignals(params.snapshotContext);
-
-  const storedSignals =
-    params.currentSnapshot?.signals_payload &&
-    typeof params.currentSnapshot.signals_payload === "object"
-      ? params.currentSnapshot.signals_payload
-      : null;
-
-  const signals = storedSignals
-    ? {
-        ...derivedSignals,
-        ...(storedSignals as object),
-        warnings: Array.isArray((storedSignals as { warnings?: unknown }).warnings)
-          ? ((storedSignals as { warnings: StudyRouteWarning[] }).warnings ?? [])
-          : derivedSignals.warnings,
-        improvementGuidance: Array.isArray(
-          (storedSignals as { improvementGuidance?: unknown }).improvementGuidance
-        )
-          ? ((storedSignals as {
-              improvementGuidance: StudyRouteImprovementGuidance[];
-            }).improvementGuidance ?? [])
-          : derivedSignals.improvementGuidance,
-      }
-    : derivedSignals;
+  const resolvedState = resolveStudyRouteState({
+    selectedStepsPayload: params.currentSnapshot?.selected_steps_payload,
+    snapshotSignals: params.currentSnapshot?.signals_payload,
+    snapshotContext: params.snapshotContext,
+  });
 
   const professionTitle =
     params.snapshotContext?.currentProfession.title ||
@@ -194,16 +80,15 @@ export async function assembleStudyRouteReadModel(
       professionTitle,
       routeLabel: professionTitle,
       stageContextLabel: params.snapshotContext?.planning.preferredEducationLevel ?? null,
-      overallFitLabel: signals.fitSummary,
-      feasibilityLabel: signals.feasibilitySummary,
-      realismLabel:
-        (signals.warnings?.length ?? 0) > 0 ? "Needs more evidence" : "Baseline realistic",
-      stepsCount: Array.isArray(steps) ? steps.length : 0,
-      warningsCount: Array.isArray(signals.warnings) ? signals.warnings.length : 0,
-      newRouteAvailable: false,
+      overallFitLabel: resolvedState.headerSummary.overallFitLabel,
+      feasibilityLabel: resolvedState.headerSummary.feasibilityLabel,
+      realismLabel: resolvedState.headerSummary.realismLabel,
+      stepsCount: resolvedState.headerSummary.stepsCount,
+      warningsCount: resolvedState.headerSummary.warningsCount,
+      newRouteAvailable: resolvedState.headerSummary.newRouteAvailable,
     },
     steps: steps as StudyRouteReadModel["steps"],
-    signals: signals as StudyRouteReadModel["signals"],
+    signals: resolvedState.signals,
     availableProfessions,
     alternativeRoutes: alternatives,
     allowedActions: {

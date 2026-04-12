@@ -19,10 +19,14 @@ import {
   
   export type PreferredEducationLevel =
     | "open"
+    | "upper_secondary"
+    | "apprenticeship"
     | "certificate"
     | "vocational"
+    | "vocational_college"
     | "bachelor"
     | "master"
+    | "professional_degree"
     | "flexible";
   
   export type ChildPlanningSourceRow = {

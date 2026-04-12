@@ -60,8 +60,11 @@ export async function getStudyRouteAvailableProfessions(
 
   const programPairs = steps
     .map((step: any) => ({
-      programSlug: step?.programme?.slug,
-      currentProfessionSlug: step?.meta?.currentProfessionSlug ?? null,
+      programSlug: step?.programme?.slug ?? step?.program_slug,
+      currentProfessionSlug:
+        step?.meta?.currentProfessionSlug ??
+        step?.current_profession_slug ??
+        null,
     }))
     .filter((x) => x.programSlug);
 

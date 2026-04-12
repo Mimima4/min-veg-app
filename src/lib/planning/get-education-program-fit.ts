@@ -115,18 +115,28 @@ function uniqueLimit(items: string[], limit: number): string[] {
 export function getEducationRouteType(
   programEducationLevel: string
 ): EducationRouteType {
+  // Academic-first routes
   if (
     programEducationLevel === "bachelor" ||
-    programEducationLevel === "master"
+    programEducationLevel === "master" ||
+    programEducationLevel === "professional_degree"
   ) {
     return "academic_first";
   }
 
+  // Practical-first routes
   if (
     programEducationLevel === "vocational" ||
-    programEducationLevel === "certificate"
+    programEducationLevel === "certificate" ||
+    programEducationLevel === "apprenticeship" ||
+    programEducationLevel === "upper_secondary"
   ) {
     return "practical_first";
+  }
+
+  // Vocational college -> sits between
+  if (programEducationLevel === "vocational_college") {
+    return "flexible_route";
   }
 
   return "flexible_route";
