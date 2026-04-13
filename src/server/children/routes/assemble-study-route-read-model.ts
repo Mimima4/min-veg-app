@@ -6,6 +6,10 @@ import type {
 } from "@/lib/routes/route-types";
 import { getStudyRouteAlternatives } from "./get-study-route-alternatives";
 import { getStudyRouteAvailableProfessions } from "./get-study-route-available-professions";
+import {
+  competitionLevelToLabel,
+  resolveProfessionCompetitionLevel,
+} from "./resolve-profession-competition-level";
 import { resolveStudyRouteState } from "./resolve-study-route-state";
 
 type AssembleParams = {
@@ -22,6 +26,7 @@ type AssembleParams = {
     id: string;
     slug: string;
     title_i18n: Record<string, string> | null;
+    competition_level?: string | null;
   };
   currentSnapshot?: {
     generated_at: string;
@@ -61,6 +66,9 @@ export async function assembleStudyRouteReadModel(
     getLocalizedValue(params.profession.title_i18n ?? {}, supportedLocale) ||
     params.profession.slug;
 
+  const competitionLevel = resolveProfessionCompetitionLevel(params.profession);
+  const competitionLabel = competitionLevelToLabel(competitionLevel);
+
   return {
     identity: {
       routeId: params.route.id,
@@ -83,6 +91,8 @@ export async function assembleStudyRouteReadModel(
       overallFitLabel: resolvedState.headerSummary.overallFitLabel,
       feasibilityLabel: resolvedState.headerSummary.feasibilityLabel,
       realismLabel: resolvedState.headerSummary.realismLabel,
+      competitionLevel,
+      competitionLabel,
       stepsCount: resolvedState.headerSummary.stepsCount,
       warningsCount: resolvedState.headerSummary.warningsCount,
       newRouteAvailable: resolvedState.headerSummary.newRouteAvailable,

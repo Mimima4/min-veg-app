@@ -1,7 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { LocalePageShell } from "@/components/layout/locale-page-shell";
 import AppPrivateNav from "@/components/layout/app-private-nav";
+import { CompetitionBadge } from "@/components/route/competition-badge";
 import { getStudyRouteDetail } from "@/server/children/routes/get-study-route-detail";
+import { getRouteStrategies } from "@/server/children/routes/route-strategy-rules";
 import RouteStepsPanel from "../route-steps-panel";
 import RouteSignalsPanel from "../route-signals-panel";
 import RouteAvailableProfessionsPanel from "../route-available-professions-panel";
@@ -37,6 +39,14 @@ export default async function StudyRouteDetailPage({
     locale,
   });
 
+  const competitionLevel = route.header.competitionLevel;
+
+  const strategies = getRouteStrategies(route.identity.targetProfessionSlug);
+  const showStrategyBlock =
+    (route.header.competitionLevel === "high" ||
+      route.header.competitionLevel === "very_high") &&
+    strategies.length > 0;
+
   return (
     <LocalePageShell
       locale={locale}
@@ -51,9 +61,12 @@ export default async function StudyRouteDetailPage({
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-sm text-stone-500">Route status</p>
-            <h2 className="mt-1 text-xl font-semibold text-stone-900">
-              {route.header.routeLabel}
-            </h2>
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              <h2 className="text-xl font-semibold text-stone-900">
+                {route.header.professionTitle}
+              </h2>
+              <CompetitionBadge level={competitionLevel} />
+            </div>
             <p className="mt-2 text-sm text-stone-600">
               {route.header.feasibilityLabel ?? "No feasibility summary yet."}
             </p>
@@ -64,7 +77,11 @@ export default async function StudyRouteDetailPage({
           </span>
         </div>
 
-        <dl className="mt-5 grid gap-4 sm:grid-cols-4">
+        <dl
+          className={`mt-5 grid gap-4 ${
+            route.header.competitionLabel ? "sm:grid-cols-5" : "sm:grid-cols-4"
+          }`}
+        >
           <div>
             <dt className="text-xs uppercase tracking-wide text-stone-500">
               Fit
@@ -82,6 +99,17 @@ export default async function StudyRouteDetailPage({
               {route.header.realismLabel ?? "—"}
             </dd>
           </div>
+
+          {route.header.competitionLabel ? (
+            <div>
+              <dt className="text-xs uppercase tracking-wide text-stone-500">
+                Competition
+              </dt>
+              <dd className="mt-1 text-sm text-stone-900">
+                {route.header.competitionLabel}
+              </dd>
+            </div>
+          ) : null}
 
           <div>
             <dt className="text-xs uppercase tracking-wide text-stone-500">
@@ -104,7 +132,35 @@ export default async function StudyRouteDetailPage({
       </div>
 
       <div className="mt-6 grid gap-6">
-        <RouteStepsPanel steps={route.steps} />
+        <RouteStepsPanel
+          steps={route.steps}
+          competitionLevel={route.header.competitionLevel}
+        />
+
+        {showStrategyBlock && (
+          <div className="mt-6 border rounded-lg p-4 bg-white">
+            <h3 className="font-medium mb-3">
+              How to increase your chances
+            </h3>
+
+            <div className="space-y-3">
+              {strategies.map((s) => (
+                <div key={`${s.type}-${s.title}`} className="text-sm">
+                  <div className="font-medium">{s.title}</div>
+                  <div className="text-gray-600">{s.description}</div>
+
+                  {!s.leads_to_same_profession && (
+                    <div className="text-xs text-orange-600 mt-1">
+                      This path does NOT lead to becoming a licensed doctor in
+                      Norway
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <AlternativeRoutesCollapsible alternatives={route.alternativeRoutes} />
         <RouteSignalsPanel signals={route.signals} />
         <RouteAvailableProfessionsPanel

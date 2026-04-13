@@ -5,6 +5,7 @@ import type {
   ChildStudyRouteOverviewItem,
   ChildStudyRoutesOverview,
 } from "@/lib/routes/route-types";
+import { resolveProfessionCompetitionLevel } from "./resolve-profession-competition-level";
 import { resolveStudyRouteState } from "./resolve-study-route-state";
 
 type Params = {
@@ -25,6 +26,7 @@ type ProfessionRow = {
   id: string;
   slug: string;
   title_i18n: Record<string, string> | null;
+  competition_level?: string | null;
 };
 
 type SnapshotRow = {
@@ -131,6 +133,8 @@ export async function getChildStudyRoutesOverview(
       getLocalizedValue(profession.title_i18n ?? {}, supportedLocale) ||
       profession.slug;
 
+    const competitionLevel = resolveProfessionCompetitionLevel(profession);
+
     const snapshot = route.current_variant_id
       ? snapshotMap.get(route.current_variant_id)
       : undefined;
@@ -146,6 +150,7 @@ export async function getChildStudyRoutesOverview(
       targetProfessionSlug: profession.slug,
       professionTitle,
       routeLabel: professionTitle,
+      competitionLevel,
       status: route.status,
       overallFitLabel: resolvedState.headerSummary.overallFitLabel,
       feasibilityLabel: resolvedState.headerSummary.feasibilityLabel,

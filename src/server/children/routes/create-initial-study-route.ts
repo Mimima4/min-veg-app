@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import type { StudyRouteReadModel, StudyRouteSnapshotStep } from "@/lib/routes/route-types";
 import { buildStudyRouteSnapshotContext } from "./build-study-route-snapshot-context";
+import { getRouteAuthenticityRule } from "./route-authenticity-rules";
 import { getStudyRouteDetail } from "./get-study-route-detail";
 import { RouteDomainError } from "./route-errors";
 
@@ -276,39 +277,20 @@ export async function createInitialStudyRoute(
         },
       ];
 
-      if (professionRow.slug === "electrician") {
-        steps.push(
-          {
-            type: "progression_step",
-            title: "Apprenticeship (læretid)",
-            institution_name: null,
-            education_level: "apprenticeship",
-            fit_band: "strong",
-            program_slug: null,
-            current_profession_slug: professionRow.slug,
-          },
-          {
-            type: "outcome_step",
-            title: "Fagbrev (Electrician)",
-            institution_name: null,
-            education_level: "certificate",
-            fit_band: "strong",
-            program_slug: null,
-            current_profession_slug: professionRow.slug,
-          }
-        );
-      }
+      const authenticityRule = getRouteAuthenticityRule(professionRow.slug);
 
-      if (professionRow.slug === "doctor") {
-        steps.push({
-          type: "outcome_step",
-          title: "Licensed doctor",
-          institution_name: null,
-          education_level: "professional_degree",
-          fit_band: "strong",
-          program_slug: null,
-          current_profession_slug: professionRow.slug,
-        });
+      if (authenticityRule) {
+        steps.push(
+          ...authenticityRule.progressionAndOutcomeSteps.map((step) => ({
+            type: step.type,
+            title: step.title,
+            institution_name: null,
+            education_level: step.education_level,
+            fit_band: step.fit_band,
+            program_slug: null,
+            current_profession_slug: professionRow.slug,
+          }))
+        );
       }
 
       initialSteps = steps;

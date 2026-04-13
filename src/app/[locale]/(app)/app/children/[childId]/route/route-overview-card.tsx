@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CompetitionBadge } from "@/components/route/competition-badge";
 import type { ChildStudyRouteOverviewItem } from "@/lib/routes/route-types";
 
 type Props = {
@@ -13,10 +14,12 @@ export default function RouteOverviewCard({ locale, childId, route }: Props) {
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <p className="text-sm text-stone-500">Target profession</p>
-          <h3 className="mt-1 text-base font-semibold text-stone-900">
-            {route.professionTitle}
-          </h3>
-          <p className="mt-1 text-sm text-stone-600">{route.routeLabel}</p>
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            <h3 className="text-lg font-semibold text-stone-900">
+              {route.professionTitle}
+            </h3>
+            <CompetitionBadge level={route.competitionLevel} />
+          </div>
         </div>
 
         <span className="inline-flex rounded-full border border-stone-300 bg-stone-50 px-3 py-1 text-xs font-medium text-stone-700">

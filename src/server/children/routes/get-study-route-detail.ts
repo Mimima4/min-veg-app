@@ -13,6 +13,7 @@ type ProfessionRow = {
   id: string;
   slug: string;
   title_i18n: Record<string, string> | null;
+  competition_level?: string | null;
 };
 
 export async function getStudyRouteDetail(
