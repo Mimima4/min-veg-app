@@ -4,13 +4,9 @@ import { LocalePageShell } from "@/components/layout/locale-page-shell";
 import AppPrivateNav from "@/components/layout/app-private-nav";
 import CompareProfessionButton from "@/components/planning/compare-profession-button";
 import CompareProfessionsButton from "@/components/planning/compare-professions-button";
+import CompareSavedRouteButton from "@/components/planning/compare-saved-route-button";
+import CompareSavedRoutesButton from "@/components/planning/compare-saved-routes-button";
 import CollapsibleSection from "@/components/planning/collapsible-section";
-import RouteOpenDoorsPanel from "@/components/planning/route-open-doors-panel";
-import {
-  getEducationDecisionRoleLabel,
-  getEducationRouteTypeLabel,
-  type EducationDecisionRole,
-} from "@/lib/planning/get-education-program-fit";
 import type { SupportedLocale } from "@/lib/i18n/site-copy";
 import EditChildForm from "./edit-child-form";
 import RemoveSavedProfessionButton from "./remove-saved-profession-button";
@@ -58,67 +54,6 @@ function TagList({
       )}
     </div>
   );
-}
-
-function getStudyModeLabel(value: string, locale: SupportedLocale) {
-  const labels = {
-    full_time: { nb: "Heltid", nn: "Heiltid", en: "Full-time" },
-    part_time: { nb: "Deltid", nn: "Deltid", en: "Part-time" },
-    flexible: { nb: "Fleksibel", nn: "Fleksibel", en: "Flexible" },
-  } as const;
-
-  if (value in labels) {
-    return labels[value as keyof typeof labels][locale];
-  }
-
-  return value;
-}
-
-function getDurationLabel(
-  value: number | null,
-  locale: SupportedLocale
-): string | null {
-  if (!value) {
-    return null;
-  }
-
-  if (locale === "en") {
-    return value === 1 ? "1 year" : `${value} years`;
-  }
-
-  return value === 1 ? "1 år" : `${value} år`;
-}
-
-function getDecisionRoleTone(role: EducationDecisionRole): string {
-  switch (role) {
-    case "local_priority":
-      return "inline-flex items-center rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1 text-sm text-emerald-800";
-    case "main_route":
-      return "inline-flex items-center rounded-full border border-blue-300 bg-blue-50 px-3 py-1 text-sm text-blue-800";
-    case "stretch_route":
-      return "inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-sm text-amber-800";
-    case "local_alternative":
-      return "inline-flex items-center rounded-full border border-stone-300 bg-white px-3 py-1 text-sm text-stone-800";
-    case "broader_alternative":
-    default:
-      return "inline-flex items-center rounded-full border border-stone-300 bg-white px-3 py-1 text-sm text-stone-800";
-  }
-}
-
-function getDecisionRoleExplanation(role: EducationDecisionRole): string {
-  switch (role) {
-    case "local_priority":
-      return "This is the clearest nearby route right now and should be treated as a strong primary option.";
-    case "main_route":
-      return "This is one of the strongest current routes for the child profile and is worth keeping near the top of the shortlist.";
-    case "stretch_route":
-      return "This route is still meaningful, but it sits wider than the current education preference and should be read more carefully.";
-    case "local_alternative":
-      return "This is a realistic nearby backup option. It is useful to keep visible, but it is not the clearest primary choice.";
-    case "broader_alternative":
-    default:
-      return "This is a broader comparison route. Keep it visible, but treat it as a secondary option for now.";
-  }
 }
 
 export default async function ChildDetailPage({
@@ -431,6 +366,10 @@ export default async function ChildDetailPage({
             which routes are primary, local, broader, or more stretch-based.
           </p>
 
+          <div className="mt-4 flex flex-wrap gap-3">
+            <CompareSavedRoutesButton locale={locale} childId={child.id} />
+          </div>
+
           {savedStudyRouteCards.length === 0 ? (
             <p className="mt-4 text-sm text-stone-600">
               No study routes saved for this child yet.
@@ -438,115 +377,41 @@ export default async function ChildDetailPage({
           ) : (
             <div className="mt-5 grid gap-4">
               {savedStudyRouteCards.map((item) => {
-                const durationLabel = getDurationLabel(
-                  item.program.duration_years,
-                  supportedLocale
-                );
-
                 return (
                   <div
-                    key={`${item.savedRoute.profession_slug}-${item.savedRoute.program_slug}`}
+                    key={item.savedRoute.id}
                     className="rounded-2xl border border-stone-200 bg-stone-50 p-5"
                   >
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                       <div className="max-w-3xl">
-                        <div className="flex flex-wrap gap-2">
-                          <span
-                            className={getDecisionRoleTone(
-                              item.decisionSupport.decisionRole
-                            )}
-                          >
-                            {getEducationDecisionRoleLabel(
-                              item.decisionSupport.decisionRole,
-                              supportedLocale
-                            )}
-                          </span>
-
-                          <span className="inline-flex items-center rounded-full border border-stone-300 bg-white px-3 py-1 text-sm text-stone-800">
-                            {getEducationRouteTypeLabel(
-                              item.decisionSupport.routeType,
-                              supportedLocale
-                            )}
-                          </span>
-
-                          <span className="inline-flex items-center rounded-full border border-stone-300 bg-white px-3 py-1 text-sm text-stone-800">
-                            {getStudyModeLabel(
-                              item.program.study_mode,
-                              supportedLocale
-                            )}
-                          </span>
-
-                          {durationLabel ? (
-                            <span className="inline-flex items-center rounded-full border border-stone-300 bg-white px-3 py-1 text-sm text-stone-800">
-                              {durationLabel}
-                            </span>
-                          ) : null}
-                        </div>
-
                         <h3 className="mt-4 text-base font-semibold text-stone-900">
-                          {item.program.title}
+                          {item.professionTitle}
                         </h3>
 
                         <p className="mt-2 text-sm leading-relaxed text-stone-600">
-                          {item.professionTitle} · {item.institution.name} ·{" "}
-                          {item.institution.municipality_name}
+                          Status: {item.savedRoute.status}
                         </p>
-
-                        <div className="mt-4 rounded-2xl border border-stone-200 bg-white p-4">
-                          <div className="text-sm font-semibold text-stone-900">
-                            How to read this route now
-                          </div>
-                          <p className="mt-2 text-sm leading-relaxed text-stone-600">
-                            {getDecisionRoleExplanation(
-                              item.decisionSupport.decisionRole
-                            )}
-                          </p>
-                        </div>
-
-                        <RouteOpenDoorsPanel
-                          items={item.openDoorProfessions.map((adjacentProfession) => ({
-                            ...adjacentProfession,
-                            href: `/${locale}/app/professions/${adjacentProfession.slug}`,
-                          }))}
-                        />
-
-                        <TagList
-                          title="Profile signals already supporting this route"
-                          items={[
-                            ...item.decisionSupport.supportingInterestLabels,
-                            ...item.decisionSupport.supportingStrengthLabels,
-                          ]}
-                          highlight
-                        />
-
-                        <TagList
-                          title="Useful school focus"
-                          items={item.decisionSupport.schoolFocusLabels}
-                        />
+                        <p className="mt-1 text-xs text-stone-500">
+                          Updated: {new Date(item.savedRoute.updated_at).toLocaleString()}
+                        </p>
                       </div>
 
                       <div className="flex flex-wrap gap-2 sm:flex-col sm:items-end">
-                        {item.institution.website_url ? (
-                          <a
-                            href={item.institution.website_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-4 py-2 text-sm text-stone-900 transition hover:border-stone-400"
-                          >
-                            Open institution page
-                          </a>
-                        ) : null}
-
                         <Link
-                          href={`/${locale}/app/children/${child.id}/education/${item.savedRoute.profession_slug}`}
+                          href={`/${locale}/app/children/${child.id}/route/${item.savedRoute.id}`}
                           className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-4 py-2 text-sm text-stone-900 transition hover:border-stone-400"
                         >
-                          Review route options
+                          Open route
                         </Link>
 
                         <RemoveSavedStudyRouteButton
                           childId={child.id}
-                          programSlug={item.savedRoute.program_slug}
+                          routeId={item.savedRoute.id}
+                        />
+
+                        <CompareSavedRouteButton
+                          childId={child.id}
+                          routeId={item.savedRoute.id}
                         />
                       </div>
                     </div>

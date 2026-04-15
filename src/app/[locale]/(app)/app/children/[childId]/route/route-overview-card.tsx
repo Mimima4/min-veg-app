@@ -9,6 +9,8 @@ type Props = {
 };
 
 export default function RouteOverviewCard({ locale, childId, route }: Props) {
+  const showSavedBadge = route.status === "saved";
+
   return (
     <div className="rounded-2xl border border-stone-200 bg-white p-5">
       <div className="flex items-start justify-between gap-4">
@@ -22,9 +24,11 @@ export default function RouteOverviewCard({ locale, childId, route }: Props) {
           </div>
         </div>
 
-        <span className="inline-flex rounded-full border border-stone-300 bg-stone-50 px-3 py-1 text-xs font-medium text-stone-700">
-          {route.status}
-        </span>
+        {showSavedBadge ? (
+          <span className="inline-flex rounded-full border border-stone-300 bg-stone-50 px-3 py-1 text-xs font-medium text-stone-700">
+            Saved
+          </span>
+        ) : null}
       </div>
 
       <dl className="mt-4 grid gap-3 sm:grid-cols-3">
@@ -68,7 +72,7 @@ export default function RouteOverviewCard({ locale, childId, route }: Props) {
         </p>
 
         <Link
-          href={`/${locale}/app/children/${childId}/route/${route.routeId}`}
+          href={`/${locale}/app/children/${childId}/route/entry/${route.targetProfessionId}`}
           className="inline-flex items-center rounded-xl bg-stone-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-stone-700"
         >
           Open route

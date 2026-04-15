@@ -231,8 +231,8 @@ export default async function RouteHubPage({
 
                 {child.status === "attention" ? (
                   <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                    Review this child’s route contour. There are warnings or a newer
-                    route version available.
+                    Review this child’s route contour. A newer route version is
+                    available or at least one route is marked for review.
                   </div>
                 ) : null}
               </div>

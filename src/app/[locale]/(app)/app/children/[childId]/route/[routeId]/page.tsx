@@ -51,7 +51,11 @@ export default async function StudyRouteDetailPage({
     <LocalePageShell
       locale={locale}
       title={route.header.professionTitle}
-      subtitle="Current saved route for this target profession."
+      subtitle={
+        route.identity.status === "saved"
+          ? "Current saved route for this target profession."
+          : "Current route for this target profession."
+      }
       backHref={`/${locale}/app/children/${childId}/route`}
       backLabel="Back routes"
     >
@@ -72,9 +76,6 @@ export default async function StudyRouteDetailPage({
             </p>
           </div>
 
-          <span className="inline-flex rounded-full border border-stone-300 bg-stone-50 px-3 py-1 text-xs font-medium text-stone-700">
-            {route.identity.status}
-          </span>
         </div>
 
         <dl
@@ -133,6 +134,10 @@ export default async function StudyRouteDetailPage({
 
       <div className="mt-6 grid gap-6">
         <RouteStepsPanel
+          childId={childId}
+          routeId={routeId}
+          locale={locale}
+          isSavedRoute={route.identity.status === "saved"}
           steps={route.steps}
           competitionLevel={route.header.competitionLevel}
         />

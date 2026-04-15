@@ -64,7 +64,7 @@ type SavedProfessionLinkRow = {
 };
 
 type SavedStudyRouteRow = {
-  program_slug: string;
+  id: string;
 };
 
 export type SummaryProfessionCard = {
@@ -418,9 +418,11 @@ export async function getChildSummaryPageData({
   }
 
   const { data: savedRouteRows, error: savedRoutesError } = await supabase
-    .from("child_saved_education_routes")
-    .select("program_slug")
-    .eq("child_profile_id", childRow.id);
+    .from("study_routes")
+    .select("id")
+    .eq("child_id", childRow.id)
+    .eq("status", "saved")
+    .is("archived_at", null);
 
   if (savedRoutesError) {
     return {

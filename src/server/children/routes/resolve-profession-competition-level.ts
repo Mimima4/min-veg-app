@@ -48,3 +48,49 @@ export function competitionLevelToLabel(
       return null;
   }
 }
+
+function stepDownCompetition(
+  level: StudyRouteCompetitionLevel,
+  steps: number
+): StudyRouteCompetitionLevel {
+  const ordered: StudyRouteCompetitionLevel[] = [
+    "low",
+    "medium",
+    "high",
+    "very_high",
+  ];
+  const index = ordered.indexOf(level);
+  const nextIndex = Math.max(0, index - steps);
+  return ordered[nextIndex] ?? level;
+}
+
+/**
+ * Applies official-source competition tuning while keeping existing scale.
+ * Lower confidence never forces strong competition changes.
+ */
+export function applyAdmissionCompetitionAdjustment(params: {
+  baseLevel: StudyRouteCompetitionLevel;
+  competitionAdjustment: number | null;
+  confidenceLevel: "low" | "medium" | "high" | null;
+}): StudyRouteCompetitionLevel {
+  const { baseLevel, competitionAdjustment, confidenceLevel } = params;
+
+  if (confidenceLevel === "low") {
+    return baseLevel;
+  }
+
+  if (typeof competitionAdjustment !== "number" || !Number.isFinite(competitionAdjustment)) {
+    return baseLevel;
+  }
+
+  // Keep top-pressure programmes in very_high unless adjustment is materially softer.
+  if (competitionAdjustment > -0.4) {
+    return stepDownCompetition(baseLevel, 2);
+  }
+
+  if (competitionAdjustment > -1.0) {
+    return stepDownCompetition(baseLevel, 1);
+  }
+
+  return baseLevel;
+}

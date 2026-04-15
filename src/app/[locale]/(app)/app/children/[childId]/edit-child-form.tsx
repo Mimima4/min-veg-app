@@ -240,6 +240,20 @@ function getLocalizedLabel<T extends string>(
   return labels[value][locale];
 }
 
+function normalizeStringArray(values: string[]): string[] {
+  return Array.from(
+    new Set(values.map((value) => value.trim()).filter((value) => value.length > 0))
+  ).sort((a, b) => a.localeCompare(b));
+}
+
+function areStringArraysEqual(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+
+  return a.every((value, index) => value === b[index]);
+}
+
 function ToggleTagButton({
   label,
   selected,
@@ -398,6 +412,15 @@ export default function EditChildForm({
     [municipalityOptions, activeCountyCode]
   );
 
+  /** Browse-by-fylke dropdown only; does not mutate props or backend order. */
+  const municipalityOptionsSortedByFylkeName = useMemo(
+    () =>
+      [...municipalityOptions].sort((a, b) =>
+        a.name.localeCompare(b.name, "nb", { sensitivity: "base" })
+      ),
+    [municipalityOptions]
+  );
+
   const municipalityLookup = useMemo(() => {
     const map = new Map<string, { name: string; countyName: string }>();
 
@@ -457,6 +480,36 @@ export default function EditChildForm({
     setMessage("");
     setErrorMessage("");
 
+    const normalizedInitialMunicipalityCodes = normalizeStringArray(
+      initialPreferredMunicipalityCodes
+    );
+    const normalizedCurrentMunicipalityCodes = normalizeStringArray(
+      selectedMunicipalityCodes
+    );
+    const normalizedInitialInterestIds = normalizeStringArray(initialInterestIds);
+    const normalizedCurrentInterestIds = normalizeStringArray(selectedInterestIds);
+    const normalizedInitialObservedTraitIds = normalizeStringArray(
+      initialObservedTraitIds
+    );
+    const normalizedCurrentObservedTraitIds = normalizeStringArray(
+      selectedObservedTraitIds
+    );
+
+    const routeRelevantChanged =
+      !areStringArraysEqual(
+        normalizedInitialMunicipalityCodes,
+        normalizedCurrentMunicipalityCodes
+      ) ||
+      (initialRelocationWillingness ?? "no") !== relocationWillingness ||
+      !areStringArraysEqual(normalizedInitialInterestIds, normalizedCurrentInterestIds) ||
+      !areStringArraysEqual(
+        normalizedInitialObservedTraitIds,
+        normalizedCurrentObservedTraitIds
+      ) ||
+      initialDesiredIncomeBand !== desiredIncomeBand ||
+      initialPreferredWorkStyle !== preferredWorkStyle ||
+      initialPreferredEducationLevel !== preferredEducationLevel;
+
     const { error } = await supabase
       .from("child_profiles")
       .update({
@@ -481,6 +534,57 @@ export default function EditChildForm({
     if (error) {
       setErrorMessage(error.message);
       return;
+    }
+
+    if (routeRelevantChanged) {
+      const { data: existingRoutes, error: existingRoutesError } = await supabase
+        .from("study_routes")
+        .select("id")
+        .eq("child_id", childId)
+        .is("archived_at", null);
+
+      if (existingRoutesError) {
+        console.error("Failed to load study routes for auto-recompute", {
+          childId,
+          error: existingRoutesError.message,
+        });
+      } else if ((existingRoutes ?? []).length > 0) {
+        const recomputeResults = await Promise.allSettled(
+          existingRoutes.map((route) =>
+            fetch("/api/internal/routes/trigger-study-route-recompute", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                childId,
+                routeId: route.id,
+                locale,
+              }),
+            }).then(async (response) => {
+              if (!response.ok) {
+                const payload = (await response.json().catch(() => null)) as
+                  | { error?: { message?: string } }
+                  | null;
+                throw new Error(payload?.error?.message ?? "Recompute request failed");
+              }
+            })
+          )
+        );
+
+        for (const [index, result] of recomputeResults.entries()) {
+          if (result.status === "rejected") {
+            console.error("Auto-recompute failed for route", {
+              childId,
+              routeId: existingRoutes[index]?.id,
+              error:
+                result.reason instanceof Error
+                  ? result.reason.message
+                  : String(result.reason),
+            });
+          }
+        }
+      }
     }
 
     setMessage("Child profile saved successfully.");
@@ -794,7 +898,7 @@ export default function EditChildForm({
                   onChange={(e) => setActiveCountyCode(e.target.value)}
                   className="w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-stone-900 outline-none focus:border-stone-500"
                 >
-                  {municipalityOptions.map((county) => (
+                  {municipalityOptionsSortedByFylkeName.map((county) => (
                     <option key={county.code} value={county.code}>
                       {county.name}
                     </option>

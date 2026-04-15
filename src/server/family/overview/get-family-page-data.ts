@@ -204,9 +204,11 @@ export async function getFamilyPageData({
   const { data: savedStudyRoutes, error: savedStudyRoutesError } =
     childIds.length > 0
       ? await supabase
-          .from("child_saved_education_routes")
-          .select("child_profile_id, program_slug")
-          .in("child_profile_id", childIds)
+          .from("study_routes")
+          .select("child_id")
+          .in("child_id", childIds)
+          .eq("status", "saved")
+          .is("archived_at", null)
       : { data: [], error: null };
 
   if (savedStudyRoutesError) {
@@ -221,8 +223,9 @@ export async function getFamilyPageData({
   const savedStudyRouteCountByChildId = new Map<string, number>();
 
   for (const route of savedStudyRoutes ?? []) {
-    const current = savedStudyRouteCountByChildId.get(route.child_profile_id) ?? 0;
-    savedStudyRouteCountByChildId.set(route.child_profile_id, current + 1);
+    const typedRoute = route as { child_id: string };
+    const current = savedStudyRouteCountByChildId.get(typedRoute.child_id) ?? 0;
+    savedStudyRouteCountByChildId.set(typedRoute.child_id, current + 1);
   }
 
   const { data: professions, error: professionsError } = await supabase

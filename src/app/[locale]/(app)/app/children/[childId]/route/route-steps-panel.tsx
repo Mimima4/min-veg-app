@@ -6,6 +6,7 @@ import type {
 } from "@/lib/routes/route-types";
 import type { StudyRouteStep } from "@/lib/routes/route-step-types";
 import { getRouteRequirementsRule } from "@/server/children/routes/route-requirements-rules";
+import SaveRouteButton from "./[routeId]/save-route-button";
 
 function isRouteSnapshotPayloadStep(
   step: StudyRouteReadModelStep
@@ -21,19 +22,35 @@ function isRouteSnapshotPayloadStep(
 }
 
 type Props = {
+  childId: string;
+  routeId: string;
+  locale: string;
+  isSavedRoute: boolean;
   steps: StudyRouteReadModelStep[];
   competitionLevel?: StudyRouteCompetitionLevel;
 };
 
 export default function RouteStepsPanel({
+  childId,
+  routeId,
+  locale,
+  isSavedRoute,
   steps,
   competitionLevel,
 }: Props) {
   return (
     <div className="rounded-2xl border border-stone-200 bg-white p-6">
-      <h2 className="text-lg font-semibold text-stone-900">Route steps</h2>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <h2 className="text-lg font-semibold text-stone-900">Route steps</h2>
+        <SaveRouteButton
+          childId={childId}
+          routeId={routeId}
+          locale={locale}
+          isSaved={isSavedRoute}
+        />
+      </div>
       <p className="mt-2 text-sm text-stone-600">
-        This path is assembled from the current saved route truth.
+        This path is assembled from the current route truth.
       </p>
 
       {steps.length === 0 ? (

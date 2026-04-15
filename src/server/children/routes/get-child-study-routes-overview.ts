@@ -31,9 +31,53 @@ type ProfessionRow = {
 
 type SnapshotRow = {
   route_variant_id: string;
+  generated_at: string;
   selected_steps_payload: unknown;
   signals_payload: unknown;
 };
+
+type VariantRow = {
+  route_id: string;
+  status: ChildStudyRouteOverviewItem["status"];
+  is_current: boolean;
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function stableStringify(value: unknown): string {
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => stableStringify(item)).join(",")}]`;
+  }
+
+  if (!isRecord(value)) {
+    return JSON.stringify(value);
+  }
+
+  const keys = Object.keys(value).sort();
+  const serialized = keys
+    .map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`)
+    .join(",");
+  return `{${serialized}}`;
+}
+
+function extractMaterialSignalsSubset(signals: unknown): {
+  warnings: unknown;
+  feasibilitySummary: unknown;
+} {
+  if (!isRecord(signals)) {
+    return {
+      warnings: null,
+      feasibilitySummary: null,
+    };
+  }
+
+  return {
+    warnings: signals.warnings ?? null,
+    feasibilitySummary: signals.feasibilitySummary ?? null,
+  };
+}
 
 export async function getChildStudyRoutesOverview(
   params: Params
@@ -98,11 +142,34 @@ export async function getChildStudyRoutesOverview(
   }
 
   let snapshotMap = new Map<string, SnapshotRow>();
+  let currentVariantStatusByRouteId = new Map<
+    string,
+    ChildStudyRouteOverviewItem["status"]
+  >();
 
   if (variantIds.length > 0) {
+    const { data: variants, error: variantsError } = await supabase
+      .from("study_route_variants")
+      .select("route_id, status, is_current")
+      .in("route_id", typedRoutes.map((route) => route.id))
+      .eq("is_current", true);
+
+    if (variantsError) {
+      throw new Error(
+        `Failed to fetch current variants for study routes overview: ${variantsError.message}`
+      );
+    }
+
+    currentVariantStatusByRouteId = new Map(
+      ((variants ?? []) as VariantRow[]).map((variant) => [
+        variant.route_id,
+        variant.status,
+      ])
+    );
+
     const { data: snapshots, error: snapshotsError } = await supabase
       .from("study_route_snapshots")
-      .select("route_variant_id, selected_steps_payload, signals_payload")
+      .select("route_variant_id, generated_at, selected_steps_payload, signals_payload")
       .in("route_variant_id", variantIds)
       .eq("is_current_snapshot", true);
 
@@ -112,15 +179,87 @@ export async function getChildStudyRoutesOverview(
       );
     }
 
-    snapshotMap = new Map(
-      ((snapshots ?? []) as SnapshotRow[]).map((snapshot) => [
-        snapshot.route_variant_id,
-        snapshot,
-      ])
-    );
+    const latestSnapshotByVariantId = new Map<string, SnapshotRow>();
+    for (const snapshot of (snapshots ?? []) as SnapshotRow[]) {
+      const current = latestSnapshotByVariantId.get(snapshot.route_variant_id);
+      if (
+        !current ||
+        new Date(snapshot.generated_at).getTime() >
+          new Date(current.generated_at).getTime()
+      ) {
+        latestSnapshotByVariantId.set(snapshot.route_variant_id, snapshot);
+      }
+    }
+    snapshotMap = latestSnapshotByVariantId;
   }
 
-  const mapped: ChildStudyRouteOverviewItem[] = typedRoutes.map((route) => {
+  const routesByProfessionId = new Map<string, RouteRow[]>();
+  for (const route of typedRoutes) {
+    const current = routesByProfessionId.get(route.target_profession_id) ?? [];
+    current.push(route);
+    routesByProfessionId.set(route.target_profession_id, current);
+  }
+
+  const primaryRoutes = Array.from(routesByProfessionId.values())
+    .map((routesForProfession) => {
+      const sorted = [...routesForProfession].sort(
+        (a, b) =>
+          new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+      );
+      const drafts = sorted.filter((route) => {
+        if (route.status === "draft") {
+          return true;
+        }
+        const currentVariantStatus = currentVariantStatusByRouteId.get(route.id);
+        return currentVariantStatus === "draft";
+      });
+      const saved = sorted.filter((route) => route.status === "saved");
+
+      for (const draftRoute of drafts) {
+        const draftSnapshot = draftRoute.current_variant_id
+          ? snapshotMap.get(draftRoute.current_variant_id)
+          : undefined;
+
+        if (!draftSnapshot) {
+          continue;
+        }
+
+        const equivalentSavedRoute = saved.find((savedRoute) => {
+          const savedSnapshot = savedRoute.current_variant_id
+            ? snapshotMap.get(savedRoute.current_variant_id)
+            : undefined;
+          if (!savedSnapshot) {
+            return false;
+          }
+
+          return (
+            stableStringify(savedSnapshot.selected_steps_payload ?? []) ===
+              stableStringify(draftSnapshot.selected_steps_payload ?? []) &&
+            stableStringify(
+              extractMaterialSignalsSubset(savedSnapshot.signals_payload)
+            ) ===
+              stableStringify(
+                extractMaterialSignalsSubset(draftSnapshot.signals_payload)
+              )
+          );
+        });
+
+        if (equivalentSavedRoute) {
+          return equivalentSavedRoute;
+        }
+      }
+
+      // Product-phase strict rule:
+      // main Route entry resolves only from working routes.
+      // Saved/non-working siblings are excluded from candidate set.
+      return drafts[0] ?? null;
+    })
+    .filter((route): route is RouteRow => Boolean(route))
+    .sort(
+      (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+    );
+
+  const mapped: ChildStudyRouteOverviewItem[] = primaryRoutes.map((route) => {
     const profession = professionMap.get(route.target_profession_id);
 
     if (!profession) {

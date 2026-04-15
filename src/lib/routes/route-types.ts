@@ -128,7 +128,10 @@ export type StudyRouteAllowedActions = {
 };
 
 export type StudyRouteSnapshotPlanningSlice = {
+  preferredMunicipalityCodes: string[];
+  relocationWillingness: "no" | "maybe" | "yes" | null;
   interestIds: string[];
+  observedTraitIds: string[];
   derivedStrengthIds: string[];
   desiredIncomeBand: string | null;
   preferredWorkStyle: string | null;

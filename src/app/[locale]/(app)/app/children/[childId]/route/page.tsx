@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
 import { LocalePageShell } from "@/components/layout/locale-page-shell";
 import AppPrivateNav from "@/components/layout/app-private-nav";
 import RouteOverviewCard from "./route-overview-card";
 import { requireAppAccess } from "@/server/billing/require-app-access";
+import { createInitialStudyRoute } from "@/server/children/routes/create-initial-study-route";
 import { getChildStudyRoutesOverview } from "@/server/children/routes/get-child-study-routes-overview";
 import { getFamilyPageData } from "@/server/family/overview/get-family-page-data";
 
@@ -52,11 +54,59 @@ export default async function ChildRouteOverviewPage({
     notFound();
   }
 
-  const overview = await getChildStudyRoutesOverview({
+  let overview = await getChildStudyRoutesOverview({
     childId,
     locale,
     childDisplayName: child.displayName,
   });
+
+  if (overview.routes.length === 0) {
+    const supabase = await createClient();
+    const { data: savedProfessionLinks, error: savedProfessionLinksError } =
+      await supabase
+        .from("child_profession_interests")
+        .select("profession_id")
+        .eq("child_profile_id", childId);
+
+    if (savedProfessionLinksError) {
+      throw new Error(
+        `Failed to load saved profession targets for working routes: ${savedProfessionLinksError.message}`
+      );
+    }
+
+    const targetProfessionIds = Array.from(
+      new Set(
+        (savedProfessionLinks ?? [])
+          .map((row) => row.profession_id)
+          .filter((value): value is string => Boolean(value))
+      )
+    );
+
+    if (targetProfessionIds.length > 0) {
+      await Promise.all(
+        targetProfessionIds.map(async (targetProfessionId) => {
+          try {
+            await createInitialStudyRoute({
+              childId,
+              targetProfessionId,
+              locale,
+              createdByType: "system",
+              createdByUserId: null,
+            });
+          } catch {
+            // Keep child Route page resilient: one failed target
+            // must not block materialization for other saved professions.
+          }
+        })
+      );
+
+      overview = await getChildStudyRoutesOverview({
+        childId,
+        locale,
+        childDisplayName: child.displayName,
+      });
+    }
+  }
 
   return (
     <LocalePageShell
@@ -91,10 +141,10 @@ export default async function ChildRouteOverviewPage({
 
       {overview.routes.length === 0 ? (
         <div className="mt-6 rounded-2xl border border-stone-200 bg-stone-50 p-6">
-          <h3 className="text-lg font-semibold text-stone-900">No saved routes yet</h3>
+          <h3 className="text-lg font-semibold text-stone-900">No working routes yet</h3>
           <p className="mt-2 text-sm text-stone-600">
-            Route is target-driven. Save a profession first, then build or open the
-            route for that target.
+            Route main entry shows only active working routes. Saved routes stay in
+            the profile storage section until a new working route is opened.
           </p>
 
           <div className="mt-4 flex flex-wrap gap-3">

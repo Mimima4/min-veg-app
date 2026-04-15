@@ -1,4 +1,5 @@
 export const STUDY_ROUTE_STATUSES = [
+    "draft",
     "saved",
     "needs_review",
     "outdated",
@@ -28,5 +29,7 @@ export const STUDY_ROUTE_STATUSES = [
     (typeof STUDY_ROUTE_SNAPSHOT_STATUSES)[number];
   
   export function isActiveStudyRouteStatus(status: StudyRouteStatus): boolean {
-    return status === "saved" || status === "needs_review";
+    return (
+      status === "draft" || status === "saved" || status === "needs_review"
+    );
   }

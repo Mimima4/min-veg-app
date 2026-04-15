@@ -13,6 +13,7 @@ type Params = {
   routeId: string;
   routeVariantId: string | null;
   targetProfessionId: string;
+  supabase?: Awaited<ReturnType<typeof createClient>>;
 };
 
 type ProfessionRow = {
@@ -21,10 +22,14 @@ type ProfessionRow = {
   title_i18n: Record<string, string> | null;
 };
 
+type ChildPlanningContextRow = ChildPlanningSourceRow & {
+  relocation_willingness: "no" | "maybe" | "yes" | null;
+};
+
 export async function buildStudyRouteSnapshotContext(
   params: Params
 ): Promise<StudyRouteSnapshotContext> {
-  const supabase = await createClient();
+  const supabase = params.supabase ?? (await createClient());
   const supportedLocale = params.locale as SupportedLocale;
 
   const [{ data: child, error: childError }, { data: profession, error: professionError }] =
@@ -32,7 +37,7 @@ export async function buildStudyRouteSnapshotContext(
       supabase
         .from("child_profiles")
         .select(
-          "interests, observed_traits, desired_income_band, preferred_work_style, preferred_education_level, preferred_municipality_codes"
+          "interests, observed_traits, desired_income_band, preferred_work_style, preferred_education_level, preferred_municipality_codes, relocation_willingness"
         )
         .eq("id", params.childId)
         .maybeSingle(),
@@ -68,7 +73,7 @@ export async function buildStudyRouteSnapshotContext(
     );
   }
 
-  const childRow = child as ChildPlanningSourceRow;
+  const childRow = child as ChildPlanningContextRow;
   const professionRow = profession as ProfessionRow;
   const planningState = getChildPlanningState(childRow);
 
@@ -85,7 +90,10 @@ export async function buildStudyRouteSnapshotContext(
         professionRow.slug,
     },
     planning: {
+      preferredMunicipalityCodes: planningState.preferredMunicipalityCodes,
+      relocationWillingness: childRow.relocation_willingness,
       interestIds: planningState.interestIds,
+      observedTraitIds: planningState.observedTraitIds,
       derivedStrengthIds: planningState.derivedStrengthIds,
       desiredIncomeBand: planningState.desiredIncomeBand,
       preferredWorkStyle: planningState.preferredWorkStyle,

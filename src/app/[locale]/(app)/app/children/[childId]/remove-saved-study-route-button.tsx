@@ -2,18 +2,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 
 type Props = {
   childId: string;
-  programSlug: string;
+  routeId: string;
 };
 
 export default function RemoveSavedStudyRouteButton({
   childId,
-  programSlug,
+  routeId,
 }: Props) {
-  const supabase = createClient();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -26,16 +24,23 @@ export default function RemoveSavedStudyRouteButton({
 
     setLoading(true);
 
-    const { error } = await supabase
-      .from("child_saved_education_routes")
-      .delete()
-      .eq("child_profile_id", childId)
-      .eq("program_slug", programSlug);
+    const response = await fetch("/api/internal/routes/remove-saved-study-route", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        childId,
+        routeId,
+      }),
+    });
+
+    const payload = await response.json().catch(() => null);
 
     setLoading(false);
 
-    if (error) {
-      alert(error.message);
+    if (!response.ok || !payload?.ok) {
+      alert(payload?.error?.message ?? "Failed to remove saved route.");
       return;
     }
 

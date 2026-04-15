@@ -5,10 +5,6 @@ import {
   getDerivedStrengthLabel,
   getInterestLabel,
 } from "@/lib/planning/child-tag-catalog";
-import {
-  getEducationProgramDecisionSupport,
-  type EducationProgramDecisionSupport,
-} from "@/lib/planning/get-education-program-fit";
 import { getNorwayCountyMunicipalityOptions } from "@/lib/planning/norway-admin";
 import { getProfessionChildFit } from "@/lib/planning/get-profession-child-fit";
 import { getSuggestedProfessions } from "@/lib/planning/get-suggested-professions";
@@ -16,10 +12,6 @@ import {
   getDevelopmentFocusLabel,
   getSchoolSubjectLabel,
 } from "@/lib/planning/profession-tag-catalog";
-import {
-  getAdjacentProfessionsForPrograms,
-  type AdjacentProfessionCard,
-} from "@/server/professions/adjacency/get-adjacent-professions-for-program";
 import {
   getChildPlanningState,
   type DesiredIncomeBand,
@@ -44,50 +36,15 @@ type ChildRow = {
 };
 
 type SavedStudyRouteRow = {
-  profession_slug: string;
-  program_slug: string;
-  created_at: string;
-};
-
-type SavedStudyProgramRow = {
-  slug: string;
-  title: string;
-  education_level: string;
-  study_mode: string;
-  duration_years: number | null;
-  institution_id: string;
-};
-
-type SavedStudyInstitutionRow = {
   id: string;
-  slug: string;
-  name: string;
-  website_url: string | null;
-  municipality_name: string;
-  municipality_code: string;
+  target_profession_id: string;
+  status: string;
+  updated_at: string;
 };
 
-type SavedStudyProfessionRow = {
-  id?: string;
-  slug: string;
+type RouteProfessionRow = {
+  id: string;
   title_i18n: Record<string, string> | null;
-  summary_i18n?: Record<string, string> | null;
-  avg_salary_nok: number | null;
-  demand_level?: string | null;
-  education_level: string;
-  work_style: string;
-  key_skills?: unknown;
-  interest_tags: unknown;
-  strength_tags: unknown;
-  development_focus_tags: unknown;
-  school_subject_tags: unknown;
-  education_notes_i18n?: Record<string, string> | null;
-};
-
-type SavedStudyLinkRow = {
-  profession_slug: string;
-  program_slug: string;
-  fit_band: "strong" | "broader";
 };
 
 export type SuggestedProfessionCard = {
@@ -117,11 +74,7 @@ export type SavedProfessionCard = {
 
 export type SavedStudyRouteCard = {
   savedRoute: SavedStudyRouteRow;
-  program: SavedStudyProgramRow;
-  institution: SavedStudyInstitutionRow;
   professionTitle: string;
-  decisionSupport: EducationProgramDecisionSupport;
-  openDoorProfessions: AdjacentProfessionCard[];
 };
 
 export type ChildProfilePageData = {
@@ -466,10 +419,12 @@ export async function getChildProfilePageData({
   );
 
   const { data: savedStudyRoutes, error: savedStudyRoutesError } = await supabase
-    .from("child_saved_education_routes")
-    .select("profession_slug, program_slug, created_at")
-    .eq("child_profile_id", childRow.id)
-    .order("created_at", { ascending: false });
+    .from("study_routes")
+    .select("id, target_profession_id, status, updated_at")
+    .eq("child_id", childRow.id)
+    .eq("status", "saved")
+    .is("archived_at", null)
+    .order("updated_at", { ascending: false });
 
   if (savedStudyRoutesError) {
     return {
@@ -481,182 +436,48 @@ export async function getChildProfilePageData({
   }
 
   const savedStudyRouteRows = (savedStudyRoutes ?? []) as SavedStudyRouteRow[];
-  const savedStudyProgramSlugs = savedStudyRouteRows.map((item) => item.program_slug);
-  const savedStudyProfessionSlugs = savedStudyRouteRows.map(
-    (item) => item.profession_slug
+  const savedRouteProfessionIds = savedStudyRouteRows.map(
+    (item) => item.target_profession_id
   );
 
-  const savedStudyProgramsQuery =
-    savedStudyProgramSlugs.length > 0
-      ? await supabase
-          .from("education_programs")
-          .select(
-            "slug, title, education_level, study_mode, duration_years, institution_id"
-          )
-          .in("slug", savedStudyProgramSlugs)
-          .eq("is_active", true)
-      : { data: [], error: null };
-
-  if (savedStudyProgramsQuery.error) {
-    return {
-      kind: "error",
-      title: "Child profile",
-      subtitle: "There was a problem loading saved study route programs.",
-      message: savedStudyProgramsQuery.error.message,
-    };
-  }
-
-  const savedStudyPrograms = (savedStudyProgramsQuery.data ??
-    []) as SavedStudyProgramRow[];
-
-  const savedStudyInstitutionIds = savedStudyPrograms.map(
-    (item) => item.institution_id
-  );
-
-  const savedStudyInstitutionsQuery =
-    savedStudyInstitutionIds.length > 0
-      ? await supabase
-          .from("education_institutions")
-          .select("id, slug, name, website_url, municipality_name, municipality_code")
-          .in("id", savedStudyInstitutionIds)
-          .eq("is_active", true)
-      : { data: [], error: null };
-
-  if (savedStudyInstitutionsQuery.error) {
-    return {
-      kind: "error",
-      title: "Child profile",
-      subtitle: "There was a problem loading saved study route institutions.",
-      message: savedStudyInstitutionsQuery.error.message,
-    };
-  }
-
-  const savedStudyProfessionsQuery =
-    savedStudyProfessionSlugs.length > 0
+  const savedRouteProfessionsQuery =
+    savedRouteProfessionIds.length > 0
       ? await supabase
           .from("professions")
-          .select(
-            "slug, title_i18n, interest_tags, strength_tags, development_focus_tags, school_subject_tags, work_style, education_level, avg_salary_nok"
-          )
-          .in("slug", savedStudyProfessionSlugs)
+          .select("id, title_i18n")
+          .in("id", savedRouteProfessionIds)
+          .eq("is_active", true)
       : { data: [], error: null };
 
-  if (savedStudyProfessionsQuery.error) {
+  if (savedRouteProfessionsQuery.error) {
     return {
       kind: "error",
       title: "Child profile",
       subtitle: "There was a problem loading saved study route professions.",
-      message: savedStudyProfessionsQuery.error.message,
+      message: savedRouteProfessionsQuery.error.message,
     };
   }
 
-  const savedStudyLinksQuery =
-    savedStudyProgramSlugs.length > 0 && savedStudyProfessionSlugs.length > 0
-      ? await supabase
-          .from("profession_program_links")
-          .select("profession_slug, program_slug, fit_band")
-          .in("program_slug", savedStudyProgramSlugs)
-          .in("profession_slug", savedStudyProfessionSlugs)
-      : { data: [], error: null };
-
-  if (savedStudyLinksQuery.error) {
-    return {
-      kind: "error",
-      title: "Child profile",
-      subtitle: "There was a problem loading saved study route links.",
-      message: savedStudyLinksQuery.error.message,
-    };
-  }
-
-  const savedProgramMap = new Map(
-    savedStudyPrograms.map((item) => [item.slug, item])
-  );
-
-  const savedInstitutionMap = new Map(
-    ((savedStudyInstitutionsQuery.data ?? []) as SavedStudyInstitutionRow[]).map(
-      (item) => [item.id, item]
-    )
-  );
-
-  const savedProfessionMapBySlug = new Map(
-    ((savedStudyProfessionsQuery.data ?? []) as SavedStudyProfessionRow[]).map(
-      (item) => [item.slug, item]
-    )
-  );
-
-  const savedLinkMap = new Map(
-    ((savedStudyLinksQuery.data ?? []) as SavedStudyLinkRow[]).map((item) => [
-      `${item.profession_slug}::${item.program_slug}`,
+  const savedRouteProfessionMap = new Map(
+    ((savedRouteProfessionsQuery.data ?? []) as RouteProfessionRow[]).map((item) => [
+      item.id,
       item,
     ])
   );
 
-  const adjacencyResult = await getAdjacentProfessionsForPrograms({
-    locale,
-    planningState,
-    programCurrentProfessionPairs: savedStudyRouteRows.map((item) => ({
-      programSlug: item.program_slug,
-      currentProfessionSlug: item.profession_slug,
-    })),
-  });
-
-  if (adjacencyResult.kind === "error") {
-    return {
-      kind: "error",
-      title: "Child profile",
-      subtitle: "There was a problem loading adjacent profession paths.",
-      message: adjacencyResult.message,
-    };
-  }
-
   const savedStudyRouteCards: SavedStudyRouteCard[] = savedStudyRouteRows
     .map((savedRoute) => {
-      const program = savedProgramMap.get(savedRoute.program_slug);
-      const profession = savedProfessionMapBySlug.get(savedRoute.profession_slug);
-      const institution = program
-        ? savedInstitutionMap.get(program.institution_id)
-        : null;
-      const link = savedLinkMap.get(
-        `${savedRoute.profession_slug}::${savedRoute.program_slug}`
-      );
-
-      if (!program || !profession || !institution || !link) {
+      const profession = savedRouteProfessionMap.get(savedRoute.target_profession_id);
+      if (!profession) {
         return null;
       }
 
-      const decisionSupport = getEducationProgramDecisionSupport({
-        locale: supportedLocale,
-        fitBand: link.fit_band,
-        programEducationLevel: program.education_level,
-        institutionMunicipalityCode: institution.municipality_code,
-        selectedMunicipalityCodes: planningState.preferredMunicipalityCodes,
-        childInterestIds: planningState.interestIds,
-        childDerivedStrengthIds: planningState.derivedStrengthIds,
-        desiredIncomeBand: planningState.desiredIncomeBand,
-        preferredWorkStyle: planningState.preferredWorkStyle,
-        preferredEducationLevel: planningState.preferredEducationLevel,
-        profession: {
-          interest_tags: profession.interest_tags,
-          strength_tags: profession.strength_tags,
-          development_focus_tags: profession.development_focus_tags,
-          school_subject_tags: profession.school_subject_tags,
-          work_style: profession.work_style,
-          education_level: profession.education_level,
-          avg_salary_nok: profession.avg_salary_nok,
-        },
-      });
-
       return {
         savedRoute,
-        program,
-        institution,
         professionTitle: getLocalizedValue(
           profession.title_i18n ?? {},
           supportedLocale
         ),
-        decisionSupport,
-        openDoorProfessions:
-          adjacencyResult.byProgramSlug.get(savedRoute.program_slug) ?? [],
       };
     })
     .filter((item): item is SavedStudyRouteCard => Boolean(item));

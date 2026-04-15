@@ -198,6 +198,7 @@ export async function getFamilyRoutesSummary({
 
     let warningsCount = 0;
     let hasNewRouteAvailable = false;
+    let hasRouteMarkedForReview = false;
     let latestRouteUpdatedAt: string | null = null;
     const targetProfessionTitles: string[] = [];
 
@@ -215,6 +216,10 @@ export async function getFamilyRoutesSummary({
 
       if (resolvedState.newRouteAvailable) {
         hasNewRouteAvailable = true;
+      }
+
+      if (route.status === "needs_review" || route.status === "outdated") {
+        hasRouteMarkedForReview = true;
       }
 
       if (
@@ -240,7 +245,7 @@ export async function getFamilyRoutesSummary({
 
     if (childRoutes.length === 0) {
       status = "empty";
-    } else if (warningsCount > 0 || hasNewRouteAvailable) {
+    } else if (hasNewRouteAvailable || hasRouteMarkedForReview) {
       status = "attention";
     }
 

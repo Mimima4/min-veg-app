@@ -9,7 +9,7 @@ create table if not exists study_routes (
   child_id uuid not null,
   target_profession_id uuid not null,
 
-  status text not null default 'saved',
+  status text not null default 'draft',
 
   current_variant_id uuid,
 
