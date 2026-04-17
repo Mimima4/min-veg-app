@@ -289,3 +289,74 @@ Route Engine:
 ## 13. Финальная формулировка
 
 Route Engine работает на основе реальных доступных данных, не зависит от внешних интеграций, не создаёт ложного ощущения полной точности, корректно учитывает уровень доверия к данным и усиливает свою точность при появлении дополнительных источников, оставаясь полностью функциональным даже при минимальном вводе.
+
+## Programme-to-school availability mapping
+
+For VGS / school-based routes, programme availability must be treated as a structured data layer.
+
+The system must maintain programme -> school availability mapping scoped by fylke / municipality where relevant.
+
+This mapping must not be treated as static seed-only truth.
+
+### Requirements
+
+- programme-to-school availability must be ingested from approved official sources
+- mapping must be refreshable
+- mapping must remain geography-aware
+- route engine must use refreshed mapping when constructing and ranking routes
+- if source availability changes, route realism must reflect that change after refresh
+
+### Source model
+
+For VGS / school-based routes:
+- official source families may include Vilbli and other approved official education structure sources
+
+### Important rule
+
+If programme availability changes in the official source, the local mapping must be able to update on refresh.
+
+Static one-time import is not sufficient for production truth.
+
+## Programme contour typing
+
+To support route-level learning-depth filtering, each programme must belong to a structured contour type.
+
+This contour typing is an internal route-engine classification layer.
+
+It is not shown to the user directly, but is used for:
+
+- learning-depth filter behavior
+- primary route ranking
+- alternative route prioritization
+- route badges / contour labels
+- study-time grouping
+
+### Minimum rule
+
+Each route-relevant programme must map to one contour type.
+
+Example contour types may include:
+
+- vocational_fast
+- vocational_extended
+- study_preparatory
+- higher_ed
+- professional_degree
+
+### Important rule
+
+Contour typing must not invent educational paths.
+
+It only classifies already valid programmes into meaningful route families.
+
+### Product rule
+
+Learning-depth filter does not construct new routes.
+
+It changes which contour becomes primary and how alternatives are ordered.
+
+### Availability rule
+
+If a profession only supports one valid contour type, the filter must shrink accordingly.
+
+The system must not show artificial depth options.

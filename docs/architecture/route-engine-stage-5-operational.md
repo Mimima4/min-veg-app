@@ -362,3 +362,30 @@ Safety:
 ### Финальный принцип
 
 v1 — это минимально достаточный, но production-ready слой, который даёт пользователю конкретный, объяснимый и управляемый маршрут без перегрузки и без зависимости от внешних систем.
+
+## Programme availability freshness and refresh policy
+
+Programme-to-school mapping and related institution/programme links must support operational freshness.
+
+### Required operational rules
+
+- mapping refresh must run on a recurring schedule
+- refresh cadence must be at least reviewable and configurable
+- weekly or monthly refresh is allowed depending on source stability
+- refreshed records must store freshness metadata
+- system must be able to identify when mapping data was last updated
+
+### Minimum freshness metadata
+
+The system should store, directly or through related operational tables:
+
+- source family
+- last synced at
+- last verified at
+- version / snapshot marker where applicable
+
+### Product rule
+
+The route engine must not assume static long-term correctness for programme availability.
+
+Availability truth must be refreshable, reviewable, and operationally visible.
