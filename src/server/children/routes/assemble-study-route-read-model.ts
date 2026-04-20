@@ -6,6 +6,7 @@ import type {
   StudyRouteReadModel,
   StudyRouteSnapshotContext,
   StudyRouteCompetitionLevel,
+  StudyRouteSnapshotStep,
 } from "@/lib/routes/route-types";
 import { getStudyRouteAlternatives } from "./get-study-route-alternatives";
 import { getStudyRouteAvailableProfessions } from "./get-study-route-available-professions";
@@ -16,6 +17,7 @@ import {
 } from "./resolve-profession-competition-level";
 import { getRouteAdmissionRealism } from "./get-route-admission-realism";
 import { resolveStudyRouteState } from "./resolve-study-route-state";
+import { enrichStudyRouteSteps } from "./enrich-study-route-steps";
 
 type AssembleParams = {
   locale?: string;
@@ -96,9 +98,12 @@ export async function assembleStudyRouteReadModel(
     locale: params.locale,
   });
 
-  const steps = Array.isArray(params.currentSnapshot?.selected_steps_payload)
+  const snapshotSteps = Array.isArray(params.currentSnapshot?.selected_steps_payload)
     ? params.currentSnapshot.selected_steps_payload
     : [];
+  const enrichedSteps = await enrichStudyRouteSteps(
+    snapshotSteps as StudyRouteSnapshotStep[]
+  );
 
   const snapshotSignals = (() => {
     if (!params.forceNewRouteAvailable) {
@@ -190,7 +195,7 @@ export async function assembleStudyRouteReadModel(
       warningsCount: resolvedState.headerSummary.warningsCount,
       newRouteAvailable: resolvedState.headerSummary.newRouteAvailable,
     },
-    steps: steps as StudyRouteReadModel["steps"],
+    steps: enrichedSteps,
     signals: resolvedState.signals,
     availableProfessions,
     alternativeRoutes: alternatives,

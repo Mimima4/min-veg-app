@@ -131,3 +131,26 @@ competition professions
 If data is uncertain or not verified:
 - show nothing
 - do not approximate
+
+---
+
+### Route prioritization principle (locked)
+
+Main route (current variant) MUST be selected based on family realism:
+- preferred municipality
+- home fylke
+- distance / relocation burden
+- practical acceptability for family
+
+Admission factors (competition, quota, thresholds, requirements):
+- MUST NOT override geography when selecting the main route
+- MUST act only as modifiers inside already acceptable geography
+
+Alternative routes:
+- MUST include admission advantages (quota, lower competition, better thresholds)
+- MAY include options outside preferred geography
+- MUST clearly communicate trade-offs:
+  - higher admission advantage vs higher practical burden
+
+Core rule:
+"Privilege improves a route, but does not override family realism unless explicitly expanded by the user."

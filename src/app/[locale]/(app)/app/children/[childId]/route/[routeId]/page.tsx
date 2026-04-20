@@ -47,6 +47,37 @@ export default async function StudyRouteDetailPage({
       route.header.competitionLevel === "very_high") &&
     strategies.length > 0;
 
+  const statusItems = [
+    {
+      label: "Fit",
+      value: route.header.overallFitLabel ?? "—",
+    },
+    {
+      label: "Education level",
+      value: route.header.stageContextLabel ?? "—",
+    },
+    {
+      label: "Realism",
+      value: route.header.realismLabel ?? "—",
+    },
+    ...(route.header.competitionLabel
+      ? [
+          {
+            label: "Competition",
+            value: route.header.competitionLabel,
+          },
+        ]
+      : []),
+    {
+      label: "Steps",
+      value: String(route.header.stepsCount),
+    },
+    {
+      label: "Warnings",
+      value: String(route.header.warningsCount),
+    },
+  ];
+
   return (
     <LocalePageShell
       locale={locale}
@@ -78,57 +109,15 @@ export default async function StudyRouteDetailPage({
 
         </div>
 
-        <dl
-          className={`mt-5 grid gap-4 ${
-            route.header.competitionLabel ? "sm:grid-cols-5" : "sm:grid-cols-4"
-          }`}
-        >
-          <div>
-            <dt className="text-xs uppercase tracking-wide text-stone-500">
-              Fit
-            </dt>
-            <dd className="mt-1 text-sm text-stone-900">
-              {route.header.overallFitLabel ?? "—"}
-            </dd>
-          </div>
-
-          <div>
-            <dt className="text-xs uppercase tracking-wide text-stone-500">
-              Realism
-            </dt>
-            <dd className="mt-1 text-sm text-stone-900">
-              {route.header.realismLabel ?? "—"}
-            </dd>
-          </div>
-
-          {route.header.competitionLabel ? (
-            <div>
+        <dl className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {statusItems.map((item) => (
+            <div key={item.label}>
               <dt className="text-xs uppercase tracking-wide text-stone-500">
-                Competition
+                {item.label}
               </dt>
-              <dd className="mt-1 text-sm text-stone-900">
-                {route.header.competitionLabel}
-              </dd>
+              <dd className="mt-1 text-sm text-stone-900">{item.value}</dd>
             </div>
-          ) : null}
-
-          <div>
-            <dt className="text-xs uppercase tracking-wide text-stone-500">
-              Steps
-            </dt>
-            <dd className="mt-1 text-sm text-stone-900">
-              {route.header.stepsCount}
-            </dd>
-          </div>
-
-          <div>
-            <dt className="text-xs uppercase tracking-wide text-stone-500">
-              Warnings
-            </dt>
-            <dd className="mt-1 text-sm text-stone-900">
-              {route.header.warningsCount}
-            </dd>
-          </div>
+          ))}
         </dl>
       </div>
 
@@ -143,10 +132,8 @@ export default async function StudyRouteDetailPage({
         />
 
         {showStrategyBlock && (
-          <div className="mt-6 border rounded-lg p-4 bg-white">
-            <h3 className="font-medium mb-3">
-              How to increase your chances
-            </h3>
+          <div className="mt-6 rounded-lg border bg-white p-4">
+            <h3 className="mb-3 font-medium">How to increase your chances</h3>
 
             <div className="space-y-3">
               {strategies.map((s) => (
@@ -155,7 +142,7 @@ export default async function StudyRouteDetailPage({
                   <div className="text-gray-600">{s.description}</div>
 
                   {!s.leads_to_same_profession && (
-                    <div className="text-xs text-orange-600 mt-1">
+                    <div className="mt-1 text-xs text-orange-600">
                       This path does NOT lead to becoming a licensed doctor in
                       Norway
                     </div>

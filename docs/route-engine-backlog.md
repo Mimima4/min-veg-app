@@ -170,3 +170,23 @@ VG1 → VG2 → Læretid → Fagbrev
 `/nb/admin/dashboard`
 
 **Статус:** TODO
+
+---
+
+### Route selection correction (geography-first)
+
+Current issue:
+- quota / admission advantage influences is_current selection
+
+Target:
+- is_current must be selected using geography-first logic
+- admission advantage must NOT determine main route
+
+Follow-up:
+- adjust selectProgrammeForRoute ranking:
+  - geography > distance > admission score
+  - admission score used only as tie-break inside same geo scope
+
+- move admission advantage emphasis to:
+  - alternative routes
+  - route deltas (realismDelta / riskDelta)

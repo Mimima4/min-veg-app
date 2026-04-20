@@ -30,6 +30,19 @@ type Props = {
   competitionLevel?: StudyRouteCompetitionLevel;
 };
 
+function humanizeStepType(type: StudyRouteSnapshotStep["type"]): string {
+  switch (type) {
+    case "programme_selection":
+      return "Programme step";
+    case "progression_step":
+      return "Progression";
+    case "outcome_step":
+      return "Outcome";
+    default:
+      return type;
+  }
+}
+
 export default function RouteStepsPanel({
   childId,
   routeId,
@@ -49,6 +62,7 @@ export default function RouteStepsPanel({
           isSaved={isSavedRoute}
         />
       </div>
+
       <p className="mt-2 text-sm text-stone-600">
         This path is assembled from the current route truth.
       </p>
@@ -83,14 +97,12 @@ export default function RouteStepsPanel({
                   className="rounded-xl border border-stone-200 bg-stone-50 p-4"
                 >
                   <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="text-xs uppercase tracking-wide text-stone-500">
-                        Step {index + 1}
-                      </p>
+                    <div className="min-w-0">
                       <div className="mt-1 flex flex-wrap items-center gap-2">
-                        <h4 className="text-base font-semibold text-stone-900">
-                          {step.title}
+                        <h4 className="text-xl font-semibold text-stone-900">
+                          {step.institution_name ?? step.title}
                         </h4>
+
                         {showCompetitionBadge && competitionLevel ? (
                           <CompetitionBadge
                             level={competitionLevel}
@@ -98,70 +110,70 @@ export default function RouteStepsPanel({
                           />
                         ) : null}
                       </div>
+
+                      {(step.program_title ?? step.program_slug) ? (
+                        <p className="mt-2 text-base text-stone-700">
+                          {step.program_title ?? step.program_slug}
+                        </p>
+                      ) : null}
+
+                      <div className="mt-3 space-y-1 text-sm text-stone-600">
+                        {(step.institution_city || step.institution_municipality) && (
+                          <div>{step.institution_city ?? step.institution_municipality}</div>
+                        )}
+
+                        {step.duration_label && (
+                          <div>Study time: {step.duration_label}</div>
+                        )}
+
+                        {(step.programme_url ?? step.institution_website) && (
+                          <a
+                            href={step.programme_url ?? step.institution_website ?? "#"}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex text-sm text-blue-600 hover:underline"
+                          >
+                            {step.programme_url
+                              ? "Visit programme page"
+                              : "Visit school website"}
+                          </a>
+                        )}
+                      </div>
                     </div>
 
                     <span className="inline-flex rounded-full border border-stone-300 bg-white px-3 py-1 text-xs font-medium text-stone-700">
-                      {step.type}
+                      {humanizeStepType(step.type)}
                     </span>
                   </div>
-
-                  <dl className="mt-4 grid gap-3 sm:grid-cols-2">
-                    <div>
-                      <dt className="text-xs uppercase tracking-wide text-stone-500">
-                        Programme
-                      </dt>
-                      <dd className="mt-1 text-sm text-stone-900">
-                        {step.program_slug ?? "—"}
-                      </dd>
-                    </div>
-
-                    <div>
-                      <dt className="text-xs uppercase tracking-wide text-stone-500">
-                        Institution
-                      </dt>
-                      <dd className="mt-1 text-sm text-stone-900">
-                        {step.institution_name ?? "—"}
-                      </dd>
-                    </div>
-
-                    <div>
-                      <dt className="text-xs uppercase tracking-wide text-stone-500">
-                        Education level
-                      </dt>
-                      <dd className="mt-1 text-sm text-stone-900">
-                        {step.education_level || "—"}
-                      </dd>
-                    </div>
-
-                    <div>
-                      <dt className="text-xs uppercase tracking-wide text-stone-500">
-                        Fit band
-                      </dt>
-                      <dd className="mt-1 text-sm text-stone-900">
-                        {step.fit_band}
-                      </dd>
-                    </div>
-                  </dl>
                 </div>
               );
             }
 
             const legacy = step as StudyRouteStep;
+
             return (
               <div
                 key={legacy.stepId}
                 className="rounded-xl border border-stone-200 bg-stone-50 p-4"
               >
                 <div className="flex items-start justify-between gap-4">
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-xs uppercase tracking-wide text-stone-500">
                       Step {index + 1}
                     </p>
+
                     <h3 className="mt-1 text-base font-semibold text-stone-900">
                       {legacy.title}
                     </h3>
-                    {legacy.subtitle ? (
-                      <p className="mt-1 text-sm text-stone-600">{legacy.subtitle}</p>
+
+                    {legacy.institution?.title ? (
+                      <p className="mt-1 text-sm text-stone-600">
+                        {legacy.institution.title}
+                      </p>
+                    ) : legacy.subtitle ? (
+                      <p className="mt-1 text-sm text-stone-600">
+                        {legacy.subtitle}
+                      </p>
                     ) : null}
                   </div>
 
@@ -177,28 +189,10 @@ export default function RouteStepsPanel({
                 <dl className="mt-4 grid gap-3 sm:grid-cols-2">
                   <div>
                     <dt className="text-xs uppercase tracking-wide text-stone-500">
-                      Programme
+                      Required programme
                     </dt>
                     <dd className="mt-1 text-sm text-stone-900">
                       {legacy.programme?.title ?? "—"}
-                    </dd>
-                  </div>
-
-                  <div>
-                    <dt className="text-xs uppercase tracking-wide text-stone-500">
-                      Institution
-                    </dt>
-                    <dd className="mt-1 text-sm text-stone-900">
-                      {legacy.institution?.title ?? "—"}
-                    </dd>
-                  </div>
-
-                  <div>
-                    <dt className="text-xs uppercase tracking-wide text-stone-500">
-                      Feasibility
-                    </dt>
-                    <dd className="mt-1 text-sm text-stone-900">
-                      {legacy.feasibilityBadge ?? "—"}
                     </dd>
                   </div>
 

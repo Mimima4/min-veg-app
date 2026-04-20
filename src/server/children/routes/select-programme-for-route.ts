@@ -83,6 +83,11 @@ function sortCandidatesWithinScope(
   homeFylkeCodes: string[],
   municipalityGeoPointByCode: Map<string, { lat: number; lng: number }>
 ): SelectedProgrammeForRoute[] {
+  // LOCKED_SPEC:
+  // - Main route selection remains family-realism first.
+  // - Geography and practical burden (municipality/fylke/distance) outrank admission factors.
+  // - Admission advantage (quota/competition/requirements) is a tie-break only within
+  //   already acceptable geography scope.
   const preferredMunicipalitySet = new Set(preferredMunicipalityCodes);
   const homeFylkeSet = new Set(homeFylkeCodes);
 

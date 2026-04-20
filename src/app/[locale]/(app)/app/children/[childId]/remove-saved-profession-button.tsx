@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 
 type Props = {
   childId: string;
@@ -13,45 +12,44 @@ export default function RemoveSavedProfessionButton({
   childId,
   professionId,
 }: Props) {
-  const supabase = createClient();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   async function handleRemove() {
     const confirmed = window.confirm(
-      "Are you sure you want to remove this saved profession from the child profile?"
+      "Are you sure you want to remove this saved profession from the child profile? All related routes for this profession will be removed from the active route list."
     );
 
     if (!confirmed) return;
 
     setLoading(true);
 
-    const { error: routeDeleteError } = await supabase
-      .from("study_routes")
-      .delete()
-      .eq("child_id", childId)
-      .eq("target_profession_id", professionId);
+    try {
+      const response = await fetch("/api/internal/routes/remove-saved-profession", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          childId,
+          professionId,
+        }),
+      });
 
-    if (routeDeleteError) {
+      const payload = await response.json();
+
+      if (!response.ok || !payload?.ok) {
+        throw new Error(
+          payload?.error?.message ?? "Failed to remove saved profession"
+        );
+      }
+
+      router.refresh();
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Unknown error");
+    } finally {
       setLoading(false);
-      alert(routeDeleteError.message);
-      return;
     }
-
-    const { error } = await supabase
-      .from("child_profession_interests")
-      .delete()
-      .eq("child_profile_id", childId)
-      .eq("profession_id", professionId);
-
-    setLoading(false);
-
-    if (error) {
-      alert(error.message);
-      return;
-    }
-
-    router.refresh();
   }
 
   return (

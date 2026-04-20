@@ -11,9 +11,16 @@ export type StudyRouteProgrammeSelectionSnapshotStep = {
   type: "programme_selection";
   title: string;
   institution_name: string | null;
+  institution_city?: string | null;
+  institution_municipality?: string | null;
+  institution_website?: string | null;
+  programme_url?: string | null;
   education_level: string;
   fit_band: string;
   program_slug: string;
+  program_title?: string | null;
+  duration_years?: number | null;
+  duration_label?: string | null;
   current_profession_slug: string;
 };
 
@@ -21,9 +28,16 @@ export type StudyRouteProgressionSnapshotStep = {
   type: "progression_step";
   title: string;
   institution_name: string | null;
+  institution_city?: string | null;
+  institution_municipality?: string | null;
+  institution_website?: string | null;
+  programme_url?: string | null;
   education_level: string;
   fit_band: string;
   program_slug: string | null;
+  program_title?: string | null;
+  duration_years?: number | null;
+  duration_label?: string | null;
   current_profession_slug: string;
 };
 
@@ -31,9 +45,16 @@ export type StudyRouteOutcomeSnapshotStep = {
   type: "outcome_step";
   title: string;
   institution_name: string | null;
+  institution_city?: string | null;
+  institution_municipality?: string | null;
+  institution_website?: string | null;
+  programme_url?: string | null;
   education_level: string;
   fit_band: string;
   program_slug: string | null;
+  program_title?: string | null;
+  duration_years?: number | null;
+  duration_label?: string | null;
   current_profession_slug: string;
 };
 
