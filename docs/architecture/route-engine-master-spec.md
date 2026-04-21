@@ -479,6 +479,99 @@ Route Engine provides guidance, not enforced decisions.
 
 Система даёт value даже без полного набора данных.
 
+### 4.X School/Programme Availability Truth Contract (VGS contour)
+
+For VGS programme -> school availability, the system MUST use a source-scoped truth contract linked to canonical school identity.
+
+#### Source roles
+
+- NSR is authoritative for school registry identity (canonical institution truth).
+- Vilbli is the primary source for VGS programme -> school availability.
+- Utdanning.no is the secondary confirmation source and preferred display layer when verified.
+- Vigo / Samordna opptak are supporting sources, not primary truth for this VGS contour.
+
+#### Canonical identity vs display naming
+
+- Canonical school identity MUST be internal and NSR-linked.
+- User-facing display name MAY differ from canonical registry name.
+- Preferred display name SHOULD come from verified Utdanning school page when available.
+- Name mismatch alone MUST NOT be treated as a conflict; legal name, display name and campus name may differ across sources.
+
+#### Matching rules (Vilbli row -> canonical school)
+
+- Vilbli school rows MUST be matched to canonical NSR-linked school identity before publishable availability.
+- Matching MUST NOT rely on raw name equality only.
+- Matching signals MAY include normalized name, fylke/county, address, school page path, website/domain, phone and email.
+
+#### Availability and verification state
+
+- Vilbli-confirmed programme availability is primary truth for VGS.
+- Absence in Vilbli SHOULD be treated as absence for VGS availability, UNLESS a confirmed and authoritative secondary source explicitly indicates an active offer.
+- School identity ambiguity MUST result in `verification_status = "needs_review"` until identity is confidently resolved.
+
+### Verification state rules (Vilbli + Utdanning)
+
+The system MUST assign `verification_status` from combined Vilbli + Utdanning signals:
+
+#### verified
+
+Set `verification_status = "verified"` when all are true:
+
+- Vilbli confirms programme availability for the school,
+- Utdanning school page is found,
+- and the corresponding programme/stage is clearly present in Utdanning (`confirmed` extraction).
+
+#### needs_review
+
+Set `verification_status = "needs_review"` when Vilbli confirms availability and at least one of the following applies:
+
+- Utdanning page is found but extraction is `partial` (only some stages confirmed),
+- Utdanning page is found but extraction is `unclear` (parser uncertainty / structure ambiguity),
+- Utdanning page exists but source alignment is not yet complete.
+
+`unclear` MUST be treated as `needs_review`, NEVER as absence.
+
+#### mismatch
+
+Set `verification_status = "mismatch"` only when all are true:
+
+- school identity is confidently matched (NSR-linked),
+- Utdanning page is successfully parsed,
+- and the programme/stage is clearly not present in Utdanning.
+
+`mismatch` MUST NOT be triggered by parsing failures, incomplete extraction, or page-discovery failures.
+
+#### not_found
+
+`not_found` is a technical pipeline-diagnostic state only:
+
+- used when Utdanning page discovery fails,
+- not persisted as final published availability truth by itself.
+
+#### User-facing transparency
+
+- Uncertain but relevant availability MUST NOT be silently dropped.
+- Records with `needs_review` MUST be shown with an explicit verification badge (for example: "Information is being verified / updated").
+- Verification incompleteness alone MUST NOT silently hide otherwise relevant availability.
+- The system MUST NOT present uncertain availability as fully confirmed.
+- Only `verified` records are treated as fully confirmed.
+
+#### Source priority clarification
+
+- Vilbli remains the primary availability source.
+- Utdanning remains a secondary verification + display layer.
+- Utdanning absence MUST NOT override Vilbli unless `mismatch` is confirmed under strict conditions above.
+
+#### Publishable truth rule
+
+Publishable school/programme availability requires all of:
+
+- matched canonical school identity (NSR-linked),
+- availability from the primary source (Vilbli),
+- recorded verification state (`verified` / `needs_review`).
+
+Runtime Route Engine and app reads MUST use internal DB truth only and MUST NOT depend on live external source calls.
+
 ---
 
 ## 7. Stage 5 — Legal / Operational Readiness

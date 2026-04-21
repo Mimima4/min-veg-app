@@ -6,8 +6,8 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-const LIST_URL =
-  "https://data-nsr.udir.no/v4/enheter?sidenummer=1&antallPerSide=1000";
+const BASE_LIST_URL = "https://data-nsr.udir.no/v4/enheter";
+const PAGE_SIZE = 1000;
 
 function normalize(value) {
   return String(value ?? "")
@@ -34,9 +34,27 @@ async function fetchJson(url) {
   return res.json();
 }
 
+async function fetchAllUnits() {
+  const all = [];
+  let page = 1;
+
+  while (true) {
+    const url = `${BASE_LIST_URL}?sidenummer=${page}&antallPerSide=${PAGE_SIZE}`;
+    const data = await fetchJson(url);
+    const units = data.EnhetListe ?? [];
+    if (units.length === 0) break;
+
+    all.push(...units);
+
+    if (units.length < PAGE_SIZE) break;
+    page += 1;
+  }
+
+  return all;
+}
+
 async function getActiveVgsUnits() {
-  const data = await fetchJson(LIST_URL);
-  const units = data.EnhetListe ?? [];
+  const units = await fetchAllUnits();
 
   return units.filter(
     (u) => u.ErVideregaaendeSkole === true && u.ErAktiv === true

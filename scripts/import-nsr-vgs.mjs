@@ -6,8 +6,8 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-const LIST_URL =
-  "https://data-nsr.udir.no/v4/enheter?sidenummer=1&antallPerSide=1000";
+const BASE_LIST_URL = "https://data-nsr.udir.no/v4/enheter";
+const PAGE_SIZE = 1000;
 
 function slugify(value) {
   return String(value ?? "")
@@ -109,6 +109,25 @@ async function fetchJson(url) {
   return res.json();
 }
 
+async function fetchAllUnits() {
+  const all = [];
+  let page = 1;
+
+  while (true) {
+    const url = `${BASE_LIST_URL}?sidenummer=${page}&antallPerSide=${PAGE_SIZE}`;
+    const data = await fetchJson(url);
+    const units = data.EnhetListe ?? [];
+    if (units.length === 0) break;
+
+    all.push(...units);
+
+    if (units.length < PAGE_SIZE) break;
+    page += 1;
+  }
+
+  return all;
+}
+
 async function upsertInstitution(detail) {
   const orgnr = detail.Organisasjonsnummer ?? null;
   const website = normalizeWebsite(detail.Internettadresse);
@@ -139,19 +158,50 @@ async function upsertInstitution(detail) {
 }
 
 async function run() {
-  const data = await fetchJson(LIST_URL);
-  const units = data.EnhetListe ?? [];
+  const units = await fetchAllUnits();
 
   const vgs = units.filter(
     (u) => u.ErVideregaaendeSkole === true && u.ErAktiv === true
   );
+  const osloInSource = vgs.filter(
+    (u) => String(u.Fylke?.Fylkesnummer ?? "") === "03"
+  );
+  const filteredOut = {
+    notActiveOrNotVgs: 0,
+    outsideNorwayOrUtlandet: 0,
+    blockedTerm: 0,
+  };
 
   let upserted = 0;
+  let osloWritten = 0;
 
   for (const unit of vgs) {
     const detail = await fetchJson(
       `https://data-nsr.udir.no/v4/enhet/${unit.Organisasjonsnummer}`
     );
+
+    if (!detail.ErAktiv || !detail.ErVideregaaendeSkole) {
+      filteredOut.notActiveOrNotVgs += 1;
+      continue;
+    }
+
+    const municipalityName = normalize(detail.Kommune?.Navn ?? "");
+    if (municipalityName.includes("utlandet")) {
+      filteredOut.outsideNorwayOrUtlandet += 1;
+      continue;
+    }
+
+    const name = normalize(detail.Navn);
+    const blockedTerms = [
+      "privatisteksamen",
+      "eksamenskontoret",
+      "fengsel",
+      "ila fengsel",
+    ];
+    if (blockedTerms.some((term) => name.includes(term))) {
+      filteredOut.blockedTerm += 1;
+      continue;
+    }
 
     await upsertInstitution(detail);
 
@@ -160,9 +210,28 @@ async function run() {
     );
 
     upserted += 1;
+    if (String(detail.Fylke?.Fylkesnummer ?? "") === "03") {
+      osloWritten += 1;
+    }
   }
 
   console.log("\nDONE");
+  console.log("Total NSR schools fetched:", units.length);
+  console.log("Total active VGS in source:", vgs.length);
+  console.log("Oslo schools detected in source:", osloInSource.length);
+  console.log("Oslo schools written to DB:", osloWritten);
+  console.log(
+    "Filtered out:",
+    filteredOut.notActiveOrNotVgs +
+      filteredOut.outsideNorwayOrUtlandet +
+      filteredOut.blockedTerm
+  );
+  console.log("Filtered out (not active/not vgs):", filteredOut.notActiveOrNotVgs);
+  console.log(
+    "Filtered out (outside Norway/utlandet):",
+    filteredOut.outsideNorwayOrUtlandet
+  );
+  console.log("Filtered out (blocked term):", filteredOut.blockedTerm);
   console.log("upserted:", upserted);
 }
 
