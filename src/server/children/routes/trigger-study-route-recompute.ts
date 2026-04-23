@@ -28,6 +28,7 @@ import { buildAvailabilityTruthLookupInputs } from "./build-availability-truth-l
 import { buildPathVariants } from "./build-path-variants";
 import { mapVilbliOutcomesToNav } from "./map-vilbli-outcomes-to-nav";
 import { selectTruthCandidateForRoute } from "./select-truth-candidate-for-route";
+import { applyRouteSelectionBoundary } from "./apply-route-selection-boundary";
 
 type Params = {
   childId: string;
@@ -672,7 +673,7 @@ export async function triggerStudyRouteRecompute(params: Params) {
 
       const { data: programs, error: programsError } = await supabase
         .from("education_programs")
-        .select("slug, title, institution_id, education_level")
+        .select("slug, title, institution_id, education_level, is_active")
         .in("slug", linkProgramSlugs)
         .eq("is_active", true)
         .returns<RouteEducationProgram[]>();
@@ -687,7 +688,7 @@ export async function triggerStudyRouteRecompute(params: Params) {
       const institutionIds = (programs ?? []).map((program) => program.institution_id);
       const { data: institutions, error: institutionsError } = await supabase
         .from("education_institutions")
-        .select("id, slug, name, county_code, municipality_code")
+        .select("id, slug, name, county_code, municipality_code, is_active, source, is_route_relevant")
         .in("id", institutionIds)
         .eq("is_active", true)
         .returns<RouteInstitution[]>();
@@ -699,15 +700,21 @@ export async function triggerStudyRouteRecompute(params: Params) {
         );
       }
 
+      const boundaryScoped = applyRouteSelectionBoundary({
+        professionProgramLinks: typedLinks,
+        educationPrograms: programs ?? [],
+        institutions: institutions ?? [],
+      });
+
       const selected = await selectProgrammeForRoute({
         supabase,
         childPlanning: {
           preferredMunicipalityCodes,
           relocationWillingness,
         },
-        professionProgramLinks: typedLinks,
-        educationPrograms: programs ?? [],
-        institutions: institutions ?? [],
+        professionProgramLinks: boundaryScoped.professionProgramLinks,
+        educationPrograms: boundaryScoped.educationPrograms,
+        institutions: boundaryScoped.institutions,
         professionSlug: professionRow.slug,
       });
 

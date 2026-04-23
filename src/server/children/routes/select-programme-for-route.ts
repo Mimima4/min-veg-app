@@ -29,6 +29,7 @@ export type RouteEducationProgram = {
   title: string;
   institution_id: string;
   education_level: string | null;
+  is_active?: boolean;
 };
 
 export type RouteInstitution = {
@@ -37,6 +38,9 @@ export type RouteInstitution = {
   name: string;
   county_code: string | null;
   municipality_code: string | null;
+  is_active?: boolean;
+  source?: string | null;
+  is_route_relevant?: boolean | null;
 };
 
 export type SelectedProgrammeForRoute = {
