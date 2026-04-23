@@ -44,9 +44,49 @@ function stageRowsSorted(rows: AvailabilityTruthRow[], stage: "VG1" | "VG2" | "V
     });
 }
 
+function stageRowsSortedWithAnchor(params: {
+  rows: AvailabilityTruthRow[];
+  stage: "VG1" | "VG2" | "VG3";
+  selectedCandidate?: AvailabilityTruthRow | null;
+}) {
+  const stageRows = stageRowsSorted(params.rows, params.stage);
+  const anchorMunicipalityCode = params.selectedCandidate?.municipalityCode ?? null;
+  const anchorInstitutionId = params.selectedCandidate?.institutionId ?? null;
+
+  return [...stageRows].sort((a, b) => {
+    const aSameInstitution = anchorInstitutionId
+      ? a.institutionId === anchorInstitutionId
+      : false;
+    const bSameInstitution = anchorInstitutionId
+      ? b.institutionId === anchorInstitutionId
+      : false;
+    if (aSameInstitution !== bSameInstitution) {
+      return aSameInstitution ? -1 : 1;
+    }
+
+    const aSameMunicipality = anchorMunicipalityCode
+      ? a.municipalityCode === anchorMunicipalityCode
+      : false;
+    const bSameMunicipality = anchorMunicipalityCode
+      ? b.municipalityCode === anchorMunicipalityCode
+      : false;
+    if (aSameMunicipality !== bSameMunicipality) {
+      return aSameMunicipality ? -1 : 1;
+    }
+
+    const verificationDelta =
+      verificationPriority(a.verificationStatus) - verificationPriority(b.verificationStatus);
+    if (verificationDelta !== 0) return verificationDelta;
+    const byInstitution = (a.institutionName ?? "").localeCompare(b.institutionName ?? "");
+    if (byInstitution !== 0) return byInstitution;
+    return (a.institutionId ?? "").localeCompare(b.institutionId ?? "");
+  });
+}
+
 export function buildStepsFromAvailabilityTruth(params: {
   professionSlug: string;
   rows: AvailabilityTruthRow[];
+  selectedCandidate?: AvailabilityTruthRow | null;
   pathVariants?: PathVariant[];
   navOutcomes?: Array<{
     navTitle: string | null;
@@ -60,6 +100,19 @@ export function buildStepsFromAvailabilityTruth(params: {
   }
 
   const defaultRow = [...params.rows].sort((a, b) => {
+    const aAnchor =
+      params.selectedCandidate &&
+      a.educationProgramId === params.selectedCandidate.educationProgramId &&
+      a.institutionId === params.selectedCandidate.institutionId &&
+      a.stage === params.selectedCandidate.stage;
+    const bAnchor =
+      params.selectedCandidate &&
+      b.educationProgramId === params.selectedCandidate.educationProgramId &&
+      b.institutionId === params.selectedCandidate.institutionId &&
+      b.stage === params.selectedCandidate.stage;
+    if (aAnchor !== bAnchor) {
+      return aAnchor ? -1 : 1;
+    }
     const stageDelta = stagePriority(a.stage) - stagePriority(b.stage);
     if (stageDelta !== 0) return stageDelta;
     const verificationDelta =
@@ -133,7 +186,11 @@ export function buildStepsFromAvailabilityTruth(params: {
   if (selectedVariant) {
     for (const node of selectedVariant.nodes) {
       if (node.type === "programme_selection") {
-        const stageRows = stageRowsSorted(params.rows, node.stage);
+        const stageRows = stageRowsSortedWithAnchor({
+          rows: params.rows,
+          stage: node.stage,
+          selectedCandidate: params.selectedCandidate ?? null,
+        });
         const stageRow = stageRows[0] ?? null;
         const hasStageAvailability = stageRows.length > 0;
         if (!hasStageAvailability) {

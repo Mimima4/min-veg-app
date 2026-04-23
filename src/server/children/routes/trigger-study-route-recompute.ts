@@ -27,6 +27,7 @@ import { shouldUseAvailabilityTruth } from "./should-use-availability-truth";
 import { buildAvailabilityTruthLookupInputs } from "./build-availability-truth-lookup-inputs";
 import { buildPathVariants } from "./build-path-variants";
 import { mapVilbliOutcomesToNav } from "./map-vilbli-outcomes-to-nav";
+import { selectTruthCandidateForRoute } from "./select-truth-candidate-for-route";
 
 type Params = {
   childId: string;
@@ -602,6 +603,12 @@ export async function triggerStudyRouteRecompute(params: Params) {
         : { useTruth: false, truth: { hasTruth: false, rows: [] } };
 
       if (useTruth) {
+        const selectedTruthCandidate = await selectTruthCandidateForRoute({
+          supabase,
+          rows: truth.rows,
+          preferredMunicipalityCodes,
+          relocationWillingness,
+        });
         const { data: linkedPrograms } = await supabase
           .from("education_programs")
           .select("slug, title")
@@ -631,23 +638,23 @@ export async function triggerStudyRouteRecompute(params: Params) {
         });
         recomputedSteps = buildStepsFromAvailabilityTruth({
           rows: truth.rows,
+          selectedCandidate: selectedTruthCandidate,
           professionSlug: professionRow.slug,
           pathVariants: enrichedPathVariants,
           navOutcomes: navOutcomeMapping.mapped,
         });
 
-        const firstTruthRow = truth.rows[0] ?? null;
-        if (firstTruthRow) {
+        if (selectedTruthCandidate) {
           selectedProgram = {
-            slug: firstTruthRow.programSlug,
-            title: firstTruthRow.programTitle ?? firstTruthRow.programSlug,
-            institution: firstTruthRow.institutionId
+            slug: selectedTruthCandidate.programSlug,
+            title: selectedTruthCandidate.programTitle ?? selectedTruthCandidate.programSlug,
+            institution: selectedTruthCandidate.institutionId
               ? {
-                  id: firstTruthRow.institutionId,
-                  slug: firstTruthRow.institutionId,
-                  name: firstTruthRow.institutionName ?? "Unknown institution",
-                  county_code: firstTruthRow.countyCode,
-                  municipality_code: null,
+                  id: selectedTruthCandidate.institutionId,
+                  slug: selectedTruthCandidate.institutionId,
+                  name: selectedTruthCandidate.institutionName ?? "Unknown institution",
+                  county_code: selectedTruthCandidate.countyCode,
+                  municipality_code: selectedTruthCandidate.municipalityCode,
                 }
               : null,
             fitBand: "strong",
@@ -656,8 +663,8 @@ export async function triggerStudyRouteRecompute(params: Params) {
           admissionRealismRecord = await getRouteAdmissionRealism({
             supabase,
             professionSlug: professionRow.slug,
-            programSlug: firstTruthRow.programSlug,
-            institutionId: firstTruthRow.institutionId,
+            programSlug: selectedTruthCandidate.programSlug,
+            institutionId: selectedTruthCandidate.institutionId,
           });
         }
       } else {

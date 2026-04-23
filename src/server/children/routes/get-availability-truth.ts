@@ -9,6 +9,7 @@ export type AvailabilityTruthRow = {
   institutionId: string;
   institutionName: string | null;
   institutionMunicipality: string | null;
+  municipalityCode: string | null;
   institutionWebsite: string | null;
   countyCode: string;
   stage: "VG1" | "VG2" | "VG3" | "APPRENTICESHIP" | string;
@@ -101,7 +102,7 @@ export async function getAvailabilityTruth({
   const { data: availabilityRows, error: availabilityError } = await supabase
     .from("programme_school_availability")
     .select(
-      "education_program_id, institution_id, county_code, stage, verification_status, updated_at, source_reference_url"
+      "education_program_id, institution_id, county_code, municipality_code, stage, verification_status, updated_at, source_reference_url"
     )
     .in("education_program_id", educationProgramIds)
     .eq("county_code", normalizedCountyCode)
@@ -116,6 +117,7 @@ export async function getAvailabilityTruth({
     education_program_id: string;
     institution_id: string;
     county_code: string;
+    municipality_code: string | null;
     stage: string;
     verification_status: string;
     updated_at: string | null;
@@ -135,7 +137,7 @@ export async function getAvailabilityTruth({
 
   const { data: institutions, error: institutionsError } = await supabase
     .from("education_institutions")
-    .select("id, name, municipality_name, website_url")
+    .select("id, name, municipality_name, municipality_code, website_url")
     .in("id", institutionIds)
     .eq("is_active", true);
 
@@ -150,6 +152,7 @@ export async function getAvailabilityTruth({
       id: string;
       name: string | null;
       municipality_name: string | null;
+      municipality_code: string | null;
       website_url: string | null;
     }>).map((institution) => [institution.id, institution])
   );
@@ -178,6 +181,7 @@ export async function getAvailabilityTruth({
         institutionId: row.institution_id,
         institutionName: institution?.name ?? null,
         institutionMunicipality: institution?.municipality_name ?? null,
+        municipalityCode: row.municipality_code ?? institution?.municipality_code ?? null,
         institutionWebsite: institution?.website_url ?? null,
         countyCode: row.county_code,
         stage: row.stage,
