@@ -4,6 +4,9 @@ import type { StudyRouteReadModel } from "@/lib/routes/route-types";
 import { assembleStudyRouteReadModel } from "./assemble-study-route-read-model";
 import { buildStudyRouteSnapshotContext } from "./build-study-route-snapshot-context";
 import { computeRouteInputSignature } from "./compute-route-input-signature";
+import { getAvailabilityTruthVersion } from "./get-availability-truth";
+import { shouldUseAvailabilityTruth } from "./should-use-availability-truth";
+import { buildAvailabilityTruthLookupInputs } from "./build-availability-truth-lookup-inputs";
 
 type Params = {
   childId: string;
@@ -19,6 +22,35 @@ type ProfessionRow = {
   title_i18n: Record<string, string> | null;
   competition_level?: string | null;
 };
+
+type SnapshotProgrammeStep = {
+  type?: string;
+  program_slug?: string | null;
+};
+
+function isLegacyTruthSnapshotShape(selectedStepsPayload: unknown): boolean {
+  if (!Array.isArray(selectedStepsPayload)) {
+    return false;
+  }
+
+  let hasProgressionStep = false;
+  let hasApprenticeshipStep = false;
+
+  for (const step of selectedStepsPayload) {
+    if (!step || typeof step !== "object" || Array.isArray(step)) {
+      continue;
+    }
+    const typedStep = step as { type?: string };
+    if (typedStep.type === "progression_step") {
+      hasProgressionStep = true;
+    }
+    if (typedStep.type === "apprenticeship_step") {
+      hasApprenticeshipStep = true;
+    }
+  }
+
+  return hasProgressionStep || !hasApprenticeshipStep;
+}
 
 export async function getStudyRouteDetail(
   params: Params
@@ -76,6 +108,7 @@ export async function getStudyRouteDetail(
         signals_payload: unknown;
         stage_context?: unknown;
         route_input_signature?: string | null;
+        route_source?: "availability_truth" | "legacy" | null;
       }
     | null = null;
 
@@ -88,7 +121,8 @@ export async function getStudyRouteDetail(
           selected_steps_payload,
           signals_payload,
           stage_context,
-          route_input_signature
+          route_input_signature,
+          route_source
         `
       )
       .eq("route_variant_id", route.current_variant_id)
@@ -115,6 +149,56 @@ export async function getStudyRouteDetail(
     supabase,
   });
 
+  const { data: programLinks, error: programLinksError } = await supabase
+    .from("profession_program_links")
+    .select("program_slug")
+    .eq("profession_slug", (profession as ProfessionRow).slug);
+
+  if (programLinksError) {
+    throw new Error(
+      `Failed to load profession-program links for truth precedence: ${programLinksError.message}`
+    );
+  }
+
+  const fallbackProgrammeSlugs = Array.from(
+    new Set(
+      ((programLinks ?? []) as Array<{ program_slug: string | null }>)
+        .map((row) => row.program_slug)
+        .filter((value): value is string => Boolean(value))
+    )
+  );
+  const snapshotSteps = Array.isArray(currentSnapshot?.selected_steps_payload)
+    ? (currentSnapshot.selected_steps_payload as SnapshotProgrammeStep[])
+    : [];
+  const currentProgrammeStep = snapshotSteps.find(
+    (step) =>
+      step?.type === "programme_selection" &&
+      typeof step.program_slug === "string" &&
+      step.program_slug.trim().length > 0
+  );
+  const primaryProgrammeSlugs =
+    typeof currentProgrammeStep?.program_slug === "string"
+      ? [currentProgrammeStep.program_slug]
+      : [];
+  const truthLookupInputs = await buildAvailabilityTruthLookupInputs({
+    supabase,
+    preferredMunicipalityCodes: snapshotContext.planning.preferredMunicipalityCodes,
+    primaryProgrammeSlugs,
+    fallbackProgrammeSlugs,
+  });
+  const { useTruth } = await shouldUseAvailabilityTruth({
+    countyCodes: truthLookupInputs.countyCodes,
+    programmeSlugsOrCodes: truthLookupInputs.programmeSlugsOrCodes,
+  });
+
+  const truthVersion =
+    truthLookupInputs.countyCodes.length > 0
+      ? await getAvailabilityTruthVersion({
+          countyCode: truthLookupInputs.countyCodes[0] ?? "",
+          programmeSlugsOrCodes: truthLookupInputs.programmeSlugsOrCodes,
+        })
+      : null;
+
   const currentRouteInputSignature = computeRouteInputSignature({
     preferredMunicipalityCodes: snapshotContext.planning.preferredMunicipalityCodes,
     relocationWillingness: snapshotContext.planning.relocationWillingness,
@@ -123,12 +207,29 @@ export async function getStudyRouteDetail(
     desiredIncomeBand: snapshotContext.planning.desiredIncomeBand,
     preferredWorkStyle: snapshotContext.planning.preferredWorkStyle,
     preferredEducationLevel: snapshotContext.planning.preferredEducationLevel,
+    truthVersion,
   });
 
   const snapshotRouteInputSignature = currentSnapshot?.route_input_signature ?? null;
+  const snapshotSource =
+    currentSnapshot?.route_source ??
+    (Array.isArray(currentSnapshot?.selected_steps_payload) &&
+    currentSnapshot?.selected_steps_payload.length > 0 &&
+    typeof currentSnapshot.selected_steps_payload[0] === "object" &&
+    currentSnapshot.selected_steps_payload[0] !== null &&
+    "source" in currentSnapshot.selected_steps_payload[0]
+      ? ((currentSnapshot.selected_steps_payload[0] as { source?: string }).source ?? null)
+      : null);
+  const isTruthPromotionNeeded =
+    useTruth && snapshotSource !== "availability_truth" && Boolean(route.current_variant_id);
+  const isLegacyTruthShapeStale =
+    snapshotSource === "availability_truth" &&
+    isLegacyTruthSnapshotShape(currentSnapshot?.selected_steps_payload);
   const isStale =
     !snapshotRouteInputSignature ||
-    snapshotRouteInputSignature !== currentRouteInputSignature;
+    snapshotRouteInputSignature !== currentRouteInputSignature ||
+    isTruthPromotionNeeded ||
+    isLegacyTruthShapeStale;
 
   // Compliance guardrail for this runtime slice:
   // - LOCKED_SPEC: saved route must not be silently overwritten.
@@ -153,13 +254,21 @@ export async function getStudyRouteDetail(
     }
   }
 
+  const showUpdateAvailableForSavedRoute =
+    route.status === "saved" &&
+    useTruth &&
+    snapshotSource === "legacy";
+
   return assembleStudyRouteReadModel({
     locale: params.locale,
     route,
     profession: profession as ProfessionRow,
     currentSnapshot,
     snapshotContext,
-    forceNewRouteAvailable: params.forceNewRouteAvailable || (isStale && !isWorkingRoute),
+    forceNewRouteAvailable:
+      params.forceNewRouteAvailable ||
+      (isStale && !isWorkingRoute) ||
+      showUpdateAvailableForSavedRoute,
     supabase,
   });
 }

@@ -6,6 +6,10 @@ import type {
 } from "@/lib/routes/route-types";
 import type { ChildPlanningState } from "@/server/children/planning/get-child-planning-state";
 import { getAdjacentProfessionsForPrograms } from "@/server/professions/adjacency/get-adjacent-professions-for-program";
+import { buildPathVariants } from "./build-path-variants";
+import { mapVilbliOutcomesToNav } from "./map-vilbli-outcomes-to-nav";
+import { shouldUseAvailabilityTruth } from "./should-use-availability-truth";
+import { buildAvailabilityTruthLookupInputs } from "./build-availability-truth-lookup-inputs";
 
 type Params = {
   routeId: string;
@@ -57,6 +61,137 @@ export async function getStudyRouteAvailableProfessions(
   const steps = Array.isArray(snapshot.selected_steps_payload)
     ? snapshot.selected_steps_payload
     : [];
+
+  const truthSourceActive = steps.some(
+    (step: any) => step?.source === "availability_truth"
+  );
+  if (truthSourceActive) {
+    const programmeStep = steps.find(
+      (step: any) =>
+        step?.type === "programme_selection" &&
+        typeof step?.program_slug === "string" &&
+        step.program_slug.trim().length > 0
+    );
+
+    const { data: childProfile } = await supabase
+      .from("study_routes")
+      .select("child_id")
+      .eq("id", params.routeId)
+      .maybeSingle();
+
+    const { data: planning } = childProfile?.child_id
+      ? await supabase
+          .from("child_profiles")
+          .select("preferred_municipality_codes")
+          .eq("id", childProfile.child_id)
+          .maybeSingle()
+      : { data: null };
+
+    const preferredMunicipalityCodes = Array.isArray(
+      planning?.preferred_municipality_codes
+    )
+      ? planning.preferred_municipality_codes.filter(
+          (item): item is string => typeof item === "string"
+        )
+      : [];
+
+    const { data: targetProfession } = await supabase
+      .from("study_routes")
+      .select("target_profession_id, professions!inner(slug)")
+      .eq("id", params.routeId)
+      .maybeSingle();
+
+    const professionSlug =
+      (targetProfession as any)?.professions?.slug ?? null;
+    if (!professionSlug) {
+      return { items: [], emptyState: EMPTY_STATE };
+    }
+
+    const { data: links } = await supabase
+      .from("profession_program_links")
+      .select("program_slug")
+      .eq("profession_slug", professionSlug);
+    const fallbackProgrammeSlugs = Array.from(
+      new Set(
+        ((links ?? []) as Array<{ program_slug: string | null }>)
+          .map((row) => row.program_slug)
+          .filter((value): value is string => Boolean(value))
+      )
+    );
+
+    const truthLookupInputs = await buildAvailabilityTruthLookupInputs({
+      supabase,
+      preferredMunicipalityCodes,
+      primaryProgrammeSlugs:
+        typeof programmeStep?.program_slug === "string"
+          ? [programmeStep.program_slug]
+          : [],
+      fallbackProgrammeSlugs,
+    });
+    const { useTruth, truth } = await shouldUseAvailabilityTruth({
+      countyCodes: truthLookupInputs.countyCodes,
+      programmeSlugsOrCodes: truthLookupInputs.programmeSlugsOrCodes,
+    });
+
+    if (!useTruth) {
+      return { items: [], emptyState: EMPTY_STATE };
+    }
+
+    const variants = await buildPathVariants(truth.rows);
+    const navMapped = await mapVilbliOutcomesToNav({
+      outcomes: variants.outcomes,
+    });
+    const { data: localProfessions } = await supabase
+      .from("professions")
+      .select("id, slug, title_i18n")
+      .eq("is_active", true);
+
+    const normalize = (value: string) =>
+      value
+        .toLowerCase()
+        .normalize("NFKD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^\p{L}\p{N}\s]/gu, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+
+    const localByTitle = new Map<string, { id: string; slug: string }>();
+    for (const row of (localProfessions ?? []) as Array<{
+      id: string;
+      slug: string;
+      title_i18n: Record<string, string> | null;
+    }>) {
+      for (const localeTitle of Object.values(row.title_i18n ?? {})) {
+        const key = normalize(localeTitle);
+        if (!localByTitle.has(key)) {
+          localByTitle.set(key, { id: row.id, slug: row.slug });
+        }
+      }
+    }
+
+    const items: StudyRouteAvailableProfession[] = [];
+    for (const item of navMapped.mapped) {
+      const matchingTitle = item.navTitle ?? item.sourceOutcome.vilbliTitle;
+      const local = localByTitle.get(normalize(matchingTitle));
+      items.push({
+        professionId:
+          local?.id ??
+          `review-${normalize(item.sourceOutcome.vilbliTitle).replace(/\s+/g, "-")}`,
+        slug: local?.slug ?? null,
+        title: item.sourceOutcome.vilbliTitle,
+        navTitle: item.navTitle,
+        navYrkeskategori: item.navYrkeskategori,
+        reviewNeeded: item.reviewNeeded || !local,
+        whyOpenedLabel: "Outcome from source-backed Vilbli path",
+        similarityLabel: item.reviewNeeded ? "Review needed" : "NAV mapped",
+      });
+    }
+
+    return {
+      items,
+      emptyState: items.length === 0 ? EMPTY_STATE : null,
+    };
+  }
 
   const programPairs = steps
     .map((step: any) => ({
@@ -149,6 +284,9 @@ export async function getStudyRouteAvailableProfessions(
           professionId,
           slug: p.slug,
           title: p.title,
+          navTitle: null,
+          navYrkeskategori: null,
+          reviewNeeded: false,
           whyOpenedLabel: "Also reachable via this route",
           similarityLabel: "Related path",
         });

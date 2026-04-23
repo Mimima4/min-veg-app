@@ -25,6 +25,10 @@ export type RouteAuthenticityRule = {
   alternativeStrategyTypes: RouteAlternativeStrategyType[];
 };
 
+type RouteAuthenticityContext = {
+  source?: "availability_truth" | "legacy";
+};
+
 const RULES: RouteAuthenticityRule[] = [
   {
     professionSlug: "electrician",
@@ -68,6 +72,16 @@ const RULES: RouteAuthenticityRule[] = [
   },
 ];
 
-export function getRouteAuthenticityRule(professionSlug: string) {
-  return RULES.find((rule) => rule.professionSlug === professionSlug) ?? null;
+export function getRouteAuthenticityRule(
+  professionSlug: string,
+  context?: RouteAuthenticityContext
+) {
+  if (context?.source === "availability_truth") {
+    return null;
+  }
+  const rule = RULES.find((entry) => entry.professionSlug === professionSlug) ?? null;
+  if (!rule) {
+    return null;
+  }
+  return rule;
 }

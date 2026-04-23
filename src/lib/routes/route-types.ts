@@ -22,6 +22,20 @@ export type StudyRouteProgrammeSelectionSnapshotStep = {
   duration_years?: number | null;
   duration_label?: string | null;
   current_profession_slug: string;
+  source?: "availability_truth" | "legacy";
+  stage?: string;
+  options?: Array<{
+    institution_id: string;
+    institution_name: string | null;
+    institution_city?: string | null;
+    institution_municipality?: string | null;
+    institution_website?: string | null;
+    program_title?: string | null;
+    stage?: string | null;
+    duration_label?: string | null;
+    display_title?: string | null;
+    verification_status: string;
+  }>;
 };
 
 export type StudyRouteProgressionSnapshotStep = {
@@ -39,6 +53,30 @@ export type StudyRouteProgressionSnapshotStep = {
   duration_years?: number | null;
   duration_label?: string | null;
   current_profession_slug: string;
+  source?: "availability_truth" | "legacy";
+};
+
+export type StudyRouteApprenticeshipSnapshotStep = {
+  type: "apprenticeship_step";
+  title: string;
+  institution_name: string | null;
+  institution_city?: string | null;
+  institution_municipality?: string | null;
+  institution_website?: string | null;
+  programme_url?: string | null;
+  education_level: string;
+  fit_band: string;
+  program_slug: string | null;
+  program_title?: string | null;
+  duration_years?: number | null;
+  duration_label?: string | null;
+  apprenticeship_options?: Array<{
+    option_id: string;
+    option_title: string;
+    outcome_profession_ids: string[];
+  }>;
+  current_profession_slug: string;
+  source?: "availability_truth" | "legacy";
 };
 
 export type StudyRouteOutcomeSnapshotStep = {
@@ -56,10 +94,14 @@ export type StudyRouteOutcomeSnapshotStep = {
   duration_years?: number | null;
   duration_label?: string | null;
   current_profession_slug: string;
+  source?: "availability_truth" | "legacy";
+  nav_profession_title?: string | null;
+  nav_yrkeskategori?: string | null;
 };
 
 export type StudyRouteSnapshotStep =
   | StudyRouteProgrammeSelectionSnapshotStep
+  | StudyRouteApprenticeshipSnapshotStep
   | StudyRouteProgressionSnapshotStep
   | StudyRouteOutcomeSnapshotStep;
 
@@ -110,8 +152,13 @@ export type StudyRouteHeaderSummary = {
 
 export type StudyRouteAvailableProfession = {
   professionId: string;
-  slug: string;
+  slug: string | null;
   title: string;
+  navTitle?: string | null;
+  navYrkeskategori?: string | null;
+  reviewNeeded?: boolean;
+  reviewStrength?: "weak_match" | "no_match";
+  apprenticeshipOptionId?: string | null;
   whyOpenedLabel?: string | null;
   similarityLabel?: string | null;
 };

@@ -92,73 +92,75 @@ export default async function StudyRouteDetailPage({
     >
       <AppPrivateNav locale={locale} currentPath="/app/route" />
 
-      <div className="mt-6 rounded-2xl border border-stone-200 bg-white p-6">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-sm text-stone-500">Route status</p>
-            <div className="mt-1 flex flex-wrap items-center gap-2">
-              <h2 className="text-xl font-semibold text-stone-900">
-                {route.header.professionTitle}
-              </h2>
-              <CompetitionBadge level={competitionLevel} />
+      <div className="mx-auto mt-6 w-full max-w-6xl">
+        <div className="grid gap-6">
+          <div className="w-full rounded-2xl border border-stone-200 bg-white p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm text-stone-500">Route status</p>
+                <div className="mt-1 flex flex-wrap items-center gap-2">
+                  <h2 className="text-xl font-semibold text-stone-900">
+                    {route.header.professionTitle}
+                  </h2>
+                  <CompetitionBadge level={competitionLevel} />
+                </div>
+                <p className="mt-2 text-sm text-stone-600">
+                  {route.header.feasibilityLabel ?? "No feasibility summary yet."}
+                </p>
+              </div>
             </div>
-            <p className="mt-2 text-sm text-stone-600">
-              {route.header.feasibilityLabel ?? "No feasibility summary yet."}
-            </p>
-          </div>
 
-        </div>
-
-        <dl className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {statusItems.map((item) => (
-            <div key={item.label}>
-              <dt className="text-xs uppercase tracking-wide text-stone-500">
-                {item.label}
-              </dt>
-              <dd className="mt-1 text-sm text-stone-900">{item.value}</dd>
-            </div>
-          ))}
-        </dl>
-      </div>
-
-      <div className="mt-6 grid gap-6">
-        <RouteStepsPanel
-          childId={childId}
-          routeId={routeId}
-          locale={locale}
-          isSavedRoute={route.identity.status === "saved"}
-          steps={route.steps}
-          competitionLevel={route.header.competitionLevel}
-        />
-
-        {showStrategyBlock && (
-          <div className="mt-6 rounded-lg border bg-white p-4">
-            <h3 className="mb-3 font-medium">How to increase your chances</h3>
-
-            <div className="space-y-3">
-              {strategies.map((s) => (
-                <div key={`${s.type}-${s.title}`} className="text-sm">
-                  <div className="font-medium">{s.title}</div>
-                  <div className="text-gray-600">{s.description}</div>
-
-                  {!s.leads_to_same_profession && (
-                    <div className="mt-1 text-xs text-orange-600">
-                      This path does NOT lead to becoming a licensed doctor in
-                      Norway
-                    </div>
-                  )}
+            <dl className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {statusItems.map((item) => (
+                <div key={item.label}>
+                  <dt className="text-xs uppercase tracking-wide text-stone-500">
+                    {item.label}
+                  </dt>
+                  <dd className="mt-1 text-sm text-stone-900">{item.value}</dd>
                 </div>
               ))}
-            </div>
+            </dl>
           </div>
-        )}
 
-        <AlternativeRoutesCollapsible alternatives={route.alternativeRoutes} />
-        <RouteSignalsPanel signals={route.signals} />
-        <RouteAvailableProfessionsPanel
-          locale={locale}
-          availableProfessions={route.availableProfessions}
-        />
+          <RouteStepsPanel
+            childId={childId}
+            routeId={routeId}
+            locale={locale}
+            isSavedRoute={route.identity.status === "saved"}
+            steps={route.steps}
+            competitionLevel={route.header.competitionLevel}
+          />
+
+          {showStrategyBlock && (
+            <div className="mt-6 rounded-lg border bg-white p-4">
+              <h3 className="mb-3 font-medium">How to increase your chances</h3>
+
+              <div className="space-y-3">
+                {strategies.map((s) => (
+                  <div key={`${s.type}-${s.title}`} className="text-sm">
+                    <div className="font-medium">{s.title}</div>
+                    <div className="text-gray-600">{s.description}</div>
+
+                    {!s.leads_to_same_profession && (
+                      <div className="mt-1 text-xs text-orange-600">
+                        This path does NOT lead to becoming a licensed doctor in
+                        Norway
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <AlternativeRoutesCollapsible alternatives={route.alternativeRoutes} />
+          <RouteSignalsPanel signals={route.signals} />
+          <RouteAvailableProfessionsPanel
+            locale={locale}
+            availableProfessions={route.availableProfessions}
+            steps={route.steps}
+          />
+        </div>
       </div>
     </LocalePageShell>
   );

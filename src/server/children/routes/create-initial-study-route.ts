@@ -1,7 +1,15 @@
 import { createClient } from "@/lib/supabase/server";
-import type { StudyRouteReadModel, StudyRouteSnapshotStep } from "@/lib/routes/route-types";
+import type {
+  StudyRouteReadModel,
+  StudyRouteSnapshotStep,
+  StudyRouteProgressionSnapshotStep,
+  StudyRouteOutcomeSnapshotStep,
+} from "@/lib/routes/route-types";
 import { buildStudyRouteSnapshotContext } from "./build-study-route-snapshot-context";
-import { getRouteAuthenticityRule } from "./route-authenticity-rules";
+import {
+  getRouteAuthenticityRule,
+  type RouteAuthenticityStep,
+} from "./route-authenticity-rules";
 import { getStudyRouteDetail } from "./get-study-route-detail";
 import { RouteDomainError } from "./route-errors";
 import {
@@ -13,6 +21,12 @@ import {
 import { computeRouteInputSignature } from "./compute-route-input-signature";
 import { getRouteAdmissionRealism } from "./get-route-admission-realism";
 import { buildRouteSignals } from "./build-route-signals";
+import { getAvailabilityTruthVersion } from "./get-availability-truth";
+import { buildStepsFromAvailabilityTruth } from "./build-steps-from-availability-truth";
+import { shouldUseAvailabilityTruth } from "./should-use-availability-truth";
+import { buildAvailabilityTruthLookupInputs } from "./build-availability-truth-lookup-inputs";
+import { buildPathVariants } from "./build-path-variants";
+import { mapVilbliOutcomesToNav } from "./map-vilbli-outcomes-to-nav";
 
 type Params = {
   childId: string;
@@ -46,6 +60,28 @@ type ExistingVariantRow = {
   status: string;
   is_current: boolean;
 };
+
+type SavedSnapshotProgrammeStep = {
+  type?: string;
+  program_slug?: string | null;
+};
+
+function deriveStageProgrammeIdentity(
+  linkedPrograms: Array<{ slug: string; title: string | null }>
+): Map<"VG1" | "VG2" | "VG3", { slug: string; title: string | null }> {
+  const byStage = new Map<"VG1" | "VG2" | "VG3", { slug: string; title: string | null }>();
+  const sorted = [...linkedPrograms].sort((a, b) => a.slug.localeCompare(b.slug));
+  for (const program of sorted) {
+    const normalizedTitle = (program.title ?? "").trim();
+    const stageMatch = normalizedTitle.match(/^(VG[1-3])\b/i);
+    const stage = stageMatch?.[1]?.toUpperCase() as "VG1" | "VG2" | "VG3" | undefined;
+    if (!stage) continue;
+    if (!byStage.has(stage)) {
+      byStage.set(stage, { slug: program.slug, title: program.title });
+    }
+  }
+  return byStage;
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -81,6 +117,33 @@ function extractMaterialSignalsSubset(signals: unknown): {
   return {
     warnings: signals.warnings ?? null,
     feasibilitySummary: signals.feasibilitySummary ?? null,
+  };
+}
+
+function toAuthenticitySnapshotStep(params: {
+  step: RouteAuthenticityStep;
+  professionSlug: string;
+}): StudyRouteProgressionSnapshotStep | StudyRouteOutcomeSnapshotStep {
+  const common = {
+    title: params.step.title,
+    institution_name: null,
+    education_level: params.step.education_level,
+    fit_band: params.step.fit_band,
+    program_slug: null,
+    current_profession_slug: params.professionSlug,
+    source: "legacy" as const,
+  };
+
+  if (params.step.type === "progression_step") {
+    return {
+      type: "progression_step",
+      ...common,
+    };
+  }
+
+  return {
+    type: "outcome_step",
+    ...common,
   };
 }
 
@@ -240,11 +303,123 @@ export async function createInitialStudyRoute(
   } | null = null;
 
   const typedLinks = (programLinks ?? []) as RouteProgramLink[];
+  const fallbackProgrammeSlugs = typedLinks.map((link) => link.program_slug);
+
+  let savedPrimaryProgrammeSlug: string | null = null;
+  if (existingSavedRoute?.current_variant_id) {
+    const { data: savedSnapshotForTruth, error: savedSnapshotForTruthError } = await supabase
+      .from("study_route_snapshots")
+      .select("selected_steps_payload")
+      .eq("route_variant_id", existingSavedRoute.current_variant_id)
+      .eq("is_current_snapshot", true)
+      .order("generated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (savedSnapshotForTruthError) {
+      throw new RouteDomainError(
+        "internal_error",
+        `Failed to load saved snapshot for truth lookup context: ${savedSnapshotForTruthError.message}`
+      );
+    }
+
+    const savedSteps = Array.isArray(savedSnapshotForTruth?.selected_steps_payload)
+      ? (savedSnapshotForTruth.selected_steps_payload as SavedSnapshotProgrammeStep[])
+      : [];
+    const savedProgrammeStep = savedSteps.find(
+      (step) =>
+        step?.type === "programme_selection" &&
+        typeof step.program_slug === "string" &&
+        step.program_slug.trim().length > 0
+    );
+    savedPrimaryProgrammeSlug =
+      typeof savedProgrammeStep?.program_slug === "string"
+        ? savedProgrammeStep.program_slug
+        : null;
+  }
 
   let initialSteps: StudyRouteSnapshotStep[] = [];
   let admissionRealismRecord = null;
 
   if (typedLinks.length > 0) {
+    const preferredMunicipalityCodes = Array.isArray(childPlanning.preferred_municipality_codes)
+      ? childPlanning.preferred_municipality_codes.filter(
+          (item): item is string => typeof item === "string"
+        )
+      : [];
+    const truthLookupInputs = await buildAvailabilityTruthLookupInputs({
+      supabase,
+      preferredMunicipalityCodes,
+      primaryProgrammeSlugs: savedPrimaryProgrammeSlug ? [savedPrimaryProgrammeSlug] : [],
+      fallbackProgrammeSlugs,
+    });
+    const { useTruth, truth } = truthLookupInputs.countyCodes.length > 0
+      ? await shouldUseAvailabilityTruth({
+          countyCodes: truthLookupInputs.countyCodes,
+          programmeSlugsOrCodes: truthLookupInputs.programmeSlugsOrCodes,
+        })
+      : { useTruth: false, truth: { hasTruth: false, rows: [] } };
+
+    if (useTruth) {
+      const { data: linkedPrograms } = await supabase
+        .from("education_programs")
+        .select("slug, title")
+        .in(
+          "slug",
+          typedLinks.map((link) => link.program_slug)
+        )
+        .eq("is_active", true);
+      const stageProgrammeIdentity = deriveStageProgrammeIdentity(
+        ((linkedPrograms ?? []) as Array<{ slug: string; title: string | null }>)
+      );
+      const pathVariants = await buildPathVariants(truth.rows);
+      const enrichedPathVariants = pathVariants.variants.map((variant) => ({
+        ...variant,
+        nodes: variant.nodes.map((node) => {
+          if (node.type !== "programme_selection") return node;
+          const stageIdentity = stageProgrammeIdentity.get(node.stage);
+          return {
+            ...node,
+            programSlug: node.programSlug ?? stageIdentity?.slug ?? null,
+            programTitle: node.programTitle ?? stageIdentity?.title ?? null,
+          };
+        }),
+      }));
+      const navOutcomeMapping = await mapVilbliOutcomesToNav({
+        outcomes: pathVariants.outcomes,
+      });
+      initialSteps = buildStepsFromAvailabilityTruth({
+        rows: truth.rows,
+        professionSlug: professionRow.slug,
+        pathVariants: enrichedPathVariants,
+        navOutcomes: navOutcomeMapping.mapped,
+      });
+
+      const firstTruthRow = truth.rows[0] ?? null;
+      if (firstTruthRow) {
+        selectedProgram = {
+          slug: firstTruthRow.programSlug,
+          title: firstTruthRow.programTitle ?? firstTruthRow.programSlug,
+          institution: firstTruthRow.institutionId
+            ? {
+                id: firstTruthRow.institutionId,
+                slug: firstTruthRow.institutionId,
+                name: firstTruthRow.institutionName ?? "Unknown institution",
+                county_code: firstTruthRow.countyCode,
+                municipality_code: null,
+              }
+            : null,
+          fitBand: "strong",
+        };
+
+        admissionRealismRecord = await getRouteAdmissionRealism({
+          supabase,
+          professionSlug: professionRow.slug,
+          programSlug: firstTruthRow.programSlug,
+          institutionId: firstTruthRow.institutionId,
+        });
+      }
+    } else {
     const linkProgramSlugs = typedLinks.map((link) => link.program_slug);
 
     const { data: programs, error: programsError } = await supabase
@@ -279,13 +454,7 @@ export async function createInitialStudyRoute(
     const selected = await selectProgrammeForRoute({
       supabase,
       childPlanning: {
-        preferredMunicipalityCodes: Array.isArray(
-          childPlanning.preferred_municipality_codes
-        )
-          ? childPlanning.preferred_municipality_codes.filter(
-              (item): item is string => typeof item === "string"
-            )
-          : [],
+        preferredMunicipalityCodes,
         relocationWillingness: childPlanning.relocation_willingness,
       },
       professionProgramLinks: typedLinks,
@@ -311,22 +480,22 @@ export async function createInitialStudyRoute(
           fit_band: selected.link.fit_band,
           program_slug: selected.link.program_slug,
           current_profession_slug: professionRow.slug,
+          source: "legacy",
         },
       ];
 
-      const authenticityRule = getRouteAuthenticityRule(professionRow.slug);
+      const authenticityRule = getRouteAuthenticityRule(professionRow.slug, {
+        source: "legacy",
+      });
 
       if (authenticityRule) {
         steps.push(
-          ...authenticityRule.progressionAndOutcomeSteps.map((step) => ({
-            type: step.type,
-            title: step.title,
-            institution_name: null,
-            education_level: step.education_level,
-            fit_band: step.fit_band,
-            program_slug: null,
-            current_profession_slug: professionRow.slug,
-          }))
+          ...authenticityRule.progressionAndOutcomeSteps.map((step) =>
+            toAuthenticitySnapshotStep({
+              step,
+              professionSlug: professionRow.slug,
+            })
+          )
         );
       }
 
@@ -338,6 +507,7 @@ export async function createInitialStudyRoute(
         programSlug: selected.program.slug,
         institutionId: selected.institution?.id ?? null,
       });
+    }
     }
   }
 
@@ -442,6 +612,17 @@ export async function createInitialStudyRoute(
     supabase,
   });
 
+  const signatureTruthInputs = Array.isArray(childPlanning.preferred_municipality_codes)
+    ? await buildAvailabilityTruthLookupInputs({
+        supabase,
+        preferredMunicipalityCodes: childPlanning.preferred_municipality_codes.filter(
+          (item): item is string => typeof item === "string"
+        ),
+        primaryProgrammeSlugs: savedPrimaryProgrammeSlug ? [savedPrimaryProgrammeSlug] : [],
+        fallbackProgrammeSlugs,
+      })
+    : { countyCodes: [], programmeSlugsOrCodes: [] };
+
   const routeInputSignature = computeRouteInputSignature({
     preferredMunicipalityCodes: snapshotContext.planning.preferredMunicipalityCodes,
     relocationWillingness: snapshotContext.planning.relocationWillingness,
@@ -450,7 +631,17 @@ export async function createInitialStudyRoute(
     desiredIncomeBand: snapshotContext.planning.desiredIncomeBand,
     preferredWorkStyle: snapshotContext.planning.preferredWorkStyle,
     preferredEducationLevel: snapshotContext.planning.preferredEducationLevel,
+    truthVersion: signatureTruthInputs.countyCodes.length > 0
+      ? await getAvailabilityTruthVersion({
+          countyCode: signatureTruthInputs.countyCodes[0] ?? "",
+          programmeSlugsOrCodes: signatureTruthInputs.programmeSlugsOrCodes,
+        })
+      : null,
   });
+
+  const routeSource = initialSteps.some((step) => step.source === "availability_truth")
+    ? "availability_truth"
+    : "legacy";
 
   const { error: snapshotError } = await supabase.from("study_route_snapshots").insert({
     route_variant_id: variant.id,
@@ -463,6 +654,7 @@ export async function createInitialStudyRoute(
     available_professions_payload: [],
     alternatives_teaser_payload: [],
     route_input_signature: routeInputSignature,
+    route_source: routeSource,
     is_current_snapshot: true,
   });
 

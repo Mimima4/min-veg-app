@@ -1,8 +1,15 @@
 import { createClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { StudyRouteSnapshotStep } from "@/lib/routes/route-types";
+import type {
+  StudyRouteSnapshotStep,
+  StudyRouteProgressionSnapshotStep,
+  StudyRouteOutcomeSnapshotStep,
+} from "@/lib/routes/route-types";
 import { buildStudyRouteSnapshotContext } from "./build-study-route-snapshot-context";
-import { getRouteAuthenticityRule } from "./route-authenticity-rules";
+import {
+  getRouteAuthenticityRule,
+  type RouteAuthenticityStep,
+} from "./route-authenticity-rules";
 import { getStudyRouteDetail } from "./get-study-route-detail";
 import { RouteDomainError } from "./route-errors";
 import {
@@ -14,6 +21,12 @@ import {
 import { computeRouteInputSignature } from "./compute-route-input-signature";
 import { getRouteAdmissionRealism } from "./get-route-admission-realism";
 import { buildRouteSignals } from "./build-route-signals";
+import { getAvailabilityTruthVersion } from "./get-availability-truth";
+import { buildStepsFromAvailabilityTruth } from "./build-steps-from-availability-truth";
+import { shouldUseAvailabilityTruth } from "./should-use-availability-truth";
+import { buildAvailabilityTruthLookupInputs } from "./build-availability-truth-lookup-inputs";
+import { buildPathVariants } from "./build-path-variants";
+import { mapVilbliOutcomesToNav } from "./map-vilbli-outcomes-to-nav";
 
 type Params = {
   childId: string;
@@ -35,10 +48,113 @@ type ChildPlanningRow = {
   relocation_willingness: "no" | "maybe" | "yes" | null;
 };
 
+type ProgrammeStepRow = {
+  type?: string;
+  program_slug?: string | null;
+};
+
+function deriveStageProgrammeIdentity(
+  linkedPrograms: Array<{ slug: string; title: string | null }>
+): Map<"VG1" | "VG2" | "VG3", { slug: string; title: string | null }> {
+  const byStage = new Map<"VG1" | "VG2" | "VG3", { slug: string; title: string | null }>();
+  const sorted = [...linkedPrograms].sort((a, b) => a.slug.localeCompare(b.slug));
+  for (const program of sorted) {
+    const normalizedTitle = (program.title ?? "").trim();
+    const stageMatch = normalizedTitle.match(/^(VG[1-3])\b/i);
+    const stage = stageMatch?.[1]?.toUpperCase() as "VG1" | "VG2" | "VG3" | undefined;
+    if (!stage) continue;
+    if (!byStage.has(stage)) {
+      byStage.set(stage, { slug: program.slug, title: program.title });
+    }
+  }
+  return byStage;
+}
+
 const MAX_SNAPSHOT_VERSION_INSERT_RETRIES = 5;
+const RECOMPUTE_TURN_WAIT_TIMEOUT_MS = 30000;
+const RECOMPUTE_TURN_WAIT_POLL_MS = 500;
+const RECOMPUTE_STALE_RUN_THRESHOLD_MS = RECOMPUTE_TURN_WAIT_TIMEOUT_MS * 5;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function waitForRouteVariantRecomputeTurn(params: {
+  supabase: SupabaseClient;
+  routeVariantId: string;
+  recomputeRunId: string;
+}): Promise<"leader" | "follower_timeout"> {
+  const startedAt = Date.now();
+
+  while (Date.now() - startedAt < RECOMPUTE_TURN_WAIT_TIMEOUT_MS) {
+    const { data, error } = await params.supabase
+      .from("study_route_recompute_runs")
+      .select("id, started_at")
+      .eq("route_variant_id", params.routeVariantId)
+      .eq("result_status", "running")
+      .order("started_at", { ascending: true })
+      .order("id", { ascending: true });
+
+    if (error) {
+      throw new RouteDomainError(
+        "route_recompute_failed",
+        `Failed to coordinate recompute turn: ${error.message}`
+      );
+    }
+
+    const runningRows = (data ?? []) as Array<{ id: string; started_at: string }>;
+    const staleRunningRows = runningRows.filter((row) => {
+      if (row.id === params.recomputeRunId) {
+        return false;
+      }
+
+      const startedAtMs = new Date(row.started_at).getTime();
+      if (Number.isNaN(startedAtMs)) {
+        return false;
+      }
+
+      return Date.now() - startedAtMs > RECOMPUTE_STALE_RUN_THRESHOLD_MS;
+    });
+
+    if (staleRunningRows.length > 0) {
+      const staleIds = staleRunningRows.map((row) => row.id);
+      const staleThresholdSeconds = Math.floor(RECOMPUTE_STALE_RUN_THRESHOLD_MS / 1000);
+      const { error: staleUpdateError } = await params.supabase
+        .from("study_route_recompute_runs")
+        .update({
+          result_status: "failed",
+          completed_at: new Date().toISOString(),
+          error_code: "stale_run",
+          error_message: `Marked stale after ${staleThresholdSeconds}s without completion`,
+        })
+        .in("id", staleIds)
+        .eq("result_status", "running");
+
+      if (staleUpdateError) {
+        throw new RouteDomainError(
+          "route_recompute_failed",
+          `Failed to mark stale recompute runs: ${staleUpdateError.message}`
+        );
+      }
+
+      // Re-evaluate queue after stale rows are cleared.
+      continue;
+    }
+
+    const leaderId = runningRows[0]?.id ?? null;
+
+    if (!leaderId || leaderId === params.recomputeRunId) {
+      return "leader";
+    }
+
+    await sleep(RECOMPUTE_TURN_WAIT_POLL_MS);
+  }
+
+  return "follower_timeout";
 }
 
 function isLockedStep(step: unknown): boolean {
@@ -159,6 +275,33 @@ function extractMaterialSignalsSubset(signals: unknown): {
   };
 }
 
+function toAuthenticitySnapshotStep(params: {
+  step: RouteAuthenticityStep;
+  professionSlug: string;
+}): StudyRouteProgressionSnapshotStep | StudyRouteOutcomeSnapshotStep {
+  const common = {
+    title: params.step.title,
+    institution_name: null,
+    education_level: params.step.education_level,
+    fit_band: params.step.fit_band,
+    program_slug: null,
+    current_profession_slug: params.professionSlug,
+    source: "legacy" as const,
+  };
+
+  if (params.step.type === "progression_step") {
+    return {
+      type: "progression_step",
+      ...common,
+    };
+  }
+
+  return {
+    type: "outcome_step",
+    ...common,
+  };
+}
+
 async function insertRecomputedSnapshotWithRetry(params: {
   supabase: SupabaseClient;
   routeVariantId: string;
@@ -166,6 +309,7 @@ async function insertRecomputedSnapshotWithRetry(params: {
   recomputedSteps: StudyRouteSnapshotStep[];
   recomputedSignals: unknown;
   routeInputSignature: string;
+  routeSource: "availability_truth" | "legacy";
 }): Promise<void> {
   for (
     let attempt = 0;
@@ -205,6 +349,7 @@ async function insertRecomputedSnapshotWithRetry(params: {
         available_professions_payload: [],
         alternatives_teaser_payload: [],
         route_input_signature: params.routeInputSignature,
+        route_source: params.routeSource,
         is_current_snapshot: true,
       });
 
@@ -221,6 +366,27 @@ async function insertRecomputedSnapshotWithRetry(params: {
       "route_recompute_failed",
       `Failed to insert recomputed snapshot: ${snapshotInsertError.message}`
     );
+  }
+
+  const { data: currentSnapshot, error: currentSnapshotError } = await params.supabase
+    .from("study_route_snapshots")
+    .select("snapshot_version")
+    .eq("route_variant_id", params.routeVariantId)
+    .eq("is_current_snapshot", true)
+    .order("generated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (currentSnapshotError) {
+    throw new RouteDomainError(
+      "route_recompute_failed",
+      `Failed to verify concurrent current snapshot after retries: ${currentSnapshotError.message}`
+    );
+  }
+
+  if (currentSnapshot?.snapshot_version) {
+    // Another concurrent recompute already produced the current snapshot.
+    return;
   }
 
   throw new RouteDomainError(
@@ -308,6 +474,30 @@ export async function triggerStudyRouteRecompute(params: Params) {
     // - LOCKED_SPEC: materially different result is exposed as new_route_available.
     // - OPEN_DECISION: exact numeric policy for "major" remains out of scope here.
     const isWorkingRoute = route.status === "draft";
+    const recomputeTurn = await waitForRouteVariantRecomputeTurn({
+      supabase,
+      routeVariantId: route.current_variant_id,
+      recomputeRunId: recomputeRun.id,
+    });
+
+    if (recomputeTurn !== "leader") {
+      await supabase
+        .from("study_route_recompute_runs")
+        .update({
+          completed_at: new Date().toISOString(),
+          result_status: "completed",
+          new_variant_created: false,
+          new_route_available: false,
+        })
+        .eq("id", recomputeRun.id);
+
+      return getStudyRouteDetail({
+        childId: route.child_id,
+        routeId: route.id,
+        locale,
+        supabase,
+      });
+    }
 
     const { data: currentSnapshot, error: currentSnapshotError } = await supabase
       .from("study_route_snapshots")
@@ -387,6 +577,90 @@ export async function triggerStudyRouteRecompute(params: Params) {
     let admissionRealismRecord = null;
 
     if (typedLinks.length > 0) {
+      const previousProgrammeStep = previousSteps.find(
+        (step) =>
+          step.type === "programme_selection" &&
+          typeof step.program_slug === "string" &&
+          step.program_slug.trim().length > 0
+      ) as ProgrammeStepRow | undefined;
+      const primaryProgrammeSlugs =
+        typeof previousProgrammeStep?.program_slug === "string"
+          ? [previousProgrammeStep.program_slug]
+          : [];
+      const fallbackProgrammeSlugs = typedLinks.map((link) => link.program_slug);
+      const truthLookupInputs = await buildAvailabilityTruthLookupInputs({
+        supabase,
+        preferredMunicipalityCodes,
+        primaryProgrammeSlugs,
+        fallbackProgrammeSlugs,
+      });
+      const { useTruth, truth } = truthLookupInputs.countyCodes.length > 0
+        ? await shouldUseAvailabilityTruth({
+            countyCodes: truthLookupInputs.countyCodes,
+            programmeSlugsOrCodes: truthLookupInputs.programmeSlugsOrCodes,
+          })
+        : { useTruth: false, truth: { hasTruth: false, rows: [] } };
+
+      if (useTruth) {
+        const { data: linkedPrograms } = await supabase
+          .from("education_programs")
+          .select("slug, title")
+          .in(
+            "slug",
+            typedLinks.map((link) => link.program_slug)
+          )
+          .eq("is_active", true);
+        const stageProgrammeIdentity = deriveStageProgrammeIdentity(
+          ((linkedPrograms ?? []) as Array<{ slug: string; title: string | null }>)
+        );
+        const pathVariants = await buildPathVariants(truth.rows);
+        const enrichedPathVariants = pathVariants.variants.map((variant) => ({
+          ...variant,
+          nodes: variant.nodes.map((node) => {
+            if (node.type !== "programme_selection") return node;
+            const stageIdentity = stageProgrammeIdentity.get(node.stage);
+            return {
+              ...node,
+              programSlug: node.programSlug ?? stageIdentity?.slug ?? null,
+              programTitle: node.programTitle ?? stageIdentity?.title ?? null,
+            };
+          }),
+        }));
+        const navOutcomeMapping = await mapVilbliOutcomesToNav({
+          outcomes: pathVariants.outcomes,
+        });
+        recomputedSteps = buildStepsFromAvailabilityTruth({
+          rows: truth.rows,
+          professionSlug: professionRow.slug,
+          pathVariants: enrichedPathVariants,
+          navOutcomes: navOutcomeMapping.mapped,
+        });
+
+        const firstTruthRow = truth.rows[0] ?? null;
+        if (firstTruthRow) {
+          selectedProgram = {
+            slug: firstTruthRow.programSlug,
+            title: firstTruthRow.programTitle ?? firstTruthRow.programSlug,
+            institution: firstTruthRow.institutionId
+              ? {
+                  id: firstTruthRow.institutionId,
+                  slug: firstTruthRow.institutionId,
+                  name: firstTruthRow.institutionName ?? "Unknown institution",
+                  county_code: firstTruthRow.countyCode,
+                  municipality_code: null,
+                }
+              : null,
+            fitBand: "strong",
+          };
+
+          admissionRealismRecord = await getRouteAdmissionRealism({
+            supabase,
+            professionSlug: professionRow.slug,
+            programSlug: firstTruthRow.programSlug,
+            institutionId: firstTruthRow.institutionId,
+          });
+        }
+      } else {
       const linkProgramSlugs = typedLinks.map((link) => link.program_slug);
 
       const { data: programs, error: programsError } = await supabase
@@ -447,22 +721,22 @@ export async function triggerStudyRouteRecompute(params: Params) {
             fit_band: selected.link.fit_band,
             program_slug: selected.link.program_slug,
             current_profession_slug: professionRow.slug,
+            source: "legacy",
           },
         ];
 
-        const authenticityRule = getRouteAuthenticityRule(professionRow.slug);
+        const authenticityRule = getRouteAuthenticityRule(professionRow.slug, {
+          source: "legacy",
+        });
 
         if (authenticityRule) {
           steps.push(
-            ...authenticityRule.progressionAndOutcomeSteps.map((step) => ({
-              type: step.type,
-              title: step.title,
-              institution_name: null,
-              education_level: step.education_level,
-              fit_band: step.fit_band,
-              program_slug: null,
-              current_profession_slug: professionRow.slug,
-            }))
+            ...authenticityRule.progressionAndOutcomeSteps.map((step) =>
+              toAuthenticitySnapshotStep({
+                step,
+                professionSlug: professionRow.slug,
+              })
+            )
           );
         }
 
@@ -474,6 +748,7 @@ export async function triggerStudyRouteRecompute(params: Params) {
           programSlug: selected.program.slug,
           institutionId: selected.institution?.id ?? null,
         });
+      }
       }
     }
 
@@ -529,6 +804,30 @@ export async function triggerStudyRouteRecompute(params: Params) {
       desiredIncomeBand: snapshotContext.planning.desiredIncomeBand,
       preferredWorkStyle: snapshotContext.planning.preferredWorkStyle,
       preferredEducationLevel: snapshotContext.planning.preferredEducationLevel,
+      truthVersion: (
+        await (async () => {
+          const signatureTruthInputs = await buildAvailabilityTruthLookupInputs({
+            supabase,
+            preferredMunicipalityCodes,
+            primaryProgrammeSlugs:
+              typeof previousSteps.find((step) => step.type === "programme_selection")
+                ?.program_slug === "string"
+                ? [
+                    previousSteps.find((step) => step.type === "programme_selection")
+                      ?.program_slug as string,
+                  ]
+                : [],
+            fallbackProgrammeSlugs: typedLinks.map((link) => link.program_slug),
+          });
+          if (signatureTruthInputs.countyCodes.length === 0) {
+            return null;
+          }
+          return getAvailabilityTruthVersion({
+            countyCode: signatureTruthInputs.countyCodes[0] ?? "",
+            programmeSlugsOrCodes: signatureTruthInputs.programmeSlugsOrCodes,
+          });
+        })()
+      ),
     });
 
     const isEquivalentToCurrentSnapshot =
@@ -577,6 +876,9 @@ export async function triggerStudyRouteRecompute(params: Params) {
       recomputedSteps,
       recomputedSignals,
       routeInputSignature,
+      routeSource: recomputedSteps.some((step) => step.source === "availability_truth")
+        ? "availability_truth"
+        : "legacy",
     });
 
     await supabase

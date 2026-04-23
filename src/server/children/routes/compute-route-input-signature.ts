@@ -8,6 +8,7 @@ type RouteRelevantInputs = {
   desiredIncomeBand: string | null;
   preferredWorkStyle: string | null;
   preferredEducationLevel: string | null;
+  truthVersion?: string | null;
 };
 
 function normalizeStringArray(values: string[]): string[] {
@@ -29,6 +30,7 @@ export function computeRouteInputSignature(inputs: RouteRelevantInputs): string 
     desired_income_band: normalizeScalar(inputs.desiredIncomeBand),
     preferred_work_style: normalizeScalar(inputs.preferredWorkStyle),
     preferred_education_level: normalizeScalar(inputs.preferredEducationLevel),
+    truth_version: normalizeScalar(inputs.truthVersion ?? null),
   });
 
   return createHash("sha256").update(canonicalPayload).digest("hex");

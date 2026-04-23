@@ -7,6 +7,7 @@ import type {
   StudyRouteSnapshotContext,
   StudyRouteCompetitionLevel,
   StudyRouteSnapshotStep,
+  StudyRouteAvailableProfession,
 } from "@/lib/routes/route-types";
 import { getStudyRouteAlternatives } from "./get-study-route-alternatives";
 import { getStudyRouteAvailableProfessions } from "./get-study-route-available-professions";
@@ -83,6 +84,14 @@ function getSelectedProgrammeSlug(selectedStepsPayload: unknown): string | null 
   return null;
 }
 
+function slugifyToken(value: string): string {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 export async function assembleStudyRouteReadModel(
   params: AssembleParams
 ): Promise<StudyRouteReadModel> {
@@ -104,6 +113,34 @@ export async function assembleStudyRouteReadModel(
   const enrichedSteps = await enrichStudyRouteSteps(
     snapshotSteps as StudyRouteSnapshotStep[]
   );
+  const truthApprenticeshipStep = enrichedSteps.find(
+    (step): step is Extract<StudyRouteSnapshotStep, { type: "apprenticeship_step" }> =>
+      step.type === "apprenticeship_step" && step.source === "availability_truth"
+  );
+  const apprenticeshipOptions = truthApprenticeshipStep?.apprenticeship_options ?? [];
+  const optionIdByOutcomeId = new Map<string, string>();
+  for (const option of apprenticeshipOptions) {
+    for (const outcomeId of option.outcome_profession_ids) {
+      optionIdByOutcomeId.set(outcomeId, option.option_id);
+    }
+  }
+  const optionIdByTitle = new Map<string, string>();
+  for (const option of apprenticeshipOptions) {
+    optionIdByTitle.set(slugifyToken(option.option_title), option.option_id);
+  }
+  const availableProfessionsWithBuckets = availableProfessions.items.map((profession) => {
+    const matchedById = optionIdByOutcomeId.get(profession.professionId) ?? null;
+    const matchedByTitle = optionIdByTitle.get(slugifyToken(profession.title)) ?? null;
+    return {
+      ...profession,
+      apprenticeshipOptionId: matchedById ?? matchedByTitle,
+    };
+  });
+  const presentationSteps = enrichedSteps
+    .filter(
+      (step) => !(step.source === "availability_truth" && step.type === "outcome_step")
+    )
+    .map((step) => step);
 
   const snapshotSignals = (() => {
     if (!params.forceNewRouteAvailable) {
@@ -195,9 +232,12 @@ export async function assembleStudyRouteReadModel(
       warningsCount: resolvedState.headerSummary.warningsCount,
       newRouteAvailable: resolvedState.headerSummary.newRouteAvailable,
     },
-    steps: enrichedSteps,
+    steps: presentationSteps,
     signals: resolvedState.signals,
-    availableProfessions,
+    availableProfessions: {
+      ...availableProfessions,
+      items: availableProfessionsWithBuckets,
+    },
     alternativeRoutes: alternatives,
     allowedActions: {
       canEditRoute: true,
