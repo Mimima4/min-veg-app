@@ -460,6 +460,8 @@ export async function createInitialStudyRoute(
     }
 
     const boundaryScoped = applyRouteSelectionBoundary({
+      professionSlug: professionRow.slug,
+      preferredMunicipalityCodes,
       professionProgramLinks: typedLinks,
       educationPrograms: typedPrograms,
       institutions: (institutions ?? []) as RouteInstitution[],

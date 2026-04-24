@@ -1,6 +1,7 @@
 import fetch from "node-fetch";
 import { createClient } from "@supabase/supabase-js";
 import { getVgsPathDefinition, mapProgrammeToPathNode } from "./vgs-path-definitions.mjs";
+import { extractVilbliStagesFromHtml } from "./vilbli-stage-extraction-helper.mjs";
 
 const READYNESS_STATUSES = {
   READY_FOR_WRITE: "ready_for_write",
@@ -67,49 +68,6 @@ function normalizeSchoolName(value) {
     .trim();
 }
 
-function parseStageArraysFromHtml(html) {
-  const stageMap = {};
-  const regex = /(?:window\.)?(vb_map_data_[A-Za-z0-9_]+)\s*=\s*(\[[\s\S]*?\]);/g;
-  let match = regex.exec(html);
-  while (match) {
-    try {
-      const parsed = new Function(`return (${match[2]});`)();
-      if (Array.isArray(parsed)) {
-        const suffix = match[1].replace(/^vb_map_data_/i, "");
-        const stageMatch = suffix.match(/vg\d/i);
-        const stage = (stageMatch ? stageMatch[0] : suffix).toUpperCase();
-        stageMap[stage] = parsed;
-      }
-    } catch {
-      // ignore malformed script blocks
-    }
-    match = regex.exec(html);
-  }
-  return stageMap;
-}
-
-function mapVilbliSchool(item) {
-  if (Array.isArray(item)) {
-    return {
-      schoolName: String(item[3] || ""),
-      schoolCode: String(item[4] || ""),
-      schoolType: String(item[2] || ""),
-      fylkeName: String(item[8] || ""),
-      schoolPagePath: String(item[9] || ""),
-    };
-  }
-
-  return {
-    schoolName: String(item.schoolName || item.school_name || item.name || ""),
-    schoolCode: String(
-      item.schoolCode || item.orgOrSchoolCode || item.orgnr || item.orgnr_skole || ""
-    ),
-    schoolType: String(item.schoolType || item.type || ""),
-    fylkeName: String(item.fylkeName || item.fylke || item.county || ""),
-    schoolPagePath: String(item.schoolPagePath || item.url || item.href || ""),
-  };
-}
-
 function classifyInstitutionMatch(vilbliName, institutionName) {
   const vilbliNorm = normalizeSchoolName(vilbliName);
   const nsrNorm = normalizeSchoolName(institutionName);
@@ -164,6 +122,41 @@ function chooseStatus(params) {
   return READYNESS_STATUSES.SOURCE_EXTRACTION_FAILED;
 }
 
+function countyTokenFromMeta(countyMeta) {
+  return String(countyMeta?.slug ?? "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "_");
+}
+
+function isCountyScopedMaterializedProgramme({
+  program,
+  countyMeta,
+  pathNode,
+}) {
+  if (!pathNode) return false;
+  const slug = String(program.slug ?? "").toLowerCase();
+  const countySlug = String(countyMeta?.slug ?? "").toLowerCase();
+  const programCode = String(program.program_code ?? "").toUpperCase();
+  const countyToken = countyTokenFromMeta(countyMeta);
+
+  if (!countySlug) return false;
+
+  const stage = pathNode.stage;
+  if (stage === "VG1") {
+    const slugMatch = slug === `electrician-vg1-elektro-${countySlug}`;
+    const codeMatch = programCode === `EL-VG1-${countyToken}`;
+    return slugMatch || codeMatch;
+  }
+
+  if (stage === "VG2") {
+    const slugMatch = slug === `electrician-vg2-elenergi-${countySlug}`;
+    const codeMatch = programCode === `EL-VG2-${countyToken}`;
+    return slugMatch || codeMatch;
+  }
+
+  return false;
+}
+
 async function classifyReadiness({ professionSlug, countyCode }) {
   const countyMeta = COUNTY_CODE_TO_VILBLI[countyCode] ?? null;
   const pathDefinition = getVgsPathDefinition(professionSlug);
@@ -205,13 +198,24 @@ async function classifyReadiness({ professionSlug, countyCode }) {
   if (linkedInstitutionsError) throw linkedInstitutionsError;
 
   const linkedInstitutionById = new Map((linkedInstitutions ?? []).map((row) => [row.id, row]));
-  const linkedProgrammesForCounty = (linkedPrograms ?? [])
-    .map((program) => ({
+  const linkedProgrammesForCounty = (linkedPrograms ?? []).map((program) => {
+    const institution = linkedInstitutionById.get(program.institution_id) ?? null;
+    const pathNode = pathDefinition ? mapProgrammeToPathNode(program, pathDefinition) : null;
+    const hasInstitutionCountyMatch = institution?.county_code === countyCode;
+    const hasCountyScopedMaterializedMatch = isCountyScopedMaterializedProgramme({
+      program,
+      countyMeta,
+      pathNode,
+    });
+
+    return {
       ...program,
-      institution: linkedInstitutionById.get(program.institution_id) ?? null,
-      pathNode: pathDefinition ? mapProgrammeToPathNode(program, pathDefinition) : null,
-    }))
-    .filter((program) => program.institution?.county_code === countyCode);
+      institution,
+      pathNode,
+      includedForCounty: hasInstitutionCountyMatch || hasCountyScopedMaterializedMatch,
+    };
+  })
+  .filter((program) => program.includedForCounty);
 
   const requiredPathNodes = (pathDefinition?.stageNodes ?? []).filter(
     (node) => node.requiredForWrite
@@ -258,28 +262,12 @@ async function classifyReadiness({ professionSlug, countyCode }) {
       if (!response.ok) {
         sourceExtractionFailed = true;
       } else {
-        const rawStageMap = parseStageArraysFromHtml(html);
-        extractedStages = Object.fromEntries(
-          Object.entries(rawStageMap).map(([stage, rows]) => {
-            const normalizedSchools = (rows ?? [])
-              .map(mapVilbliSchool)
-              .filter((school) => school.schoolName && school.schoolCode)
-              .filter(
-                (school) =>
-                  normalizeBasic(school.fylkeName) === normalizeBasic(countyMeta.label) ||
-                  school.schoolPagePath.includes(`/${countyMeta.slug}/`)
-              );
-            const deduped = Array.from(
-              new Map(
-                normalizedSchools.map((school) => [
-                  `${school.schoolCode}__${school.schoolName}`,
-                  school,
-                ])
-              ).values()
-            );
-            return [stage, deduped];
-          })
-        );
+        const extracted = extractVilbliStagesFromHtml({
+          html,
+          countySlug: countyMeta.slug,
+          countyLabel: countyMeta.label,
+        });
+        extractedStages = extracted.extractedStages;
         extractedSchoolCounts = Object.fromEntries(
           Object.entries(extractedStages).map(([stage, schools]) => [stage, schools.length])
         );

@@ -5,8 +5,11 @@ import type {
 } from "./select-programme-for-route";
 
 const TEMP_HIGHER_ED_LEVELS = new Set(["bachelor", "professional_degree", "master"]);
+const TRUTH_READY_ELECTRICIAN_COUNTIES = new Set(["03", "46"]);
 
 export function applyRouteSelectionBoundary(params: {
+  professionSlug: string;
+  preferredMunicipalityCodes?: string[];
   professionProgramLinks: RouteProgramLink[];
   educationPrograms: RouteEducationProgram[];
   institutions: RouteInstitution[];
@@ -18,6 +21,14 @@ export function applyRouteSelectionBoundary(params: {
   const institutionById = new Map(
     params.institutions.map((institution) => [institution.id, institution])
   );
+  const homeCountyCodes = new Set(
+    (params.preferredMunicipalityCodes ?? [])
+      .map((code) => code.trim().slice(0, 2))
+      .filter((code) => code.length === 2)
+  );
+  const homeInTruthReadyElectricianCounty = Array.from(homeCountyCodes).some((code) =>
+    TRUTH_READY_ELECTRICIAN_COUNTIES.has(code)
+  );
 
   const allowedPrograms = params.educationPrograms.filter((program) => {
     const institution = institutionById.get(program.institution_id);
@@ -26,6 +37,21 @@ export function applyRouteSelectionBoundary(params: {
     const educationLevel = (program.education_level ?? "").trim().toLowerCase();
     const isHigherEd = TEMP_HIGHER_ED_LEVELS.has(educationLevel);
     const isLegacyInstitution = institution.source === "legacy";
+    const candidateCountyCode = (institution.county_code ?? "").trim();
+    const isTruthReadyCountyForElectrician =
+      TRUTH_READY_ELECTRICIAN_COUNTIES.has(candidateCountyCode) ||
+      homeInTruthReadyElectricianCounty;
+
+    // Selective production boundary: for electrician in truth-ready counties,
+    // cut legacy upper-secondary/VGS contour from legacy selector candidates.
+    if (
+      params.professionSlug === "electrician" &&
+      isTruthReadyCountyForElectrician &&
+      isLegacyInstitution &&
+      !isHigherEd
+    ) {
+      return false;
+    }
 
     // Temporary boundary codification: higher-ed legacy contour is allowed only
     // when candidate completeness requirements are met. is_route_relevant=false

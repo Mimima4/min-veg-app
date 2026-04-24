@@ -701,6 +701,8 @@ export async function triggerStudyRouteRecompute(params: Params) {
       }
 
       const boundaryScoped = applyRouteSelectionBoundary({
+        professionSlug: professionRow.slug,
+        preferredMunicipalityCodes,
         professionProgramLinks: typedLinks,
         educationPrograms: programs ?? [],
         institutions: institutions ?? [],
