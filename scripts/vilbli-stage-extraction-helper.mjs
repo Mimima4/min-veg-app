@@ -114,6 +114,27 @@ function inferStageFromColumnId(columnId) {
   return `VG${n}`;
 }
 
+export function resolveStageFromVilbliKurs(urlOrHref) {
+  try {
+    const url = String(urlOrHref ?? "").includes("://")
+      ? new URL(String(urlOrHref))
+      : new URL(String(urlOrHref ?? ""), "https://www.vilbli.no");
+    const kurs = String(url.searchParams.get("kurs") ?? "");
+    if (!kurs) return null;
+    const tokens = kurs
+      .split("_")
+      .map((token) => token.trim().toUpperCase())
+      .filter(Boolean);
+    const lastToken = tokens.at(-1);
+    if (!lastToken) return null;
+    const stageMatch = lastToken.match(/([123])(?=-|$)/);
+    if (!stageMatch?.[1]) return null;
+    return `VG${stageMatch[1]}`;
+  } catch {
+    return null;
+  }
+}
+
 function parseSchoolProgrammeLinksFromHtml({ html, sourceUrl, countySlug }) {
   const rows = [];
   const columnRegex =
@@ -121,7 +142,7 @@ function parseSchoolProgrammeLinksFromHtml({ html, sourceUrl, countySlug }) {
   let columnMatch = columnRegex.exec(html);
   while (columnMatch) {
     const columnId = String(columnMatch[1] ?? "");
-    const stage = inferStageFromColumnId(columnId);
+    const stageFromColumn = inferStageFromColumnId(columnId);
     const ul = String(columnMatch[2] ?? "");
     const entryRegex =
       /<li class="([^"]*)"[\s\S]*?<a href="([^"]*)"[^>]*>([\s\S]*?)<\/a>[\s\S]*?<\/li>/gi;
@@ -129,6 +150,8 @@ function parseSchoolProgrammeLinksFromHtml({ html, sourceUrl, countySlug }) {
     while (entryMatch) {
       const classAttr = String(entryMatch[1] ?? "");
       const href = String(entryMatch[2] ?? "").trim();
+      const stageFromKurs = resolveStageFromVilbliKurs(href);
+      const stage = stageFromKurs ?? stageFromColumn;
       const rawTitle = String(entryMatch[3] ?? "").replace(/<[^>]+>/g, " ");
       const title = normalizeBasic(rawTitle);
 

@@ -66,6 +66,15 @@ export async function getStudyRouteAvailableProfessions(
     (step: any) => step?.source === "availability_truth"
   );
   if (truthSourceActive) {
+    const selectedApprenticeshipStep = steps.find(
+      (step: any) =>
+        step?.type === "apprenticeship_step" && step?.source === "availability_truth"
+    );
+    const selectedSourceOutcomeUrl =
+      typeof selectedApprenticeshipStep?.source_outcome_url === "string" &&
+      selectedApprenticeshipStep.source_outcome_url.trim().length > 0
+        ? selectedApprenticeshipStep.source_outcome_url
+        : null;
     const programmeStep = steps.find(
       (step: any) =>
         step?.type === "programme_selection" &&
@@ -138,8 +147,24 @@ export async function getStudyRouteAvailableProfessions(
     }
 
     const variants = await buildPathVariants(truth.rows);
+    const scopedOutcomes =
+      selectedSourceOutcomeUrl !== null
+        ? variants.outcomes.filter(
+            (outcome) => outcome.sourceOutcomeUrl === selectedSourceOutcomeUrl
+          )
+        : variants.outcomes;
+    if (selectedSourceOutcomeUrl === null) {
+      console.info(
+        "[get-study-route-available-professions] fallback_to_unscoped_outcomes",
+        {
+          routeId: params.routeId,
+          reason: "missing_selected_source_outcome_url",
+          outcomesCount: variants.outcomes.length,
+        }
+      );
+    }
     const navMapped = await mapVilbliOutcomesToNav({
-      outcomes: variants.outcomes,
+      outcomes: scopedOutcomes,
     });
     const { data: localProfessions } = await supabase
       .from("professions")

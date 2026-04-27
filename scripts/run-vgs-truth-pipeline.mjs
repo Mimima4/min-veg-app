@@ -2,7 +2,10 @@ import fetch from "node-fetch";
 import { createClient } from "@supabase/supabase-js";
 import { spawnSync } from "node:child_process";
 import { getVgsPathDefinition } from "./vgs-path-definitions.mjs";
-import { extractVilbliStagesFromHtml } from "./vilbli-stage-extraction-helper.mjs";
+import {
+  extractVilbliStagesFromHtml,
+  resolveStageFromVilbliKurs,
+} from "./vilbli-stage-extraction-helper.mjs";
 
 const COUNTY_CODE_TO_VILBLI = {
   "03": { slug: "oslo", label: "Oslo" },
@@ -251,6 +254,12 @@ function slugify(value) {
     .replace(/^-|-$/g, "");
 }
 
+function countyProgramCodeToken(countyMeta) {
+  return slugify(String(countyMeta?.slug ?? ""))
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "_");
+}
+
 function deterministicProgrammeIdentity({
   professionSlug,
   countySlug,
@@ -413,6 +422,7 @@ async function run() {
   ];
 
   const expandedStageEntries = [];
+  const skippedNoSchoolAvailability = [];
   for (const link of includedProgrammeLinks) {
     const responseProgramme = await fetch(link.href, {
       headers: {
@@ -429,21 +439,44 @@ async function run() {
       countySlug: countyMeta.slug,
       countyLabel: countyMeta.label,
     });
+    const stageFromKurs = resolveStageFromVilbliKurs(link.href);
     const stageHint = String(link.stage ?? "").toUpperCase();
     const stageCandidates = Object.entries(extractedProgramme.extractedStages)
       .filter(([_, schools]) => Array.isArray(schools) && schools.length > 0)
       .map(([stage]) => stage.toUpperCase());
-    const resolvedStage =
-      (stageHint && stageCandidates.includes(stageHint) ? stageHint : stageCandidates[0] ?? null);
+    let resolvedStage = null;
+    if (stageFromKurs && stageCandidates.includes(stageFromKurs)) {
+      resolvedStage = stageFromKurs;
+    } else if (stageFromKurs) {
+      resolvedStage = stageFromKurs;
+    } else if (stageHint && stageCandidates.includes(stageHint)) {
+      resolvedStage = stageHint;
+    } else if (stageCandidates.length === 1) {
+      resolvedStage = stageCandidates[0];
+    }
 
     if (!resolvedStage) {
-      throw new Error(`ABORT: No stage-specific school block found for programme page ${link.href}`);
+      throw new Error(
+        `ABORT: Unable to confidently resolve stage for programme page ${link.href}. stageFromKurs=${
+          stageFromKurs ?? "null"
+        }, stageHint=${stageHint || "null"}, stageCandidates=${stageCandidates.join(",") || "none"}`
+      );
+    }
+    const resolvedSchools = extractedProgramme.extractedStages[resolvedStage] ?? [];
+    if (resolvedSchools.length === 0) {
+      skippedNoSchoolAvailability.push({
+        stage: resolvedStage,
+        title: link.titleDisplay,
+        href: link.href,
+        skipReason: "no_school_availability_for_resolved_stage",
+      });
+      continue;
     }
     expandedStageEntries.push({
       stage: resolvedStage,
       titleDisplay: link.titleDisplay,
       href: link.href,
-      schools: extractedProgramme.extractedStages[resolvedStage] ?? [],
+      schools: resolvedSchools,
       optionId: link.optionId,
       source: "school_programme_link",
     });
@@ -571,16 +604,23 @@ async function run() {
   // 5) If readiness green -> write programme_school_availability.
   const readinessProgrammes = readiness.details?.linkedProgrammes ?? [];
   const requiredProgrammesByStage = new Map();
+  const countySlugSuffix = `-${countyMeta.slug}`;
+  const countyToken = countyProgramCodeToken(countyMeta);
   for (const node of requiredProgrammeNodes) {
     const candidates = readinessProgrammes.filter((programme) => programme.nodeKey === node.nodeKey);
     if (candidates.length === 0) {
       throw new Error(`ABORT: Missing programme candidate for required node ${node.nodeKey}`);
     }
-    const preferred = candidates.find(
+    const countyCanonical = candidates.find((candidate) => {
+      const slug = String(candidate.slug ?? "").toLowerCase();
+      const programCode = String(candidate.programCode ?? "").toUpperCase();
+      return slug.endsWith(countySlugSuffix) || programCode.endsWith(countyToken);
+    });
+    const preferredBroad = candidates.find(
       (candidate) =>
         candidate.programCode && candidate.programCode.startsWith(`EL-${node.stage.replace("VG", "VG")}-`)
     );
-    requiredProgrammesByStage.set(node.stage, preferred ?? candidates[0]);
+    requiredProgrammesByStage.set(node.stage, countyCanonical ?? preferredBroad ?? candidates[0]);
   }
 
   const snapshotLabel = `vilbli-${countyMeta.slug}-${professionSlug}-pipeline-${new Date()
@@ -665,6 +705,71 @@ async function run() {
     }
   }
 
+  // 5c) Stale deactivation for this profession/county/source.
+  const currentActiveSet = new Set(
+    writeRows.map((row) => `${row.programSlug}::${row.institutionId}::${String(row.stage).toUpperCase()}`)
+  );
+
+  const { data: professionLinks, error: professionLinksError } = await supabase
+    .from("profession_program_links")
+    .select("program_slug")
+    .eq("profession_slug", professionSlug);
+  if (professionLinksError) throw professionLinksError;
+
+  const professionProgramSlugs = Array.from(
+    new Set((professionLinks ?? []).map((row) => row.program_slug).filter(Boolean))
+  );
+  const { data: professionProgramRows, error: professionProgramRowsError } = professionProgramSlugs.length
+    ? await supabase
+        .from("education_programs")
+        .select("id, slug")
+        .in("slug", professionProgramSlugs)
+    : { data: [], error: null };
+  if (professionProgramRowsError) throw professionProgramRowsError;
+
+  const programSlugById = new Map(
+    (professionProgramRows ?? []).map((row) => [
+      row.id,
+      row.slug,
+    ])
+  );
+  const professionProgramIds = Array.from(programSlugById.keys());
+
+  const { data: activeRowsForScope, error: activeRowsForScopeError } = professionProgramIds.length
+    ? await supabase
+        .from("programme_school_availability")
+        .select("id, education_program_id, institution_id, stage")
+        .in("education_program_id", professionProgramIds)
+        .eq("county_code", countyCode)
+        .eq("source", SOURCE)
+        .eq("is_active", true)
+    : { data: [], error: null };
+  if (activeRowsForScopeError) throw activeRowsForScopeError;
+
+  const staleRowIds = [];
+  let keptCount = 0;
+  for (const row of activeRowsForScope ?? []) {
+    const slug = programSlugById.get(row.education_program_id);
+    if (!slug) continue;
+    const key = `${slug}::${row.institution_id}::${String(row.stage ?? "").toUpperCase()}`;
+    if (currentActiveSet.has(key)) {
+      keptCount += 1;
+    } else {
+      staleRowIds.push(row.id);
+    }
+  }
+
+  let deactivatedCount = 0;
+  if (staleRowIds.length > 0) {
+    const { data: deactivatedRows, error: deactivateError } = await supabase
+      .from("programme_school_availability")
+      .update({ is_active: false })
+      .in("id", staleRowIds)
+      .select("id");
+    if (deactivateError) throw deactivateError;
+    deactivatedCount = (deactivatedRows ?? []).length;
+  }
+
   // 6) Print summary.
   console.log(
     JSON.stringify(
@@ -685,6 +790,7 @@ async function run() {
           includedProgrammes: includedProgrammeLinks.length,
           excludedProgrammes: excludedProgrammeLinks.length,
           skippedSiblings: skippedSiblingProgrammeLinks,
+          skippedNoSchoolAvailability,
           excluded: excludedProgrammeLinks.map((entry) => ({
             stage: entry.stage,
             title: entry.titleDisplay,
@@ -701,6 +807,11 @@ async function run() {
           inserted: writeCounters.inserted,
           updated: writeCounters.updated,
           total: writeRows.length,
+        },
+        staleDeactivation: {
+          checked: (activeRowsForScope ?? []).length,
+          deactivated: deactivatedCount,
+          kept: keptCount,
         },
       },
       null,

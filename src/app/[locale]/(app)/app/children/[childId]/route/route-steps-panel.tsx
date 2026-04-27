@@ -204,12 +204,19 @@ export default function RouteStepsPanel({
                 const isOpen = openStepKey === stepKey;
                 const displayProgrammeTitle =
                   step.type === "programme_selection"
-                    ? selectedOption.displayTitle ??
-                      selectedOption.programTitle ??
-                      (selectedOption.fromPayload
-                        ? null
-                        : step.program_title ?? step.title ?? step.program_slug) ??
-                      "Unknown programme"
+                    ? String(step.stage ?? "").toUpperCase() === "VG3"
+                      ? step.title ??
+                        step.program_title ??
+                        selectedOption.displayTitle ??
+                        selectedOption.programTitle ??
+                        step.program_slug ??
+                        "Unknown programme"
+                      : selectedOption.displayTitle ??
+                        selectedOption.programTitle ??
+                        (selectedOption.fromPayload
+                          ? null
+                          : step.program_title ?? step.title ?? step.program_slug) ??
+                        "Unknown programme"
                     : step.title ?? step.program_title ?? step.program_slug ?? selectedOption.schoolName;
                 const selectedSchoolName = selectedOption.schoolName;
                 const selectedLocation = selectedOption.location;

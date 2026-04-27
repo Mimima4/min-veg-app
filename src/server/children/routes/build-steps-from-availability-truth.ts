@@ -83,6 +83,136 @@ function stageRowsSortedWithAnchor(params: {
   });
 }
 
+function dedupeRowsByInstitution(rows: AvailabilityTruthRow[]): AvailabilityTruthRow[] {
+  const seen = new Set<string>();
+  const deduped: AvailabilityTruthRow[] = [];
+  for (const row of rows) {
+    const key = String(row.institutionId ?? "").trim();
+    if (!key) continue;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(row);
+  }
+  return deduped;
+}
+
+function isVg3GeographicallyEligible(params: {
+  selectedVg2Row: AvailabilityTruthRow | null;
+  vg3Candidate: AvailabilityTruthRow | null;
+}): boolean {
+  const { selectedVg2Row, vg3Candidate } = params;
+  if (!selectedVg2Row || !vg3Candidate) return false;
+  if (selectedVg2Row.institutionId === vg3Candidate.institutionId) {
+    return true;
+  }
+  if (
+    selectedVg2Row.municipalityCode &&
+    vg3Candidate.municipalityCode &&
+    selectedVg2Row.municipalityCode === vg3Candidate.municipalityCode
+  ) {
+    return true;
+  }
+  return false;
+}
+
+function toStageAwareProgrammeTitle(params: {
+  stage: "VG1" | "VG2" | "VG3";
+  title: string;
+}): string {
+  if (params.stage !== "VG3") return params.title;
+  const normalized = String(params.title ?? "").trim();
+  if (!normalized) return "VG3";
+  if (/^VG3\b/i.test(normalized)) {
+    return normalized.replace(/^VG3\b\s*/i, "VG3 ").trim();
+  }
+  return `VG3 ${normalized}`;
+}
+
+function normalizeProfessionSlugTokens(professionSlug: string): string[] {
+  return String(professionSlug ?? "")
+    .toLowerCase()
+    .split(/[^a-z0-9]+/g)
+    .filter((token) => token.length >= 4);
+}
+
+function scoreSourceOutcomeUrl(params: {
+  url: string;
+  professionSlug: string;
+}): number {
+  const rawUrl = String(params.url ?? "").trim();
+  if (!rawUrl) return Number.NEGATIVE_INFINITY;
+
+  let score = 0;
+  try {
+    const parsed = new URL(rawUrl);
+    const pathSegments = parsed.pathname.split("/").filter(Boolean);
+    const lastSegment = (pathSegments[pathSegments.length - 1] ?? "").toLowerCase();
+
+    // Branch-specific Vilbli outcome pages typically end with "<branch>-yrker".
+    if (lastSegment.includes("-yrker")) {
+      score += 100;
+    } else {
+      // Broad education-area pages usually do not carry branch-specific "-yrker" suffix.
+      score -= 25;
+    }
+
+    const professionTokens = normalizeProfessionSlugTokens(params.professionSlug);
+    const lowerPath = parsed.pathname.toLowerCase();
+    for (const token of professionTokens) {
+      if (lowerPath.includes(token)) {
+        score += 5;
+      }
+    }
+  } catch {
+    // Keep deterministic fallback for malformed URLs.
+    score -= 1000;
+  }
+
+  return score;
+}
+
+function resolveApprenticeshipSourceOutcomeUrl(params: {
+  selectedVariant: PathVariant | null;
+  allPathVariants: PathVariant[];
+  professionSlug: string;
+}): string | null {
+  const fromSelectedVariant =
+    params.selectedVariant?.nodes
+      .filter(
+        (node): node is Extract<PathVariant["nodes"][number], { type: "apprenticeship_step" }> =>
+          node.type === "apprenticeship_step"
+      )
+      .map((node) => node.sourceOutcomeUrl)
+      .find((value): value is string => Boolean(value)) ?? null;
+
+  const candidateUrls = Array.from(
+    new Set(
+      params.allPathVariants
+        .flatMap((variant) => variant.nodes)
+        .filter(
+          (node): node is Extract<PathVariant["nodes"][number], { type: "apprenticeship_step" }> =>
+            node.type === "apprenticeship_step"
+        )
+        .map((node) => node.sourceOutcomeUrl)
+        .filter((value): value is string => Boolean(value))
+    )
+  );
+
+  if (candidateUrls.length === 0) {
+    return fromSelectedVariant;
+  }
+
+  const bestBySpecificity = [...candidateUrls].sort((a, b) => {
+    const byScore =
+      scoreSourceOutcomeUrl({ url: b, professionSlug: params.professionSlug }) -
+      scoreSourceOutcomeUrl({ url: a, professionSlug: params.professionSlug });
+    if (byScore !== 0) return byScore;
+    return a.localeCompare(b);
+  })[0];
+
+  return bestBySpecificity ?? fromSelectedVariant;
+}
+
 export function buildStepsFromAvailabilityTruth(params: {
   professionSlug: string;
   rows: AvailabilityTruthRow[];
@@ -145,6 +275,11 @@ export function buildStepsFromAvailabilityTruth(params: {
         if (aHasVg3 === bHasVg3) return 0;
         return bHasVg3 ? 1 : -1;
       })[0] ?? null;
+  const resolvedApprenticeshipSourceOutcomeUrl = resolveApprenticeshipSourceOutcomeUrl({
+    selectedVariant,
+    allPathVariants: params.pathVariants ?? [],
+    professionSlug: params.professionSlug,
+  });
   const buildApprenticeshipOptions = (sourceOutcomeUrl: string | null) => {
     const scopedOutcomes = (params.navOutcomes ?? []).filter((outcome) => {
       if (!sourceOutcomeUrl) return false;
@@ -184,18 +319,43 @@ export function buildStepsFromAvailabilityTruth(params: {
   }
 
   if (selectedVariant) {
+    let selectedVg2RowForGate: AvailabilityTruthRow | null = null;
     for (const node of selectedVariant.nodes) {
       if (node.type === "programme_selection") {
-        const stageRows = stageRowsSortedWithAnchor({
-          rows: params.rows,
-          stage: node.stage,
-          selectedCandidate: params.selectedCandidate ?? null,
-        });
+        const stageRows = dedupeRowsByInstitution(
+          stageRowsSortedWithAnchor({
+            rows: params.rows,
+            stage: node.stage,
+            selectedCandidate: params.selectedCandidate ?? null,
+          })
+        );
         const stageRow = stageRows[0] ?? null;
+
+        if (node.stage === "VG3") {
+          const vg3Eligible = isVg3GeographicallyEligible({
+            selectedVg2Row: selectedVg2RowForGate,
+            vg3Candidate: stageRow,
+          });
+          if (!vg3Eligible) {
+            // Debug-only guardrail: this helps trace why VG3 was skipped.
+            console.info("[build-steps-from-availability-truth] VG3 skipped", {
+              skipReason: "vg3_not_geographically_eligible",
+              vg2InstitutionId: selectedVg2RowForGate?.institutionId ?? null,
+              vg2MunicipalityCode: selectedVg2RowForGate?.municipalityCode ?? null,
+              vg3InstitutionId: stageRow?.institutionId ?? null,
+              vg3MunicipalityCode: stageRow?.municipalityCode ?? null,
+            });
+            continue;
+          }
+        }
+
         const hasStageAvailability = stageRows.length > 0;
         if (!hasStageAvailability) {
           // Child/family contour rule: school-based steps must have school availability.
           continue;
+        }
+        if (node.stage === "VG2") {
+          selectedVg2RowForGate = stageRow;
         }
         const selectedProgrammeSlug =
           stageRow?.programSlug ??
@@ -207,9 +367,13 @@ export function buildStepsFromAvailabilityTruth(params: {
             `Invariant violation: missing source-backed programme slug for ${node.stage}`
           );
         }
-        const selectedProgrammeTitle = hasStageAvailability
+        const selectedProgrammeTitleRaw = hasStageAvailability
           ? stageRow?.programTitle ?? node.programTitle ?? node.title
           : node.programTitle ?? node.title;
+        const selectedProgrammeTitle = toStageAwareProgrammeTitle({
+          stage: node.stage,
+          title: selectedProgrammeTitleRaw,
+        });
         steps.push({
           type: "programme_selection",
           title: selectedProgrammeTitle,
@@ -249,10 +413,14 @@ export function buildStepsFromAvailabilityTruth(params: {
         education_level: "apprenticeship",
         fit_band: "strong",
         program_slug: null,
-        apprenticeship_options: buildApprenticeshipOptions(node.sourceOutcomeUrl ?? null),
+        apprenticeship_options: buildApprenticeshipOptions(
+          resolvedApprenticeshipSourceOutcomeUrl ?? node.sourceOutcomeUrl ?? null
+        ),
         current_profession_slug: params.professionSlug,
         source: "availability_truth",
-      });
+        source_outcome_url:
+          resolvedApprenticeshipSourceOutcomeUrl ?? node.sourceOutcomeUrl ?? null,
+      } as StudyRouteSnapshotStep);
     }
   } else {
     const selectedProgrammeTitle = defaultRow.programTitle ?? defaultRow.programSlug;
