@@ -572,6 +572,54 @@ Publishable school/programme availability requires all of:
 
 Runtime Route Engine and app reads MUST use internal DB truth only and MUST NOT depend on live external source calls.
 
+#### VGS apprenticeship outcome URL invariant
+
+For availability-truth VGS routes, `apprenticeship_step.source_outcome_url` MUST resolve to the most specific profession-branch outcome URL when such a source exists.
+
+- Route structure and outcome scope are separate concerns.
+- A structural direct-bedrift route MAY still use a profession-branch outcome scope.
+- Broad education-area yrker URLs MUST NOT be used when a branch-specific yrker URL exists.
+- Fallback to broad education-area URL is allowed only when no branch-specific source exists.
+- This correctness MUST be enforced during snapshot generation; UI masking of broad outcomes is not an acceptable substitute.
+
+#### NAV / Vilbli boundary contract
+
+1. Route anchor truth  
+Route always anchors to internal saved target profession and server-side route snapshot truth.
+
+2. VGS structure truth  
+For VGS routes, programme/stage structure and school availability are derived from Vilbli-based truth, with canonical school identity via NSR.
+
+3. Outcome scope truth  
+`apprenticeship_step.source_outcome_url` must resolve from the most specific available profession-branch Vilbli outcome URL. Broad education-area yrker URLs are fallback-only.
+
+4. Structure vs scope separation  
+Structural route selection (for example `direct-bedrift` vs `vg3-then-bedrift`) must not automatically dictate broad outcome scope.
+
+5. NAV role  
+NAV is used for profession taxonomy alignment, labour-market enrichment, and user-facing normalization. NAV is not the primary source for VGS route structure, school/programme availability, or broadening educational outcomes.
+
+6. Mapping layer responsibility  
+Mapping `Vilbli outcome -> normalized profession identity` (including NAV alignment) must live in a dedicated server-side mapping layer consumed by Route Engine and read model.
+
+7. Available professions rule  
+For VGS routes, Available professions are derived only after an apprenticeship fag/outcome option is selected or resolved.  
+They must be based on selected Vilbli profession-branch outcome scope and may be enriched/aligned with NAV.  
+NAV must not broaden the educational outcome set beyond the selected Vilbli branch.
+
+8. No UI compensation  
+UI must render snapshot truth. Incorrect broad outcome scope must be fixed in snapshot generation or mapping logic, not masked in presentation.
+
+#### VGS VG3 rendering and eligibility guardrails
+
+- A school-based `VG3` step MUST be included only when geographically eligible relative to the selected `VG2` continuation.
+- When shown, `VG3` display title MUST include stage prefix, for example `VG3 Maritim elektriker`.
+
+#### VGS stale availability lifecycle
+
+- Stale VGS availability rows are deactivated by the pipeline as part of source refresh lifecycle.
+- Manual ad hoc cleanup is not the baseline operating model.
+
 ---
 
 ## 7. Stage 5 — Legal / Operational Readiness

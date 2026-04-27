@@ -317,6 +317,41 @@ If programme availability changes in the official source, the local mapping must
 
 Static one-time import is not sufficient for production truth.
 
+### VGS truth route outcome-scope invariant
+
+For availability-truth VGS routes, apprenticeship outcome scope must be resolved independently from structural variant selection.
+
+- `apprenticeship_step.source_outcome_url` must prefer the most specific profession-branch yrker URL when available.
+- Structural `direct-bedrift` selection must not automatically force broad education-area yrker outcome scope.
+- Broad education-area yrker URLs are fallback-only and may be used only when no branch-specific yrker source exists.
+- Snapshot generation must persist the correct scope; presentation-layer masking is not an acceptable workaround.
+
+### NAV / Vilbli boundary contract for VGS routes
+
+1. Route anchor truth  
+Route stays anchored to internal saved target profession and server-side snapshot truth.
+
+2. VGS structure truth  
+Programme/stage and school availability are derived from Vilbli-based VGS truth with NSR canonical school identity.
+
+3. Outcome scope truth  
+`apprenticeship_step.source_outcome_url` must resolve from the most specific available profession-branch Vilbli outcome URL. Broad education-area yrker URLs are fallback-only.
+
+4. Structure vs scope separation  
+Structural route variant choice (for example `direct-bedrift` vs `vg3-then-bedrift`) must not implicitly force broad outcome scope.
+
+5. NAV role  
+NAV is used for taxonomy alignment, labour-market enrichment, and user-facing normalization; NAV is not primary truth for VGS route structure, school/programme availability, or educational outcome expansion.
+
+6. Mapping layer responsibility  
+Mapping `Vilbli outcome -> normalized profession identity` (including NAV alignment) must be implemented in dedicated server-side mapping logic consumed by Route Engine/read model.
+
+7. Available professions rule  
+For VGS routes, available professions are derived only after apprenticeship outcome option selection/resolution and must remain within selected Vilbli branch scope; NAV enrichment must not broaden this set.
+
+8. No UI compensation  
+Incorrect broad scope must be corrected in snapshot generation or mapping logic, not hidden in presentation.
+
 ## Availability data model
 
 Programme-to-school availability must be represented as a dedicated data model.
@@ -472,6 +507,13 @@ Instead:
 
 - previously existing but no longer present pairs must be:
   - marked is_active = false
+
+This stale deactivation is part of normal pipeline lifecycle and should not rely on manual one-off cleanup.
+
+### VGS truth route step constraints
+
+- School-based `VG3` steps are included only when geographically eligible as continuation from selected `VG2`.
+- Display title for shown `VG3` steps must include stage prefix (for example `VG3 Maritim elektriker`).
 
 ---
 
