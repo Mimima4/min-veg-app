@@ -60,52 +60,57 @@ export default async function ChildRouteOverviewPage({
     childDisplayName: child.displayName,
   });
 
-  if (overview.routes.length === 0) {
-    const supabase = await createClient();
-    const { data: savedProfessionLinks, error: savedProfessionLinksError } =
-      await supabase
-        .from("child_profession_interests")
-        .select("profession_id")
-        .eq("child_profile_id", childId);
+  const supabase = await createClient();
+  const { data: savedProfessionLinks, error: savedProfessionLinksError } = await supabase
+    .from("child_profession_interests")
+    .select("profession_id")
+    .eq("child_profile_id", childId);
 
-    if (savedProfessionLinksError) {
-      throw new Error(
-        `Failed to load saved profession targets for working routes: ${savedProfessionLinksError.message}`
-      );
-    }
+  if (savedProfessionLinksError) {
+    throw new Error(
+      `Failed to load saved profession targets for working routes: ${savedProfessionLinksError.message}`
+    );
+  }
 
-    const targetProfessionIds = Array.from(
-      new Set(
-        (savedProfessionLinks ?? [])
-          .map((row) => row.profession_id)
-          .filter((value): value is string => Boolean(value))
-      )
+  const savedProfessionIds = Array.from(
+    new Set(
+      (savedProfessionLinks ?? [])
+        .map((row) => row.profession_id)
+        .filter((value): value is string => Boolean(value))
+    )
+  );
+  const workingOverviewProfessionIds = new Set(
+    overview.routes
+      .map((route) => route.professionId)
+      .filter((value): value is string => Boolean(value))
+  );
+  const missingWorkingRouteProfessionIds = savedProfessionIds.filter(
+    (professionId) => !workingOverviewProfessionIds.has(professionId)
+  );
+
+  if (missingWorkingRouteProfessionIds.length > 0) {
+    await Promise.all(
+      missingWorkingRouteProfessionIds.map(async (targetProfessionId) => {
+        try {
+          await createInitialStudyRoute({
+            childId,
+            targetProfessionId,
+            locale,
+            createdByType: "system",
+            createdByUserId: null,
+          });
+        } catch {
+          // Keep child Route page resilient: one failed target
+          // must not block materialization for other saved professions.
+        }
+      })
     );
 
-    if (targetProfessionIds.length > 0) {
-      await Promise.all(
-        targetProfessionIds.map(async (targetProfessionId) => {
-          try {
-            await createInitialStudyRoute({
-              childId,
-              targetProfessionId,
-              locale,
-              createdByType: "system",
-              createdByUserId: null,
-            });
-          } catch {
-            // Keep child Route page resilient: one failed target
-            // must not block materialization for other saved professions.
-          }
-        })
-      );
-
-      overview = await getChildStudyRoutesOverview({
-        childId,
-        locale,
-        childDisplayName: child.displayName,
-      });
-    }
+    overview = await getChildStudyRoutesOverview({
+      childId,
+      locale,
+      childDisplayName: child.displayName,
+    });
   }
 
   return (

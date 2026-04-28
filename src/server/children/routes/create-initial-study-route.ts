@@ -544,6 +544,9 @@ export async function createInitialStudyRoute(
     admissionRealismRecord,
   });
 
+  // SAFE FIX: saved route must not block working route creation.
+  // We still allow equivalence check, but NEVER return saved route here.
+  let isEquivalentToSavedRoute = false;
   if (existingSavedRoute?.current_variant_id) {
     const { data: savedSnapshot, error: savedSnapshotError } = await supabase
       .from("study_route_snapshots")
@@ -561,20 +564,15 @@ export async function createInitialStudyRoute(
       );
     }
 
-    const isEquivalentToSavedRoute =
+    isEquivalentToSavedRoute =
       stableStringify(savedSnapshot?.selected_steps_payload ?? []) ===
         stableStringify(initialSteps) &&
       stableStringify(extractMaterialSignalsSubset(savedSnapshot?.signals_payload)) ===
         stableStringify(extractMaterialSignalsSubset(initialSignals));
-
-    if (isEquivalentToSavedRoute) {
-      return getStudyRouteDetail({
-        childId: params.childId,
-        routeId: existingSavedRoute.id,
-        locale,
-      });
-    }
   }
+  // IMPORTANT:
+  // even if equivalent, DO NOT return saved route.
+  // We continue to draft creation.
 
   const { data: route, error: routeError } = await supabase
     .from("study_routes")

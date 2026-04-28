@@ -38,8 +38,15 @@ type ChildRow = {
 type SavedStudyRouteRow = {
   id: string;
   target_profession_id: string;
+  current_variant_id: string | null;
   status: string;
   updated_at: string;
+};
+
+type SavedRouteSnapshotRow = {
+  route_variant_id: string;
+  selected_steps_payload: unknown;
+  generated_at: string;
 };
 
 type RouteProfessionRow = {
@@ -75,6 +82,8 @@ export type SavedProfessionCard = {
 export type SavedStudyRouteCard = {
   savedRoute: SavedStudyRouteRow;
   professionTitle: string;
+  primaryInstitutionName: string | null;
+  primaryInstitutionLocation: string | null;
 };
 
 export type ChildProfilePageData = {
@@ -420,7 +429,7 @@ export async function getChildProfilePageData({
 
   const { data: savedStudyRoutes, error: savedStudyRoutesError } = await supabase
     .from("study_routes")
-    .select("id, target_profession_id, status, updated_at")
+    .select("id, target_profession_id, current_variant_id, status, updated_at")
     .eq("child_id", childRow.id)
     .eq("status", "saved")
     .is("archived_at", null)
@@ -436,6 +445,44 @@ export async function getChildProfilePageData({
   }
 
   const savedStudyRouteRows = (savedStudyRoutes ?? []) as SavedStudyRouteRow[];
+  const savedVariantIds = Array.from(
+    new Set(
+      savedStudyRouteRows
+        .map((item) => item.current_variant_id)
+        .filter((value): value is string => Boolean(value))
+    )
+  );
+
+  let savedRouteSnapshotByVariantId = new Map<string, SavedRouteSnapshotRow>();
+  if (savedVariantIds.length > 0) {
+    const { data: savedRouteSnapshots, error: savedRouteSnapshotsError } = await supabase
+      .from("study_route_snapshots")
+      .select("route_variant_id, selected_steps_payload, generated_at")
+      .in("route_variant_id", savedVariantIds)
+      .eq("is_current_snapshot", true);
+
+    if (savedRouteSnapshotsError) {
+      return {
+        kind: "error",
+        title: "Child profile",
+        subtitle: "There was a problem loading saved study route snapshots.",
+        message: savedRouteSnapshotsError.message,
+      };
+    }
+
+    const latestSnapshotByVariantId = new Map<string, SavedRouteSnapshotRow>();
+    for (const snapshot of (savedRouteSnapshots ?? []) as SavedRouteSnapshotRow[]) {
+      const current = latestSnapshotByVariantId.get(snapshot.route_variant_id);
+      if (
+        !current ||
+        new Date(snapshot.generated_at).getTime() >
+          new Date(current.generated_at).getTime()
+      ) {
+        latestSnapshotByVariantId.set(snapshot.route_variant_id, snapshot);
+      }
+    }
+    savedRouteSnapshotByVariantId = latestSnapshotByVariantId;
+  }
   const savedRouteProfessionIds = savedStudyRouteRows.map(
     (item) => item.target_profession_id
   );
@@ -478,6 +525,48 @@ export async function getChildProfilePageData({
           profession.title_i18n ?? {},
           supportedLocale
         ),
+        primaryInstitutionName: (() => {
+          const snapshot = savedRoute.current_variant_id
+            ? savedRouteSnapshotByVariantId.get(savedRoute.current_variant_id)
+            : undefined;
+          const steps = Array.isArray(snapshot?.selected_steps_payload)
+            ? (snapshot.selected_steps_payload as Array<Record<string, unknown>>)
+            : [];
+          const primaryProgrammeStep = steps.find((step) => {
+            if (!step || typeof step !== "object") return false;
+            if (step.type !== "programme_selection") return false;
+            return (
+              typeof step.institution_name === "string" &&
+              step.institution_name.trim().length > 0
+            );
+          });
+          return (primaryProgrammeStep?.institution_name as string | undefined) ?? null;
+        })(),
+        primaryInstitutionLocation: (() => {
+          const snapshot = savedRoute.current_variant_id
+            ? savedRouteSnapshotByVariantId.get(savedRoute.current_variant_id)
+            : undefined;
+          const steps = Array.isArray(snapshot?.selected_steps_payload)
+            ? (snapshot.selected_steps_payload as Array<Record<string, unknown>>)
+            : [];
+          const primaryProgrammeStep = steps.find((step) => {
+            if (!step || typeof step !== "object") return false;
+            if (step.type !== "programme_selection") return false;
+            return (
+              typeof step.institution_name === "string" &&
+              step.institution_name.trim().length > 0
+            );
+          });
+          const municipality = primaryProgrammeStep?.institution_municipality;
+          if (typeof municipality === "string" && municipality.trim().length > 0) {
+            return municipality;
+          }
+          const city = primaryProgrammeStep?.institution_city;
+          if (typeof city === "string" && city.trim().length > 0) {
+            return city;
+          }
+          return null;
+        })(),
       };
     })
     .filter((item): item is SavedStudyRouteCard => Boolean(item));

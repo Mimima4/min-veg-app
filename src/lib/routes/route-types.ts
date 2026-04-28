@@ -233,6 +233,7 @@ export type StudyRouteReadModel = {
 
 export type ChildStudyRouteOverviewItem = {
   routeId: string;
+  professionId: string;
   targetProfessionId: string;
   targetProfessionSlug: string;
   professionTitle: string;

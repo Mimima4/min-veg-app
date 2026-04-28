@@ -285,6 +285,7 @@ export async function getChildStudyRoutesOverview(
 
     return {
       routeId: route.id,
+      professionId: route.target_profession_id,
       targetProfessionId: route.target_profession_id,
       targetProfessionSlug: profession.slug,
       professionTitle,

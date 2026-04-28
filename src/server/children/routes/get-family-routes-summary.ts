@@ -195,6 +195,9 @@ export async function getFamilyRoutesSummary({
 
   return typedChildren.map((child) => {
     const childRoutes = routesByChildId.get(child.id) ?? [];
+    const uniqueTargetProfessionIds = new Set(
+      childRoutes.map((route) => route.target_profession_id).filter(Boolean)
+    );
 
     let warningsCount = 0;
     let hasNewRouteAvailable = false;
@@ -253,7 +256,7 @@ export async function getFamilyRoutesSummary({
       childId: child.id,
       displayName: child.display_name || "Unnamed child",
       schoolStageLabel: getSchoolStageLabel(child.school_stage, supportedLocale),
-      routeCount: childRoutes.length,
+      routeCount: uniqueTargetProfessionIds.size,
       warningsCount,
       hasNewRouteAvailable,
       status,

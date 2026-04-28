@@ -391,6 +391,16 @@ export default async function ChildDetailPage({
                         <p className="mt-2 text-sm leading-relaxed text-stone-600">
                           Status: {item.savedRoute.status}
                         </p>
+                        {item.primaryInstitutionName ? (
+                          <p className="mt-2 text-sm font-medium text-stone-800">
+                            {item.primaryInstitutionName}
+                          </p>
+                        ) : null}
+                        {item.primaryInstitutionLocation ? (
+                          <p className="mt-1 text-sm text-stone-600">
+                            {item.primaryInstitutionLocation}
+                          </p>
+                        ) : null}
                         <p className="mt-1 text-xs text-stone-500">
                           Updated: {new Date(item.savedRoute.updated_at).toLocaleString()}
                         </p>
