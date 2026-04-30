@@ -5,6 +5,7 @@ import { LocalePageShell } from "@/components/layout/locale-page-shell";
 import AppPrivateNav from "@/components/layout/app-private-nav";
 import type { SupportedLocale } from "@/lib/i18n/site-copy";
 import { getLocalizedValue } from "@/lib/i18n/get-localized-value";
+import type { StudyRouteReadModel, StudyRouteReadModelStep, StudyRouteSnapshotStep } from "@/lib/routes/route-types";
 import { requireAppAccess } from "@/server/billing/require-app-access";
 import { getStudyRouteDetail } from "@/server/children/routes/get-study-route-detail";
 
@@ -22,6 +23,75 @@ type ProfessionRow = {
   slug: string;
   title_i18n: Record<string, string> | null;
 };
+
+function isProgrammeSelectionStep(
+  step: StudyRouteReadModelStep
+): step is Extract<StudyRouteSnapshotStep, { type: "programme_selection" }> {
+  return (
+    typeof step === "object" &&
+    step !== null &&
+    "type" in step &&
+    step.type === "programme_selection"
+  );
+}
+
+function getPrimaryProgrammeStep(detail: StudyRouteReadModel) {
+  return detail.steps.find((step) => isProgrammeSelectionStep(step)) ?? null;
+}
+
+function getSchool(step: Extract<StudyRouteSnapshotStep, { type: "programme_selection" }> | null) {
+  return step?.institution_name ?? "—";
+}
+
+function getLocation(
+  step: Extract<StudyRouteSnapshotStep, { type: "programme_selection" }> | null
+) {
+  return step?.institution_municipality ?? step?.institution_city ?? "—";
+}
+
+function isSnapshotStep(step: StudyRouteReadModelStep): step is StudyRouteSnapshotStep {
+  return (
+    typeof step === "object" &&
+    step !== null &&
+    "type" in step &&
+    (step.type === "programme_selection" ||
+      step.type === "apprenticeship_step" ||
+      step.type === "progression_step" ||
+      step.type === "outcome_step")
+  );
+}
+
+function humanizeStepType(type: StudyRouteSnapshotStep["type"]): string {
+  switch (type) {
+    case "programme_selection":
+      return "Programme step";
+    case "apprenticeship_step":
+      return "Apprenticeship";
+    case "progression_step":
+      return "Progression";
+    case "outcome_step":
+      return "Outcome";
+    default:
+      return type;
+  }
+}
+
+function getStepTitle(step: StudyRouteReadModelStep): string {
+  if ("title" in step && typeof step.title === "string" && step.title.trim().length > 0) {
+    return step.title;
+  }
+  if (
+    "program_title" in step &&
+    typeof step.program_title === "string" &&
+    step.program_title.trim().length > 0
+  ) {
+    return step.program_title;
+  }
+  if ("program_slug" in step && typeof step.program_slug === "string" && step.program_slug.length > 0) {
+    return step.program_slug;
+  }
+  return "Route step";
+}
 
 export default async function SavedRouteComparePage({
   params,
@@ -127,122 +197,111 @@ export default async function SavedRouteComparePage({
     >
       <AppPrivateNav locale={locale} currentPath="/app/family" />
 
-      <div className="grid gap-4 xl:grid-cols-3">
+      <div className="mt-6 space-y-6">
         {routeDetails.map(({ route, detail }) => {
           const profession = professionMap.get(route.target_profession_id);
           const professionTitle = profession
             ? getLocalizedValue(profession.title_i18n ?? {}, locale as SupportedLocale) ||
               profession.slug
             : "Unknown profession";
-          const routeSteps = detail.steps.slice(0, 4);
-          const remainingStepsCount = Math.max(detail.steps.length - routeSteps.length, 0);
-          const warnings = detail.signals.warnings.slice(0, 3);
-          const guidance = detail.signals.improvementGuidance.slice(0, 3);
+          const primaryProgrammeStep = getPrimaryProgrammeStep(detail);
+          const routeSteps = detail.steps;
 
           return (
-            <div
-              key={route.id}
-              className="rounded-2xl border border-stone-200 bg-white p-6"
-            >
-              <h2 className="text-lg font-semibold text-stone-900">{professionTitle}</h2>
-              <p className="mt-2 text-sm text-stone-600">Status: {detail.identity.status}</p>
-              <p className="mt-1 text-xs text-stone-500">
-                Updated: {new Date(route.updated_at).toLocaleString()}
-              </p>
-
-              <dl className="mt-4 grid gap-3 sm:grid-cols-2">
-                <div>
-                  <dt className="text-xs uppercase tracking-wide text-stone-500">Fit</dt>
-                  <dd className="mt-1 text-sm text-stone-900">
-                    {detail.header.overallFitLabel ?? "—"}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-xs uppercase tracking-wide text-stone-500">
-                    Feasibility
-                  </dt>
-                  <dd className="mt-1 text-sm text-stone-900">
-                    {detail.header.feasibilityLabel ?? "—"}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-xs uppercase tracking-wide text-stone-500">
-                    Warnings
-                  </dt>
-                  <dd className="mt-1 text-sm text-stone-900">
-                    {detail.header.warningsCount}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-xs uppercase tracking-wide text-stone-500">Steps</dt>
-                  <dd className="mt-1 text-sm text-stone-900">{detail.header.stepsCount}</dd>
-                </div>
-              </dl>
-
-              <div className="mt-5">
-                <h3 className="text-sm font-semibold text-stone-900">Route steps</h3>
-                <ol className="mt-2 space-y-2">
-                  {routeSteps.map((step, index) => (
-                    <li
-                      key={`${route.id}-${index}`}
-                      className="rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-700"
-                    >
-                      {step.title}
-                    </li>
-                  ))}
-                </ol>
-                {remainingStepsCount > 0 ? (
-                  <p className="mt-2 text-xs text-stone-500">
-                    +{remainingStepsCount} more steps
-                  </p>
-                ) : null}
-              </div>
-
-              <div className="mt-5">
-                <h3 className="text-sm font-semibold text-stone-900">Key signals</h3>
-                {detail.signals.feasibilitySummary ? (
+            <div key={route.id} className="rounded-2xl border border-stone-200 bg-white p-6">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <h2 className="text-xl font-semibold text-stone-900">{professionTitle}</h2>
                   <p className="mt-2 text-sm text-stone-700">
-                    {detail.signals.feasibilitySummary}
+                    City / kommune: {getLocation(primaryProgrammeStep)}
                   </p>
-                ) : null}
-                {detail.signals.confidenceSummary ? (
-                  <p className="mt-2 text-sm text-stone-700">
-                    {detail.signals.confidenceSummary}
-                  </p>
-                ) : null}
-                {warnings.length > 0 ? (
-                  <ul className="mt-2 space-y-2">
-                    {warnings.map((warning) => (
-                      <li
-                        key={`${route.id}-${warning.code}`}
-                        className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800"
-                      >
-                        {warning.label}
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-                {guidance.length > 0 ? (
-                  <ul className="mt-2 space-y-2">
-                    {guidance.map((item) => (
-                      <li
-                        key={`${route.id}-${item.code}`}
-                        className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800"
-                      >
-                        {item.label}
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-              </div>
+                </div>
 
-              <div className="mt-5 flex flex-col gap-2">
                 <Link
                   href={`/${locale}/app/children/${childId}/route/${route.id}`}
                   className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-4 py-2 text-sm text-stone-900 transition hover:border-stone-400"
                 >
                   Open full route
                 </Link>
+              </div>
+              <div className="mt-6">
+                <h3 className="text-sm font-semibold text-stone-900">Route steps</h3>
+                {routeSteps.length === 0 ? (
+                  <div className="mt-2 rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-600">
+                    —
+                  </div>
+                ) : (
+                  <div className="mt-3 overflow-x-auto pb-2">
+                    <div className="flex min-w-max items-start gap-3">
+                      {routeSteps.map((step, index) => {
+                        const snapshotStep = isSnapshotStep(step) ? step : null;
+                        const schoolName = snapshotStep?.institution_name ?? null;
+                        const location =
+                          snapshotStep?.institution_municipality ??
+                          snapshotStep?.institution_city ??
+                          null;
+                        const duration =
+                          snapshotStep && "duration_label" in snapshotStep
+                            ? (snapshotStep.duration_label ?? null)
+                            : null;
+                        const website =
+                          snapshotStep && "institution_website" in snapshotStep
+                            ? (snapshotStep.institution_website ?? null)
+                            : null;
+                        const apprenticeshipOptionTitle =
+                          snapshotStep?.type === "apprenticeship_step" &&
+                          Array.isArray(snapshotStep.apprenticeship_options) &&
+                          snapshotStep.apprenticeship_options[0]
+                            ? snapshotStep.apprenticeship_options[0].option_title
+                            : null;
+
+                        return (
+                          <div key={`${route.id}-step-${index}`} className="flex items-start gap-3">
+                            <div className="w-[320px] shrink-0 rounded-xl border border-stone-200 bg-stone-50 p-4">
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                  <h4 className="text-xl font-semibold text-stone-900">
+                                    {getStepTitle(step)}
+                                  </h4>
+                                  {schoolName ? (
+                                    <p className="mt-2 text-base text-stone-700">{schoolName}</p>
+                                  ) : null}
+                                  {apprenticeshipOptionTitle ? (
+                                    <p className="mt-1 text-sm text-stone-600">
+                                      {apprenticeshipOptionTitle}
+                                    </p>
+                                  ) : null}
+                                  <div className="mt-3 space-y-1 text-sm text-stone-600">
+                                    {location ? <div>{location}</div> : null}
+                                    {duration ? <div>Duration: {duration}</div> : null}
+                                    {website ? (
+                                      <a
+                                        href={website}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex text-sm text-blue-600 hover:underline"
+                                      >
+                                        Visit school website
+                                      </a>
+                                    ) : null}
+                                  </div>
+                                </div>
+                                {snapshotStep ? (
+                                  <span className="inline-flex rounded-full border border-stone-300 bg-white px-3 py-1 text-xs font-medium text-stone-700">
+                                    {humanizeStepType(snapshotStep.type)}
+                                  </span>
+                                ) : null}
+                              </div>
+                            </div>
+                            {index < routeSteps.length - 1 ? (
+                              <div className="mt-16 shrink-0 text-xl text-stone-400">→</div>
+                            ) : null}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           );

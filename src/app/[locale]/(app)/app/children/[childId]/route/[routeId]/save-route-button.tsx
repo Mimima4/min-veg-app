@@ -8,6 +8,7 @@ type Props = {
   routeId: string;
   locale: string;
   isSaved: boolean;
+  selectedOptions?: Record<string, string>;
 };
 
 export default function SaveRouteButton({
@@ -15,6 +16,7 @@ export default function SaveRouteButton({
   routeId,
   locale,
   isSaved,
+  selectedOptions,
 }: Props) {
   if (isSaved) {
     return (
@@ -43,6 +45,7 @@ export default function SaveRouteButton({
         childId,
         routeId,
         locale,
+        selectedOptions,
       }),
     });
 
@@ -51,6 +54,13 @@ export default function SaveRouteButton({
 
     if (!response.ok || !payload?.ok) {
       alert(payload?.error?.message ?? "Failed to save route.");
+      return;
+    }
+
+    const nextRouteId = payload?.result?.routeId;
+    if (typeof nextRouteId === "string" && nextRouteId.length > 0) {
+      router.replace(`/${locale}/app/children/${childId}/route/${nextRouteId}`);
+      router.refresh();
       return;
     }
 

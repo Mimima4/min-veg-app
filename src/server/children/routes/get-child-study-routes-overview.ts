@@ -213,45 +213,6 @@ export async function getChildStudyRoutesOverview(
         const currentVariantStatus = currentVariantStatusByRouteId.get(route.id);
         return currentVariantStatus === "draft";
       });
-      const saved = sorted.filter((route) => route.status === "saved");
-
-      for (const draftRoute of drafts) {
-        const draftSnapshot = draftRoute.current_variant_id
-          ? snapshotMap.get(draftRoute.current_variant_id)
-          : undefined;
-
-        if (!draftSnapshot) {
-          continue;
-        }
-
-        const equivalentSavedRoute = saved.find((savedRoute) => {
-          const savedSnapshot = savedRoute.current_variant_id
-            ? snapshotMap.get(savedRoute.current_variant_id)
-            : undefined;
-          if (!savedSnapshot) {
-            return false;
-          }
-
-          return (
-            stableStringify(savedSnapshot.selected_steps_payload ?? []) ===
-              stableStringify(draftSnapshot.selected_steps_payload ?? []) &&
-            stableStringify(
-              extractMaterialSignalsSubset(savedSnapshot.signals_payload)
-            ) ===
-              stableStringify(
-                extractMaterialSignalsSubset(draftSnapshot.signals_payload)
-              )
-          );
-        });
-
-        if (equivalentSavedRoute) {
-          return equivalentSavedRoute;
-        }
-      }
-
-      // Product-phase strict rule:
-      // main Route entry resolves only from working routes.
-      // Saved/non-working siblings are excluded from candidate set.
       return drafts[0] ?? null;
     })
     .filter((route): route is RouteRow => Boolean(route))

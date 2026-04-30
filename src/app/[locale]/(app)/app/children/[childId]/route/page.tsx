@@ -9,6 +9,9 @@ import { createInitialStudyRoute } from "@/server/children/routes/create-initial
 import { getChildStudyRoutesOverview } from "@/server/children/routes/get-child-study-routes-overview";
 import { getFamilyPageData } from "@/server/family/overview/get-family-page-data";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function ChildRouteOverviewPage({
   params,
 }: {
@@ -79,13 +82,28 @@ export default async function ChildRouteOverviewPage({
         .filter((value): value is string => Boolean(value))
     )
   );
-  const workingOverviewProfessionIds = new Set(
-    overview.routes
-      .map((route) => route.professionId)
+
+  const { data: workingDraftRoutes, error: workingDraftRoutesError } = await supabase
+    .from("study_routes")
+    .select("target_profession_id")
+    .eq("child_id", childId)
+    .is("archived_at", null)
+    .eq("status", "draft");
+
+  if (workingDraftRoutesError) {
+    throw new Error(
+      `Failed to load active draft routes for materialization coverage: ${workingDraftRoutesError.message}`
+    );
+  }
+
+  const workingDraftProfessionIds = new Set(
+    (workingDraftRoutes ?? [])
+      .map((route) => route.target_profession_id)
       .filter((value): value is string => Boolean(value))
   );
+
   const missingWorkingRouteProfessionIds = savedProfessionIds.filter(
-    (professionId) => !workingOverviewProfessionIds.has(professionId)
+    (professionId) => !workingDraftProfessionIds.has(professionId)
   );
 
   if (missingWorkingRouteProfessionIds.length > 0) {

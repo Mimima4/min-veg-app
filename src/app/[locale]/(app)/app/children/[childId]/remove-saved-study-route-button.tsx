@@ -2,6 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  emitRouteCompareChanged,
+  readRouteCompareIds,
+  writeRouteCompareIds,
+} from "@/lib/planning/route-compare-selection";
 
 type Props = {
   childId: string;
@@ -43,6 +48,11 @@ export default function RemoveSavedStudyRouteButton({
       alert(payload?.error?.message ?? "Failed to remove saved route.");
       return;
     }
+
+    const currentCompareIds = readRouteCompareIds(childId);
+    const nextCompareIds = currentCompareIds.filter((id) => id !== routeId);
+    writeRouteCompareIds(childId, nextCompareIds);
+    emitRouteCompareChanged(childId);
 
     router.refresh();
   }

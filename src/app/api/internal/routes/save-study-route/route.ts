@@ -5,7 +5,7 @@ import { toRouteErrorResponse } from "@/server/children/routes/route-errors";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { childId, routeId, locale } = body;
+    const { childId, routeId, locale, selectedOptions } = body;
 
     if (!childId || !routeId) {
       return NextResponse.json({
@@ -21,6 +21,7 @@ export async function POST(req: Request) {
       childId,
       routeId,
       locale,
+      selectedOptions,
     });
 
     return NextResponse.json({

@@ -126,9 +126,17 @@ export default async function StudyRouteDetailPage({
             childId={childId}
             routeId={routeId}
             locale={locale}
-            isSavedRoute={route.identity.status === "saved"}
+            isSavedRoute={
+              route.identity.status === "saved" ||
+              (
+                route as {
+                  alreadySavedEquivalent?: boolean;
+                }
+              ).alreadySavedEquivalent === true
+            }
             steps={route.steps}
             competitionLevel={route.header.competitionLevel}
+            savedSelectionSignatures={route.savedSelectionSignatures ?? []}
           />
 
           {showStrategyBlock && (

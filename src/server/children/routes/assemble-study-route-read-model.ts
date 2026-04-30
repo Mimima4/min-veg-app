@@ -44,6 +44,9 @@ type AssembleParams = {
   } | null;
   snapshotContext?: StudyRouteSnapshotContext | null;
   forceNewRouteAvailable?: boolean;
+  alreadySavedEquivalent?: boolean;
+  equivalentSavedRouteId?: string | null;
+  savedSelectionSignatures?: string[];
   supabase?: SupabaseClient;
 };
 
@@ -203,6 +206,7 @@ export async function assembleStudyRouteReadModel(
   }
 
   const competitionLabel = competitionLevelToLabel(competitionLevel);
+  const alreadySavedEquivalent = Boolean(params.alreadySavedEquivalent);
 
   return {
     identity: {
@@ -239,15 +243,21 @@ export async function assembleStudyRouteReadModel(
       items: availableProfessionsWithBuckets,
     },
     alternativeRoutes: alternatives,
+    alreadySavedEquivalent,
+    equivalentSavedRouteId: params.equivalentSavedRouteId ?? null,
+    savedSelectionSignatures: params.savedSelectionSignatures ?? [],
     allowedActions: {
       canEditRoute: true,
       canOpenAlternatives: true,
-      canSaveAsNewVariant: true,
+      canSaveAsNewVariant: !alreadySavedEquivalent,
       canReplaceCurrentVariant: true,
       canOpenAvailableProfessions: true,
       canExportConsultationPdf: false,
       canShareReadOnlyRoute: false,
       canRemoveSavedRoute: true,
     },
+  } as StudyRouteReadModel & {
+    alreadySavedEquivalent: boolean;
+    equivalentSavedRouteId: string | null;
   };
 }

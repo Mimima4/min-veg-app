@@ -228,6 +228,7 @@ export type StudyRouteReadModel = {
   signals: StudyRouteSignals;
   availableProfessions: StudyRouteAvailableProfessionsBlock;
   alternativeRoutes: StudyRouteAlternativeTeaser[];
+  savedSelectionSignatures?: string[];
   allowedActions: StudyRouteAllowedActions;
 };
 

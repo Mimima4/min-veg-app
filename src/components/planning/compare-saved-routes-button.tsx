@@ -5,20 +5,39 @@ import { useRouter } from "next/navigation";
 import {
   emitRouteCompareChanged,
   readRouteCompareIds,
+  writeRouteCompareIds,
 } from "@/lib/planning/route-compare-selection";
 
 type Props = {
   locale: string;
   childId: string;
+  validRouteIds?: string[];
 };
 
-export default function CompareSavedRoutesButton({ locale, childId }: Props) {
+export default function CompareSavedRoutesButton({
+  locale,
+  childId,
+  validRouteIds,
+}: Props) {
   const router = useRouter();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   useEffect(() => {
+    const validRouteIdSet = validRouteIds ? new Set(validRouteIds) : null;
+
+    function pruneIds(ids: string[]) {
+      if (!validRouteIdSet) return ids;
+      return ids.filter((id) => validRouteIdSet.has(id));
+    }
+
     function sync() {
-      setSelectedIds(readRouteCompareIds(childId));
+      const storedIds = readRouteCompareIds(childId);
+      const filteredIds = pruneIds(storedIds);
+      if (filteredIds.join(",") !== storedIds.join(",")) {
+        writeRouteCompareIds(childId, filteredIds);
+        emitRouteCompareChanged(childId);
+      }
+      setSelectedIds(filteredIds);
     }
 
     sync();
@@ -47,14 +66,20 @@ export default function CompareSavedRoutesButton({ locale, childId }: Props) {
       );
       window.removeEventListener("storage", handleStorage);
     };
-  }, [childId]);
+  }, [childId, validRouteIds]);
 
   function handleOpenCompare() {
-    if (selectedIds.length < 2) return;
-
+    const validRouteIdSet = validRouteIds ? new Set(validRouteIds) : null;
+    const storedIds = readRouteCompareIds(childId);
+    const filteredIds = validRouteIdSet
+      ? storedIds.filter((id) => validRouteIdSet.has(id))
+      : storedIds;
+    writeRouteCompareIds(childId, filteredIds);
+    setSelectedIds(filteredIds);
     emitRouteCompareChanged(childId);
+    if (filteredIds.length < 2) return;
     router.push(
-      `/${locale}/app/children/${childId}/route/compare?ids=${selectedIds.join(",")}`
+      `/${locale}/app/children/${childId}/route/compare?ids=${filteredIds.join(",")}`
     );
   }
 

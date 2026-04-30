@@ -31,6 +31,7 @@ type Props = {
   isSavedRoute: boolean;
   steps: StudyRouteReadModelStep[];
   competitionLevel?: StudyRouteCompetitionLevel;
+  savedSelectionSignatures?: string[];
 };
 
 function humanizeStepType(type: StudyRouteSnapshotStep["type"]): string {
@@ -48,6 +49,23 @@ function humanizeStepType(type: StudyRouteSnapshotStep["type"]): string {
   }
 }
 
+function normalizeJsonValue(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map((item) => normalizeJsonValue(item));
+  }
+  if (value && typeof value === "object") {
+    const sortedEntries = Object.entries(value as Record<string, unknown>)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, nestedValue]) => [key, normalizeJsonValue(nestedValue)]);
+    return Object.fromEntries(sortedEntries);
+  }
+  return value;
+}
+
+function stableStringify(value: unknown): string {
+  return JSON.stringify(normalizeJsonValue(value));
+}
+
 export default function RouteStepsPanel({
   childId,
   routeId,
@@ -55,11 +73,23 @@ export default function RouteStepsPanel({
   isSavedRoute,
   steps,
   competitionLevel,
+  savedSelectionSignatures = [],
 }: Props) {
   const [selectedOptionByStep, setSelectedOptionByStep] = useState<Record<string, string>>({});
   const [openStepKey, setOpenStepKey] = useState<string | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const stepRefByKey = useRef<Record<string, HTMLDivElement | null>>({});
+  type StepOption = {
+    id: string;
+    schoolName: string;
+    location: string | null;
+    website: string | null;
+    programTitle: string | null | undefined;
+    displayTitle: string | null | undefined;
+    durationLabel: string | null;
+    fromPayload: boolean;
+    meta: string | null;
+  };
 
   useEffect(() => {
     const onPointerDown = (event: MouseEvent) => {
@@ -151,23 +181,81 @@ export default function RouteStepsPanel({
     ];
   };
 
-  const getSelectedOption = (
-    stepKey: string,
-    options: Array<{
-      id: string;
-      schoolName: string;
-      location: string | null;
-      website: string | null;
-      programTitle: string | null | undefined;
-      displayTitle: string | null | undefined;
-      durationLabel: string | null;
-      fromPayload: boolean;
-      meta: string | null;
-    }>
-  ) => {
-    const selectedId = selectedOptionByStep[stepKey];
-    return options.find((option) => option.id === selectedId) ?? options[0];
+  const getBaselineOptionForStep = (
+    step: StudyRouteSnapshotStep,
+    options: StepOption[]
+  ): StepOption | undefined => {
+    if (options.length === 0) return undefined;
+
+    if (step.type === "apprenticeship_step") {
+      const savedSelectedId = (
+        step as StudyRouteSnapshotStep & { selected_apprenticeship_option_id?: string | null }
+      ).selected_apprenticeship_option_id;
+      if (savedSelectedId) {
+        return options.find((option) => option.id === savedSelectedId) ?? options[0];
+      }
+      return options[0];
+    }
+
+    if (step.type === "programme_selection") {
+      const targetSchool = step.institution_name ?? null;
+      const targetLocation = step.institution_city ?? step.institution_municipality ?? null;
+      const targetWebsite = step.institution_website ?? null;
+      const matched = options.find((option) => {
+        if (!targetSchool || option.schoolName !== targetSchool) return false;
+        if (targetLocation && option.location && option.location !== targetLocation) return false;
+        if (targetWebsite && option.website && option.website !== targetWebsite) return false;
+        return true;
+      });
+      return matched ?? options[0];
+    }
+
+    return options[0];
   };
+
+  const getSelectedOption = (stepKey: string, step: StudyRouteSnapshotStep, options: StepOption[]) => {
+    const selectedId = selectedOptionByStep[stepKey];
+    const selectedFromUi = options.find((option) => option.id === selectedId);
+    if (selectedFromUi) return selectedFromUi;
+    return getBaselineOptionForStep(step, options) ?? options[0];
+  };
+
+  const isSelectableStep = (step: StudyRouteSnapshotStep) =>
+    step.type === "programme_selection" || step.type === "apprenticeship_step";
+
+  const baselineOptionByStep = steps.reduce<Record<string, string>>((acc, step, index) => {
+    if (!isRouteSnapshotPayloadStep(step)) return acc;
+    if (!isSelectableStep(step)) return acc;
+    const stepKey = `snap-${index}-${step.type}-${step.program_slug ?? "none"}`;
+    const options = buildStepOptions(step);
+    const baseline = getBaselineOptionForStep(step, options);
+    if (baseline) {
+      acc[stepKey] = baseline.id;
+    }
+    return acc;
+  }, {});
+
+  const isDirtySelection = Object.entries(selectedOptionByStep).some(([stepKey, selectedId]) => {
+    const baselineId = baselineOptionByStep[stepKey];
+    return Boolean(baselineId) && selectedId !== baselineId;
+  });
+
+  const buildSelectionSignature = () => {
+    const entries: Array<{ stepKey: string; optionId: string }> = [];
+    steps.forEach((step, index) => {
+      if (!isRouteSnapshotPayloadStep(step)) return;
+      if (!isSelectableStep(step)) return;
+      const stepKey = `snap-${index}-${step.type}-${step.program_slug ?? "none"}`;
+      const optionId = selectedOptionByStep[stepKey] ?? baselineOptionByStep[stepKey];
+      if (!optionId) return;
+      if (step.type === "programme_selection" && optionId === "programme-current") return;
+      entries.push({ stepKey, optionId });
+    });
+    return stableStringify(entries);
+  };
+
+  const currentSelectionSignature = buildSelectionSignature();
+  const alreadySavedBySignature = savedSelectionSignatures.includes(currentSelectionSignature);
 
   return (
     <div ref={panelRef} className="w-full rounded-2xl border border-stone-200 bg-white p-6">
@@ -177,7 +265,8 @@ export default function RouteStepsPanel({
           childId={childId}
           routeId={routeId}
           locale={locale}
-          isSaved={isSavedRoute}
+          isSaved={(isSavedRoute && !isDirtySelection) || alreadySavedBySignature}
+          selectedOptions={selectedOptionByStep}
         />
       </div>
 
@@ -199,7 +288,7 @@ export default function RouteStepsPanel({
                   competitionLevel === "very_high" &&
                   step.type === "programme_selection";
                 const stepOptions = buildStepOptions(step);
-                const selectedOption = getSelectedOption(stepKey, stepOptions);
+                const selectedOption = getSelectedOption(stepKey, step, stepOptions);
                 const optionList = stepOptions;
                 const isOpen = openStepKey === stepKey;
                 const displayProgrammeTitle =
@@ -218,7 +307,17 @@ export default function RouteStepsPanel({
                           : step.program_title ?? step.title ?? step.program_slug) ??
                         "Unknown programme"
                     : step.title ?? step.program_title ?? step.program_slug ?? selectedOption.schoolName;
-                const selectedSchoolName = selectedOption.schoolName;
+                const selectedSchoolName =
+                  step.type === "apprenticeship_step"
+                    ? selectedOptionByStep[stepKey]
+                      ? selectedOption.schoolName
+                      : (
+                          step as StudyRouteSnapshotStep & {
+                            selected_apprenticeship_option_title?: string | null;
+                          }
+                        ).selected_apprenticeship_option_title ??
+                        selectedOption.schoolName
+                    : selectedOption.schoolName;
                 const selectedLocation = selectedOption.location;
                 const selectedWebsite = selectedOption.website ?? null;
                 const selectedDurationLabel = selectedOption.durationLabel ?? step.duration_label;

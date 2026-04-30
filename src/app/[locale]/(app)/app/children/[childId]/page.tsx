@@ -367,7 +367,11 @@ export default async function ChildDetailPage({
           </p>
 
           <div className="mt-4 flex flex-wrap gap-3">
-            <CompareSavedRoutesButton locale={locale} childId={child.id} />
+            <CompareSavedRoutesButton
+              locale={locale}
+              childId={child.id}
+              validRouteIds={savedStudyRouteCards.map((item) => item.savedRoute.id)}
+            />
           </div>
 
           {savedStudyRouteCards.length === 0 ? (
@@ -387,10 +391,6 @@ export default async function ChildDetailPage({
                         <h3 className="mt-4 text-base font-semibold text-stone-900">
                           {item.professionTitle}
                         </h3>
-
-                        <p className="mt-2 text-sm leading-relaxed text-stone-600">
-                          Status: {item.savedRoute.status}
-                        </p>
                         {item.primaryInstitutionName ? (
                           <p className="mt-2 text-sm font-medium text-stone-800">
                             {item.primaryInstitutionName}
@@ -401,6 +401,9 @@ export default async function ChildDetailPage({
                             {item.primaryInstitutionLocation}
                           </p>
                         ) : null}
+                        <p className="mt-2 text-sm leading-relaxed text-stone-600">
+                          Status: {item.savedRoute.status}
+                        </p>
                         <p className="mt-1 text-xs text-stone-500">
                           Updated: {new Date(item.savedRoute.updated_at).toLocaleString()}
                         </p>
