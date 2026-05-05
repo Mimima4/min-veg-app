@@ -432,6 +432,63 @@ function buildIdentitySemanticsDiagnosticsFromUniqueSchools(uniqueExtractedSchoo
   return { identitySemanticsSummary, identitySemanticsBySchoolCode, identitySemanticsWarning };
 }
 
+/** Core tier score from classifyInstitutionMatch (core_name_match); not a new business threshold for matching. */
+const CORE_NAME_MATCH_SCORE_FOR_DIAGNOSTICS = 0.9;
+const MATCHING_AMBIGUITY_CANDIDATE_CAP = 5;
+const MATCHING_AMBIGUITY_LABEL_MAX_LEN = 160;
+
+function compactMatchingAmbiguityLabel(value, maxLen = MATCHING_AMBIGUITY_LABEL_MAX_LEN) {
+  const s = String(value ?? "").trim();
+  if (s.length <= maxLen) return s;
+  return `${s.slice(0, Math.max(0, maxLen - 1))}…`;
+}
+
+/** Dry-run abort JSON only; uses existing ties order / cap; does not alter matching decisions. */
+function buildMatchingAmbiguityDiagnosticEntry(school, ties, best) {
+  const capped = ties.slice(0, MATCHING_AMBIGUITY_CANDIDATE_CAP);
+  const reasonCodes = [];
+  if (ties.length > 1) {
+    reasonCodes.push("equal_score_tie");
+  }
+  if (
+    capped.length >= 2 &&
+    capped.every((candidate) => candidate.matchType === capped[0].matchType)
+  ) {
+    reasonCodes.push("multiple_nsr_candidates_same_tier");
+  }
+  const weakSignalTie =
+    best.matchType === "fallback_fuzzy" || best.score < CORE_NAME_MATCH_SCORE_FOR_DIAGNOSTICS;
+  if (weakSignalTie) {
+    reasonCodes.push("weak_signal_tie");
+  }
+
+  let explanationCode = "equal_score_tie";
+  if (reasonCodes.includes("weak_signal_tie")) {
+    explanationCode = "weak_signal_tie";
+  } else if (reasonCodes.includes("multiple_nsr_candidates_same_tier")) {
+    explanationCode = "multiple_nsr_candidates_same_tier";
+  } else {
+    explanationCode = "equal_score_tie";
+  }
+
+  const codeRaw = school.schoolCode != null ? String(school.schoolCode).trim() : "";
+  return {
+    vilbliSchoolCode: codeRaw ? codeRaw : null,
+    vilbliSchoolLabel: compactMatchingAmbiguityLabel(school.schoolName),
+    candidateCount: ties.length,
+    topScore: best.score,
+    topMatchType: best.matchType,
+    candidates: capped.map((candidate) => ({
+      institutionId: String(candidate.institution.id),
+      institutionName: compactMatchingAmbiguityLabel(candidate.institution.name),
+      matchType: candidate.matchType,
+      score: candidate.score,
+    })),
+    reasonCodes,
+    explanationCode,
+  };
+}
+
 async function run() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
     throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL");
@@ -643,6 +700,7 @@ async function run() {
   const matchedBySchoolCode = new Map();
   const unmatchedSchools = [];
   const ambiguousMatches = [];
+  const matchingAmbiguityDiagnostics = isDryRun ? [] : null;
   for (const school of uniqueExtractedSchools) {
     const ranked = (nsrInstitutions ?? [])
       .map((institution) => ({
@@ -669,6 +727,11 @@ async function run() {
         schoolCode: school.schoolCode,
         schoolName: school.schoolName,
       });
+      if (isDryRun) {
+        matchingAmbiguityDiagnostics.push(
+          buildMatchingAmbiguityDiagnosticEntry(school, ties, best)
+        );
+      }
     }
   }
 
@@ -679,6 +742,24 @@ async function run() {
     if (isDryRun) {
       const diag = buildIdentitySemanticsDiagnosticsFromUniqueSchools(uniqueExtractedSchools);
       const abortReason = `School matching not clean. unmatched=${unmatchedSchoolCount}, ambiguous=${ambiguousMatchCount}`;
+      const ambiguityDiagnosticsPayload =
+        ambiguousMatchCount === 0 ? [] : matchingAmbiguityDiagnostics ?? [];
+      const matchingAmbiguitySummary =
+        ambiguousMatchCount === 0
+          ? {
+              ambiguousSchoolsCount: 0,
+              topScoreTieCount: 0,
+              weakSignalTieCount: 0,
+              diagnosticsOnly: true,
+            }
+          : {
+              ambiguousSchoolsCount: ambiguousMatchCount,
+              topScoreTieCount: ambiguousMatchCount,
+              weakSignalTieCount: ambiguityDiagnosticsPayload.filter((entry) =>
+                (entry.reasonCodes ?? []).includes("weak_signal_tie")
+              ).length,
+              diagnosticsOnly: true,
+            };
       const structuredAbortDiagnostics = {
         mode: "dry_run",
         aborted: true,
@@ -688,6 +769,8 @@ async function run() {
           unmatched: unmatchedSchoolCount,
           ambiguous: ambiguousMatchCount,
         },
+        matchingAmbiguitySummary,
+        matchingAmbiguityDiagnostics: ambiguityDiagnosticsPayload,
         identitySemanticsSummary: diag.identitySemanticsSummary,
         identitySemanticsBySchoolCode: diag.identitySemanticsBySchoolCode,
         identitySemanticsWarning: diag.identitySemanticsWarning,

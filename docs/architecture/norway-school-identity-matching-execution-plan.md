@@ -620,11 +620,150 @@ When dry-run aborts on dirty matching, output should include:
 - Diagnostics before abort apply **only** in dry-run; normal mode unchanged.
 - Abort policy is unchanged (still hard fail on dirty matching; structured output does not imply success).
 - `56` now exposes LOSA-heavy `unsupported` semantics in identity summary **before** abort (diagnostics-only).
-- `15` / `18` / `55` still abort without strong semantic explanation from identity helper for *matching ambiguity* itself; a next layer may require **matching ambiguity diagnostics** (not write-policy changes).
+- `15` / `18` / `55`: Phase **1A.2g** adds **matching ambiguity diagnostics** in the dry-run structured abort JSON only; counties remain **non-green** (abort unchanged). Identity semantics diagnostics remain additive.
 
-#### Next block
+### Phase 1A.2g — Matching ambiguity diagnostics contract
 
-- Phase 1A.2g — decide whether to add matching ambiguity diagnostics **without** changing matching policy.
+#### Decision
+
+- Add matching ambiguity diagnostics **only** to dry-run structured abort JSON (extend Phase 1A.2f payload in `scripts/run-vgs-truth-pipeline.mjs`).
+- Do not change matching policy.
+- Do not change readiness script output (`scripts/classify-vgs-truth-readiness.mjs`) in this phase.
+- Do not change normal mode behavior or summary.
+- Do not make ambiguous counties publishable.
+
+#### Output fields
+
+`matchingAmbiguitySummary`:
+
+```json
+{
+  "ambiguousSchoolsCount": "number",
+  "topScoreTieCount": "number",
+  "weakSignalTieCount": "number",
+  "diagnosticsOnly": true
+}
+```
+
+`matchingAmbiguityDiagnostics`:
+
+Array of:
+
+```json
+{
+  "vilbliSchoolCode": "string | null",
+  "vilbliSchoolLabel": "string",
+  "candidateCount": "number",
+  "topScore": "number | null",
+  "topMatchType": "string | null",
+  "candidates": [
+    {
+      "institutionId": "string",
+      "institutionName": "string",
+      "matchType": "string",
+      "score": "number"
+    }
+  ],
+  "reasonCodes": ["string"],
+  "explanationCode": "string"
+}
+```
+
+#### Reason codes
+
+Initial allowed codes:
+
+- `equal_score_tie`
+- `multiple_nsr_candidates_same_tier`
+- `weak_signal_tie`
+
+Reserved / future only (not required in first implementation):
+
+- `multi_location_same_identity_possible`
+- `slash_alias_needs_identity_resolution`
+- `losa_related_ambiguity`
+- `missing_disambiguating_source_field`
+
+#### Caps / payload rules
+
+- Cap `candidates` per ambiguous school at **5** (do not dump full ranked list).
+- Truncate overly long institution or Vilbli labels if needed while keeping enough for operator review.
+- Diagnostics are operator-facing tooling output, not end-user surfaced copy.
+
+#### Hard constraints
+
+- Diagnostics must **not** select a winning candidate.
+- Diagnostics must **not** break ties.
+- Diagnostics must **not** change matched / unmatched / ambiguous counts.
+- Diagnostics must **not** alter abort behavior (still abort on dirty matching; structured JSON does not mean success).
+- Diagnostics must **not** change readiness output.
+- Diagnostics must **not** change normal mode output.
+- Diagnostics must **not** influence write, deactivation, or publishability decisions.
+
+#### Validation gates
+
+- `node --check`
+- `rm -rf .next && npm run build`
+- Dry-run `15` / `18` / `55`: still abort and include `matchingAmbiguityDiagnostics` where ambiguous schools exist.
+- Dry-run `56`: still abort; `matchingAmbiguityDiagnostics` may be empty when the failure is unmatched-heavy rather than ambiguity-heavy.
+- Dry-run `03` / `11` / `46` / `50`: still succeed (no change to successful dry-run contract beyond additive fields absent when not aborting).
+
+### Phase 1A.2g implementation result (matching ambiguity diagnostics)
+
+#### Scope completed
+
+- Matching ambiguity diagnostics are implemented in `scripts/run-vgs-truth-pipeline.mjs` only (extend Phase **1A.2f** dry-run structured abort payload).
+- Uses **`ranked` / `best` / `ties`** from the **existing** matching loop; **no** second matching pass.
+- Matching policy unchanged; **`matchedBySchoolCode` / `unmatchedSchools` / `ambiguousMatches` counts and semantics** unchanged.
+- Normal mode unchanged (no structured ambiguity JSON on dirty matching; same throw as before).
+- Normal write mode was **not** run for this validation.
+- Readiness script output unchanged (`scripts/classify-vgs-truth-readiness.mjs` not modified).
+- Write, deactivation, and publishability logic unchanged.
+
+#### Reason / explanation rules (as implemented)
+
+- **`equal_score_tie`**: included when `ties.length > 1` (top-score tie).
+- **`multiple_nsr_candidates_same_tier`**: included when **capped** candidates (max 5, existing `ties` order) all share the same `matchType` (requires at least two capped candidates for the “multiple” signal).
+- **`weak_signal_tie`**: included only when `topMatchType === "fallback_fuzzy"` **or** `topScore < 0.9` (aligned with existing `classifyInstitutionMatch` semantics: `core_name_match` tier is `0.9`; no new business thresholds for matching).
+- **`explanationCode`** priority (single primary code per ambiguous school):
+  1. `weak_signal_tie`
+  2. `multiple_nsr_candidates_same_tier`
+  3. `equal_score_tie`
+- **`topScoreTieCount`**: number of ambiguous schools with a top-score tie; with current pipeline logic this **equals** `ambiguousMatches.length` / `ambiguousSchoolsCount`.
+- If a county aborts **only** because of unmatched schools (`ambiguous=0`), **`matchingAmbiguityDiagnostics` is `[]`** and ambiguity summary counts are all **zero** (unmatched-heavy case).
+
+#### Validation result
+
+- `node --check scripts/run-vgs-truth-pipeline.mjs` — passed.
+- `rm -rf .next && npm run build` — passed.
+
+#### Dry-run matrix snapshot (electrician) — dirty counties (still abort)
+
+- `15` — still aborts — `matchingAmbiguitySummary`: `ambiguousSchoolsCount=1`, `topScoreTieCount=1`, `weakSignalTieCount=1` — example: Surnadal (`candidateCount=4`), `explanationCode=weak_signal_tie`.
+- `18` — still aborts — `matchingAmbiguitySummary`: `ambiguous=1`, `topScoreTie=1`, `weakSignal=1` — example: Nuortta-Sálto (`candidateCount=2`), `explanationCode=weak_signal_tie`.
+- `55` — still aborts — `matchingAmbiguitySummary`: `ambiguous=2`, `topScoreTie=2`, `weakSignal=0` — example: Nord-Troms, `explanationCode=multiple_nsr_candidates_same_tier`.
+- `56` — still aborts — `matchingAmbiguitySummary` all zero — `matchingAmbiguityDiagnostics=[]` because the county is **unmatched-heavy**, not ambiguity-heavy.
+
+#### Dry-run matrix snapshot (electrician) — green counties (still succeed)
+
+- `03` — succeeds.
+- `11` — succeeds.
+- `46` — succeeds.
+- `50` — succeeds.
+
+#### Operational notes
+
+1. Phase **1A.2g** — **implementation result** as implemented in `scripts/run-vgs-truth-pipeline.mjs`: ambiguity payload is **dry-run structured abort only**.
+2. Ambiguity diagnostics are **operator-facing** tooling; they **do not** resolve ambiguity or select an NSR institution.
+3. Counties **`15` / `18` / `55`** now expose **why** matching is ambiguous (capped tie set + reason codes) but remain **non-green** until policy/product work—not diagnostic output alone.
+4. County **`56`** remains dominated by **unmatched** Vilbli schools (and LOSA-heavy identity signals from earlier phases); the next useful layer is **unmatched diagnostics** and **LOSA handling**, not more ambiguity-only payload.
+5. Successful dry-run JSON does **not** include `matchingAmbiguitySummary` / `matchingAmbiguityDiagnostics` (abort path only); normal success summary paths are unchanged.
+6. Next planned work is **Phase 1A.2h** (see below)—unmatched-heavy diagnostics decision—**without** changing matching policy.
+
+### Phase 1A.2h — Unmatched-heavy diagnostics decision (next)
+
+- **Goal:** Decide whether to add **unmatched** diagnostics for **unmatched-heavy** counties (especially **`56`**) in a dry-run-safe, diagnostics-only way—**without** changing matching policy, readiness output, or write behavior.
+- This phase is **not** started in the 1A.2g implementation above; it is the **next** planned block after ambiguity diagnostics are fixed.
 
 ---
 
