@@ -5,7 +5,17 @@ import type {
 } from "./select-programme-for-route";
 
 const TEMP_HIGHER_ED_LEVELS = new Set(["bachelor", "professional_degree", "master"]);
-const TRUTH_READY_ELECTRICIAN_COUNTIES = new Set(["03", "46"]);
+// Production truth-ready allowlist (Norwegian county codes): electrician PSA coverage
+// is verified in 03 Oslo, 11 Rogaland, 15 Møre og Romsdal, 46 Vestland, and 50 Trøndelag;
+// elsewhere legacy VGS catalog candidates stay visible until the same bar is met. Do not add
+// counties without a full audit — do not extend ad hoc.
+const TRUTH_READY_ELECTRICIAN_COUNTIES = new Set([
+  "03", // Oslo
+  "11", // Rogaland
+  "15", // Møre og Romsdal
+  "46", // Vestland
+  "50", // Trøndelag
+]);
 
 export function applyRouteSelectionBoundary(params: {
   professionSlug: string;
@@ -42,7 +52,7 @@ export function applyRouteSelectionBoundary(params: {
       TRUTH_READY_ELECTRICIAN_COUNTIES.has(candidateCountyCode) ||
       homeInTruthReadyElectricianCounty;
 
-    // Selective production boundary: for electrician in truth-ready counties,
+    // Selective production boundary: for electrician in TRUTH_READY_ELECTRICIAN_COUNTIES,
     // cut legacy upper-secondary/VGS contour from legacy selector candidates.
     if (
       params.professionSlug === "electrician" &&

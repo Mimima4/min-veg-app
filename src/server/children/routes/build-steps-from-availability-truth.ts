@@ -401,6 +401,12 @@ export function buildStepsFromAvailabilityTruth(params: {
             duration_label: null,
             display_title: row.programTitle,
             verification_status: row.verificationStatus,
+            institution_is_private_school:
+              row.institutionIsPrivateSchool === true
+                ? true
+                : row.institutionIsPrivateSchool === false
+                  ? false
+                  : null,
           })),
         });
         continue;
@@ -450,6 +456,12 @@ export function buildStepsFromAvailabilityTruth(params: {
           duration_label: null,
           display_title: defaultRow.programTitle,
           verification_status: defaultRow.verificationStatus,
+          institution_is_private_school:
+            defaultRow.institutionIsPrivateSchool === true
+              ? true
+              : defaultRow.institutionIsPrivateSchool === false
+                ? false
+                : null,
         },
       ],
     });

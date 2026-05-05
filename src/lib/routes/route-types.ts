@@ -35,6 +35,7 @@ export type StudyRouteProgrammeSelectionSnapshotStep = {
     duration_label?: string | null;
     display_title?: string | null;
     verification_status: string;
+    institution_is_private_school?: boolean | null;
   }>;
 };
 

@@ -247,6 +247,36 @@ export async function enrichStudyRouteSteps(
     website: string | null;
   } | null = null;
 
+  const institutionIdsNeedingPrivateFlag = new Set<string>();
+  for (const step of steps) {
+    if (step.source !== "availability_truth" || step.type !== "programme_selection") {
+      continue;
+    }
+    for (const opt of step.options ?? []) {
+      const oid = typeof opt.institution_id === "string" ? opt.institution_id.trim() : "";
+      if (!oid) continue;
+      const existing = opt.institution_is_private_school;
+      if (existing !== undefined && existing !== null) continue;
+      institutionIdsNeedingPrivateFlag.add(oid);
+    }
+  }
+
+  let privateSchoolByInstitutionId = new Map<string, boolean | null>();
+  if (institutionIdsNeedingPrivateFlag.size > 0) {
+    const { data: privateRows } = await supabase
+      .from("education_institutions")
+      .select("id, is_private_school")
+      .in("id", [...institutionIdsNeedingPrivateFlag]);
+    privateSchoolByInstitutionId = new Map(
+      (
+        (privateRows ?? []) as Array<{
+          id: string;
+          is_private_school: boolean | null;
+        }>
+      ).map((row) => [row.id, row.is_private_school ?? null])
+    );
+  }
+
   return steps.map((step) => {
     if (step.source === "availability_truth") {
       if (step.type === "apprenticeship_step") {
@@ -332,6 +362,16 @@ export async function enrichStudyRouteSteps(
                   ? stripTrailingGeographicSuffix(optionNormalizedProgramTitle)
                   : optionNormalizedProgramTitle;
 
+              const institutionId =
+                typeof option.institution_id === "string" ? option.institution_id.trim() : "";
+              const hydratedPrivate =
+                option.institution_is_private_school !== undefined &&
+                option.institution_is_private_school !== null
+                  ? option.institution_is_private_school
+                  : institutionId
+                    ? (privateSchoolByInstitutionId.get(institutionId) ?? null)
+                    : null;
+
               return {
                 ...option,
                 institution_city: optionMunicipality,
@@ -344,6 +384,7 @@ export async function enrichStudyRouteSteps(
                 stage: option.stage ?? step.stage ?? null,
                 duration_label: option.duration_label ?? formatDurationLabel(truthDuration),
                 display_title: optionDisplayProgramTitle,
+                institution_is_private_school: hydratedPrivate,
               };
             })(),
           })),

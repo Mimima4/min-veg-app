@@ -502,6 +502,7 @@ For VGS programme -> school availability, the system MUST use a source-scoped tr
 - Vilbli school rows MUST be matched to canonical NSR-linked school identity before publishable availability.
 - Matching MUST NOT rely on raw name equality only.
 - Matching signals MAY include normalized name, fylke/county, address, school page path, website/domain, phone and email.
+- **Mandatory production rules** for Norwegian school identity (aliases via `/`, multiple campuses/avdelinger, LOSA-as-non-ordinary-match, ambiguity → abort vs false truth, and implementation boundaries) are normative and live in **`docs/architecture/norway-school-identity-matching-spec.md`** (`norway-school-identity-matching-spec.md`). Changes to Vilbli → NSR matching MUST respect that document.
 
 #### Availability and verification state
 

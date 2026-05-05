@@ -66,6 +66,14 @@ function stableStringify(value: unknown): string {
   return JSON.stringify(normalizeJsonValue(value));
 }
 
+const PRIVATE_SCHOOL_BADGE_CLASSES = {
+  default:
+    "inline-flex shrink-0 rounded-full border border-orange-200 bg-orange-50 px-2 py-0.5 text-xs font-medium text-orange-700",
+  /** Same orange palette, slightly stronger for selected row on dark background. */
+  onDarkSelectedRow:
+    "inline-flex shrink-0 rounded-full border border-orange-300 bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-900",
+};
+
 export default function RouteStepsPanel({
   childId,
   routeId,
@@ -89,6 +97,7 @@ export default function RouteStepsPanel({
     durationLabel: string | null;
     fromPayload: boolean;
     meta: string | null;
+    institutionIsPrivateSchool: boolean;
   };
 
   useEffect(() => {
@@ -118,6 +127,7 @@ export default function RouteStepsPanel({
         durationLabel: option.duration_label ?? step.duration_label ?? null,
         fromPayload: true,
         meta: option.verification_status,
+        institutionIsPrivateSchool: option.institution_is_private_school === true,
       }));
       if (mapped.length > 0) return mapped;
       return [
@@ -131,6 +141,7 @@ export default function RouteStepsPanel({
           durationLabel: step.duration_label ?? null,
           fromPayload: false,
           meta: null,
+          institutionIsPrivateSchool: false,
         },
       ];
     }
@@ -149,6 +160,7 @@ export default function RouteStepsPanel({
           option.outcome_profession_ids.length > 0
             ? `${option.outcome_profession_ids.length} outcomes`
             : null,
+        institutionIsPrivateSchool: false,
       }));
       if (mapped.length > 0) return mapped;
       return [
@@ -162,6 +174,7 @@ export default function RouteStepsPanel({
           durationLabel: step.duration_label ?? null,
           fromPayload: false,
           meta: null,
+          institutionIsPrivateSchool: false,
         },
       ];
     }
@@ -177,6 +190,7 @@ export default function RouteStepsPanel({
         durationLabel: step.duration_label ?? null,
         fromPayload: false,
         meta: null,
+        institutionIsPrivateSchool: false,
       },
     ];
   };
@@ -369,6 +383,18 @@ export default function RouteStepsPanel({
                                 </div>
                               )}
 
+                              {step.type === "programme_selection" &&
+                              selectedOption.institutionIsPrivateSchool ? (
+                                <div className="pt-0.5">
+                                  <span
+                                    className={PRIVATE_SCHOOL_BADGE_CLASSES.default}
+                                    title="Privat videregående skole"
+                                  >
+                                    Privatskole
+                                  </span>
+                                </div>
+                              ) : null}
+
                               {selectedWebsite && (
                                 <a
                                   href={selectedWebsite}
@@ -407,13 +433,27 @@ export default function RouteStepsPanel({
                                     setOpenStepKey(null);
                                   }
                                 }
-                                className={`w-full rounded-md border px-3 py-2 text-left text-sm ${
+                                className={`flex w-full items-start justify-between gap-2 rounded-md border px-3 py-2 text-left text-sm ${
                                   option.id === selectedOption.id
                                     ? "border-stone-700 bg-stone-900 text-white"
                                     : "border-stone-200 bg-white text-stone-800 hover:bg-stone-100"
                                 }`}
                               >
-                                <div>{option.schoolName}</div>
+                                <span className="min-w-0 flex-1 break-words">
+                                  {option.schoolName}
+                                </span>
+                                {option.institutionIsPrivateSchool ? (
+                                  <span
+                                    className={
+                                      option.id === selectedOption.id
+                                        ? PRIVATE_SCHOOL_BADGE_CLASSES.onDarkSelectedRow
+                                        : PRIVATE_SCHOOL_BADGE_CLASSES.default
+                                    }
+                                    title="Privat videregående skole"
+                                  >
+                                    Privatskole
+                                  </span>
+                                ) : null}
                               </button>
                             ))}
                           </div>

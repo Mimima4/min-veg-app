@@ -11,6 +11,7 @@ export type AvailabilityTruthRow = {
   institutionMunicipality: string | null;
   municipalityCode: string | null;
   institutionWebsite: string | null;
+  institutionIsPrivateSchool: boolean | null;
   countyCode: string;
   stage: "VG1" | "VG2" | "VG3" | "APPRENTICESHIP" | string;
   verificationStatus: "verified" | "needs_review" | string;
@@ -137,7 +138,7 @@ export async function getAvailabilityTruth({
 
   const { data: institutions, error: institutionsError } = await supabase
     .from("education_institutions")
-    .select("id, name, municipality_name, municipality_code, website_url")
+    .select("id, name, municipality_name, municipality_code, website_url, is_private_school")
     .in("id", institutionIds)
     .eq("is_active", true);
 
@@ -154,6 +155,7 @@ export async function getAvailabilityTruth({
       municipality_name: string | null;
       municipality_code: string | null;
       website_url: string | null;
+      is_private_school: boolean | null;
     }>).map((institution) => [institution.id, institution])
   );
 
@@ -183,6 +185,8 @@ export async function getAvailabilityTruth({
         institutionMunicipality: institution?.municipality_name ?? null,
         municipalityCode: row.municipality_code ?? institution?.municipality_code ?? null,
         institutionWebsite: institution?.website_url ?? null,
+        institutionIsPrivateSchool:
+          institution != null ? (institution.is_private_school ?? null) : null,
         countyCode: row.county_code,
         stage: row.stage,
         verificationStatus: row.verification_status,
