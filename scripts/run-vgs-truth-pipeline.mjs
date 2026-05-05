@@ -352,6 +352,86 @@ function isCanonicalProgrammeRowAligned(row, spec) {
   );
 }
 
+/**
+ * Read-only Vilbli school rows → identity semantics diagnostics (dry-run additive only).
+ * Summary counts reflect all analyzed schools; map may be capped.
+ */
+function buildIdentitySemanticsDiagnosticsFromUniqueSchools(uniqueExtractedSchools) {
+  const identitySemanticsSummary = {
+    totalSchoolsAnalyzed: 0,
+    slashAliasCount: 0,
+    losaCount: 0,
+    multiLocationSignalCount: 0,
+    unsupportedCount: 0,
+    needsReviewCount: 0,
+    helperError: false,
+    helperErrorMessage: null,
+  };
+  let identitySemanticsBySchoolCode = {};
+  let identitySemanticsWarning = null;
+
+  try {
+    const entries = [...uniqueExtractedSchools]
+      .map((school) => ({
+        schoolCode: String(school?.schoolCode ?? "").trim(),
+        schoolName: String(school?.schoolName ?? "").trim(),
+      }))
+      .sort(
+        (a, b) =>
+          a.schoolCode.localeCompare(b.schoolCode) || a.schoolName.localeCompare(b.schoolName)
+      );
+    identitySemanticsSummary.totalSchoolsAnalyzed = entries.length;
+
+    const diagnosticsMap = {};
+    const maxDetailedEntries = 100;
+    let emitted = 0;
+
+    for (let i = 0; i < entries.length; i += 1) {
+      const entry = entries[i];
+      const semantics = classifyIdentitySemantics(entry.schoolName, {
+        schoolCode: entry.schoolCode || null,
+      });
+
+      if (semantics.hasSlashAliases) identitySemanticsSummary.slashAliasCount += 1;
+      if (semantics.isLosa) identitySemanticsSummary.losaCount += 1;
+      if (semantics.hasMultiLocationSignal) identitySemanticsSummary.multiLocationSignalCount += 1;
+      if ((semantics.unsupportedReasonCodes ?? []).length > 0) identitySemanticsSummary.unsupportedCount += 1;
+      if ((semantics.needsReviewReasonCodes ?? []).length > 0) identitySemanticsSummary.needsReviewCount += 1;
+
+      if (emitted < maxDetailedEntries) {
+        const fallbackLabel = normalizeBasic(entry.schoolName || "unknown");
+        const stableIndex = String(i + 1).padStart(4, "0");
+        const key = entry.schoolCode || `${fallbackLabel}::${stableIndex}`;
+        diagnosticsMap[key] = {
+          schoolName: entry.schoolName,
+          hasSlashAliases: semantics.hasSlashAliases,
+          isLosa: semantics.isLosa,
+          hasMultiLocationSignal: semantics.hasMultiLocationSignal,
+          unsupportedReasonCodes: semantics.unsupportedReasonCodes ?? [],
+          needsReviewReasonCodes: semantics.needsReviewReasonCodes ?? [],
+          identityReasonCodes: semantics.identityReasonCodes ?? [],
+        };
+        emitted += 1;
+      }
+    }
+
+    identitySemanticsBySchoolCode = diagnosticsMap;
+    if (entries.length > maxDetailedEntries) {
+      identitySemanticsWarning =
+        "identitySemanticsBySchoolCode capped at 100 entries; summary counts are based on all analyzed schools";
+    }
+  } catch (error) {
+    identitySemanticsSummary.helperError = true;
+    identitySemanticsSummary.helperErrorMessage =
+      error instanceof Error ? error.message.slice(0, 200) : "identity semantics helper failed";
+    identitySemanticsBySchoolCode = {};
+    identitySemanticsWarning =
+      "identity semantics diagnostics unavailable: helper failed (fail-open, pipeline behavior unchanged)";
+  }
+
+  return { identitySemanticsSummary, identitySemanticsBySchoolCode, identitySemanticsWarning };
+}
+
 async function run() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
     throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL");
@@ -592,85 +672,43 @@ async function run() {
     }
   }
 
-  if (unmatchedSchools.length > 0 || ambiguousMatches.length > 0) {
+  const unmatchedSchoolCount = unmatchedSchools.length;
+  const ambiguousMatchCount = ambiguousMatches.length;
+
+  if (unmatchedSchoolCount > 0 || ambiguousMatchCount > 0) {
+    if (isDryRun) {
+      const diag = buildIdentitySemanticsDiagnosticsFromUniqueSchools(uniqueExtractedSchools);
+      const abortReason = `School matching not clean. unmatched=${unmatchedSchoolCount}, ambiguous=${ambiguousMatchCount}`;
+      const structuredAbortDiagnostics = {
+        mode: "dry_run",
+        aborted: true,
+        abortReason,
+        matching: {
+          matched: matchedBySchoolCode.size,
+          unmatched: unmatchedSchoolCount,
+          ambiguous: ambiguousMatchCount,
+        },
+        identitySemanticsSummary: diag.identitySemanticsSummary,
+        identitySemanticsBySchoolCode: diag.identitySemanticsBySchoolCode,
+        identitySemanticsWarning: diag.identitySemanticsWarning,
+        safety: { dbWritesExecuted: false },
+      };
+      console.log(JSON.stringify(structuredAbortDiagnostics, null, 2));
+    }
     throw new Error(
-      `ABORT: School matching not clean. unmatched=${unmatchedSchools.length}, ambiguous=${ambiguousMatches.length}`
+      `ABORT: School matching not clean. unmatched=${unmatchedSchoolCount}, ambiguous=${ambiguousMatchCount}`
     );
   }
 
-  const identitySemanticsSummary = {
-    totalSchoolsAnalyzed: 0,
-    slashAliasCount: 0,
-    losaCount: 0,
-    multiLocationSignalCount: 0,
-    unsupportedCount: 0,
-    needsReviewCount: 0,
-    helperError: false,
-    helperErrorMessage: null,
-  };
-  let identitySemanticsBySchoolCode = {};
-  let identitySemanticsWarning = null;
+  let identitySemanticsSummary;
+  let identitySemanticsBySchoolCode;
+  let identitySemanticsWarning;
 
   if (isDryRun) {
-    try {
-      const entries = [...uniqueExtractedSchools]
-        .map((school) => ({
-          schoolCode: String(school?.schoolCode ?? "").trim(),
-          schoolName: String(school?.schoolName ?? "").trim(),
-          school,
-        }))
-        .sort(
-          (a, b) =>
-            a.schoolCode.localeCompare(b.schoolCode) || a.schoolName.localeCompare(b.schoolName)
-        );
-      identitySemanticsSummary.totalSchoolsAnalyzed = entries.length;
-
-      const diagnosticsMap = {};
-      const maxDetailedEntries = 100;
-      let emitted = 0;
-
-      for (let i = 0; i < entries.length; i += 1) {
-        const entry = entries[i];
-        const semantics = classifyIdentitySemantics(entry.schoolName, {
-          schoolCode: entry.schoolCode || null,
-        });
-
-        if (semantics.hasSlashAliases) identitySemanticsSummary.slashAliasCount += 1;
-        if (semantics.isLosa) identitySemanticsSummary.losaCount += 1;
-        if (semantics.hasMultiLocationSignal) identitySemanticsSummary.multiLocationSignalCount += 1;
-        if ((semantics.unsupportedReasonCodes ?? []).length > 0) identitySemanticsSummary.unsupportedCount += 1;
-        if ((semantics.needsReviewReasonCodes ?? []).length > 0) identitySemanticsSummary.needsReviewCount += 1;
-
-        if (emitted < maxDetailedEntries) {
-          const fallbackLabel = normalizeBasic(entry.schoolName || "unknown");
-          const stableIndex = String(i + 1).padStart(4, "0");
-          const key = entry.schoolCode || `${fallbackLabel}::${stableIndex}`;
-          diagnosticsMap[key] = {
-            schoolName: entry.schoolName,
-            hasSlashAliases: semantics.hasSlashAliases,
-            isLosa: semantics.isLosa,
-            hasMultiLocationSignal: semantics.hasMultiLocationSignal,
-            unsupportedReasonCodes: semantics.unsupportedReasonCodes ?? [],
-            needsReviewReasonCodes: semantics.needsReviewReasonCodes ?? [],
-            identityReasonCodes: semantics.identityReasonCodes ?? [],
-          };
-          emitted += 1;
-        }
-      }
-
-      identitySemanticsBySchoolCode = diagnosticsMap;
-      if (entries.length > maxDetailedEntries) {
-        identitySemanticsWarning =
-          "identitySemanticsBySchoolCode capped at 100 entries; summary counts are based on all analyzed schools";
-      }
-    } catch (error) {
-      identitySemanticsSummary.helperError = true;
-      identitySemanticsSummary.helperErrorMessage =
-        error instanceof Error ? error.message.slice(0, 200) : "identity semantics helper failed";
-      identitySemanticsBySchoolCode = {};
-      identitySemanticsWarning =
-        "identity semantics diagnostics unavailable: helper failed (fail-open, pipeline behavior unchanged)";
-    }
+    const diag = buildIdentitySemanticsDiagnosticsFromUniqueSchools(uniqueExtractedSchools);
+    identitySemanticsSummary = diag.identitySemanticsSummary;
+    identitySemanticsBySchoolCode = diag.identitySemanticsBySchoolCode;
+    identitySemanticsWarning = diag.identitySemanticsWarning;
   }
 
   // 2b) Dry-run only: shared planner + read-only materialization simulation.

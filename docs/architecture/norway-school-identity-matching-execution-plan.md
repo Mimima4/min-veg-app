@@ -502,9 +502,129 @@ Introduce one shared identity semantics helper for pipeline/readiness/cleanup sc
 - `46` has a multi-location signal but remains green; this remains diagnostics-only.
 - Non-green counties still abort before diagnostics output because the existing hard matching gate is preserved.
 
+### Phase 1A.2f — Dry-run abort diagnostics contract
+
+#### Decision
+
+- For `isDryRun=true` and matching-not-clean, the pipeline may compute identity diagnostics **before** abort.
+- Abort still happens.
+- No readiness override.
+- No write planning.
+- No deactivation planning.
+- No PSA writes.
+- No LOSA write-block.
+- Normal mode abort behavior remains unchanged.
+
+#### Structured abort diagnostics contract
+
+When dry-run aborts on dirty matching, output should include:
+
+```json
+{
+  "mode": "dry_run",
+  "aborted": true,
+  "abortReason": "string",
+  "matching": {
+    "matched": "number",
+    "unmatched": "number",
+    "ambiguous": "number"
+  },
+  "identitySemanticsSummary": {
+    "totalSchoolsAnalyzed": "number",
+    "slashAliasCount": "number",
+    "losaCount": "number",
+    "multiLocationSignalCount": "number",
+    "unsupportedCount": "number",
+    "needsReviewCount": "number",
+    "helperError": "boolean",
+    "helperErrorMessage": "string | null"
+  },
+  "identitySemanticsBySchoolCode": "Record<string, object>",
+  "identitySemanticsWarning": "string | null",
+  "safety": {
+    "dbWritesExecuted": false
+  }
+}
+```
+
+#### Error/exit behavior
+
+- The run must still fail/abort.
+- Structured diagnostics must not turn abort into success.
+- Primary abort reason remains matching-not-clean.
+- Helper failures must not hide the primary abort reason.
+- If helper fails, diagnostics should be fail-open:
+  - `helperError=true`
+  - `helperErrorMessage` set
+  - `identitySemanticsBySchoolCode={}`
+  - `identitySemanticsWarning` set.
+
+#### Payload/cap rules
+
+- Deterministic sorted input.
+- Cap `identitySemanticsBySchoolCode` at 100.
+- Summary counts use all analyzed schools, not capped map entries.
+- Warning set if capped.
+
+#### Forbidden
+
+- No diagnostics before abort in normal mode.
+- No changing normal abort message/behavior.
+- No matching/ranking/status/count changes.
+- No write candidates after failed matching.
+- No deactivation forecast after failed matching.
+- No use of helper output for publishability.
+
+#### Validation gates
+
+- `node --check`
+- `rm -rf .next && npm run build`
+- Dry-run `15` / `18` / `55` / `56` should still abort but output structured diagnostics.
+- Dry-run `03` / `11` / `46` / `50` should remain successful.
+- Normal write mode not run without approval.
+
+### Phase 1A.2f implementation result (dry-run structured abort diagnostics)
+
+#### Scope completed
+
+- Implemented in `scripts/run-vgs-truth-pipeline.mjs`.
+- `buildIdentitySemanticsDiagnosticsFromUniqueSchools(uniqueExtractedSchools)` extracted as a single local function for `identitySemanticsSummary` / `identitySemanticsBySchoolCode` / `identitySemanticsWarning` (reuse for successful dry-run summary and dirty-matching dry-run abort).
+- Dirty matching in dry-run prints structured JSON diagnostics to **stdout** via `console.log(JSON.stringify(..., null, 2))` **before** the same `throw` with the existing ABORT message (`ABORT: School matching not clean...`).
+- Successful dry-run summary output does **not** include `aborted: true`.
+- Normal mode dirty-matching behavior/message unchanged (no structured diagnostics in normal mode).
+- Admin dashboard (`/nb/admin/dashboard`) not integrated in this phase.
+- Normal write mode was not run; dry-run DB writes were not executed.
+
+#### Validation result
+
+- `node --check scripts/run-vgs-truth-pipeline.mjs` passed.
+- `node --check scripts/school-identity-semantics.mjs` passed.
+- `rm -rf .next && npm run build` passed.
+
+#### Dry-run matrix snapshot (electrician) — dirty counties (still abort)
+
+- `15` — still abort — identity: `total=10 slash=0 losa=0 multi=0 unsupported=0 needsReview=0` — `safety.dbWritesExecuted=false`
+- `18` — still abort — identity: `total=13 slash=0 losa=0 multi=0 unsupported=0 needsReview=0` — `safety.dbWritesExecuted=false`
+- `55` — still abort — identity: `total=5 slash=0 losa=0 multi=0 unsupported=0 needsReview=0` — `safety.dbWritesExecuted=false`
+- `56` — still abort — identity: `total=24 slash=0 losa=18 multi=0 unsupported=18 needsReview=0` — `safety.dbWritesExecuted=false`
+
+#### Dry-run matrix snapshot (electrician) — green counties (still succeed)
+
+- `03` — still succeeds — identity: `total=5 slash=0 losa=0 ...`
+- `11` — still succeeds — identity: `total=13 ...`
+- `46` — still succeeds — identity: `total=22 ...`
+- `50` — still succeeds — identity: `total=15 ...`
+
+#### Operational notes
+
+- Diagnostics before abort apply **only** in dry-run; normal mode unchanged.
+- Abort policy is unchanged (still hard fail on dirty matching; structured output does not imply success).
+- `56` now exposes LOSA-heavy `unsupported` semantics in identity summary **before** abort (diagnostics-only).
+- `15` / `18` / `55` still abort without strong semantic explanation from identity helper for *matching ambiguity* itself; a next layer may require **matching ambiguity diagnostics** (not write-policy changes).
+
 #### Next block
 
-- Phase 1A.2f — decide whether to extend diagnostics before abort for non-green counties, without changing abort policy.
+- Phase 1A.2g — decide whether to add matching ambiguity diagnostics **without** changing matching policy.
 
 ---
 
