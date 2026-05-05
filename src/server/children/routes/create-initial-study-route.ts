@@ -29,6 +29,7 @@ import { buildPathVariants } from "./build-path-variants";
 import { mapVilbliOutcomesToNav } from "./map-vilbli-outcomes-to-nav";
 import { selectTruthCandidateForRoute } from "./select-truth-candidate-for-route";
 import { applyRouteSelectionBoundary } from "./apply-route-selection-boundary";
+import { toUniqueValidUuids } from "./route-id-guards";
 
 type Params = {
   childId: string;
@@ -444,19 +445,26 @@ export async function createInitialStudyRoute(
     }
 
     const typedPrograms = (programs ?? []) as RouteEducationProgram[];
-    const institutionIds = typedPrograms.map((program) => program.institution_id);
+    const institutionIds = toUniqueValidUuids(
+      typedPrograms.map((program) => program.institution_id)
+    );
+    let institutions: RouteInstitution[] = [];
 
-    const { data: institutions, error: institutionsError } = await supabase
-      .from("education_institutions")
-      .select("id, slug, name, county_code, municipality_code, is_active, source, is_route_relevant")
-      .in("id", institutionIds)
-      .eq("is_active", true);
+    if (institutionIds.length > 0) {
+      const { data: institutionRows, error: institutionsError } = await supabase
+        .from("education_institutions")
+        .select("id, slug, name, county_code, municipality_code, is_active, source, is_route_relevant")
+        .in("id", institutionIds)
+        .eq("is_active", true);
 
-    if (institutionsError) {
-      throw new RouteDomainError(
-        "internal_error",
-        `Failed to load education institutions for initial route: ${institutionsError.message}`
-      );
+      if (institutionsError) {
+        throw new RouteDomainError(
+          "internal_error",
+          `Failed to load education institutions for initial route: ${institutionsError.message}`
+        );
+      }
+
+      institutions = (institutionRows ?? []) as RouteInstitution[];
     }
 
     const boundaryScoped = applyRouteSelectionBoundary({
@@ -464,7 +472,7 @@ export async function createInitialStudyRoute(
       preferredMunicipalityCodes,
       professionProgramLinks: typedLinks,
       educationPrograms: typedPrograms,
-      institutions: (institutions ?? []) as RouteInstitution[],
+      institutions,
     });
 
     const selected = await selectProgrammeForRoute({

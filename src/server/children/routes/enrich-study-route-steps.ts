@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import type { StudyRouteSnapshotStep } from "@/lib/routes/route-types";
+import { isValidUuid, toUniqueValidUuids } from "./route-id-guards";
 
 type EducationProgramRow = {
   slug: string;
@@ -161,12 +162,8 @@ export async function enrichStudyRouteSteps(
     typedPrograms.map((program) => [program.slug, program])
   );
 
-  const institutionIds = Array.from(
-    new Set(
-      typedPrograms
-        .map((program) => program.institution_id)
-        .filter((value): value is string => Boolean(value))
-    )
+  const institutionIds = toUniqueValidUuids(
+    typedPrograms.map((program) => program.institution_id)
   );
 
   let institutionById = new Map<string, EducationInstitutionRow>();
@@ -254,7 +251,7 @@ export async function enrichStudyRouteSteps(
     }
     for (const opt of step.options ?? []) {
       const oid = typeof opt.institution_id === "string" ? opt.institution_id.trim() : "";
-      if (!oid) continue;
+      if (!isValidUuid(oid)) continue;
       const existing = opt.institution_is_private_school;
       if (existing !== undefined && existing !== null) continue;
       institutionIdsNeedingPrivateFlag.add(oid);

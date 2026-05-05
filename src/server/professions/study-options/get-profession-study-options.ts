@@ -13,6 +13,7 @@ import {
   type PreferredEducationLevel,
   type PreferredWorkStyle,
 } from "@/server/children/planning/get-child-planning-state";
+import { toUniqueValidUuids } from "@/server/children/routes/route-id-guards";
 
 type ProgramLinkRow = {
   program_slug: string;
@@ -38,7 +39,7 @@ type ProgramDetailsRow = {
   study_mode: string;
   duration_years: number | null;
   description: string | null;
-  institution_id: string;
+  institution_id: string | null;
 };
 
 type ChildRow = {
@@ -215,23 +216,30 @@ export async function getProfessionStudyOptions({
     };
   }
 
-  const institutionIds = (programs ?? []).map((program) => program.institution_id);
+  const institutionIds = toUniqueValidUuids(
+    (programs ?? []).map((program) => program.institution_id)
+  );
 
-  const { data: institutions, error: institutionsError } = await supabase
-    .from("education_institutions")
-    .select(
-      "id, slug, name, institution_type, website_url, county_code, municipality_code, municipality_name"
-    )
-    .in("id", institutionIds)
-    .eq("is_active", true);
+  let institutions: InstitutionRow[] = [];
+  if (institutionIds.length > 0) {
+    const { data: institutionRows, error: institutionsError } = await supabase
+      .from("education_institutions")
+      .select(
+        "id, slug, name, institution_type, website_url, county_code, municipality_code, municipality_name"
+      )
+      .in("id", institutionIds)
+      .eq("is_active", true);
 
-  if (institutionsError) {
-    return {
-      kind: "error",
-      title: "Study options",
-      subtitle: "There was a problem loading institutions.",
-      message: institutionsError.message,
-    };
+    if (institutionsError) {
+      return {
+        kind: "error",
+        title: "Study options",
+        subtitle: "There was a problem loading institutions.",
+        message: institutionsError.message,
+      };
+    }
+
+    institutions = (institutionRows ?? []) as InstitutionRow[];
   }
 
   const { data: savedRouteRows } = await supabase
@@ -247,12 +255,14 @@ export async function getProfessionStudyOptions({
   );
 
   const institutionMap = new Map<string, InstitutionRow>(
-    (institutions ?? []).map((item) => [item.id, item as InstitutionRow])
+    institutions.map((item) => [item.id, item as InstitutionRow])
   );
 
   const decoratedRows = ((programs ?? []) as ProgramDetailsRow[])
     .map((program) => {
-      const institution = institutionMap.get(program.institution_id);
+      const institution = program.institution_id
+        ? institutionMap.get(program.institution_id)
+        : undefined;
       const link = linkMap.get(program.slug);
 
       if (!institution || !link) {

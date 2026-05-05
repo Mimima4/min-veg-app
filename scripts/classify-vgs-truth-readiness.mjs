@@ -57,6 +57,36 @@ function normalizeBasic(value) {
     .trim();
 }
 
+const UUID_SHAPE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isValidUuid(value) {
+  if (typeof value !== "string") return false;
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+  const lowered = trimmed.toLowerCase();
+  if (lowered === "null" || lowered === "undefined") return false;
+  return UUID_SHAPE.test(trimmed);
+}
+
+function toUniqueValidUuids(values) {
+  const unique = new Set();
+  let droppedInvalidCount = 0;
+
+  for (const value of values) {
+    if (!isValidUuid(value)) {
+      droppedInvalidCount += 1;
+      continue;
+    }
+    unique.add(value.trim());
+  }
+
+  return {
+    ids: Array.from(unique),
+    droppedInvalidCount,
+  };
+}
+
 function normalizeSchoolName(value) {
   return normalizeBasic(value)
     .replace(/\bvideregaende skole\b/g, " ")
@@ -186,9 +216,15 @@ async function classifyReadiness({ professionSlug, countyCode }) {
     : { data: [], error: null };
   if (linkedProgramsError) throw linkedProgramsError;
 
-  const linkedInstitutionIds = Array.from(
-    new Set((linkedPrograms ?? []).map((row) => row.institution_id).filter(Boolean))
+  const linkedInstitutionIdsResult = toUniqueValidUuids(
+    (linkedPrograms ?? []).map((row) => row.institution_id)
   );
+  const linkedInstitutionIds = linkedInstitutionIdsResult.ids;
+  if (linkedInstitutionIdsResult.droppedInvalidCount > 0) {
+    console.warn(
+      `[classify-vgs-truth-readiness] dropped invalid institution IDs: ${linkedInstitutionIdsResult.droppedInvalidCount} (profession=${professionSlug}, county=${countyCode})`
+    );
+  }
   const { data: linkedInstitutions, error: linkedInstitutionsError } = linkedInstitutionIds.length
     ? await supabase
         .from("education_institutions")

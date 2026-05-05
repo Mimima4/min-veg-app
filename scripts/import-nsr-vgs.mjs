@@ -36,6 +36,35 @@ function normalize(value) {
     .trim();
 }
 
+function normalizedTokens(value) {
+  return normalize(value)
+    .split(" ")
+    .map((token) => token.trim())
+    .filter(Boolean);
+}
+
+function hasTokenPhrase(tokens, phrase) {
+  const phraseTokens = normalizedTokens(phrase);
+  if (phraseTokens.length === 0 || tokens.length < phraseTokens.length) {
+    return false;
+  }
+
+  for (let index = 0; index <= tokens.length - phraseTokens.length; index += 1) {
+    let matches = true;
+    for (let offset = 0; offset < phraseTokens.length; offset += 1) {
+      if (tokens[index + offset] !== phraseTokens[offset]) {
+        matches = false;
+        break;
+      }
+    }
+    if (matches) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 function normalizeWebsite(value) {
   const raw = String(value ?? "").trim();
   if (!raw) return null;
@@ -53,19 +82,24 @@ function normalizeWebsite(value) {
 }
 
 function isPrivateSchool(detail) {
+  // Official NSR field is the primary truth for private-school status.
   if (detail.ErPrivatskole === true) return true;
+  if (detail.ErPrivatskole === false) return false;
 
-  const name = normalize(detail.Navn);
+  // Conservative fallback when NSR flag is missing/unknown: exact token phrases only.
+  // Do not use arbitrary substring heuristics (e.g. "as"), which can contaminate public schools.
+  const nameTokens = normalizedTokens(detail.Navn);
 
-  const privateSignals = [
+  const conservativePrivateNamePhrases = [
     "akademiet",
     "wang",
     "montessori",
     "bibelskolen",
-    "as",
   ];
 
-  return privateSignals.some((signal) => name.includes(signal));
+  return conservativePrivateNamePhrases.some((phrase) =>
+    hasTokenPhrase(nameTokens, phrase)
+  );
 }
 
 function isRouteRelevant(detail) {

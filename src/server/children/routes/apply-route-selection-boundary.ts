@@ -3,6 +3,7 @@ import type {
   RouteInstitution,
   RouteProgramLink,
 } from "./select-programme-for-route";
+import { isValidUuid, toUniqueValidUuids } from "./route-id-guards";
 
 const TEMP_HIGHER_ED_LEVELS = new Set(["bachelor", "professional_degree", "master"]);
 // Production truth-ready allowlist (Norwegian county codes): electrician PSA coverage
@@ -41,6 +42,7 @@ export function applyRouteSelectionBoundary(params: {
   );
 
   const allowedPrograms = params.educationPrograms.filter((program) => {
+    if (!isValidUuid(program.institution_id)) return false;
     const institution = institutionById.get(program.institution_id);
     if (!institution) return false;
 
@@ -85,7 +87,7 @@ export function applyRouteSelectionBoundary(params: {
     linkedProgramSlugs.has(program.slug)
   );
   const filteredInstitutionIds = new Set(
-    filteredPrograms.map((program) => program.institution_id)
+    toUniqueValidUuids(filteredPrograms.map((program) => program.institution_id))
   );
   const filteredInstitutions = params.institutions.filter((institution) =>
     filteredInstitutionIds.has(institution.id)

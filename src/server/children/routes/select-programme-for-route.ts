@@ -27,7 +27,7 @@ export type RouteProgramLink = {
 export type RouteEducationProgram = {
   slug: string;
   title: string;
-  institution_id: string;
+  institution_id: string | null;
   education_level: string | null;
   is_active?: boolean;
 };
@@ -223,7 +223,9 @@ export async function selectProgrammeForRoute(params: {
       return {
         link,
         program,
-        institution: institutionById.get(program.institution_id) ?? null,
+        institution: program.institution_id
+          ? institutionById.get(program.institution_id) ?? null
+          : null,
       } satisfies SelectedProgrammeForRoute;
     })
     .filter((candidate): candidate is SelectedProgrammeForRoute => Boolean(candidate));
