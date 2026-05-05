@@ -2,6 +2,7 @@ import fetch from "node-fetch";
 import { createClient } from "@supabase/supabase-js";
 import { getVgsPathDefinition, mapProgrammeToPathNode } from "./vgs-path-definitions.mjs";
 import { extractVilbliStagesFromHtml } from "./vilbli-stage-extraction-helper.mjs";
+import { classifyIdentitySemantics } from "./school-identity-semantics.mjs";
 
 const READYNESS_STATUSES = {
   READY_FOR_WRITE: "ready_for_write",
@@ -185,6 +186,94 @@ function isCountyScopedMaterializedProgramme({
   }
 
   return false;
+}
+
+function withIdentitySemanticsDiagnostics(result) {
+  const summary = {
+    totalSchoolsAnalyzed: 0,
+    slashAliasCount: 0,
+    losaCount: 0,
+    multiLocationSignalCount: 0,
+    unsupportedCount: 0,
+    needsReviewCount: 0,
+    helperError: false,
+    helperErrorMessage: null,
+  };
+
+  const bySchoolCode = {};
+
+  try {
+    const details = result?.details ?? {};
+    const matchedSchools = Array.isArray(details.matchedSchools) ? details.matchedSchools : [];
+    const unmatchedSchools = Array.isArray(details.unmatchedSchools) ? details.unmatchedSchools : [];
+    const ambiguousMatches = Array.isArray(details.ambiguousMatches) ? details.ambiguousMatches : [];
+    const schoolInputs = [];
+
+    for (const school of matchedSchools) {
+      schoolInputs.push({
+        schoolCode: school?.schoolCode ?? null,
+        schoolName: school?.schoolName ?? "",
+      });
+    }
+
+    for (const school of unmatchedSchools) {
+      schoolInputs.push({
+        schoolCode: school?.schoolCode ?? null,
+        schoolName: school?.schoolName ?? "",
+      });
+    }
+
+    for (const entry of ambiguousMatches) {
+      schoolInputs.push({
+        schoolCode: entry?.school?.schoolCode ?? null,
+        schoolName: entry?.school?.schoolName ?? "",
+      });
+    }
+
+    const seen = new Set();
+    for (const school of schoolInputs) {
+      const schoolCode = typeof school.schoolCode === "string" ? school.schoolCode.trim() : "";
+      const schoolName = typeof school.schoolName === "string" ? school.schoolName : "";
+      const dedupeKey = `${schoolCode}::${schoolName}`;
+      if (seen.has(dedupeKey)) continue;
+      seen.add(dedupeKey);
+
+      const semantics = classifyIdentitySemantics(schoolName, {
+        schoolCode: schoolCode || null,
+      });
+
+      const stableKey = schoolCode || `${semantics.normalizedLabel || "unknown"}::${summary.totalSchoolsAnalyzed}`;
+      bySchoolCode[stableKey] = semantics;
+
+      summary.totalSchoolsAnalyzed += 1;
+      if (semantics.hasSlashAliases) summary.slashAliasCount += 1;
+      if (semantics.isLosa) summary.losaCount += 1;
+      if (semantics.hasMultiLocationSignal) summary.multiLocationSignalCount += 1;
+      if ((semantics.unsupportedReasonCodes ?? []).length > 0) summary.unsupportedCount += 1;
+      if ((semantics.needsReviewReasonCodes ?? []).length > 0) summary.needsReviewCount += 1;
+    }
+  } catch (error) {
+    summary.helperError = true;
+    summary.helperErrorMessage =
+      error instanceof Error ? error.message : String(error ?? "unknown_helper_error");
+    return {
+      ...result,
+      details: {
+        ...result.details,
+        identitySemanticsSummary: summary,
+        identitySemanticsBySchoolCode: {},
+      },
+    };
+  }
+
+  return {
+    ...result,
+    details: {
+      ...result.details,
+      identitySemanticsSummary: summary,
+      identitySemanticsBySchoolCode: bySchoolCode,
+    },
+  };
 }
 
 async function classifyReadiness({ professionSlug, countyCode }) {
@@ -470,7 +559,7 @@ async function classifyReadiness({ professionSlug, countyCode }) {
     };
   });
 
-  return {
+  const baseResult = {
     professionSlug,
     countyCode,
     status,
@@ -535,6 +624,8 @@ async function classifyReadiness({ professionSlug, countyCode }) {
       },
     },
   };
+
+  return withIdentitySemanticsDiagnostics(baseResult);
 }
 
 async function run() {

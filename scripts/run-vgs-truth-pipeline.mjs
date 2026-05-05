@@ -350,6 +350,20 @@ async function run() {
   const args = parseArgs(process.argv.slice(2));
   const professionSlug = String(args.profession ?? "").trim();
   const countyCode = String(args.county ?? "").trim();
+  const isDryRun = String(args["dry-run"] ?? "").toLowerCase() === "true";
+
+  // Write boundaries guarded by assertCanWrite in this pipeline:
+  // - materialize child script
+  // - upsertEducationProgrammeByIdentity
+  // - ensureProfessionProgrammeLink
+  // - upsertAvailabilityRow
+  // - stale programme_school_availability deactivation update
+  // - any future write-capable helper called from this pipeline
+  function assertCanWrite(boundaryName) {
+    if (isDryRun) {
+      throw new Error(`Dry-run attempted write boundary: ${boundaryName}`);
+    }
+  }
 
   if (!professionSlug || !countyCode) {
     throw new Error(
@@ -366,6 +380,27 @@ async function run() {
     throw new Error(`Unsupported county code: ${countyCode}`);
   }
   const sourceUrl = pathDefinition.sourceModel.buildVilbliUrl(countyMeta.slug);
+  const dryRunLimitations = [];
+  const writeCandidatesSummary = {
+    requiredStageRows: 0,
+    expandedStageRows: 0,
+    byStage: {},
+    sample: [],
+  };
+  const deactivateCandidatesSummary = {
+    checkedActiveRows: 0,
+    wouldDeactivateRowIdsCount: 0,
+    wouldDeactivateSampleIds: [],
+  };
+  let wouldWriteCount = 0;
+  let wouldDeactivateCount = 0;
+  let wouldSkipCount = 0;
+  let wouldBlockCount = 0;
+  const expandedProgrammeMaterializationSummary = {
+    plannedProgrammeUpsertAttempts: 0,
+    plannedLinkEnsureAttempts: 0,
+    note: null,
+  };
 
   // 1) Load/extract Vilbli structure + availability.
   const response = await fetch(sourceUrl, {
@@ -542,12 +577,23 @@ async function run() {
   }
 
   // 3) Materialize required VGS programme rows from confirmed Vilbli structure.
-  const materializeResult = runNodeScript("scripts/materialize-vgs-programmes-from-vilbli.mjs", [
-    "--profession",
-    professionSlug,
-    "--county",
-    countyCode,
-  ]);
+  const materializeResult = isDryRun
+    ? {
+        skippedInDryRun: true,
+        reason: "write_capable_child_script_blocked",
+      }
+    : (() => {
+        assertCanWrite('runNodeScript("scripts/materialize-vgs-programmes-from-vilbli.mjs", ...)');
+        return runNodeScript("scripts/materialize-vgs-programmes-from-vilbli.mjs", [
+          "--profession",
+          professionSlug,
+          "--county",
+          countyCode,
+        ]);
+      })();
+  if (isDryRun) {
+    dryRunLimitations.push("materialization_skipped_write_candidate_parity_may_be_incomplete");
+  }
 
   // 4) Run readiness gate.
   const readiness = runNodeScript("scripts/classify-vgs-truth-readiness.mjs", [
@@ -571,12 +617,28 @@ async function run() {
       stage: entry.stage,
       titleDisplay: entry.titleDisplay,
     });
-    const programmeResult = await upsertEducationProgrammeByIdentity(supabase, {
-      slug: identity.slug,
-      programCode: identity.programCode,
-      title: entry.titleDisplay,
-    });
-    const linkAction = await ensureProfessionProgrammeLink(supabase, professionSlug, identity.slug);
+    const programmeResult = isDryRun
+      ? { id: null, action: "would_upsert" }
+      : await (async () => {
+          assertCanWrite("upsertEducationProgrammeByIdentity");
+          return upsertEducationProgrammeByIdentity(supabase, {
+            slug: identity.slug,
+            programCode: identity.programCode,
+            title: entry.titleDisplay,
+          });
+        })();
+    const linkAction = isDryRun
+      ? "would_ensure"
+      : await (async () => {
+          assertCanWrite("ensureProfessionProgrammeLink");
+          return ensureProfessionProgrammeLink(supabase, professionSlug, identity.slug);
+        })();
+    if (isDryRun) {
+      expandedProgrammeMaterializationSummary.plannedProgrammeUpsertAttempts += 1;
+      expandedProgrammeMaterializationSummary.plannedLinkEnsureAttempts += 1;
+      expandedProgrammeMaterializationSummary.note =
+        "planned attempts only; exact insert/update outcomes unavailable in dry-run";
+    }
     const key = `${entry.stage}::${identity.slug}`;
     if (!expandedProgrammesByStage.has(entry.stage)) {
       expandedProgrammesByStage.set(entry.stage, []);
@@ -654,8 +716,24 @@ async function run() {
         verification_status: VERIFICATION_STATUS,
         notes: null,
       };
-      const action = await upsertAvailabilityRow(supabase, payload);
-      writeCounters[action] += 1;
+      let action = "would_upsert";
+      if (isDryRun) {
+        wouldWriteCount += 1;
+        wouldBlockCount += 1;
+        writeCandidatesSummary.requiredStageRows += 1;
+        writeCandidatesSummary.byStage[stage] = (writeCandidatesSummary.byStage[stage] ?? 0) + 1;
+        if (writeCandidatesSummary.sample.length < 10) {
+          writeCandidatesSummary.sample.push({
+            stage,
+            schoolCode: school.schoolCode,
+            programSlug: programme.slug,
+          });
+        }
+      } else {
+        assertCanWrite("upsertAvailabilityRow");
+        action = await upsertAvailabilityRow(supabase, payload);
+        writeCounters[action] += 1;
+      }
       writeRows.push({
         stage,
         schoolCode: school.schoolCode,
@@ -692,8 +770,24 @@ async function run() {
           verification_status: VERIFICATION_STATUS,
           notes: null,
         };
-        const action = await upsertAvailabilityRow(supabase, payload);
-        writeCounters[action] += 1;
+        let action = "would_upsert";
+        if (isDryRun) {
+          wouldWriteCount += 1;
+          wouldBlockCount += 1;
+          writeCandidatesSummary.expandedStageRows += 1;
+          writeCandidatesSummary.byStage[stage] = (writeCandidatesSummary.byStage[stage] ?? 0) + 1;
+          if (writeCandidatesSummary.sample.length < 10) {
+            writeCandidatesSummary.sample.push({
+              stage,
+              schoolCode: school.schoolCode,
+              programSlug: programme.slug,
+            });
+          }
+        } else {
+          assertCanWrite("upsertAvailabilityRow");
+          action = await upsertAvailabilityRow(supabase, payload);
+          writeCounters[action] += 1;
+        }
         writeRows.push({
           stage,
           schoolCode: school.schoolCode,
@@ -761,19 +855,33 @@ async function run() {
 
   let deactivatedCount = 0;
   if (staleRowIds.length > 0) {
-    const { data: deactivatedRows, error: deactivateError } = await supabase
-      .from("programme_school_availability")
-      .update({ is_active: false })
-      .in("id", staleRowIds)
-      .select("id");
-    if (deactivateError) throw deactivateError;
-    deactivatedCount = (deactivatedRows ?? []).length;
+    if (isDryRun) {
+      wouldDeactivateCount = staleRowIds.length;
+      deactivateCandidatesSummary.checkedActiveRows = (activeRowsForScope ?? []).length;
+      deactivateCandidatesSummary.wouldDeactivateRowIdsCount = staleRowIds.length;
+      deactivateCandidatesSummary.wouldDeactivateSampleIds = staleRowIds.slice(0, 10);
+      dryRunLimitations.push("stale_deactivation_forecast_may_be_incomplete");
+    } else {
+      assertCanWrite("stale programme_school_availability deactivation update");
+      const { data: deactivatedRows, error: deactivateError } = await supabase
+        .from("programme_school_availability")
+        .update({ is_active: false })
+        .in("id", staleRowIds)
+        .select("id");
+      if (deactivateError) throw deactivateError;
+      deactivatedCount = (deactivatedRows ?? []).length;
+    }
+  } else if (isDryRun) {
+    deactivateCandidatesSummary.checkedActiveRows = (activeRowsForScope ?? []).length;
   }
 
+  wouldSkipCount =
+    skippedSiblingProgrammeLinks.length +
+    skippedNoSchoolAvailability.length +
+    excludedProgrammeLinks.length;
+
   // 6) Print summary.
-  console.log(
-    JSON.stringify(
-      {
+  const normalSummary = {
         professionSlug,
         countyCode,
         sourceUrl,
@@ -813,11 +921,42 @@ async function run() {
           deactivated: deactivatedCount,
           kept: keptCount,
         },
-      },
-      null,
-      2
-    )
-  );
+      };
+
+  if (!isDryRun) {
+    console.log(JSON.stringify(normalSummary, null, 2));
+    return;
+  }
+
+  const dryRunSummary = {
+    mode: "dry_run",
+    profession: professionSlug,
+    county: countyCode,
+    readinessStatus: readiness?.status ?? null,
+    matching: {
+      matched: matchedBySchoolCode.size,
+      unmatched: unmatchedSchools.length,
+      ambiguous: ambiguousMatches.length,
+    },
+    materialization: {
+      skippedInDryRun: true,
+      reason: "write_capable_child_script_blocked",
+    },
+    expandedProgrammeMaterialization: expandedProgrammeMaterializationSummary,
+    wouldWriteCount,
+    wouldDeactivateCount,
+    wouldSkipCount,
+    wouldBlockCount,
+    writeCandidatesSummary,
+    deactivateCandidatesSummary,
+    safety: {
+      dbWritesExecuted: false,
+      informationalOnly: dryRunLimitations.length > 0,
+    },
+    dryRunLimitations,
+  };
+
+  console.log(JSON.stringify(dryRunSummary, null, 2));
 }
 
 run().catch((error) => {
