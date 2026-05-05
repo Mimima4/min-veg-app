@@ -489,6 +489,166 @@ function buildMatchingAmbiguityDiagnosticEntry(school, ties, best) {
   };
 }
 
+const MATCHING_UNMATCHED_DIAG_CAP = 50;
+/** Normalized label length at or below this is treated as too short to represent school identity (diagnostics only). */
+const UNMATCHED_SOURCE_NORMALIZED_LABEL_TOO_SHORT = 2;
+
+function sortUnmatchedSchoolsDeterministic(schools) {
+  return [...schools].sort((a, b) => {
+    const ca = String(a.schoolCode ?? "").trim();
+    const cb = String(b.schoolCode ?? "").trim();
+    if (ca !== cb) return ca.localeCompare(cb);
+    return String(a.schoolName ?? "").localeCompare(String(b.schoolName ?? ""));
+  });
+}
+
+function isUnmatchedSourceLabelTooAmbiguous(school, semantics) {
+  const raw = String(school.schoolName ?? "").trim();
+  if (raw.length === 0) return true;
+  const norm = String(semantics.normalizedLabel ?? "").trim();
+  if (norm.length === 0) return true;
+  if (norm.length <= UNMATCHED_SOURCE_NORMALIZED_LABEL_TOO_SHORT) return true;
+  return false;
+}
+
+function buildIdentityHintCodesFromSemantics(semantics) {
+  const out = [];
+  const seen = new Set();
+  for (const list of [
+    semantics.identityReasonCodes ?? [],
+    semantics.unsupportedReasonCodes ?? [],
+    semantics.needsReviewReasonCodes ?? [],
+  ]) {
+    for (const code of list) {
+      const s = String(code ?? "").trim();
+      if (!s || seen.has(s)) continue;
+      seen.add(s);
+      out.push(s);
+    }
+  }
+  return out;
+}
+
+function buildUnmatchedSchoolDiagnosticEntry(school, nsrCatalogCount, semantics) {
+  const codeTrim = school.schoolCode != null ? String(school.schoolCode).trim() : "";
+  const missingSchoolCode = !codeTrim;
+  const catalogHasNsr = nsrCatalogCount > 0;
+  const losa =
+    semantics.isLosa || (semantics.unsupportedReasonCodes ?? []).includes("losa_unsupported");
+  const sourceAmbiguous = isUnmatchedSourceLabelTooAmbiguous(school, semantics);
+
+  const reasonCodes = [];
+  const pushReason = (c) => {
+    if (!reasonCodes.includes(c)) reasonCodes.push(c);
+  };
+
+  if (missingSchoolCode) pushReason("missing_school_code");
+  if (nsrCatalogCount === 0) pushReason("no_nsr_candidate");
+  if (losa) {
+    pushReason("losa_unsupported_hint");
+    pushReason("possible_external_delivery_model");
+  }
+  if (catalogHasNsr && !missingSchoolCode) {
+    pushReason("low_score_no_match");
+    pushReason("unmatched_after_conservative_fuzzy_reject");
+  }
+  if (semantics.hasSlashAliases) pushReason("slash_alias_hint");
+  if (semantics.hasMultiLocationSignal) pushReason("multi_location_hint");
+  if (sourceAmbiguous) pushReason("source_label_too_ambiguous");
+
+  const explanationPriority = [
+    { code: "missing_school_code", ok: missingSchoolCode },
+    { code: "no_nsr_candidate", ok: nsrCatalogCount === 0 },
+    { code: "losa_unsupported_hint", ok: losa },
+    { code: "low_score_no_match", ok: catalogHasNsr && !missingSchoolCode },
+    { code: "slash_alias_hint", ok: semantics.hasSlashAliases },
+    { code: "multi_location_hint", ok: semantics.hasMultiLocationSignal },
+    { code: "source_label_too_ambiguous", ok: sourceAmbiguous },
+  ];
+  const explanationHit = explanationPriority.find((x) => x.ok);
+  const explanationCode = explanationHit
+    ? explanationHit.code
+    : catalogHasNsr && !missingSchoolCode
+      ? "low_score_no_match"
+      : nsrCatalogCount === 0
+        ? "no_nsr_candidate"
+        : "missing_school_code";
+
+  return {
+    vilbliSchoolCode: codeTrim ? codeTrim : null,
+    vilbliSchoolLabel: compactMatchingAmbiguityLabel(school.schoolName),
+    candidateCount: 0,
+    topCandidate: null,
+    reasonCodes,
+    explanationCode,
+    identityHintCodes: buildIdentityHintCodesFromSemantics(semantics),
+  };
+}
+
+function buildMatchingUnmatchedAbortPayload(unmatchedSchools, nsrInstitutions) {
+  const nsrCountyCatalogCount = (nsrInstitutions ?? []).length;
+  const countyHasNsrInstitutions = nsrCountyCatalogCount > 0;
+  const unmatchedSchoolsCount = unmatchedSchools.length;
+
+  if (unmatchedSchoolsCount === 0) {
+    return {
+      matchingUnmatchedSummary: {
+        unmatchedSchoolsCount: 0,
+        countyHasNsrInstitutions,
+        nsrCountyCatalogCount,
+        noNonNoneMatchCount: 0,
+        lowScoreCandidateCount: 0,
+        losaHintCount: 0,
+        slashHintCount: 0,
+        multiLocationHintCount: 0,
+        diagnosticsOnly: true,
+      },
+      matchingUnmatchedDiagnostics: [],
+      matchingUnmatchedWarning: null,
+    };
+  }
+
+  const sorted = sortUnmatchedSchoolsDeterministic(unmatchedSchools);
+  let losaHintCount = 0;
+  let slashHintCount = 0;
+  let multiLocationHintCount = 0;
+  const allDiagnostics = [];
+
+  for (const school of sorted) {
+    const semantics = classifyIdentitySemantics(school.schoolName, {
+      schoolCode: school.schoolCode || null,
+    });
+    const losa =
+      semantics.isLosa || (semantics.unsupportedReasonCodes ?? []).includes("losa_unsupported");
+    if (losa) losaHintCount += 1;
+    if (semantics.hasSlashAliases) slashHintCount += 1;
+    if (semantics.hasMultiLocationSignal) multiLocationHintCount += 1;
+    allDiagnostics.push(buildUnmatchedSchoolDiagnosticEntry(school, nsrCountyCatalogCount, semantics));
+  }
+
+  const matchingUnmatchedDiagnostics = allDiagnostics.slice(0, MATCHING_UNMATCHED_DIAG_CAP);
+  const matchingUnmatchedWarning =
+    unmatchedSchoolsCount > MATCHING_UNMATCHED_DIAG_CAP
+      ? `matchingUnmatchedDiagnostics capped at ${MATCHING_UNMATCHED_DIAG_CAP} schools; summary counts reflect all ${unmatchedSchoolsCount} unmatched`
+      : null;
+
+  return {
+    matchingUnmatchedSummary: {
+      unmatchedSchoolsCount,
+      countyHasNsrInstitutions,
+      nsrCountyCatalogCount,
+      noNonNoneMatchCount: unmatchedSchoolsCount,
+      lowScoreCandidateCount: 0,
+      losaHintCount,
+      slashHintCount,
+      multiLocationHintCount,
+      diagnosticsOnly: true,
+    },
+    matchingUnmatchedDiagnostics,
+    matchingUnmatchedWarning,
+  };
+}
+
 async function run() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
     throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL");
@@ -760,6 +920,10 @@ async function run() {
               ).length,
               diagnosticsOnly: true,
             };
+      const unmatchedAbort = buildMatchingUnmatchedAbortPayload(
+        unmatchedSchools,
+        nsrInstitutions
+      );
       const structuredAbortDiagnostics = {
         mode: "dry_run",
         aborted: true,
@@ -771,6 +935,9 @@ async function run() {
         },
         matchingAmbiguitySummary,
         matchingAmbiguityDiagnostics: ambiguityDiagnosticsPayload,
+        matchingUnmatchedSummary: unmatchedAbort.matchingUnmatchedSummary,
+        matchingUnmatchedDiagnostics: unmatchedAbort.matchingUnmatchedDiagnostics,
+        matchingUnmatchedWarning: unmatchedAbort.matchingUnmatchedWarning,
         identitySemanticsSummary: diag.identitySemanticsSummary,
         identitySemanticsBySchoolCode: diag.identitySemanticsBySchoolCode,
         identitySemanticsWarning: diag.identitySemanticsWarning,

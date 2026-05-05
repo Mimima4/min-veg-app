@@ -758,12 +758,205 @@ Reserved / future only (not required in first implementation):
 3. Counties **`15` / `18` / `55`** now expose **why** matching is ambiguous (capped tie set + reason codes) but remain **non-green** until policy/product work—not diagnostic output alone.
 4. County **`56`** remains dominated by **unmatched** Vilbli schools (and LOSA-heavy identity signals from earlier phases); the next useful layer is **unmatched diagnostics** and **LOSA handling**, not more ambiguity-only payload.
 5. Successful dry-run JSON does **not** include `matchingAmbiguitySummary` / `matchingAmbiguityDiagnostics` (abort path only); normal success summary paths are unchanged.
-6. Next planned work is **Phase 1A.2h** (see below)—unmatched-heavy diagnostics decision—**without** changing matching policy.
+6. Contract for unmatched-heavy diagnostics is **Phase 1A.2h.1** below (implemented in `scripts/run-vgs-truth-pipeline.mjs`; readiness unchanged).
 
-### Phase 1A.2h — Unmatched-heavy diagnostics decision (next)
+### Phase 1A.2h — Unmatched-heavy diagnostics (design decision)
 
-- **Goal:** Decide whether to add **unmatched** diagnostics for **unmatched-heavy** counties (especially **`56`**) in a dry-run-safe, diagnostics-only way—**without** changing matching policy, readiness output, or write behavior.
-- This phase is **not** started in the 1A.2g implementation above; it is the **next** planned block after ambiguity diagnostics are fixed.
+- **Design-pass outcome:** add **unmatched-heavy diagnostics** only to **dry-run structured abort JSON** in `scripts/run-vgs-truth-pipeline.mjs`.
+- **First implementation step does not** change `scripts/classify-vgs-truth-readiness.mjs` output shape or behavior.
+- Detailed contract: **Phase 1A.2h.1**.
+
+### Phase 1A.2h.1 — Unmatched-heavy diagnostics contract
+
+#### 1. Decision
+
+- Add **matching unmatched diagnostics** only to **dry-run structured abort JSON** (extend the Phase **1A.2f** abort payload in `scripts/run-vgs-truth-pipeline.mjs`).
+- Do **not** change matching policy.
+- Do **not** change readiness output (`scripts/classify-vgs-truth-readiness.mjs`) in the **first** implementation step.
+- Do **not** change normal mode.
+- Do **not** make unmatched counties publishable.
+- **Primary target:** county **`56` Finnmark** — unmatched-heavy + LOSA-heavy operator explanation (abort unchanged).
+
+#### 2. Output fields
+
+`matchingUnmatchedSummary`:
+
+```json
+{
+  "unmatchedSchoolsCount": "number",
+  "countyHasNsrInstitutions": "boolean",
+  "nsrCountyCatalogCount": "number",
+  "noNonNoneMatchCount": "number",
+  "lowScoreCandidateCount": "number",
+  "losaHintCount": "number",
+  "slashHintCount": "number",
+  "multiLocationHintCount": "number",
+  "diagnosticsOnly": true
+}
+```
+
+`matchingUnmatchedDiagnostics`:
+
+Array of objects:
+
+```json
+{
+  "vilbliSchoolCode": "string | null",
+  "vilbliSchoolLabel": "string",
+  "candidateCount": "number",
+  "topCandidate": {
+    "institutionId": "string",
+    "institutionName": "string",
+    "matchType": "string",
+    "score": "number"
+  },
+  "reasonCodes": ["string"],
+  "explanationCode": "string",
+  "identityHintCodes": ["string"]
+}
+```
+
+- `topCandidate` is **`null`** when there is no surviving non-`none` match under the current classifier (see matcher limitation below).
+
+#### 3. Current matcher limitation
+
+- Under the current `classifyInstitutionMatch` flow, **unmatched** means **no** candidate survived **`matchType !== "none"`**.
+- Therefore **`topCandidate` should normally be `null`** in Phase **1A.2h.1**.
+- **`lowScoreCandidateCount`** in `matchingUnmatchedSummary` stays **schema-ready**; expect **`0`** in **1A.2h.1** while no weak-candidate layer exists (no second scorer).
+- Do **not** introduce a second weak-candidate scorer in this phase.
+- Do **not** lower thresholds.
+- Do **not** infer a likely NSR institution for matching purposes.
+
+#### 4. Reason codes
+
+**Initial allowed codes:**
+
+- `no_nsr_candidate`
+- `low_score_no_match`
+- `losa_unsupported_hint`
+- `slash_alias_hint`
+- `multi_location_hint`
+- `missing_school_code`
+- `source_label_too_ambiguous`
+- `possible_external_delivery_model`
+- `unmatched_after_conservative_fuzzy_reject`
+
+**`explanationCode` priority** (first applicable wins):
+
+1. `missing_school_code`
+2. `no_nsr_candidate`
+3. `losa_unsupported_hint`
+4. `low_score_no_match`
+5. `slash_alias_hint`
+6. `multi_location_hint`
+7. `source_label_too_ambiguous`
+8. `unmatched_after_conservative_fuzzy_reject`
+
+#### Clarifications before implementation
+
+1. **NSR county context**
+   - `countyHasNsrInstitutions` and `nsrCountyCatalogCount` are **factual** county-level context fields.
+   - Do **not** force them to zero when `unmatchedSchoolsCount === 0`.
+   - If `unmatchedSchoolsCount === 0`:
+     - unmatched-specific counters must be **0**;
+     - `matchingUnmatchedDiagnostics` must be **`[]`**;
+     - `countyHasNsrInstitutions` / `nsrCountyCatalogCount` remain **factual**.
+
+2. **`low_score_no_match` vs `unmatched_after_conservative_fuzzy_reject`**
+   - For Phase **1A.2h.1**, `explanationCode` should use **`low_score_no_match`** when the NSR catalog exists and no candidate survived current `matchType !== "none"` (and no higher-priority explanation applies).
+   - **`unmatched_after_conservative_fuzzy_reject`** may be included only as an **additional** `reasonCode`, **not** as primary `explanationCode` in this phase.
+   - Do **not** introduce new fuzzy scoring or thresholds.
+
+3. **`source_label_too_ambiguous`**
+   - Use only with a **deterministic narrow** rule:
+     - missing/empty label after trim, **or**
+     - extremely short **normalized** label that cannot safely represent a school identity (implementation-defined constant, e.g. normalized length \(\leq 2\)).
+   - Do **not** use subjective ambiguity heuristics.
+   - Do **not** use this code to change matching behavior.
+
+4. **`explanationCode` limitation**
+   - `explanationCode` is only the **primary operator hint**.
+   - Full interpretation must use **`reasonCodes` + `identityHintCodes`**.
+   - No `explanationCode` may be interpreted as permission to publish, write, or auto-match.
+
+#### 5. Hint policy
+
+- LOSA / slash / multi-location hints come from the **identity semantics helper** (`school-identity-semantics` / pipeline’s existing identity diagnostics path).
+- Hints explain **source label semantics** only.
+- Hints must **not** affect matching, publishability, or PSA writes.
+- `possible_external_delivery_model` is **explanatory only** and does **not** imply Route Engine or product route support.
+
+#### 6. Caps / payload rules
+
+- Cap **`matchingUnmatchedDiagnostics`** at **50** schools (deterministic order; document order in implementation—e.g. sorted by `vilbliSchoolCode` / label).
+- **Summary counts** must reflect **all** unmatched schools, not only capped diagnostic rows.
+- Compact / truncate labels for operator readability.
+- Do **not** dump raw Vilbli or NSR source rows.
+- Diagnostics are **operator-facing**, not end-user-facing.
+
+#### 7. Hard constraints
+
+- Diagnostics must **not** select a candidate.
+- Diagnostics must **not** lower the matching threshold.
+- Diagnostics must **not** change the unmatched count or list semantics.
+- Diagnostics must **not** make unmatched counties publishable.
+- Diagnostics must **not** write PSA rows.
+- Diagnostics must **not** bypass the LOSA unsupported rule.
+- Diagnostics must **not** change normal mode output.
+- Diagnostics must **not** change readiness output in the **first** implementation.
+
+#### 8. Validation
+
+- `node --check scripts/run-vgs-truth-pipeline.mjs`
+- `rm -rf .next && npm run build`
+- Dry-run **`56`**: still **abort** and include **`matchingUnmatchedDiagnostics`** (and summary).
+- Dry-run **`15` / `18` / `55`**: still **abort** and keep **`matchingAmbiguity*`** diagnostics.
+- Dry-run **`03` / `11` / `46` / `50`**: still **succeed**.
+- Normal write mode **not** run for validation without explicit approval.
+
+#### 9. Phase 1A.2h.1 implementation result (unmatched-heavy diagnostics)
+
+**Scope completed**
+
+- `matchingUnmatchedSummary`, `matchingUnmatchedDiagnostics`, and optional `matchingUnmatchedWarning` are implemented in **`scripts/run-vgs-truth-pipeline.mjs`** only, on the **dry-run structured abort JSON** path (after dirty matching, before the same ABORT throw).
+- Behavior is **generic** for any county/profession with unmatched schools: **no** `countyCode === "56"` (or any county-specific) branching.
+- Uses **existing** `unmatchedSchools` from the current matching loop and the same NSR county query; **no** second matching pass; **no** weak-candidate scorer.
+- In this phase **`topCandidate` is always `null`** and **`candidateCount` is always `0`**.
+- **`source_label_too_ambiguous`** uses the **narrow deterministic** rule documented in **“Clarifications before implementation”**.
+- **`unmatched_after_conservative_fuzzy_reject`** appears only in **`reasonCodes`**, **never** as **`explanationCode`**.
+- **`countyHasNsrInstitutions`** / **`nsrCountyCatalogCount`** remain **factual** county context even when **`unmatchedSchoolsCount === 0`** (unmatched-specific aggregates are zero; diagnostics array is **`[]`**).
+- **Normal mode** output and behavior unchanged (no structured unmatched JSON on dirty matching in normal mode).
+- **Matching policy** unchanged; **readiness** script output unchanged; **no** DB writes / **no** normal write run for this validation.
+
+**Validation result**
+
+- `node --check scripts/run-vgs-truth-pipeline.mjs` — OK.
+- `node --check scripts/school-identity-semantics.mjs` — OK.
+- `rm -rf .next && npm run build` — OK.
+
+**Dry-run matrix snapshot (electrician) — dirty counties (still abort)**
+
+- `56` — still aborts — `unmatched=22`, `countyHasNsr=true`, NSR **`nsrCountyCatalogCount=12`**, `losaHint=17`, `slash=5`, `lowScoreCandidate=0`; **`matchingUnmatchedDiagnostics`** includes **22** rows (under cap **50**, so **`matchingUnmatchedWarning`** is typically **null**); example school code **`203171`**: **`explanationCode=losa_unsupported_hint`**, **`topCandidate=null`**, **`candidateCount=0`**.
+- `15` — still aborts — `unmatched=0`, **factual** NSR **`27`**, **`matchingUnmatchedDiagnostics=[]`**; **`matchingAmbiguity*`** diagnostics preserved.
+- `18` — still aborts — `unmatched=0`, factual NSR **`28`**, **`matchingUnmatchedDiagnostics=[]`**; ambiguity diagnostics preserved.
+- `55` — still aborts — `unmatched=0`, factual NSR **`21`**, **`matchingUnmatchedDiagnostics=[]`**; ambiguity diagnostics preserved.
+
+**Dry-run matrix snapshot (electrician) — green counties (still succeed)**
+
+- `03` / `11` / `46` / `50` — still succeed.
+
+**Operational notes**
+
+1. County **`56`** is now clearer as **unmatched-heavy** with **LOSA / external-delivery–oriented signals** (via identity semantics hints and reason codes)—**not** primarily a fuzzy-threshold tuning problem from operator-facing diagnostics alone.
+2. This phase **still does not** make **`56`** (or any unmatched county) **publishable**: abort policy and unsupported LOSA semantics are unchanged at the product/matching boundary.
+3. The **next** architectural move should be a **school identity / LOSA / external-delivery model decision** (how to represent and surface LOSA safely), **not** ad-hoc matching threshold changes driven by diagnostics output.
+4. Planned next planning block: **Phase 1A.2i** (below).
+
+#### 10. Phase 1A.2i — LOSA / external-delivery modelling boundary (next)
+
+- **Goal:** Decide product and data **boundaries** for **LOSA** and **external / non–ordinary-school delivery** labels: what is in scope for Vilbli truth materialization, what remains unsupported, and what would require schema/UX/PSA semantics (see also **Phase 4 — LOSA model**).
+- **Out of scope for 1A.2i decision-by-diagnostics alone:** lowering fuzzy thresholds or inferring NSR institutions from diagnostics-only output.
+- **Not started** in the **1A.2h.1** code path above; this is the **next** documented phase gate after unmatched-heavy dry-run diagnostics.
 
 ---
 
