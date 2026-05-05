@@ -309,6 +309,203 @@ Introduce one shared identity semantics helper for pipeline/readiness/cleanup sc
   - Do not change or degrade current app/runtime behavior for `15`.
   - Further work must strengthen proof/diagnostics/identity confidence, not "fix" already-correct display.
 
+### Phase 1A.2b — Dry-run materialization simulation decision
+
+#### Current dry-run coverage
+
+- Covers extraction, matching, readiness, and candidate planning.
+- Guards write boundaries and enforces no DB writes in dry-run.
+- Provides a useful safety smoke-test before write-path changes.
+
+#### Current dry-run limitations
+
+- Does not provide full write parity proof.
+- Materialization is skipped in dry-run.
+- Stale deactivation forecast may be incomplete.
+- Expanded programme candidate completeness is not guaranteed.
+
+#### Decision
+
+- Before helper integration that can affect write decisions, improve dry-run materialization simulation inside `scripts/run-vgs-truth-pipeline.mjs`.
+- No LOSA write-block integration yet.
+- No helper integration into `scripts/run-vgs-truth-pipeline.mjs` yet.
+- Normal mode must remain untouched.
+
+#### Required next block
+
+- Phase 1A.2c — Read-only materialization simulation inside dry-run path.
+
+#### Gates
+
+- `node --check`
+- `rm -rf .next && npm run build`
+- Readiness baseline unchanged
+- Pipeline dry-run with no DB writes
+- Normal mode not executed without explicit approval
+- Dry-run limitations reduced or explicitly clarified
+
+### Phase 1A.2c.0 implementation result (shared pure planner extraction)
+
+#### Scope completed
+
+- Added shared pure planner in `scripts/vgs-programme-materialization-planner.mjs`.
+- Updated `scripts/materialize-vgs-programmes-from-vilbli.mjs` to consume planner output for deterministic programme specs.
+- Kept IO/write/fetch/env/CLI behavior in materialize script.
+- `scripts/run-vgs-truth-pipeline.mjs` was not changed in this block.
+- DB write execution was not run in this block.
+
+#### Single-source rules moved into planner
+
+- Deterministic programme identity/spec derivation rules.
+- Required-node spec derivation for electrician materialization nodes.
+- `stagePresentInCounty` county-stage presence semantics.
+- Stable warning/reason handling in planner result shape.
+
+#### Validation result
+
+- `node --check scripts/vgs-programme-materialization-planner.mjs` passed.
+- `node --check scripts/materialize-vgs-programmes-from-vilbli.mjs` passed.
+- `rm -rf .next && npm run build` passed.
+
+#### Remaining note
+
+- Parity proof remains limited until shared planner is also used by dry-run materialization simulation in `scripts/run-vgs-truth-pipeline.mjs`.
+- Next block: Phase 1A.2c.1 — connect shared planner to dry-run materialization simulation in pipeline.
+- No helper/LOSA write integration yet.
+
+### Phase 1A.2c.1 implementation result (dry-run planner simulation integration)
+
+#### Scope completed
+
+- Implemented in `scripts/run-vgs-truth-pipeline.mjs`.
+- Connected shared planner in dry-run-only path.
+- Added read-only materialization simulation in dry-run.
+- Added safe programme lookups with `.in("slug", slugs)` and `.in("program_code", programCodes)`.
+- Empty arrays are not passed to `.in(...)`.
+- Raw `.or(...)` lookup strings are not used.
+- Read-only lookup results are deduplicated by programme `id`.
+- Added attempt-level programme/link classification in dry-run summary.
+- Unresolved future programme IDs are treated as attempt-level uncertainty (no fake certainty).
+- Normal mode was not run and was intentionally not changed.
+- Dry-run performed no DB writes.
+
+#### Validation result
+
+- `node --check scripts/run-vgs-truth-pipeline.mjs` passed.
+- `node --check scripts/vgs-programme-materialization-planner.mjs` passed.
+- `rm -rf .next && npm run build` passed.
+
+#### Dry-run matrix result snapshot (electrician)
+
+- `03` — `verification_ready_after_write` — `5/0/0` — `wouldWrite=10` — `wouldDeactivate=0` — `materializationSimulationComplete=false` — limitation: `materialization_simulated_read_only_not_write_parity_proof`
+- `11` — `verification_ready_after_write` — `13/0/0` — `wouldWrite=26` — `wouldDeactivate=0` — `materializationSimulationComplete=false` — limitation: `materialization_simulated_read_only_not_write_parity_proof`
+- `46` — `verification_ready_after_write` — `22/0/0` — `wouldWrite=42` — `wouldDeactivate=0` — `materializationSimulationComplete=false` — limitation: `materialization_simulated_read_only_not_write_parity_proof`
+- `50` — `verification_ready_after_write` — `15/0/0` — `wouldWrite=29` — `wouldDeactivate=0` — `materializationSimulationComplete=false` — limitation: `materialization_simulated_read_only_not_write_parity_proof`
+- `15` — `ABORT` — `School matching not clean. unmatched=0, ambiguous=1`
+- `18` — `ABORT` — `School matching not clean. unmatched=0, ambiguous=1`
+- `55` — `ABORT` — `School matching not clean. unmatched=0, ambiguous=2`
+- `56` — `ABORT` — `School matching not clean. unmatched=22, ambiguous=0`
+
+#### Operational note
+
+- Dry-run is improved and now planner-backed for materialization simulation, but it is still not a full parity-proof of write outcomes.
+- Helper/LOSA write integration remains blocked until `materializationSimulationComplete` semantics are explicitly approved, or current limitation status is accepted as sufficient for diagnostics-only integration.
+
+#### Next recommended block
+
+- Phase 1A.2d — decide whether current improved dry-run is sufficient for pipeline helper diagnostics-only integration, or whether additional parity work is required.
+
+### Phase 1A.2d decision (diagnostics-only integration gate)
+
+#### Decision
+
+- GO for pipeline helper diagnostics-only integration in `scripts/run-vgs-truth-pipeline.mjs`.
+- `materializationSimulationComplete=true` is not required for this diagnostics-only step.
+- LOSA write-block remains explicitly out of scope and not approved in this step.
+- Write decisions must remain unchanged.
+
+#### Allowed next step
+
+- Add `identitySemanticsSummary` and `identitySemanticsBySchoolCode` in pipeline summary/log output only.
+- Helper is allowed as additive diagnostics-only processing.
+- Helper output must not participate in matching/readiness/status/count/write decisions.
+
+#### Forbidden in this step
+
+- No LOSA write-block integration.
+- No filtering schools based on helper semantics output.
+- No publishability decisions based on helper semantics output.
+- No county allowlist changes.
+- No normal mode write behavior changes.
+- No Route Engine/UI/billing changes.
+
+#### Acceptance gates
+
+- `node --check`
+- `rm -rf .next && npm run build`
+- Readiness baseline unchanged.
+- Pipeline dry-run successful for green counties.
+- Dry-run abort behavior preserved for non-green counties.
+- `safety.dbWritesExecuted=false`.
+- Normal write mode not executed without explicit approval.
+
+#### Note
+
+- Additional parity work is required only when moving from diagnostics-only usage to write-confidence / write-decision usage.
+
+### Phase 1A.2e implementation result (pipeline helper diagnostics-only integration)
+
+#### Scope completed
+
+- Implemented in `scripts/run-vgs-truth-pipeline.mjs`.
+- `classifyIdentitySemantics` is integrated in dry-run path only.
+- Diagnostics are computed after clean matching gate and only when `isDryRun=true`.
+- Added dry-run-only summary fields:
+  - `identitySemanticsSummary`
+  - `identitySemanticsBySchoolCode`
+  - `identitySemanticsWarning`
+- Helper fail-open behavior implemented:
+  - helper error does not abort pipeline;
+  - `helperError` / `helperErrorMessage` / warning are populated.
+- `identitySemanticsBySchoolCode` is deterministic:
+  - sorted input;
+  - `schoolCode` key when available;
+  - fallback key `normalizedLabel::zeroPaddedStableIndex`;
+  - capped at 100 entries.
+- `identitySemanticsSummary` counts are computed from all analyzed schools, not from capped map entries.
+- Normal mode was not run.
+- Normal mode summary/output was not changed.
+- LOSA write-block was not added.
+- Write decisions were not changed.
+
+#### Validation result
+
+- `node --check scripts/run-vgs-truth-pipeline.mjs` passed.
+- `node --check scripts/school-identity-semantics.mjs` passed.
+- `rm -rf .next && npm run build` passed.
+
+#### Dry-run matrix result snapshot (electrician)
+
+- `03` — `verification_ready_after_write` — `5/0/0` — identity: `total=5 slash=0 losa=0 multi=0 unsupported=0 needsReview=0`
+- `11` — `verification_ready_after_write` — `13/0/0` — identity: `total=13 slash=0 losa=0 multi=0 unsupported=0 needsReview=0`
+- `46` — `verification_ready_after_write` — `22/0/0` — identity: `total=22 slash=0 losa=0 multi=1 unsupported=0 needsReview=1`
+- `50` — `verification_ready_after_write` — `15/0/0` — identity: `total=15 slash=0 losa=0 multi=0 unsupported=0 needsReview=0`
+- `15` — `ABORT` — `School matching not clean. unmatched=0, ambiguous=1`
+- `18` — `ABORT` — `School matching not clean. unmatched=0, ambiguous=1`
+- `55` — `ABORT` — `School matching not clean. unmatched=0, ambiguous=2`
+- `56` — `ABORT` — `School matching not clean. unmatched=22, ambiguous=0`
+
+#### Operational notes
+
+- Pipeline now includes dry-run-only identity semantics diagnostics.
+- Diagnostics do not affect matching/readiness/write/deactivation logic.
+- `46` has a multi-location signal but remains green; this remains diagnostics-only.
+- Non-green counties still abort before diagnostics output because the existing hard matching gate is preserved.
+
+#### Next block
+
+- Phase 1A.2f — decide whether to extend diagnostics before abort for non-green counties, without changing abort policy.
+
 ---
 
 ## Phase 2 — School identity / location model

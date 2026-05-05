@@ -6,6 +6,8 @@ import {
   extractVilbliStagesFromHtml,
   resolveStageFromVilbliKurs,
 } from "./vilbli-stage-extraction-helper.mjs";
+import { buildRequiredProgrammeSpecs } from "./vgs-programme-materialization-planner.mjs";
+import { classifyIdentitySemantics } from "./school-identity-semantics.mjs";
 
 const COUNTY_CODE_TO_VILBLI = {
   "03": { slug: "oslo", label: "Oslo" },
@@ -339,6 +341,17 @@ async function ensureProfessionProgrammeLink(supabase, professionSlug, programSl
   return "inserted";
 }
 
+function isCanonicalProgrammeRowAligned(row, spec) {
+  return (
+    String(row.slug ?? "") === String(spec.slug ?? "") &&
+    String(row.program_code ?? "") === String(spec.programCode ?? "") &&
+    String(row.title ?? "") === String(spec.title ?? "") &&
+    String(row.education_level ?? "") === "upper_secondary" &&
+    String(row.study_mode ?? "") === "full_time" &&
+    row.is_active === true
+  );
+}
+
 async function run() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
     throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL");
@@ -397,8 +410,17 @@ async function run() {
   let wouldSkipCount = 0;
   let wouldBlockCount = 0;
   const expandedProgrammeMaterializationSummary = {
-    plannedProgrammeUpsertAttempts: 0,
+    plannedProgrammeInsertAttempts: 0,
+    plannedProgrammeUpdateAttempts: 0,
+    plannedProgrammeExistsCount: 0,
+    plannedLinkInsertAttempts: 0,
+    plannedLinkExistsCount: 0,
     plannedLinkEnsureAttempts: 0,
+    existingProgrammeCount: 0,
+    existingLinkCount: 0,
+    skippedMaterializationCandidates: [],
+    materializationSimulationComplete: false,
+    materializationSimulationLimitations: [],
     note: null,
   };
 
@@ -576,6 +598,234 @@ async function run() {
     );
   }
 
+  const identitySemanticsSummary = {
+    totalSchoolsAnalyzed: 0,
+    slashAliasCount: 0,
+    losaCount: 0,
+    multiLocationSignalCount: 0,
+    unsupportedCount: 0,
+    needsReviewCount: 0,
+    helperError: false,
+    helperErrorMessage: null,
+  };
+  let identitySemanticsBySchoolCode = {};
+  let identitySemanticsWarning = null;
+
+  if (isDryRun) {
+    try {
+      const entries = [...uniqueExtractedSchools]
+        .map((school) => ({
+          schoolCode: String(school?.schoolCode ?? "").trim(),
+          schoolName: String(school?.schoolName ?? "").trim(),
+          school,
+        }))
+        .sort(
+          (a, b) =>
+            a.schoolCode.localeCompare(b.schoolCode) || a.schoolName.localeCompare(b.schoolName)
+        );
+      identitySemanticsSummary.totalSchoolsAnalyzed = entries.length;
+
+      const diagnosticsMap = {};
+      const maxDetailedEntries = 100;
+      let emitted = 0;
+
+      for (let i = 0; i < entries.length; i += 1) {
+        const entry = entries[i];
+        const semantics = classifyIdentitySemantics(entry.schoolName, {
+          schoolCode: entry.schoolCode || null,
+        });
+
+        if (semantics.hasSlashAliases) identitySemanticsSummary.slashAliasCount += 1;
+        if (semantics.isLosa) identitySemanticsSummary.losaCount += 1;
+        if (semantics.hasMultiLocationSignal) identitySemanticsSummary.multiLocationSignalCount += 1;
+        if ((semantics.unsupportedReasonCodes ?? []).length > 0) identitySemanticsSummary.unsupportedCount += 1;
+        if ((semantics.needsReviewReasonCodes ?? []).length > 0) identitySemanticsSummary.needsReviewCount += 1;
+
+        if (emitted < maxDetailedEntries) {
+          const fallbackLabel = normalizeBasic(entry.schoolName || "unknown");
+          const stableIndex = String(i + 1).padStart(4, "0");
+          const key = entry.schoolCode || `${fallbackLabel}::${stableIndex}`;
+          diagnosticsMap[key] = {
+            schoolName: entry.schoolName,
+            hasSlashAliases: semantics.hasSlashAliases,
+            isLosa: semantics.isLosa,
+            hasMultiLocationSignal: semantics.hasMultiLocationSignal,
+            unsupportedReasonCodes: semantics.unsupportedReasonCodes ?? [],
+            needsReviewReasonCodes: semantics.needsReviewReasonCodes ?? [],
+            identityReasonCodes: semantics.identityReasonCodes ?? [],
+          };
+          emitted += 1;
+        }
+      }
+
+      identitySemanticsBySchoolCode = diagnosticsMap;
+      if (entries.length > maxDetailedEntries) {
+        identitySemanticsWarning =
+          "identitySemanticsBySchoolCode capped at 100 entries; summary counts are based on all analyzed schools";
+      }
+    } catch (error) {
+      identitySemanticsSummary.helperError = true;
+      identitySemanticsSummary.helperErrorMessage =
+        error instanceof Error ? error.message.slice(0, 200) : "identity semantics helper failed";
+      identitySemanticsBySchoolCode = {};
+      identitySemanticsWarning =
+        "identity semantics diagnostics unavailable: helper failed (fail-open, pipeline behavior unchanged)";
+    }
+  }
+
+  // 2b) Dry-run only: shared planner + read-only materialization simulation.
+  if (isDryRun) {
+    const plannerResult = buildRequiredProgrammeSpecs({
+      professionSlug,
+      countyCode,
+      countyMeta,
+      requiredNodes: requiredProgrammeNodes,
+      extractedStages,
+    });
+
+    const specs = Object.values(plannerResult.programmeSpecsByNodeKey ?? {});
+    const plannerWarnings = Array.isArray(plannerResult.plannerWarnings)
+      ? plannerResult.plannerWarnings
+      : [];
+
+    if (plannerWarnings.length > 0) {
+      expandedProgrammeMaterializationSummary.materializationSimulationLimitations.push(
+        "planner_warnings_present"
+      );
+    }
+
+    const missingRequiredNodeKeys = Array.isArray(plannerResult.missingRequiredNodeKeys)
+      ? plannerResult.missingRequiredNodeKeys
+      : [];
+    for (const nodeKey of missingRequiredNodeKeys) {
+      expandedProgrammeMaterializationSummary.skippedMaterializationCandidates.push({
+        nodeKey,
+        reason: "skipped_due_to_missing_identity",
+        plannerWarnings,
+      });
+    }
+
+    const slugs = Array.from(
+      new Set(specs.map((spec) => String(spec.slug ?? "").trim()).filter(Boolean))
+    );
+    const programCodes = Array.from(
+      new Set(specs.map((spec) => String(spec.programCode ?? "").trim()).filter(Boolean))
+    );
+
+    const rowsById = new Map();
+    const rowBySlug = new Map();
+    const rowByProgramCode = new Map();
+
+    if (slugs.length > 0) {
+      const { data: slugRows, error: slugRowsError } = await supabase
+        .from("education_programs")
+        .select("id, slug, program_code, title, education_level, study_mode, is_active")
+        .in("slug", slugs);
+      if (slugRowsError) throw slugRowsError;
+      for (const row of slugRows ?? []) {
+        rowsById.set(row.id, row);
+        rowBySlug.set(String(row.slug ?? ""), row);
+        rowByProgramCode.set(String(row.program_code ?? ""), row);
+      }
+    }
+
+    if (programCodes.length > 0) {
+      const { data: codeRows, error: codeRowsError } = await supabase
+        .from("education_programs")
+        .select("id, slug, program_code, title, education_level, study_mode, is_active")
+        .in("program_code", programCodes);
+      if (codeRowsError) throw codeRowsError;
+      for (const row of codeRows ?? []) {
+        const existing = rowsById.get(row.id);
+        const merged = existing ?? row;
+        rowsById.set(row.id, merged);
+        rowBySlug.set(String(merged.slug ?? ""), merged);
+        rowByProgramCode.set(String(merged.program_code ?? ""), merged);
+      }
+    }
+
+    expandedProgrammeMaterializationSummary.existingProgrammeCount = rowsById.size;
+
+    const existingRowIdsForSpecs = new Set();
+    const resolvedProgrammeSlugs = new Set();
+    const unresolvedProgrammeSlugs = new Set();
+
+    for (const spec of specs) {
+      const matchedRow =
+        rowBySlug.get(String(spec.slug ?? "")) ??
+        rowByProgramCode.get(String(spec.programCode ?? "")) ??
+        null;
+
+      if (!matchedRow) {
+        expandedProgrammeMaterializationSummary.plannedProgrammeInsertAttempts += 1;
+        unresolvedProgrammeSlugs.add(String(spec.slug ?? ""));
+        expandedProgrammeMaterializationSummary.skippedMaterializationCandidates.push({
+          nodeKey: String(spec.nodeKey ?? "unknown"),
+          reason: "skipped_due_to_unresolved_programme_id",
+        });
+        continue;
+      }
+
+      existingRowIdsForSpecs.add(matchedRow.id);
+      resolvedProgrammeSlugs.add(String(spec.slug ?? ""));
+      if (isCanonicalProgrammeRowAligned(matchedRow, spec)) {
+        expandedProgrammeMaterializationSummary.plannedProgrammeExistsCount += 1;
+      } else {
+        expandedProgrammeMaterializationSummary.plannedProgrammeUpdateAttempts += 1;
+      }
+    }
+
+    expandedProgrammeMaterializationSummary.existingProgrammeCount = existingRowIdsForSpecs.size;
+
+    const linkSlugs = Array.from(resolvedProgrammeSlugs);
+    const existingLinksBySlug = new Set();
+    if (linkSlugs.length > 0) {
+      const { data: linkRows, error: linkRowsError } = await supabase
+        .from("profession_program_links")
+        .select("id, program_slug")
+        .eq("profession_slug", professionSlug)
+        .in("program_slug", linkSlugs);
+      if (linkRowsError) throw linkRowsError;
+      for (const row of linkRows ?? []) {
+        existingLinksBySlug.add(String(row.program_slug ?? ""));
+      }
+    }
+
+    expandedProgrammeMaterializationSummary.existingLinkCount = existingLinksBySlug.size;
+
+    for (const slug of resolvedProgrammeSlugs) {
+      expandedProgrammeMaterializationSummary.plannedLinkEnsureAttempts += 1;
+      if (existingLinksBySlug.has(slug)) {
+        expandedProgrammeMaterializationSummary.plannedLinkExistsCount += 1;
+      } else {
+        expandedProgrammeMaterializationSummary.plannedLinkInsertAttempts += 1;
+      }
+    }
+    if (unresolvedProgrammeSlugs.size > 0) {
+      expandedProgrammeMaterializationSummary.plannedLinkEnsureAttempts +=
+        unresolvedProgrammeSlugs.size;
+      expandedProgrammeMaterializationSummary.materializationSimulationLimitations.push(
+        "link_insert_classification_attempt_level_due_to_unresolved_programme_ids"
+      );
+    }
+
+    expandedProgrammeMaterializationSummary.materializationSimulationLimitations.push(
+      "materialization_simulated_read_only_not_write_parity_proof"
+    );
+
+    expandedProgrammeMaterializationSummary.materializationSimulationLimitations = Array.from(
+      new Set(expandedProgrammeMaterializationSummary.materializationSimulationLimitations)
+    );
+
+    expandedProgrammeMaterializationSummary.materializationSimulationComplete =
+      missingRequiredNodeKeys.length === 0 &&
+      expandedProgrammeMaterializationSummary.skippedMaterializationCandidates.length === 0 &&
+      expandedProgrammeMaterializationSummary.materializationSimulationLimitations.length === 0;
+
+    expandedProgrammeMaterializationSummary.note =
+      "planner-backed dry-run simulation is read-only; classification is attempt-level and not exact write parity proof";
+  }
+
   // 3) Materialize required VGS programme rows from confirmed Vilbli structure.
   const materializeResult = isDryRun
     ? {
@@ -592,7 +842,7 @@ async function run() {
         ]);
       })();
   if (isDryRun) {
-    dryRunLimitations.push("materialization_skipped_write_candidate_parity_may_be_incomplete");
+    dryRunLimitations.push("materialization_simulated_read_only_not_write_parity_proof");
   }
 
   // 4) Run readiness gate.
@@ -633,12 +883,6 @@ async function run() {
           assertCanWrite("ensureProfessionProgrammeLink");
           return ensureProfessionProgrammeLink(supabase, professionSlug, identity.slug);
         })();
-    if (isDryRun) {
-      expandedProgrammeMaterializationSummary.plannedProgrammeUpsertAttempts += 1;
-      expandedProgrammeMaterializationSummary.plannedLinkEnsureAttempts += 1;
-      expandedProgrammeMaterializationSummary.note =
-        "planned attempts only; exact insert/update outcomes unavailable in dry-run";
-    }
     const key = `${entry.stage}::${identity.slug}`;
     if (!expandedProgrammesByStage.has(entry.stage)) {
       expandedProgrammesByStage.set(entry.stage, []);
@@ -949,9 +1193,14 @@ async function run() {
     wouldBlockCount,
     writeCandidatesSummary,
     deactivateCandidatesSummary,
+    identitySemanticsSummary,
+    identitySemanticsBySchoolCode,
+    identitySemanticsWarning,
     safety: {
       dbWritesExecuted: false,
-      informationalOnly: dryRunLimitations.length > 0,
+      informationalOnly:
+        dryRunLimitations.length > 0 ||
+        expandedProgrammeMaterializationSummary.materializationSimulationLimitations.length > 0,
     },
     dryRunLimitations,
   };

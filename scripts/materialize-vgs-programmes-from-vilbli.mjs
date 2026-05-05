@@ -1,6 +1,10 @@
 import fetch from "node-fetch";
 import { createClient } from "@supabase/supabase-js";
 import { getVgsPathDefinition } from "./vgs-path-definitions.mjs";
+import {
+  buildRequiredProgrammeSpecs,
+  stagePresentInCounty,
+} from "./vgs-programme-materialization-planner.mjs";
 
 const COUNTY_CODE_TO_VILBLI = {
   "03": { slug: "oslo", label: "Oslo" },
@@ -37,16 +41,6 @@ function parseArgs(argv) {
   return args;
 }
 
-function normalizeBasic(value) {
-  return String(value ?? "")
-    .toLowerCase()
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^\p{L}\p{N}\s]/gu, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
 function parseStageArraysFromHtml(html) {
   const stageMap = {};
   const regex = /(?:window\.)?(vb_map_data_[A-Za-z0-9_]+)\s*=\s*(\[[\s\S]*?\]);/g;
@@ -66,74 +60,6 @@ function parseStageArraysFromHtml(html) {
     match = regex.exec(html);
   }
   return stageMap;
-}
-
-function mapVilbliSchool(item) {
-  if (Array.isArray(item)) {
-    return {
-      schoolName: String(item[3] || ""),
-      schoolCode: String(item[4] || ""),
-      fylkeName: String(item[8] || ""),
-      schoolPagePath: String(item[9] || ""),
-    };
-  }
-
-  return {
-    schoolName: String(item.schoolName || item.school_name || item.name || ""),
-    schoolCode: String(
-      item.schoolCode || item.orgOrSchoolCode || item.orgnr || item.orgnr_skole || ""
-    ),
-    fylkeName: String(item.fylkeName || item.fylke || item.county || ""),
-    schoolPagePath: String(item.schoolPagePath || item.url || item.href || ""),
-  };
-}
-
-function stagePresentInCounty(stageRows, countyMeta) {
-  const normalizedCountyLabel = normalizeBasic(countyMeta.label);
-  const filtered = stageRows
-    .map(mapVilbliSchool)
-    .filter((school) => school.schoolName && school.schoolCode)
-    .filter(
-      (school) =>
-        normalizeBasic(school.fylkeName) === normalizedCountyLabel ||
-        school.schoolPagePath.includes(`/${countyMeta.slug}/`)
-    );
-  return filtered.length > 0;
-}
-
-function getDeterministicProgrammeSpec({ professionSlug, countyCode, countyMeta }) {
-  if (professionSlug !== "electrician") {
-    throw new Error("Only electrician is currently supported for materialization.");
-  }
-
-  if (countyCode === "50") {
-    return {
-      VG1_ELEKTRO: {
-        slug: "electrician-vg1-elektro-trondelag",
-        programCode: "EL-VG1-TRONDELAG",
-        title: "VG1 Elektro og datateknologi",
-      },
-      VG2_EL_BRANCH: {
-        slug: "electrician-vg2-elenergi-trondelag",
-        programCode: "EL-VG2-TRONDELAG",
-        title: "VG2 Elenergi og ekom",
-      },
-    };
-  }
-
-  const countyUpper = countyMeta.slug.toUpperCase().replace(/[^A-Z0-9]+/g, "_");
-  return {
-    VG1_ELEKTRO: {
-      slug: `${professionSlug}-vg1-elektro-${countyMeta.slug}`,
-      programCode: `EL-VG1-${countyUpper}`,
-      title: "VG1 Elektro og datateknologi",
-    },
-    VG2_EL_BRANCH: {
-      slug: `${professionSlug}-vg2-elenergi-${countyMeta.slug}`,
-      programCode: `EL-VG2-${countyUpper}`,
-      title: "VG2 Elenergi og ekom",
-    },
-  };
 }
 
 async function upsertProgrammeBySlugOrCode(supabase, spec) {
@@ -264,11 +190,15 @@ async function run() {
     );
   }
 
-  const programmeSpecs = getDeterministicProgrammeSpec({
+  const plan = buildRequiredProgrammeSpecs({
     professionSlug,
     countyCode,
     countyMeta,
+    requiredNodes: supportedRequiredNodes,
+    extractedStages: extractedByStage,
   });
+  const programmeSpecsByNodeKey = plan.programmeSpecsByNodeKey;
+
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -276,10 +206,15 @@ async function run() {
 
   const materialized = [];
   for (const node of supportedRequiredNodes) {
-    const spec = programmeSpecs[node.nodeKey];
-    if (!spec) {
+    const row = programmeSpecsByNodeKey[node.nodeKey];
+    if (!row) {
       throw new Error(`No deterministic programme spec defined for ${node.nodeKey}`);
     }
+    const spec = {
+      slug: row.slug,
+      programCode: row.programCode,
+      title: row.title,
+    };
     const programmeResult = await upsertProgrammeBySlugOrCode(supabase, spec);
     const linkAction = await ensureProfessionLink(supabase, professionSlug, spec.slug);
     materialized.push({
