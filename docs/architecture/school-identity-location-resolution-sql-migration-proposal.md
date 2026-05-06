@@ -374,4 +374,31 @@ Required pre-apply conditions:
 
 Next gate:
 
-- **security/RLS review**
+- **dry-run migration plan**
+
+## 19. Security/RLS review status
+
+- Status: **APPROVED FOR ADDITIVE TABLE MIGRATION WITH CONDITIONS**
+- Migration execution is **NOT approved** by this status.
+- Apply remains blocked until all Security/RLS conditions and dry-run migration plan approval are complete.
+
+Required conditions before apply:
+
+1. Approve explicit security/RLS role-policy matrix for:
+   - `service/system`
+   - `admin/operator`
+   - `anonymous/public`
+   - `authenticated family user`
+   - `school user`
+   - `kommune/fylke institutional user`
+   - `future mobile/API client`
+2. Enforce service-role-only access to Phase 2 tables at initial apply.
+3. Define audited operator transition rules before operator workflow.
+4. Validate Supabase `pgcrypto` extension/permissions policy.
+5. Keep runtime/client paths pinned to published truth only.
+6. No public/family/mobile direct access to Phase 2 internal tables.
+7. No hidden manual truth.
+
+Next gate:
+
+- **dry-run migration plan**
