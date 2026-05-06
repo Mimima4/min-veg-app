@@ -1088,8 +1088,9 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
 - Migration execution remains **blocked**.
 - Dry-run migration plan is **documented**.
 - Dry-run/static validation execution is **passed**.
-- The next gate is **pgcrypto environment / platform permission check**.
-- No production apply starts until pgcrypto check + final controlled-apply approval are complete.
+- pgcrypto environment / platform permission check is **passed**.
+- The next gate is **final controlled-apply approval**.
+- No apply starts until final controlled-apply approval is explicitly granted.
 
 ### Acceptance gate summary (Phase 2)
 
@@ -1101,18 +1102,17 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
 - Security/RLS gate status is logged (`APPROVED FOR ADDITIVE TABLE MIGRATION WITH CONDITIONS`).
 - Dry-run migration plan documentation is logged.
 - Dry-run/static validation execution result is logged (`STATIC VALIDATION PASSED`).
+- pgcrypto environment check result is logged (`PASSED`; `installed_version=1.3`).
 - Migration execution remains blocked pending:
   - Security/RLS conditions closure;
-  - pgcrypto environment check;
   - explicit final approval.
-- pgcrypto environment / platform permission check is the current gate (not approved by this section alone).
+- Final controlled-apply approval is the current gate (not approved by this section alone).
 - Read-only simulation plan is reviewed/approved.
 - No conflicts remain with locked specs:
   - `docs/architecture/norway-school-identity-matching-spec.md`
   - `docs/architecture/route-engine-master-spec.md`
 - No migration execution/schema/code/write integration starts before:
   - Security/RLS pre-apply conditions closure;
-  - pgcrypto environment check;
   - explicit controlled-apply approval.
 
 ### Possible approaches

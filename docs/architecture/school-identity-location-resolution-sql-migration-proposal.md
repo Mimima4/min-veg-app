@@ -498,3 +498,29 @@ Gate status:
 
 - Migration execution is **NOT approved** by this result.
 - Next gate: **pgcrypto environment / platform permission check**.
+
+## 22. pgcrypto environment check
+
+Status:
+
+- **PASSED**
+
+Result:
+
+- Query:
+  - `select name, default_version, installed_version from pg_available_extensions where name = 'pgcrypto';`
+- Returned:
+  - `name = pgcrypto`
+  - `default_version = 1.3`
+  - `installed_version = 1.3`
+
+Conclusion:
+
+- `pgcrypto` is already installed/enabled in target Supabase environment.
+- `gen_random_uuid()` should be available.
+- `CREATE EXTENSION IF NOT EXISTS pgcrypto` in migration draft should be safe/no-op for this environment.
+
+Gate status:
+
+- Migration execution is **NOT approved** by this result.
+- Next gate: **final controlled-apply approval**.
