@@ -641,9 +641,13 @@ Gate implications:
 
 Main rollout status:
 
-- Main rollout planning checklist is proposed and not executed:
-  - `docs/architecture/phase-2-main-supabase-rollout-checklist.md`
+- **APPLIED TO MAIN SCHEMA**:
+  - target `project_ref=bgmtxyfchtqjuvzuuoon`;
+  - applied migration `20260506112154_school_identity_location_resolution_phase2.sql`.
+- Runtime/write integration remains **blocked**.
+- No backfill.
+- No data inserted.
 
 Next gate:
 
-- **owner decision: Phase 2 read-only integration planning or main rollout planning**
+- **main post-apply read-only smoke + freeze Phase 2 schema rollout**

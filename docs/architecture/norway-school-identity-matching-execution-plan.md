@@ -1116,11 +1116,20 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
   - dry-run planned only `20260506112154_school_identity_location_resolution_phase2.sql`;
   - `pgcrypto` confirmed (`default_version=1.3`, `installed_version=1.3`);
   - build passed.
-- Production/main operational rollout remains **NOT approved**.
-- Main apply remains **NOT executed**.
+- Main migration applied successfully in production/main schema rollout:
+  - target `project_ref=bgmtxyfchtqjuvzuuoon`;
+  - command `npx supabase db push --linked`;
+  - applied migration `20260506112154_school_identity_location_resolution_phase2.sql`;
+  - pre-apply history did not contain `20260506112154`;
+  - post-apply history now contains `20260506112154`;
+  - all 7 Phase 2 tables exist;
+  - estimated row count for all 7 Phase 2 tables is `0`;
+  - `uq_res_active_obs` and `uq_pub_active_obs_prog_stage` exist;
+  - `pgcrypto` notice confirmed extension already exists.
+- Production/main schema rollout is **completed**.
 - Runtime/write integration remains **blocked**.
 - Next gate:
-  - **final main apply approval**.
+  - **main post-apply read-only smoke + freeze Phase 2 schema rollout**.
 
 ### Acceptance gate summary (Phase 2)
 

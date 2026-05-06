@@ -179,3 +179,53 @@ Scope note:
 - Actual main apply was **NOT executed**.
 - Runtime/write integration remains blocked.
 - Next gate: **final main apply approval**.
+
+## 13. Main apply result
+
+Status:
+
+- **MAIN APPLY COMPLETED**
+- Target: `project_ref=bgmtxyfchtqjuvzuuoon`
+
+Apply execution:
+
+- Command executed: `npx supabase db push --linked`
+- Applied migration:
+  - `20260506112154_school_identity_location_resolution_phase2.sql`
+- `pgcrypto` notice:
+  - extension already exists, skipping.
+
+Pre-apply confirmation:
+
+- Remote migration history did not contain `20260506112154`.
+
+Post-apply confirmation:
+
+1. Remote migration history now contains `20260506112154`.
+2. All 7 Phase 2 tables exist:
+   - `source_school_observations`
+   - `school_identity_candidates`
+   - `identity_aliases`
+   - `school_locations`
+   - `school_identity_resolution_decisions`
+   - `programme_availability_publication_decisions`
+   - `school_identity_review_events`
+3. Estimated row count for all 7 tables is `0`.
+4. Required indexes exist:
+   - `uq_res_active_obs`
+   - `uq_pub_active_obs_prog_stage`
+
+Operational boundary confirmation:
+
+- Schema only.
+- Runtime/write integration remains blocked.
+- No backfill.
+- No PSA publication changed.
+- No operator workflow enabled.
+- No manual SQL.
+- No code/script changes.
+- No Route Engine/UI/billing changes.
+
+Next gate:
+
+- **main post-apply read-only smoke + freeze Phase 2 schema rollout**.
