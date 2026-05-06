@@ -463,3 +463,38 @@ Acceptance criteria:
 4. Rollback checklist is accepted.
 5. Security conditions are acknowledged.
 6. Migration execution still requires explicit final approval.
+
+## 21. Dry-run/static validation result
+
+Status:
+
+- **STATIC VALIDATION PASSED**
+- Build sanity check passed: `rm -rf .next && npm run build`.
+
+Key confirmations:
+
+1. No `INSERT`/`UPDATE`/`DELETE`.
+2. No `ALTER TABLE` against existing runtime/truth tables.
+3. No `DROP`/`TRUNCATE`.
+4. No `CREATE POLICY`/`GRANT`/`REVOKE`.
+5. No `CREATE TRIGGER`/`CREATE FUNCTION`.
+6. No dynamic SQL (`DO $$` / `EXECUTE`).
+7. No county/fylke-specific logic.
+8. All 7 Phase 2 tables are present.
+9. FK references remain isolated to Phase 2 table set.
+10. Active-row uniqueness uses `superseded_at IS NULL`.
+11. Exact CHECK vocabularies pass.
+12. Dependency/order checks pass.
+13. Rollback comment order checks pass.
+14. Naming checks pass (length/uniqueness/prefixes).
+15. Security placeholder exists and no public/family/mobile grants are present.
+
+Non-blocking warnings:
+
+- Static validation does not replace target-environment `pgcrypto` permission/policy check.
+- Static validation does not equal apply approval.
+
+Gate status:
+
+- Migration execution is **NOT approved** by this result.
+- Next gate: **pgcrypto environment / platform permission check**.
