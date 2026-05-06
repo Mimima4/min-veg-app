@@ -1004,6 +1004,58 @@ Array of objects:
 - County **`56` (Finnmark)** remains **non-green** under current truth rules; operator diagnostics now show **unmatched-heavy + LOSA/external-delivery hints**—this remains **not** a matching-threshold bug to patch in Phase 1.
 - **Next work** should advance **Phase 2** (school identity vs location) and **Phase 4** (LOSA model) **design and contract**, not incremental matching patches or county exceptions.
 
+### Phase 1A closure decision
+
+**1. Closure decision**
+
+- The **Phase 1A diagnostic/read-safety layer is closed**.
+
+**2. Done criteria (met)**
+
+- All planned **1A.1–1A.2i** code and documentation are committed to `main`.
+- The execution plan reflects actual implemented behavior and validation snapshots.
+- Dry-run outputs are stable and intentionally additive.
+- Green counties remain green (`03` / `11` / `46` / `50`).
+- Non-green counties are now diagnostically explained (`15` / `18` / `55` / `56`).
+- No write-policy changes were introduced.
+- No publishability expansion was introduced.
+- No normal mode drift was introduced.
+- No Route Engine runtime/UI/billing changes were introduced.
+
+**3. Current county status (electrician)**
+
+| County | Status | Why | Publishable under current gate? | Risk | Next action class |
+|--------|--------|-----|----------------------------------|------|-------------------|
+| `03` | green | clean matching/readiness | Yes | low | maintain baseline |
+| `11` | green | clean matching/readiness | Yes | low | maintain baseline |
+| `46` | green | clean matching/readiness; diagnostic multi-location signal present | Yes | low (monitor) | monitor identity signal |
+| `50` | green | clean matching/readiness | Yes | low | maintain baseline |
+| `15` | non-green | ambiguity / canonical review (UI-correct vs Vilbli) | No | medium | Phase 2 identity/location modelling |
+| `18` | non-green | ambiguity + slash-alias context | No | medium | Phase 2 identity/location modelling |
+| `55` | non-green | ambiguity + multi-location/campus unresolved context | No | medium | Phase 2 identity/location modelling |
+| `56` | non-green | unmatched-heavy + LOSA/external-delivery signals | No | medium-high | Phase 4 LOSA model + Phase 2 identity layer |
+
+**4. Explicit non-goals after closure**
+
+- No matching-threshold tuning.
+- No county allowlist expansion.
+- No county-specific bypass.
+- No LOSA PSA writes.
+- No random campus matching.
+- No UI compensation to mask unresolved truth semantics.
+
+**5. Next official block**
+
+- **Phase 2 — school identity / location resolution design.**
+
+**6. Phase linkage**
+
+- **Phase 4 — LOSA / external-delivery model contract** must be designed and approved before **`56` Finnmark** can become publishable truth.
+
+**7. Working principle**
+
+- Further progress must model **identity/location/delivery truth**, not tune fuzzy matching to force green status.
+
 ---
 
 ## Phase 2 — School identity / location model
