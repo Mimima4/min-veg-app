@@ -1139,9 +1139,10 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
   - no sample data in main;
   - PSA publication unchanged;
   - build passed on first attempt.
-- Main post-apply smoke limitation:
-  - optional script smoke against main was not run because safe env vars were not available in this session;
-  - not a blocker for schema smoke.
+- Post-refactor read-only diagnostics live smoke against main (**passed**, docs: `phase-2-read-only-diagnostics-helper-boundary-adr.md` §18):
+  - target `project_ref=bgmtxyfchtqjuvzuuoon`;
+  - shared helper + refactored `scripts/diagnose-school-identity-phase2-readonly.mjs`;
+  - `phase2SchemaAvailable=true`; all summary counts `0`; `phase2DiagnosticsWarning=null`; flat CLI stdout preserved; no writes; no runtime/readiness/pipeline integration; PSA unchanged.
 - Production/main schema rollout is **completed**.
 - Phase 2 schema rollout is **complete**.
 - Runtime/write integration remains **blocked**.
@@ -1161,11 +1162,15 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
 
 ### Phase 2 shared read-only helper — next technical gate
 
-- Boundary ADR: `docs/architecture/phase-2-read-only-diagnostics-helper-boundary-adr.md` — **ACCEPTED FOR PLANNING** (recommended planning track: PLAN SHARED HELPER FIRST).
-- **Next technical implementation gate:** extract **shared helper** + refactor **`scripts/diagnose-school-identity-phase2-readonly.mjs` only** with **parity** to current flat stdout JSON; **`MAX_OBSERVATIONS = 5000` in helper**.
+- Boundary ADR: `docs/architecture/phase-2-read-only-diagnostics-helper-boundary-adr.md` — helper **implemented**; post-refactor live smoke **PASSED** (§18; main `project_ref=bgmtxyfchtqjuvzuuoon`).
+- **Shared helper extraction + standalone script refactor:** **complete** (`scripts/lib/phase2-readonly-diagnostics-helper.mjs`; **`MAX_OBSERVATIONS = 5000`** in helper); CLI flat stdout **preserved**.
 - **Runtime/write integration** remains **blocked**.
 - **Readiness/pipeline diagnostics integration** remains **not approved** until boundary ADR Step 3 and explicit owner gate.
 - **Phase 2 main schema rollout** remains **CLOSED / COMPLETE**.
+- **Next gate — owner decision only:**
+  - **a)** freeze read-only helper as standalone tool (no new importers);
+  - **b)** plan optional additive readiness diagnostics;
+  - **c)** plan optional additive pipeline dry-run diagnostics.
 
 ### Acceptance gate summary (Phase 2)
 

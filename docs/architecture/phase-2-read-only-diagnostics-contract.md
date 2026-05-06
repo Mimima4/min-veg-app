@@ -2,16 +2,18 @@
 
 ## 1. Status
 
-- Status: **ACCEPTED FOR PLANNING**
-- No code implementation is approved by this document.
+- Status: **ACCEPTED FOR PLANNING** for scope expansion beyond the standalone script; diagnostics contract **in use** for Phase 2 read-only tables.
+- Shared read-only helper: **implemented** and **live-smoke validated** on main (`project_ref=bgmtxyfchtqjuvzuuoon`); **standalone diagnostic script is the only approved consumer** until an explicit owner gate expands importers.
 - No runtime integration is approved by this document.
 - No write integration is approved by this document.
 
 ### Shared read-only helper boundary
 
-- Boundary ADR (helper module scope — **Planning only** until code lands):
+- Boundary ADR (helper module scope):
   - `docs/architecture/phase-2-read-only-diagnostics-helper-boundary-adr.md`
-- Helper boundary status: **ACCEPTED FOR PLANNING** (implementation not approved except as described in §11 Next gate).
+- Helper status: **implemented** (`scripts/lib/phase2-readonly-diagnostics-helper.mjs`) and **live-smoke validated** (main `project_ref=bgmtxyfchtqjuvzuuoon`; see boundary ADR §18).
+- **Approved consumer:** `scripts/diagnose-school-identity-phase2-readonly.mjs` remains the **only** approved importer/consumer unless a separate owner gate + ADR update expands the allowlist.
+- **Next owner decision:** freeze the standalone helper/tool as-is **or** open planning for optional additive readiness diagnostics (readiness/pipeline integration still **not** approved until explicitly gated).
 
 ## 2. Decision
 
@@ -140,9 +142,10 @@ Planned behavior:
 ## 11. Next gate
 
 - Standalone diagnostic script is **implemented** and validated (`my-app-test` synthetic sample execution + cleanup; see sample data runbook).
-- **Next technical gate (only):** implement **shared read-only helper** per `phase-2-read-only-diagnostics-helper-boundary-adr.md` (`scripts/lib/phase2-readonly-diagnostics-helper.mjs`) and **refactor** `scripts/diagnose-school-identity-phase2-readonly.mjs` to use it — **CLI flat stdout parity required** (see boundary ADR §3B, §14).
-- **Must not**, in that change set, add imports into `classify-vgs-truth-readiness.mjs` or `run-vgs-truth-pipeline.mjs`.
+- **Shared read-only helper** is **implemented** and **post-refactor live-smoke validated** on main (`project_ref=bgmtxyfchtqjuvzuuoon`); `scripts/diagnose-school-identity-phase2-readonly.mjs` refactored with **CLI flat stdout parity** preserved (boundary ADR §3B, §14, §18).
+- **Must not** add helper imports into `classify-vgs-truth-readiness.mjs` or `run-vgs-truth-pipeline.mjs` without a separate explicit gate + ADR update.
 - Optional readiness/pipeline additive integration remains **not approved** until boundary ADR integration Step 3 and a separate owner gate.
+- **Next owner decision:** freeze standalone helper/tool as the sole diagnostics surface **or** plan optional readiness diagnostics scope (additive only; integration still gated).
 - Sample data runbook artifact:
   - `docs/architecture/phase-2-read-only-diagnostics-sample-data-runbook.md`
 

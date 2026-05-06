@@ -2,10 +2,10 @@
 
 ## 1. Status
 
-- Status: **ACCEPTED FOR PLANNING**
-- No code implementation approved yet.
-- No readiness/pipeline integration approved yet.
-- No runtime/write integration approved.
+- Status: **ACCEPTED FOR PLANNING** (boundary rules); **implementation complete** — shared helper extracted and standalone CLI refactored (see §18).
+- Post-refactor live smoke against main: **PASSED** (§18).
+- Readiness/pipeline integration: **not approved**.
+- Runtime/write integration: **not approved**.
 
 Context:
 
@@ -223,9 +223,47 @@ Before accepting helper extraction + standalone script refactor:
 
 ## 17. Next gate
 
-- Implement shared helper **and** refactor standalone diagnostic script **only** — **same change intent, no classify/pipeline integration**.
-- Validate **parity** with current standalone behavior (§14).
+- ~~Implement shared helper **and** refactor standalone diagnostic script **only**~~ — **done**; validated via §18 post-refactor live smoke.
 - Readiness/pipeline integration stays **not approved** until Step 3 (b)/(c) is explicitly gated.
+- **Owner next gate:** choose among boundary ADR §15 Step 3 options:
+  - **a)** freeze as separate tool;
+  - **b)** optional readiness diagnostics (additive);
+  - **c)** optional pipeline dry-run diagnostics (additive).
+
+## 18. Post-refactor live smoke result
+
+- **Status:** **PASSED**
+- **Target:** main — `project_ref=bgmtxyfchtqjuvzuuoon`
+
+**Context (docs-only record):** shared helper `scripts/lib/phase2-readonly-diagnostics-helper.mjs` in place; `scripts/diagnose-school-identity-phase2-readonly.mjs` refactored to use it; helper returns nested `phase2ReadOnlyDiagnostics`; standalone CLI **still prints flat JSON** on stdout; no readiness/pipeline/runtime integration.
+
+**Observed payload** (semantic match for flat CLI / inner nested object):
+
+```json
+{
+  "phase2SchemaAvailable": true,
+  "identityResolutionSummary": {
+    "observationsCount": 0,
+    "resolutionDecisionCount": 0,
+    "publicationDecisionCount": 0,
+    "publishableCount": 0,
+    "needsReviewCount": 0,
+    "unsupportedCount": 0,
+    "unresolvedCount": 0
+  },
+  "identityResolutionBySchoolCode": {},
+  "phase2DiagnosticsWarning": null
+}
+```
+
+**State**
+
+- Helper refactor validated; standalone CLI output contract preserved (flat stdout).
+- Readiness/pipeline integration remains **not approved**.
+
+**Confirmed**
+
+- Flat CLI stdout preserved; Phase 2 schema reachable; summary row counts remain `0`; `phase2DiagnosticsWarning=null`; no writes; no runtime/write integration; no readiness/pipeline integration; no PSA publication changes.
 
 ---
 
