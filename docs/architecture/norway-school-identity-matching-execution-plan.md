@@ -1095,10 +1095,17 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
 - pgcrypto environment / platform permission check is **passed**.
 - Post-apply read-only smoke in approved test environment is **passed**.
 - Test migration cycle is **closed**.
+- Separate read-only diagnostics script is **implemented** (`scripts/diagnose-school-identity-phase2-readonly.mjs`).
+- Local fail-open smoke is **passed**.
+- Remote `my-app-test` smoke from Cursor/sandbox was **attempted** but blocked in that execution environment:
+  - `getaddrinfo ENOTFOUND egalvhjvdvmoqboxbwzo.supabase.co`
+- Read-only diagnostics smoke from network-enabled local Terminal is **passed** against `my-app-test`:
+  - `phase2SchemaAvailable=true`
+  - summary counts `0` and no warning (`phase2DiagnosticsWarning=null`)
 - Production/main operational rollout remains **NOT approved**.
 - Runtime/write integration remains **blocked**.
 - Next gate is owner decision between:
-  - **implement separate read-only diagnostic script for `my-app-test`**;
+  - **read-only diagnostics sample data planning**;
   - **main Supabase rollout planning**.
 
 ### Acceptance gate summary (Phase 2)
@@ -1121,12 +1128,15 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
 - Runtime/write integration remains blocked pending a separate Phase 2 integration approval.
 - Phase 2 read-only diagnostics ADR/contract is logged (`ACCEPTED FOR PLANNING`):
   - `docs/architecture/phase-2-read-only-diagnostics-contract.md`
+- Read-only diagnostics smoke note is logged:
+  - earlier Cursor/sandbox attempt blocked by DNS;
+  - network-enabled local Terminal smoke passed for `my-app-test`.
 - Read-only simulation plan is reviewed/approved.
 - No conflicts remain with locked specs:
   - `docs/architecture/norway-school-identity-matching-spec.md`
   - `docs/architecture/route-engine-master-spec.md`
 - No production rollout/schema-write integration starts before:
-  - owner gate decision between implementing separate read-only diagnostics in `my-app-test` and main rollout planning;
+  - owner gate decision between read-only diagnostics sample data planning and main rollout planning;
   - explicit Phase 2 integration approval;
   - explicit production operational approval.
 

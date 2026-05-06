@@ -136,3 +136,74 @@ Planned behavior:
 - Implement separate read-only diagnostic script only after this ADR is accepted.
 - First implementation target: `my-app-test` only.
 - No integration into readiness/pipeline until script behavior is validated.
+
+## 12. Smoke test note
+
+Status:
+
+- **PASSED FROM NETWORK-ENABLED LOCAL TERMINAL**
+
+Context:
+
+- Target: `project_ref=egalvhjvdvmoqboxbwzo` / `my-app-test`
+- URL used: `https://egalvhjvdvmoqboxbwzo.supabase.co`
+- Env gate was enabled.
+- Env vars were present in inline run.
+- Secret key was not printed; only prefix type was observed (`eyJ`).
+
+Read-only probe result (earlier Cursor/sandbox attempt):
+
+- Probes attempted (read-only `select id limit 1`) against:
+  - `source_school_observations`
+  - `school_identity_resolution_decisions`
+  - `programme_availability_publication_decisions`
+- All probes failed with:
+  - `getaddrinfo ENOTFOUND egalvhjvdvmoqboxbwzo.supabase.co`
+
+Interpretation:
+
+- Likely cause: DNS/network resolution issue in current execution environment.
+- Not a table-not-found / schema-cache issue.
+- Not a permission/RLS/JWT issue.
+
+Script behavior confirmation:
+
+- Script returned stable fail-open output:
+  - `phase2SchemaAvailable=false`
+  - `phase2DiagnosticsWarning="phase2_schema_unavailable"`
+  - exit code `0`
+- No writes were executed.
+- No `INSERT`/`UPDATE`/`DELETE`/`UPSERT`/`RPC` were executed.
+- No migration or schema changes were executed.
+
+Successful local Terminal smoke result:
+
+- Executed from network-enabled local Terminal against:
+  - `project_ref=egalvhjvdvmoqboxbwzo` / `my-app-test`
+- Local environment used service-role credentials without printing secret values.
+- Output:
+  - `phase2SchemaAvailable=true`
+  - `identityResolutionSummary.observationsCount=0`
+  - `identityResolutionSummary.resolutionDecisionCount=0`
+  - `identityResolutionSummary.publicationDecisionCount=0`
+  - `identityResolutionSummary.publishableCount=0`
+  - `identityResolutionSummary.needsReviewCount=0`
+  - `identityResolutionSummary.unsupportedCount=0`
+  - `identityResolutionSummary.unresolvedCount=0`
+  - `identityResolutionBySchoolCode={}`
+  - `phase2DiagnosticsWarning=null`
+
+Interpretation:
+
+- Phase 2 schema is reachable from network-enabled local environment.
+- Script can read Phase 2 tables.
+- Tables are empty as expected after migration with no backfill.
+- Read-only diagnostics path works.
+- No runtime/write integration was enabled.
+- No PSA publication was changed.
+
+Next action:
+
+- Commit smoke result, then owner decision between:
+  - read-only diagnostics sample data planning;
+  - main Supabase rollout planning.
