@@ -2,18 +2,28 @@
 
 ## 1. Status
 
-- Status: **ACCEPTED FOR PLANNING** for scope expansion beyond the standalone script; diagnostics contract **in use** for Phase 2 read-only tables.
-- Shared read-only helper: **implemented** and **live-smoke validated** on main (`project_ref=bgmtxyfchtqjuvzuuoon`); **standalone diagnostic script is the only approved consumer** until an explicit owner gate expands importers.
+- Phase 2 **standalone read-only diagnostics tooling:** **validated** and **frozen** (no new approved consumers without a separate owner gate + ADR update).
+- Shared read-only helper + diagnostic script: **CLOSED** as **standalone tool** (boundary ADR §19).
+- Scope expansion (readiness/pipeline/runtime): **not approved** by this document / remains **gated separately**.
 - No runtime integration is approved by this document.
 - No write integration is approved by this document.
 
 ### Shared read-only helper boundary
 
-- Boundary ADR (helper module scope):
+- Boundary ADR (helper module scope + closure):
   - `docs/architecture/phase-2-read-only-diagnostics-helper-boundary-adr.md`
-- Helper status: **implemented** (`scripts/lib/phase2-readonly-diagnostics-helper.mjs`) and **live-smoke validated** (main `project_ref=bgmtxyfchtqjuvzuuoon`; see boundary ADR §18).
-- **Approved consumer:** `scripts/diagnose-school-identity-phase2-readonly.mjs` remains the **only** approved importer/consumer unless a separate owner gate + ADR update expands the allowlist.
-- **Next owner decision:** freeze the standalone helper/tool as-is **or** open planning for optional additive readiness diagnostics (readiness/pipeline integration still **not** approved until explicitly gated).
+- Helper: **implemented** (`scripts/lib/phase2-readonly-diagnostics-helper.mjs`); **live-smoke validated** on main (`project_ref=bgmtxyfchtqjuvzuuoon`; boundary ADR §18).
+- **Approved consumer (only):** `scripts/diagnose-school-identity-phase2-readonly.mjs`.
+- **Not approved** (no helper import / consumption without a **separate owner gate** + ADR/contract update):
+  - `scripts/classify-vgs-truth-readiness.mjs`
+  - `scripts/run-vgs-truth-pipeline.mjs`
+  - Route Engine / application runtime
+  - UI / admin
+  - billing
+  - PSA write / materialization paths
+- **Next possible gates** (owner decision only; no work in flight):
+  - optional **readiness diagnostics** planning (additive; integration still explicitly gated);
+  - optional **pipeline dry-run diagnostics** planning (additive; integration still explicitly gated).
 
 ## 2. Decision
 
@@ -73,9 +83,8 @@ If a read query fails:
 
 ## 6. Environment boundary
 
-- Phase 2 schema is currently applied in `my-app-test` only.
-- Main rollout is not approved.
-- Any implementation must be safe in environments where Phase 2 tables do not exist.
+- Phase 2 schema is applied in **`my-app-test`** and **main** (production Supabase — see execution plan Phase 2 closure).
+- Diagnostics must remain **fail-open** wherever Phase 2 tables are absent or unreachable from the client perspective.
 - Recommended optional feature flag / env gate:
   - `PHASE2_IDENTITY_DIAGNOSTICS_ENABLED=true`
 - Default behavior should be disabled outside explicitly approved environments.
@@ -143,9 +152,10 @@ Planned behavior:
 
 - Standalone diagnostic script is **implemented** and validated (`my-app-test` synthetic sample execution + cleanup; see sample data runbook).
 - **Shared read-only helper** is **implemented** and **post-refactor live-smoke validated** on main (`project_ref=bgmtxyfchtqjuvzuuoon`); `scripts/diagnose-school-identity-phase2-readonly.mjs` refactored with **CLI flat stdout parity** preserved (boundary ADR §3B, §14, §18).
-- **Must not** add helper imports into `classify-vgs-truth-readiness.mjs` or `run-vgs-truth-pipeline.mjs` without a separate explicit gate + ADR update.
-- Optional readiness/pipeline additive integration remains **not approved** until boundary ADR integration Step 3 and a separate owner gate.
-- **Next owner decision:** freeze standalone helper/tool as the sole diagnostics surface **or** plan optional readiness diagnostics scope (additive only; integration still gated).
+- **Closure / freeze:** standalone read-only diagnostics tooling is **frozen**; **approved consumer remains** `scripts/diagnose-school-identity-phase2-readonly.mjs` **only** (boundary ADR §19; see §1).
+- **Must not** add helper imports into disallowed paths (§1) without a separate explicit owner gate + ADR update.
+- Readiness/pipeline additive integration remains **not approved** until explicitly gated.
+- **Next possible owner-only gates:** optional readiness diagnostics planning; optional pipeline dry-run diagnostics planning (each requires ADR/contract updates before any new importer).
 - Sample data runbook artifact:
   - `docs/architecture/phase-2-read-only-diagnostics-sample-data-runbook.md`
 

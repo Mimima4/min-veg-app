@@ -2,10 +2,13 @@
 
 ## 1. Status
 
-- Status: **ACCEPTED FOR PLANNING** (boundary rules); **implementation complete** — shared helper extracted and standalone CLI refactored (see §18).
+- Boundary rules: **ACCEPTED** (this ADR).
+- Read-only helper closure: **CLOSED / VALIDATED AS STANDALONE TOOL** (see §19).
+- **Implementation complete** — shared helper extracted and standalone CLI refactored (§18).
 - Post-refactor live smoke against main: **PASSED** (§18).
-- Readiness/pipeline integration: **not approved**.
-- Runtime/write integration: **not approved**.
+- Readiness integration: **not approved**.
+- Pipeline integration: **not approved**.
+- Runtime/write integration: **blocked**.
 
 Context:
 
@@ -14,9 +17,9 @@ Context:
 - Main post-apply read-only smoke **passed**.
 - Standalone diagnostic script exists: `scripts/diagnose-school-identity-phase2-readonly.mjs`, validated in `my-app-test` with synthetic sample data and cleanup.
 
-Planning recommendation:
+Planning note (historical):
 
-- **PLAN SHARED HELPER FIRST**
+- Standalone shared-helper extraction is **complete**; owner decision **§15.3(a)** — **freeze as separate tool** — is **recorded in §19**.
 
 ## 2. Decision
 
@@ -206,9 +209,9 @@ Before accepting helper extraction + standalone script refactor:
 1. Implement helper + refactor `scripts/diagnose-school-identity-phase2-readonly.mjs` only.
 2. Validate output parity vs pre-refactor script (including synthetic scenario if re-run in test).
 3. Owner gate:
-   - **a)** freeze as separate tool;
-   - **b)** optional readiness diagnostics (additive);
-   - **c)** optional pipeline dry-run diagnostics (additive).
+   - **a)** freeze as separate tool — **selected** (closure §19);
+   - **b)** optional readiness diagnostics (additive) — deferred until explicit gate;
+   - **c)** optional pipeline dry-run diagnostics (additive) — deferred until explicit gate.
 
 ## 16. Risks
 
@@ -224,11 +227,9 @@ Before accepting helper extraction + standalone script refactor:
 ## 17. Next gate
 
 - ~~Implement shared helper **and** refactor standalone diagnostic script **only**~~ — **done**; validated via §18 post-refactor live smoke.
-- Readiness/pipeline integration stays **not approved** until Step 3 (b)/(c) is explicitly gated.
-- **Owner next gate:** choose among boundary ADR §15 Step 3 options:
-  - **a)** freeze as separate tool;
-  - **b)** optional readiness diagnostics (additive);
-  - **c)** optional pipeline dry-run diagnostics (additive).
+- ~~**Owner next gate** (§15 Step 3)~~ — **resolved:** **§15.3(a) freeze as separate tool** (closure §19).
+- Any future Step **(b)/(c)** work remains **not started** until a **separate owner gate** and ADR/contract updates explicitly approve new importers or merge fields.
+- New static imports of the helper from outside `scripts/diagnose-school-identity-phase2-readonly.mjs` remain **out of scope** until a **separate owner gate + ADR update** (unchanged from §6).
 
 ## 18. Post-refactor live smoke result
 
@@ -263,7 +264,31 @@ Before accepting helper extraction + standalone script refactor:
 
 **Confirmed**
 
-- Flat CLI stdout preserved; Phase 2 schema reachable; summary row counts remain `0`; `phase2DiagnosticsWarning=null`; no writes; no runtime/write integration; no readiness/pipeline integration; no PSA publication changes.
+- Flat CLI stdout preserved; Phase 2 schema reachable; summary row counts remain `0`; `phase2DiagnosticsWarning=null`; `identityResolutionBySchoolCode={}`; no writes; no runtime/write integration; no readiness/pipeline integration; no PSA publication changes.
+
+## 19. Closure — standalone tool freeze
+
+- **Status:** **CLOSED / VALIDATED AS STANDALONE TOOL**
+
+**Preconditions (all satisfied)**
+
+- Phase 2 schema rollout: **CLOSED / COMPLETE** (test + main).
+- Main schema applied; post-apply smoke **passed**.
+- Standalone diagnostic script **implemented** and **validated** (including synthetic sample execution + cleanup verified).
+- Shared helper **implemented**; post-refactor live smoke against main **passed** (§18): `phase2SchemaAvailable=true`; all summary counts `0`; `identityResolutionBySchoolCode={}`; `phase2DiagnosticsWarning=null`.
+
+**State**
+
+- Helper and standalone diagnostic script are **validated** for **operator/scripts-only** use.
+- Helper is **approved only** for use by `scripts/diagnose-school-identity-phase2-readonly.mjs` (single allowed importer), per §6.
+- **Readiness** integration (e.g. `classify-vgs-truth-readiness.mjs`): **not approved**.
+- **Pipeline** integration (e.g. `run-vgs-truth-pipeline.mjs`): **not approved**.
+- **Runtime/write** integration: **blocked**.
+- **Future imports** of `scripts/lib/phase2-readonly-diagnostics-helper.mjs` from any path other than the standalone diagnostic script require a **separate owner gate** and **ADR/contract update** (review rule in §6 unchanged).
+
+**Owner decision**
+
+- **Freeze** read-only helper as a **standalone tool** — no further helper integration work is in scope until an explicit new gate.
 
 ---
 

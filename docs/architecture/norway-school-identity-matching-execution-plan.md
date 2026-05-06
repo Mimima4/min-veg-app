@@ -1158,19 +1158,21 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
   - This closure does **not** approve PSA publication changes.
   - This closure does **not** approve backfill.
 - Next official block (only if owner approves):
-  - **Phase 2 read-only integration planning** as a **separate new gate** (readiness/pipeline diagnostics scope only; no write path until a later explicit integration approval).
+  - optional **readiness** or **pipeline dry-run** diagnostics planning as a **separate new gate** (see **Phase 2 read-only helper — closure** below); or **no further action** on diagnostics integration.
 
-### Phase 2 shared read-only helper — next technical gate
+### Phase 2 read-only helper — closure (standalone tool)
 
-- Boundary ADR: `docs/architecture/phase-2-read-only-diagnostics-helper-boundary-adr.md` — helper **implemented**; post-refactor live smoke **PASSED** (§18; main `project_ref=bgmtxyfchtqjuvzuuoon`).
-- **Shared helper extraction + standalone script refactor:** **complete** (`scripts/lib/phase2-readonly-diagnostics-helper.mjs`; **`MAX_OBSERVATIONS = 5000`** in helper); CLI flat stdout **preserved**.
-- **Runtime/write integration** remains **blocked**.
-- **Readiness/pipeline diagnostics integration** remains **not approved** until boundary ADR Step 3 and explicit owner gate.
+- **Status:** **CLOSED / STANDALONE TOOL VALIDATED**
+- **Decision:** **freeze** read-only helper as **standalone** operator/scripts tooling — **no new importers** without a separate owner gate + ADR/contract update.
+- Boundary ADR: `docs/architecture/phase-2-read-only-diagnostics-helper-boundary-adr.md` — closure **§19**; post-refactor live smoke **PASSED** (§18; main `project_ref=bgmtxyfchtqjuvzuuoon`).
+- **Shared helper + standalone script:** **complete** (`scripts/lib/phase2-readonly-diagnostics-helper.mjs`; **`MAX_OBSERVATIONS = 5000`** in helper); CLI flat stdout **preserved**; synthetic sample + cleanup **verified** in test; main smoke: `phase2SchemaAvailable=true`; all counts `0`; `identityResolutionBySchoolCode={}`; `phase2DiagnosticsWarning=null`.
 - **Phase 2 main schema rollout** remains **CLOSED / COMPLETE**.
-- **Next gate — owner decision only:**
-  - **a)** freeze read-only helper as standalone tool (no new importers);
-  - **b)** plan optional additive readiness diagnostics;
-  - **c)** plan optional additive pipeline dry-run diagnostics.
+- **Runtime/write integration** remains **blocked**.
+- **Readiness/pipeline integration** remains **not approved**.
+- **Next official blocks** (owner decision only):
+  - **a)** optional **readiness diagnostics** planning;
+  - **b)** optional **pipeline dry-run diagnostics** planning;
+  - **c)** **no further action** (keep frozen standalone tool only).
 
 ### Acceptance gate summary (Phase 2)
 
@@ -1190,9 +1192,9 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
 - Test migration cycle is closed.
 - Production/main operational schema rollout completion is logged (main apply + post-apply smoke passed).
 - Runtime/write integration remains blocked pending a separate Phase 2 integration approval.
-- Phase 2 read-only diagnostics ADR/contract is logged (`ACCEPTED FOR PLANNING`):
+- Phase 2 read-only diagnostics contract is logged (**standalone tooling frozen**):
   - `docs/architecture/phase-2-read-only-diagnostics-contract.md`
-- Phase 2 shared read-only diagnostics helper boundary ADR is logged (`ACCEPTED FOR PLANNING`):
+- Phase 2 shared read-only diagnostics helper boundary ADR is logged (**CLOSED / VALIDATED AS STANDALONE TOOL**, §19):
   - `docs/architecture/phase-2-read-only-diagnostics-helper-boundary-adr.md`
 - Phase 2 diagnostics sample data runbook is logged (`PROPOSED / NOT EXECUTED`):
   - `docs/architecture/phase-2-read-only-diagnostics-sample-data-runbook.md`
@@ -1212,9 +1214,8 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
   - diagnostics script implemented; synthetic sample/cleanup verified in test;
   - migration applied to main `project_ref=bgmtxyfchtqjuvzuuoon`; main post-apply smoke passed;
   - main Phase 2 tables exist with row counts `0`; no backfill; PSA publication unchanged; Route Engine/UI/billing untouched.
-- No runtime/write integration starts before:
-  - separate owner approval to open **Phase 2 read-only integration planning** gate; and
-  - explicit Phase 2 runtime/write integration approval (if ever pursued).
+- No runtime/write integration starts before explicit Phase 2 runtime/write integration approval (if ever pursued).
+- Optional readiness/pipeline **diagnostics-only** planning remains a **separate owner gate** (does not reopen helper imports until ADR/contract updates).
 
 ### Possible approaches
 
