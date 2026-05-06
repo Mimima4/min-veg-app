@@ -524,3 +524,73 @@ Gate status:
 
 - Migration execution is **NOT approved** by this result.
 - Next gate: **final controlled-apply approval**.
+
+## 23. Controlled apply result
+
+Status:
+
+- **APPLIED TO TEST ENVIRONMENT**
+- Target: `project_ref=egalvhjvdvmoqboxbwzo` / `my-app-test` main DB.
+- Applied migration:
+  - `supabase/migrations/20260506112154_school_identity_location_resolution_phase2.sql`
+
+Pre-apply facts:
+
+1. Git preflight was clean on `main`.
+2. HEAD at apply precheck:
+   - `1bd760984c1182098e22be6e0009d6513ee74120`
+3. Migration SHA256 matched expected:
+   - `bc72a924bcba216a2009662aee91d874772d7b1d694f51df9a9832ccdeaa4549`
+4. `npx supabase migration list --linked` showed remote history did not contain `20260506112154`.
+5. `npx supabase db push --linked --dry-run` planned only:
+   - `20260506112154_school_identity_location_resolution_phase2.sql`
+
+Apply facts:
+
+1. Command executed:
+   - `npx supabase db push --linked`
+2. Applied migration:
+   - `20260506112154_school_identity_location_resolution_phase2.sql`
+3. Notice observed during apply:
+   - `extension "pgcrypto" already exists, skipping`
+4. Command finished successfully:
+   - `Finished supabase db push.`
+
+Post-apply facts:
+
+1. Remote migration history includes:
+   - `20260506112154`
+2. All 7 Phase 2 tables exist:
+   - `source_school_observations`
+   - `school_identity_candidates`
+   - `identity_aliases`
+   - `school_locations`
+   - `school_identity_resolution_decisions`
+   - `programme_availability_publication_decisions`
+   - `school_identity_review_events`
+3. All 7 Phase 2 tables reported estimated row count `0`.
+4. Indexes verified:
+   - `uq_res_active_obs`
+   - `uq_pub_active_obs_prog_stage`
+5. Build sanity passed:
+   - `rm -rf .next && npm run build`
+
+Limitations during verification:
+
+1. Direct `SELECT gen_random_uuid()` verification was not executed because `psql` was unavailable in the execution environment.
+2. Full SQL introspection for RLS/grants was not fully executed because `supabase db dump --linked` required Docker in the execution environment.
+3. Migration content review still confirms no `CREATE POLICY`, `GRANT`, or `REVOKE` statements; no manual SQL was executed.
+
+Explicit scope boundary:
+
+1. This result does **not** approve runtime/write integration.
+2. This result does **not** enable operator workflow.
+3. This result does **not** publish any PSA truth.
+4. No backfill was executed.
+5. No code changes were executed.
+6. No migration file changes were executed.
+7. No `db reset` was executed.
+
+Next gate:
+
+- **post-apply read-only smoke + Phase 2 integration planning**

@@ -1085,12 +1085,15 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
 - Migration draft review decision is **APPROVE WITH CONDITIONS**:
   - `supabase/migrations/20260506112154_school_identity_location_resolution_phase2.sql`
 - Security/RLS review decision is **APPROVED FOR ADDITIVE TABLE MIGRATION WITH CONDITIONS**.
-- Migration execution remains **blocked**.
+- Controlled migration apply to approved test environment is **completed**:
+  - `project_ref=egalvhjvdvmoqboxbwzo` (`my-app-test` main DB)
+  - migration: `20260506112154_school_identity_location_resolution_phase2.sql`
 - Dry-run migration plan is **documented**.
 - Dry-run/static validation execution is **passed**.
 - pgcrypto environment / platform permission check is **passed**.
-- The next gate is **final controlled-apply approval**.
-- No apply starts until final controlled-apply approval is explicitly granted.
+- Production/main operational rollout remains **NOT approved**.
+- Runtime/write integration remains **blocked**.
+- The next gate is **post-apply read-only smoke + Phase 2 integration planning**.
 
 ### Acceptance gate summary (Phase 2)
 
@@ -1103,17 +1106,19 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
 - Dry-run migration plan documentation is logged.
 - Dry-run/static validation execution result is logged (`STATIC VALIDATION PASSED`).
 - pgcrypto environment check result is logged (`PASSED`; `installed_version=1.3`).
-- Migration execution remains blocked pending:
-  - Security/RLS conditions closure;
-  - explicit final approval.
-- Final controlled-apply approval is the current gate (not approved by this section alone).
+- Controlled apply result is logged for approved test target:
+  - `project_ref=egalvhjvdvmoqboxbwzo` / `my-app-test`
+  - applied migration: `20260506112154_school_identity_location_resolution_phase2.sql`
+- Production/main operational rollout remains blocked pending a separate approval gate.
+- Runtime/write integration remains blocked pending a separate Phase 2 integration approval.
 - Read-only simulation plan is reviewed/approved.
 - No conflicts remain with locked specs:
   - `docs/architecture/norway-school-identity-matching-spec.md`
   - `docs/architecture/route-engine-master-spec.md`
-- No migration execution/schema/code/write integration starts before:
-  - Security/RLS pre-apply conditions closure;
-  - explicit controlled-apply approval.
+- No production rollout/schema-write integration starts before:
+  - post-apply read-only smoke completion;
+  - explicit Phase 2 integration approval;
+  - explicit production operational approval.
 
 ### Possible approaches
 
