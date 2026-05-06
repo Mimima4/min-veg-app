@@ -1106,12 +1106,13 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
   - summary counts `0` and no warning (`phase2DiagnosticsWarning=null`)
 - Controlled sample execution for read-only diagnostics is **passed** in `my-app-test`.
 - Sample data cleanup is **passed** (marker rows returned to zero).
+- Main Apply Gate Checklist review decision is **APPROVE WITH CONDITIONS**.
+- Main Apply Gate Checklist condition is documented:
+  - backup/restore readiness must be evidence-confirmed and owner-accepted before main preflight/apply.
 - Production/main operational rollout remains **NOT approved**.
 - Runtime/write integration remains **blocked**.
-- Next gate is owner decision between:
-  - **approve Main Apply Gate Checklist / main preflight**;
-  - **read-only integration into readiness/pipeline diagnostics planning**;
-  - **stop/freeze Phase 2 diagnostics as validated**.
+- Next gate:
+  - **main preflight/dry-run after backup/restore readiness confirmation**.
 
 ### Acceptance gate summary (Phase 2)
 

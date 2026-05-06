@@ -45,7 +45,11 @@ Before any main apply attempt:
 9. Confirm `pgcrypto` is installed/allowed.
 10. Confirm dry-run plans only:
     - `20260506112154_school_identity_location_resolution_phase2.sql`
-11. Confirm backup/restore confidence is acknowledged by owner.
+11. Confirm backup/restore readiness is evidence-confirmed and owner-accepted:
+    - current backup/PITR status or backup window is known;
+    - restore procedure is known/available;
+    - owner explicitly accepts restore posture for this controlled additive migration;
+    - if any of the above cannot be confirmed, STOP.
 12. Confirm there are no pending unexpected migrations.
 
 ## 4. Allowed apply scope
@@ -110,6 +114,7 @@ STOP immediately if any condition occurs:
 8. Dirty git beyond allowed transient `supabase/.temp`.
 9. Any apply error.
 10. Any post-apply verification failure.
+11. Backup/restore readiness is not evidence-confirmed or owner-accepted.
 
 ## 9. Rollback awareness
 
