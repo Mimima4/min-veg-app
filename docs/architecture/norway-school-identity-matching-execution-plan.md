@@ -1064,6 +1064,26 @@ Array of objects:
 
 Introduce explicit conceptual separation: **school identity** vs **NSR location / avdeling**.
 
+### Phase 2 architecture spec
+
+- Phase 2 detailed architecture boundary is defined in:
+  - `docs/architecture/school-identity-location-resolution-phase-2-spec.md`
+- That document is the required design baseline for Phase 2 implementation planning.
+
+### Implementation blocker (Phase 2)
+
+- Phase 2 implementation is **blocked** until the Phase 2 architecture spec is reviewed and explicitly accepted.
+
+### Acceptance gate summary (Phase 2)
+
+- Reviewed/accepted Phase 2 architecture spec decision is logged.
+- Separate DB model proposal is reviewed/approved (not by this execution plan section alone).
+- Read-only simulation plan is reviewed/approved.
+- No conflicts remain with locked specs:
+  - `docs/architecture/norway-school-identity-matching-spec.md`
+  - `docs/architecture/route-engine-master-spec.md`
+- No write integration starts before explicit approval.
+
 ### Possible approaches
 
 - Derive identity clusters from NSR names (rules-based, reproducible).  
