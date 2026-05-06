@@ -949,14 +949,60 @@ Array of objects:
 
 1. County **`56`** is now clearer as **unmatched-heavy** with **LOSA / external-delivery–oriented signals** (via identity semantics hints and reason codes)—**not** primarily a fuzzy-threshold tuning problem from operator-facing diagnostics alone.
 2. This phase **still does not** make **`56`** (or any unmatched county) **publishable**: abort policy and unsupported LOSA semantics are unchanged at the product/matching boundary.
-3. The **next** architectural move should be a **school identity / LOSA / external-delivery model decision** (how to represent and surface LOSA safely), **not** ad-hoc matching threshold changes driven by diagnostics output.
-4. Planned next planning block: **Phase 1A.2i** (below).
+3. The **next** architectural move should be **school identity / LOSA / external-delivery modelling** (**Phase 2** / **Phase 4** in this plan), **not** ad-hoc matching threshold changes driven by diagnostics output.
+4. **Phase 1A.2i** decision is **recorded below** (Phase 1 stays diagnostics-only for LOSA; no PSA / Route Engine escape hatches).
 
-#### 10. Phase 1A.2i — LOSA / external-delivery modelling boundary (next)
+#### 10. Phase 1A.2i — LOSA / external-delivery modelling boundary (decision)
 
-- **Goal:** Decide product and data **boundaries** for **LOSA** and **external / non–ordinary-school delivery** labels: what is in scope for Vilbli truth materialization, what remains unsupported, and what would require schema/UX/PSA semantics (see also **Phase 4 — LOSA model**).
-- **Out of scope for 1A.2i decision-by-diagnostics alone:** lowering fuzzy thresholds or inferring NSR institutions from diagnostics-only output.
-- **Not started** in the **1A.2h.1** code path above; this is the **next** documented phase gate after unmatched-heavy dry-run diagnostics.
+**1. Decision**
+
+- **Option A accepted:** in **Phase 1**, **LOSA / external-delivery** remains **diagnostics-only / unsupported** relative to publishable Vilbli→PSA truth—no new LOSA PSA product model in this phase.
+- **No PSA writes** targeting LOSA semantics; existing pipeline **abort-before-write** posture for dirty matching / unsupported identity remains unchanged (see **Phase 1A.2h.1** diagnostics and canonical matching spec **CASE 4**).
+- **No LOSA-to-school / LOSA-to-NSR mapping** (no manual pairing, no heuristic “pick an enhet”).
+- **No Route Engine** or **family-facing** route option that treats **unsupported LOSA** as ordinary school programme availability truth.
+- **No county-specific exception** (including **no `56` allowlist** / no Finnmark-only publish bypass).
+
+**2. Domain statuses**
+
+| Status | Role in Phase 1 |
+|--------|-----------------|
+| **`unsupported_losa`** | Identified as LOSA-oriented / unsupported for ordinary school matching → **not publishable** as PSA truth. |
+| **`external_delivery`** | Non–ordinary-school delivery signal without an approved model → **not publishable until explicitly modelled**. |
+| **`remote_or_local_delivery`** | **Future only**; requires **explicit product + data contract** before any PSA or Route Engine surfacing. |
+| **`identity_unresolved`** | Cannot resolve to a supported school identity / NSR alignment under current rules → **not publishable**. |
+| **`needs_review`** | Operator/review signal only → **not publishable as route truth** for families. |
+| **`publishable_school_availability`** | **Only** class allowed for **family-facing PSA truth** under the current VGS contour (ordinary NSR-backed availability when policy allows). |
+
+**3. Route Engine boundary**
+
+- Do **not** present LOSA as an **ordinary school option** on the study route.
+- Do **not** choose a **random institution or campus** for LOSA or external-delivery rows.
+- Do **not** build a **VG progression step** from **unsupported LOSA** availability as if it were canonical school truth.
+- **Later:** **operator / review** surfacing may be considered, but **not family-facing truth** until a **LOSA model** and explicit product rules exist (see **Phase 4 — LOSA model**).
+
+**4. Non-goals (Phase 1 / 1A.2i documentation closure)**
+
+- No fuzzy-threshold tuning to “green” LOSA-heavy counties.
+- No manual **internet-derived** lookup tables.
+- No **county-specific allowlist** or production exception for **Finnmark (`56`)**.
+- No **UI compensation** that implies publishable school truth where the model is unsupported.
+- No **PSA write-policy change** for LOSA as part of this documentation decision.
+- **No new DB schema** introduced under the **Phase 1A.2i** decision itself (schema work deferred to **Phase 2** / **Phase 4** when contracted).
+
+**5. Exit criteria for a future LOSA model** (not Phase 1 deliverables; checklist for **Phase 4** readiness)
+
+- **Source-backed** provider / delivery identity (what the official source asserts, not inferred labels alone).
+- Clear separation of **responsible school/provider** vs **delivery site** / modality where applicable.
+- Explicit **programme ↔ stage** relation for how availability is offered.
+- **NSR alignment** where applicable—and honest **non-NSR** paths where not.
+- **Audit trail** and immutable-enough provenance for operator review.
+- **Review status** workflow before any family-facing surfacing.
+- **Explicit product decision** on what families may see vs what remains internal/operator-only.
+
+**6. Operational note**
+
+- County **`56` (Finnmark)** remains **non-green** under current truth rules; operator diagnostics now show **unmatched-heavy + LOSA/external-delivery hints**—this remains **not** a matching-threshold bug to patch in Phase 1.
+- **Next work** should advance **Phase 2** (school identity vs location) and **Phase 4** (LOSA model) **design and contract**, not incremental matching patches or county exceptions.
 
 ---
 
