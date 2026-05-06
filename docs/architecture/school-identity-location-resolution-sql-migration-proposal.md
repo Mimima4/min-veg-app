@@ -644,10 +644,12 @@ Main rollout status:
 - **APPLIED TO MAIN SCHEMA**:
   - target `project_ref=bgmtxyfchtqjuvzuuoon`;
   - applied migration `20260506112154_school_identity_location_resolution_phase2.sql`.
+- **MAIN POST-APPLY SMOKE PASSED**.
+- **PHASE 2 SCHEMA ROLLOUT COMPLETE**.
 - Runtime/write integration remains **blocked**.
-- No backfill.
+- No backfill inserted.
 - No data inserted.
 
 Next gate:
 
-- **main post-apply read-only smoke + freeze Phase 2 schema rollout**
+- **owner decision: read-only integration planning or stop/freeze Phase 2 schema rollout as complete**

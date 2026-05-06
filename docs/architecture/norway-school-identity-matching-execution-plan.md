@@ -1126,10 +1126,27 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
   - estimated row count for all 7 Phase 2 tables is `0`;
   - `uq_res_active_obs` and `uq_pub_active_obs_prog_stage` exist;
   - `pgcrypto` notice confirmed extension already exists.
+- Main post-apply read-only smoke is **passed**:
+  - remote migration history includes `20260506112154`;
+  - all 7 Phase 2 tables exist;
+  - all 7 tables have estimated row count `0`;
+  - `uq_res_active_obs` and `uq_pub_active_obs_prog_stage` exist;
+  - no backfill;
+  - no runtime/write integration;
+  - no manual SQL;
+  - no sample data in main;
+  - PSA publication unchanged;
+  - build passed on first attempt.
+- Main post-apply smoke limitation:
+  - optional script smoke against main was not run because safe env vars were not available in this session;
+  - not a blocker for schema smoke.
 - Production/main schema rollout is **completed**.
+- Phase 2 schema rollout is **complete**.
 - Runtime/write integration remains **blocked**.
 - Next gate:
-  - **main post-apply read-only smoke + freeze Phase 2 schema rollout**.
+  - **owner decision:**
+    - **read-only integration into readiness/pipeline diagnostics planning**; or
+    - **stop/freeze Phase 2 schema rollout as complete**.
 
 ### Acceptance gate summary (Phase 2)
 
@@ -1147,7 +1164,7 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
   - applied migration: `20260506112154_school_identity_location_resolution_phase2.sql`
 - Post-apply read-only smoke result is logged (`POST-APPLY SMOKE PASSED`) for the same test target.
 - Test migration cycle is closed.
-- Production/main operational rollout remains blocked pending a separate approval gate.
+- Production/main operational schema rollout completion is logged (main apply + post-apply smoke passed).
 - Runtime/write integration remains blocked pending a separate Phase 2 integration approval.
 - Phase 2 read-only diagnostics ADR/contract is logged (`ACCEPTED FOR PLANNING`):
   - `docs/architecture/phase-2-read-only-diagnostics-contract.md`
@@ -1165,10 +1182,9 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
 - No conflicts remain with locked specs:
   - `docs/architecture/norway-school-identity-matching-spec.md`
   - `docs/architecture/route-engine-master-spec.md`
-- No production rollout/schema-write integration starts before:
-  - owner gate decision between Main Apply Gate Checklist approval/main preflight, read-only diagnostics integration planning, or diagnostics freeze;
-  - explicit Phase 2 integration approval;
-  - explicit production operational approval.
+- No runtime/write integration starts before:
+  - owner gate decision between read-only diagnostics integration planning or freeze/no further action on Phase 2 schema rollout;
+  - explicit Phase 2 integration approval.
 
 ### Possible approaches
 

@@ -229,3 +229,56 @@ Operational boundary confirmation:
 Next gate:
 
 - **main post-apply read-only smoke + freeze Phase 2 schema rollout**.
+
+## 14. Main post-apply read-only smoke result
+
+Status:
+
+- **MAIN POST-APPLY SMOKE PASSED**
+- Target: `project_ref=bgmtxyfchtqjuvzuuoon`
+
+Confirmations:
+
+1. Migration history:
+   - remote migration history includes `20260506112154`.
+2. Table existence:
+   - all 7 Phase 2 tables exist:
+     - `source_school_observations`
+     - `school_identity_candidates`
+     - `identity_aliases`
+     - `school_locations`
+     - `school_identity_resolution_decisions`
+     - `programme_availability_publication_decisions`
+     - `school_identity_review_events`
+3. Row counts:
+   - all 7 tables have estimated row count `0`.
+4. Key indexes:
+   - `uq_res_active_obs` exists;
+   - `uq_pub_active_obs_prog_stage` exists.
+5. Isolation confirmation:
+   - no backfill;
+   - no runtime/write integration;
+   - no manual SQL;
+   - no Route Engine/UI/billing changes;
+   - no operator workflow enablement;
+   - no sample data in main;
+   - PSA publication unchanged.
+6. Build confirmation:
+   - `rm -rf .next && npm run build` passed on first attempt.
+
+Limitation:
+
+- Optional script smoke against main was not run because safe env vars were not available in this session.
+- This is not a blocker for schema smoke and may be run later as read-only diagnostics smoke when env is available.
+
+Schema rollout status:
+
+- **PHASE 2 SCHEMA ROLLOUT COMPLETE**
+- Runtime/write integration remains blocked.
+- No backfill.
+- No PSA publication change.
+- No operator workflow enabled.
+
+Next gate:
+
+- **owner decision between read-only integration planning and freeze/no further action**.
