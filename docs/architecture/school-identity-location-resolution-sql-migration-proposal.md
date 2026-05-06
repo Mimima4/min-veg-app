@@ -639,6 +639,11 @@ Gate implications:
 2. Production/main rollout remains **NOT approved**.
 3. Runtime/write integration remains **blocked**.
 
+Main rollout status:
+
+- Main rollout planning checklist is proposed and not executed:
+  - `docs/architecture/phase-2-main-supabase-rollout-checklist.md`
+
 Next gate:
 
 - **owner decision: Phase 2 read-only integration planning or main rollout planning**

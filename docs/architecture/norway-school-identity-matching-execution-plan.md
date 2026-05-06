@@ -1077,6 +1077,8 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
   - `docs/architecture/school-identity-location-resolution-sql-migration-proposal.md`
 - Phase 2 read-only diagnostics integration contract (ADR):
   - `docs/architecture/phase-2-read-only-diagnostics-contract.md`
+- Main Supabase rollout gate checklist:
+  - `docs/architecture/phase-2-main-supabase-rollout-checklist.md`
 
 ### Implementation blocker (Phase 2)
 
@@ -1107,7 +1109,7 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
 - Production/main operational rollout remains **NOT approved**.
 - Runtime/write integration remains **blocked**.
 - Next gate is owner decision between:
-  - **main Supabase rollout planning**;
+  - **approve Main Apply Gate Checklist / main preflight**;
   - **read-only integration into readiness/pipeline diagnostics planning**;
   - **stop/freeze Phase 2 diagnostics as validated**.
 
@@ -1136,6 +1138,8 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
 - Sample data runbook execution result is logged:
   - `SAMPLE EXECUTION PASSED`;
   - cleanup verified.
+- Main rollout checklist artifact is logged (`PROPOSED / NOT EXECUTED`):
+  - `docs/architecture/phase-2-main-supabase-rollout-checklist.md`
 - Read-only diagnostics smoke note is logged:
   - earlier Cursor/sandbox attempt blocked by DNS;
   - network-enabled local Terminal smoke passed for `my-app-test`.
@@ -1144,7 +1148,7 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
   - `docs/architecture/norway-school-identity-matching-spec.md`
   - `docs/architecture/route-engine-master-spec.md`
 - No production rollout/schema-write integration starts before:
-  - owner gate decision between main rollout planning, read-only diagnostics integration planning, or diagnostics freeze;
+  - owner gate decision between Main Apply Gate Checklist approval/main preflight, read-only diagnostics integration planning, or diagnostics freeze;
   - explicit Phase 2 integration approval;
   - explicit production operational approval.
 
