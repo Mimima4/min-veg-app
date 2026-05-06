@@ -1071,6 +1071,8 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
 - That document is the required design baseline for Phase 2 implementation planning.
 - DB model proposal artifact (`ACCEPTED WITH NOTES`):
   - `docs/architecture/school-identity-location-resolution-db-model-proposal.md`
+- Schema design draft artifact (created, not approved):
+  - `docs/architecture/school-identity-location-resolution-schema-design-draft.md`
 
 ### Implementation blocker (Phase 2)
 
