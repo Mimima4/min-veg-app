@@ -1091,9 +1091,13 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
 - Dry-run migration plan is **documented**.
 - Dry-run/static validation execution is **passed**.
 - pgcrypto environment / platform permission check is **passed**.
+- Post-apply read-only smoke in approved test environment is **passed**.
+- Test migration cycle is **closed**.
 - Production/main operational rollout remains **NOT approved**.
 - Runtime/write integration remains **blocked**.
-- The next gate is **post-apply read-only smoke + Phase 2 integration planning**.
+- Next gate is owner decision between:
+  - **Phase 2 read-only integration planning**;
+  - **main Supabase rollout planning**.
 
 ### Acceptance gate summary (Phase 2)
 
@@ -1109,6 +1113,8 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
 - Controlled apply result is logged for approved test target:
   - `project_ref=egalvhjvdvmoqboxbwzo` / `my-app-test`
   - applied migration: `20260506112154_school_identity_location_resolution_phase2.sql`
+- Post-apply read-only smoke result is logged (`POST-APPLY SMOKE PASSED`) for the same test target.
+- Test migration cycle is closed.
 - Production/main operational rollout remains blocked pending a separate approval gate.
 - Runtime/write integration remains blocked pending a separate Phase 2 integration approval.
 - Read-only simulation plan is reviewed/approved.
@@ -1116,7 +1122,7 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
   - `docs/architecture/norway-school-identity-matching-spec.md`
   - `docs/architecture/route-engine-master-spec.md`
 - No production rollout/schema-write integration starts before:
-  - post-apply read-only smoke completion;
+  - owner gate decision between Phase 2 read-only integration planning and main rollout planning;
   - explicit Phase 2 integration approval;
   - explicit production operational approval.
 

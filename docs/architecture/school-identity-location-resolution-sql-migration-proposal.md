@@ -594,3 +594,51 @@ Explicit scope boundary:
 Next gate:
 
 - **post-apply read-only smoke + Phase 2 integration planning**
+
+## 24. Post-apply read-only smoke result
+
+Status:
+
+- **POST-APPLY SMOKE PASSED**
+- Target: `project_ref=egalvhjvdvmoqboxbwzo` / `my-app-test`
+
+Confirmations:
+
+1. Migration history confirmed:
+   - `Local=20260506112154`, `Remote=20260506112154`
+2. All 7 Phase 2 tables exist:
+   - `source_school_observations`
+   - `school_identity_candidates`
+   - `identity_aliases`
+   - `school_locations`
+   - `school_identity_resolution_decisions`
+   - `programme_availability_publication_decisions`
+   - `school_identity_review_events`
+3. All 7 tables reported estimated row count `0`.
+4. Indexes confirmed:
+   - `uq_res_active_obs`
+   - `uq_pub_active_obs_prog_stage`
+5. Constraint/security/runtime static confirmations from migration file:
+   - CHECK constraints present for `decision_state`, `publishability_state`, `alias_type`, and `verification_alignment_state`.
+   - No `CREATE POLICY` / `GRANT` / `REVOKE`.
+   - No `CREATE TRIGGER` / `CREATE FUNCTION`.
+6. Runtime isolation confirmations:
+   - No runtime/write integration.
+   - No PSA publication changes.
+7. Build sanity passed:
+   - `rm -rf .next && npm run build`
+
+Limitations:
+
+1. Direct DB introspection for CHECK/RLS/grants was limited in this environment.
+2. Verification relied on Supabase inspect outputs plus migration-file static confirmation for constraints/security clauses.
+
+Gate implications:
+
+1. Test apply cycle is **closed**.
+2. Production/main rollout remains **NOT approved**.
+3. Runtime/write integration remains **blocked**.
+
+Next gate:
+
+- **owner decision: Phase 2 read-only integration planning or main rollout planning**
