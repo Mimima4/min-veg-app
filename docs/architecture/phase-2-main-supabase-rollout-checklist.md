@@ -141,3 +141,41 @@ New tables remain internal/unreferenced until separate integration approval.
 - Runtime/write integration still blocked.
 - PSA publication unchanged.
 - Next gate: main post-apply read-only smoke.
+
+## 12. Main preflight/dry-run result
+
+Status:
+
+- **MAIN PREFLIGHT DRY-RUN PASSED**
+- Target: `project_ref=bgmtxyfchtqjuvzuuoon`
+
+Confirmations:
+
+1. Git/integrity:
+   - branch is `main`;
+   - working tree clean except allowed transient `supabase/.temp`;
+   - HEAD SHA: `db3ba10c9f206fa155b29f71047b708e7a8d1fa2`;
+   - migration SHA256 matched:
+     - `bc72a924bcba216a2009662aee91d874772d7b1d694f51df9a9832ccdeaa4549`.
+2. Target confirmation:
+   - linked target is main `project_ref=bgmtxyfchtqjuvzuuoon`;
+   - target is not `my-app-test` / `egalvhjvdvmoqboxbwzo`.
+3. Migration history confirmation:
+   - remote migration history does not contain `20260506112154`.
+4. Dry-run confirmation:
+   - dry-run planned only:
+     - `20260506112154_school_identity_location_resolution_phase2.sql`.
+5. Backup/restore gate:
+   - owner confirmed backup/restore readiness.
+6. `pgcrypto` main check:
+   - `name=pgcrypto`;
+   - `default_version=1.3`;
+   - `installed_version=1.3`.
+7. Build gate:
+   - `rm -rf .next && npm run build` passed.
+
+Scope note:
+
+- Actual main apply was **NOT executed**.
+- Runtime/write integration remains blocked.
+- Next gate: **final main apply approval**.

@@ -1109,10 +1109,18 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
 - Main Apply Gate Checklist review decision is **APPROVE WITH CONDITIONS**.
 - Main Apply Gate Checklist condition is documented:
   - backup/restore readiness must be evidence-confirmed and owner-accepted before main preflight/apply.
+- Main preflight/dry-run for main rollout is **passed**:
+  - target `project_ref=bgmtxyfchtqjuvzuuoon`;
+  - migration SHA256 matched expected approved hash;
+  - remote migration history does not include `20260506112154`;
+  - dry-run planned only `20260506112154_school_identity_location_resolution_phase2.sql`;
+  - `pgcrypto` confirmed (`default_version=1.3`, `installed_version=1.3`);
+  - build passed.
 - Production/main operational rollout remains **NOT approved**.
+- Main apply remains **NOT executed**.
 - Runtime/write integration remains **blocked**.
 - Next gate:
-  - **main preflight/dry-run after backup/restore readiness confirmation**.
+  - **final main apply approval**.
 
 ### Acceptance gate summary (Phase 2)
 
