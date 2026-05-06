@@ -136,6 +136,8 @@ Planned behavior:
 - Implement separate read-only diagnostic script only after this ADR is accepted.
 - First implementation target: `my-app-test` only.
 - No integration into readiness/pipeline until script behavior is validated.
+- Sample data runbook artifact (`PROPOSED / NOT EXECUTED`):
+  - `docs/architecture/phase-2-read-only-diagnostics-sample-data-runbook.md`
 
 ## 12. Smoke test note
 
@@ -207,3 +209,8 @@ Next action:
 - Commit smoke result, then owner decision between:
   - read-only diagnostics sample data planning;
   - main Supabase rollout planning.
+
+Runbook status update:
+
+- Controlled synthetic sample data runbook is proposed and not executed:
+  - `docs/architecture/phase-2-read-only-diagnostics-sample-data-runbook.md`

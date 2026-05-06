@@ -1105,7 +1105,7 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
 - Production/main operational rollout remains **NOT approved**.
 - Runtime/write integration remains **blocked**.
 - Next gate is owner decision between:
-  - **read-only diagnostics sample data planning**;
+  - **review/approve sample data insert/cleanup runbook**;
   - **main Supabase rollout planning**.
 
 ### Acceptance gate summary (Phase 2)
@@ -1128,6 +1128,8 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
 - Runtime/write integration remains blocked pending a separate Phase 2 integration approval.
 - Phase 2 read-only diagnostics ADR/contract is logged (`ACCEPTED FOR PLANNING`):
   - `docs/architecture/phase-2-read-only-diagnostics-contract.md`
+- Phase 2 diagnostics sample data runbook is logged (`PROPOSED / NOT EXECUTED`):
+  - `docs/architecture/phase-2-read-only-diagnostics-sample-data-runbook.md`
 - Read-only diagnostics smoke note is logged:
   - earlier Cursor/sandbox attempt blocked by DNS;
   - network-enabled local Terminal smoke passed for `my-app-test`.
@@ -1136,7 +1138,7 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
   - `docs/architecture/norway-school-identity-matching-spec.md`
   - `docs/architecture/route-engine-master-spec.md`
 - No production rollout/schema-write integration starts before:
-  - owner gate decision between read-only diagnostics sample data planning and main rollout planning;
+  - owner gate decision between runbook approval for sample data test and main rollout planning;
   - explicit Phase 2 integration approval;
   - explicit production operational approval.
 
