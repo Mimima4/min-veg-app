@@ -29,6 +29,7 @@ Authoritative references:
 
 - `docs/architecture/school-identity-location-resolution-phase-2-spec.md`
 - `docs/architecture/school-identity-location-resolution-db-model-proposal.md`
+- `docs/architecture/school-identity-location-resolution-sql-migration-proposal.md`
 - `docs/architecture/norway-school-identity-matching-spec.md`
 - `docs/architecture/route-engine-master-spec.md`
 - `docs/product-principles.md`
@@ -463,3 +464,10 @@ Notes to carry into SQL/migration proposal:
 5. Lock stale severity criteria and revalidation triggers.
 6. Define key collision and merge/split governance mechanics.
 7. Specify retention/archival implementation plan and backfill sequencing.
+
+Carry-forward safeguards to enforce at SQL review:
+
+- RLS/security section remains policy-level; final rules require separate security review.
+- Enum strategy (constrained text + checks vs native enum) remains proposal-level until SQL acceptance.
+- Backfill algorithm remains non-approved until separate backfill ADR/plan.
+- Active-row uniqueness stays anchored on `superseded_at IS NULL` as canonical proposed mechanism.

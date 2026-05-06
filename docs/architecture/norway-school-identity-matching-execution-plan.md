@@ -1073,20 +1073,24 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
   - `docs/architecture/school-identity-location-resolution-db-model-proposal.md`
 - Schema design draft artifact (`ACCEPTED WITH NOTES`):
   - `docs/architecture/school-identity-location-resolution-schema-design-draft.md`
+- SQL/migration proposal artifact (`PROPOSAL / NOT APPROVED`):
+  - `docs/architecture/school-identity-location-resolution-sql-migration-proposal.md`
 
 ### Implementation blocker (Phase 2)
 
 - Phase 2 architecture spec is **accepted with notes**.
 - Phase 2 DB model proposal is **accepted with notes**.
 - Phase 2 schema design draft is **accepted with notes**.
-- The next blocked step is **SQL/migration proposal**.
-- No SQL/migrations/schema/code/write integration starts until SQL/migration proposal is separately reviewed and approved.
+- SQL/migration proposal is **created** with status **PROPOSAL / NOT APPROVED**.
+- The next gate is **review/acceptance of the created SQL/migration proposal**.
+- No SQL/migrations/schema/code/write integration starts until that review/acceptance gate is passed.
 
 ### Acceptance gate summary (Phase 2)
 
 - Phase 2 spec acceptance decision (`ACCEPTED WITH NOTES`) is logged.
 - Phase 2 DB model proposal acceptance decision (`ACCEPTED WITH NOTES`) is logged.
 - Phase 2 schema design draft acceptance decision (`ACCEPTED WITH NOTES`) is logged.
+- SQL/migration proposal creation is logged (`PROPOSAL / NOT APPROVED`).
 - SQL/migration proposal review/acceptance is the current gate (not approved by this section alone).
 - Read-only simulation plan is reviewed/approved.
 - No conflicts remain with locked specs:
