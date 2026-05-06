@@ -326,3 +326,29 @@ Before any PSA write-path integration:
 - no readiness JSON changes;
 - no PSA write changes;
 - no UI/admin dashboard changes.
+
+## 17. Acceptance status
+
+- Status: **ACCEPTED WITH NOTES**
+- No blocking conflicts found with:
+  - `docs/architecture/school-identity-location-resolution-phase-2-spec.md`
+  - `docs/architecture/school-identity-location-resolution-db-model-proposal.md`
+  - `docs/architecture/school-identity-location-resolution-schema-design-draft.md`
+  - `docs/architecture/norway-school-identity-matching-spec.md`
+  - `docs/architecture/route-engine-master-spec.md`
+  - `docs/product-principles.md`
+  - Phase 2 gates in `docs/architecture/norway-school-identity-matching-execution-plan.md`
+- This proposal is the accepted baseline for the next **migration file draft** step.
+- No migration execution is approved by this proposal.
+- No DB schema change is approved by this proposal.
+- No code/runtime/write integration is approved by this proposal.
+
+Notes to carry into migration file draft:
+
+1. Finalize exact SQL types and FK forms.
+2. Formalize JSON contract enforcement/versioning.
+3. Implement physical partial unique constraints for active rows.
+4. Require separate RLS/security review before applying migrations.
+5. Define concrete rollback/no-data-loss plan per migration unit.
+6. Define dry-run migration validation plan.
+7. Keep backfill excluded until separate ADR/approval.

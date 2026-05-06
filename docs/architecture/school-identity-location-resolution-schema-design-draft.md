@@ -452,8 +452,12 @@ Explicit no-change list:
   - `docs/product-principles.md`
   - Phase 2 gates in `docs/architecture/norway-school-identity-matching-execution-plan.md`
 - This draft is the accepted baseline for the next **SQL/migration proposal** step.
+- SQL/migration proposal artifact status: **ACCEPTED WITH NOTES**:
+  - `docs/architecture/school-identity-location-resolution-sql-migration-proposal.md`
+- Next blocked step: **migration file draft**.
 - No SQL/migration is approved by this draft.
 - No DB schema, code, or write integration is approved by this draft.
+- No migration execution/schema/code/write integration starts until migration file draft is reviewed and approved.
 
 Notes to carry into SQL/migration proposal:
 
