@@ -216,8 +216,10 @@ Guardrail:
   - `docs/product-principles.md`
   - Phase 2 gates in `docs/architecture/norway-school-identity-matching-execution-plan.md`
 - This proposal is the accepted baseline for the next **schema design draft** step.
-- Schema design draft artifact created (not approved):
+- Schema design draft artifact (`ACCEPTED WITH NOTES`):
   - `docs/architecture/school-identity-location-resolution-schema-design-draft.md`
+- Next blocked step: **SQL/migration proposal**.
+- No SQL/migrations/schema/code/write integration starts until SQL/migration proposal is reviewed and approved.
 - No SQL/migration is approved by this proposal.
 - No DB schema, code, or write integration is approved by this proposal.
 

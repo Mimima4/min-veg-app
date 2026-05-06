@@ -439,3 +439,27 @@ Explicit no-change list:
 - no random campus decisions;
 - no publishability expansion without auditable evidence;
 - all decisions carry reason codes and evidence references.
+
+## 20. Acceptance status
+
+- Status: **ACCEPTED WITH NOTES**
+- No blocking conflicts found with:
+  - `docs/architecture/school-identity-location-resolution-phase-2-spec.md`
+  - `docs/architecture/school-identity-location-resolution-db-model-proposal.md`
+  - `docs/architecture/norway-school-identity-matching-spec.md`
+  - `docs/architecture/route-engine-master-spec.md`
+  - `docs/product-principles.md`
+  - Phase 2 gates in `docs/architecture/norway-school-identity-matching-execution-plan.md`
+- This draft is the accepted baseline for the next **SQL/migration proposal** step.
+- No SQL/migration is approved by this draft.
+- No DB schema, code, or write integration is approved by this draft.
+
+Notes to carry into SQL/migration proposal:
+
+1. Finalize enum physical strategy and evolution policy.
+2. Define active-row uniqueness enforcement pattern.
+3. Specify JSON validation contracts.
+4. Define RLS/security and operator authority boundaries.
+5. Lock stale severity criteria and revalidation triggers.
+6. Define key collision and merge/split governance mechanics.
+7. Specify retention/archival implementation plan and backfill sequencing.

@@ -1071,26 +1071,28 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
 - That document is the required design baseline for Phase 2 implementation planning.
 - DB model proposal artifact (`ACCEPTED WITH NOTES`):
   - `docs/architecture/school-identity-location-resolution-db-model-proposal.md`
-- Schema design draft artifact (created, not approved):
+- Schema design draft artifact (`ACCEPTED WITH NOTES`):
   - `docs/architecture/school-identity-location-resolution-schema-design-draft.md`
 
 ### Implementation blocker (Phase 2)
 
 - Phase 2 architecture spec is **accepted with notes**.
 - Phase 2 DB model proposal is **accepted with notes**.
-- The next blocked step is **schema design draft**.
-- No SQL/migrations/schema/code/write integration starts until schema design draft is separately reviewed and approved.
+- Phase 2 schema design draft is **accepted with notes**.
+- The next blocked step is **SQL/migration proposal**.
+- No SQL/migrations/schema/code/write integration starts until SQL/migration proposal is separately reviewed and approved.
 
 ### Acceptance gate summary (Phase 2)
 
 - Phase 2 spec acceptance decision (`ACCEPTED WITH NOTES`) is logged.
 - Phase 2 DB model proposal acceptance decision (`ACCEPTED WITH NOTES`) is logged.
-- Schema design draft review/acceptance is the current gate (not approved by this section alone).
+- Phase 2 schema design draft acceptance decision (`ACCEPTED WITH NOTES`) is logged.
+- SQL/migration proposal review/acceptance is the current gate (not approved by this section alone).
 - Read-only simulation plan is reviewed/approved.
 - No conflicts remain with locked specs:
   - `docs/architecture/norway-school-identity-matching-spec.md`
   - `docs/architecture/route-engine-master-spec.md`
-- No SQL/migrations/schema/code/write integration starts before explicit approval of schema design draft + simulation gate.
+- No SQL/migrations/schema/code/write integration starts before explicit approval of SQL/migration proposal + simulation gate.
 
 ### Possible approaches
 
