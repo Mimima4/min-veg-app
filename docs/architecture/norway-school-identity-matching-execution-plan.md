@@ -1086,8 +1086,9 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
   - `supabase/migrations/20260506112154_school_identity_location_resolution_phase2.sql`
 - Security/RLS review decision is **APPROVED FOR ADDITIVE TABLE MIGRATION WITH CONDITIONS**.
 - Migration execution remains **blocked**.
-- The next gate is **dry-run migration plan**.
-- No apply starts until all Security/RLS conditions and dry-run migration plan are approved.
+- Dry-run migration plan is **documented**.
+- The next gate is **dry-run/static validation execution + pgcrypto environment check**.
+- No production apply starts until dry-run/static validation + pgcrypto + final approval are complete.
 
 ### Acceptance gate summary (Phase 2)
 
@@ -1097,15 +1098,21 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
 - SQL/migration proposal acceptance decision (`ACCEPTED WITH NOTES`) is logged.
 - Migration draft gate status is logged (`APPROVE WITH CONDITIONS`).
 - Security/RLS gate status is logged (`APPROVED FOR ADDITIVE TABLE MIGRATION WITH CONDITIONS`).
-- Migration execution remains blocked pending Security/RLS conditions + dry-run migration plan approval.
-- Dry-run migration plan is the current gate (not approved by this section alone).
+- Dry-run migration plan documentation is logged.
+- Migration execution remains blocked pending:
+  - Security/RLS conditions closure;
+  - dry-run/static validation execution;
+  - pgcrypto environment check;
+  - explicit final approval.
+- Dry-run/static validation execution + pgcrypto check is the current gate (not approved by this section alone).
 - Read-only simulation plan is reviewed/approved.
 - No conflicts remain with locked specs:
   - `docs/architecture/norway-school-identity-matching-spec.md`
   - `docs/architecture/route-engine-master-spec.md`
 - No migration execution/schema/code/write integration starts before:
   - Security/RLS pre-apply conditions closure;
-  - dry-run migration plan approval;
+  - dry-run/static validation execution;
+  - pgcrypto environment check;
   - explicit controlled-apply approval.
 
 ### Possible approaches

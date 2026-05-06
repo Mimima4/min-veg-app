@@ -402,3 +402,64 @@ Required conditions before apply:
 Next gate:
 
 - **dry-run migration plan**
+
+## 20. Dry-run migration plan
+
+Status:
+
+- Dry-run migration plan is documented and ready for execution review.
+- Migration execution remains **NOT approved** by this plan.
+
+Goals:
+
+1. Prove migration is additive-only.
+2. Prove no existing runtime/truth table changes.
+3. Prove no data writes/backfill.
+4. Prove dependency order is valid.
+5. Prove rollback order is valid.
+6. Confirm `pgcrypto` policy/permissions handling.
+7. Prove no RLS/policy/grant side effects.
+8. Prove no runtime integration.
+
+Static checks:
+
+1. No `ALTER TABLE` on existing tables.
+2. No `INSERT`/`UPDATE`/`DELETE`.
+3. No `CREATE POLICY`/`GRANT`/`REVOKE`.
+4. No `CREATE TRIGGER`/`CREATE FUNCTION`.
+5. No county/fylke-specific logic.
+6. Object names are `<63` chars.
+7. No duplicate object names.
+8. All 7 Phase 2 tables are present.
+
+Syntax/dependency validation path:
+
+1. Static SQL parse/lint if available.
+2. Optional local/shadow DB validation only (never production).
+3. FK dependency order check.
+4. Index/constraint order check.
+
+`pgcrypto` condition check:
+
+1. Verify target env already has `pgcrypto` or allows `CREATE EXTENSION`.
+2. If not allowed, require approved platform/admin fallback.
+3. Approval owner: security/platform.
+
+Rollback/security checks:
+
+1. Reverse dependency rollback order is valid.
+2. Rollback drops only new objects.
+3. Existing production truth/runtime data remains untouched.
+4. Service-role-only initial access.
+5. No public/family/mobile direct access.
+6. No operator writes until workflow is approved.
+7. No hidden manual truth.
+
+Acceptance criteria:
+
+1. All static checks pass.
+2. Syntax/dependency validation path is approved.
+3. `pgcrypto` condition is resolved.
+4. Rollback checklist is accepted.
+5. Security conditions are acknowledged.
+6. Migration execution still requires explicit final approval.
