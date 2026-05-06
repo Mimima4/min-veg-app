@@ -352,3 +352,26 @@ Notes to carry into migration file draft:
 5. Define concrete rollback/no-data-loss plan per migration unit.
 6. Define dry-run migration validation plan.
 7. Keep backfill excluded until separate ADR/approval.
+
+## 18. Migration draft acceptance status
+
+- Status: **APPROVE WITH CONDITIONS**
+- Reviewed migration draft:
+  - `supabase/migrations/20260506112154_school_identity_location_resolution_phase2.sql`
+- No hard SQL blockers found for migration draft candidate status.
+- Migration execution is **NOT approved** by this status.
+- Apply remains blocked until all pre-apply conditions are satisfied.
+
+Required pre-apply conditions:
+
+1. Separate security/RLS review and approved policy/grants model.
+2. Supabase `pgcrypto` extension policy/permissions check.
+3. Dry-run migration plan review.
+4. Apply remains strictly additive-only.
+5. No backfill.
+6. No existing runtime/truth table changes.
+7. No runtime/write integration.
+
+Next gate:
+
+- **security/RLS review**

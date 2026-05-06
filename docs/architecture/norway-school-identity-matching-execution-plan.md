@@ -1082,8 +1082,11 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
 - Phase 2 DB model proposal is **accepted with notes**.
 - Phase 2 schema design draft is **accepted with notes**.
 - SQL/migration proposal is **accepted with notes**.
-- The next blocked step is **migration file draft**.
-- No migration execution/schema/code/write integration starts until migration file draft is reviewed and approved.
+- Migration draft review decision is **APPROVE WITH CONDITIONS**:
+  - `supabase/migrations/20260506112154_school_identity_location_resolution_phase2.sql`
+- Migration execution remains **blocked**.
+- The next gate is **security/RLS review**.
+- No apply starts until all pre-apply conditions are satisfied.
 
 ### Acceptance gate summary (Phase 2)
 
@@ -1091,12 +1094,17 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
 - Phase 2 DB model proposal acceptance decision (`ACCEPTED WITH NOTES`) is logged.
 - Phase 2 schema design draft acceptance decision (`ACCEPTED WITH NOTES`) is logged.
 - SQL/migration proposal acceptance decision (`ACCEPTED WITH NOTES`) is logged.
-- Migration file draft review/acceptance is the current gate (not approved by this section alone).
+- Migration draft gate status is logged (`APPROVE WITH CONDITIONS`).
+- Migration execution remains blocked pending pre-apply conditions.
+- Security/RLS review is the current gate (not approved by this section alone).
 - Read-only simulation plan is reviewed/approved.
 - No conflicts remain with locked specs:
   - `docs/architecture/norway-school-identity-matching-spec.md`
   - `docs/architecture/route-engine-master-spec.md`
-- No migration execution/schema/code/write integration starts before explicit approval of migration file draft + simulation gate.
+- No migration execution/schema/code/write integration starts before:
+  - explicit security/RLS review outcome;
+  - pre-apply conditions closure;
+  - explicit controlled-apply approval.
 
 ### Possible approaches
 
