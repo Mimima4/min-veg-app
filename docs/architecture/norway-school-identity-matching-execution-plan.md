@@ -1102,13 +1102,14 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
 - Read-only diagnostics smoke from network-enabled local Terminal is **passed** against `my-app-test`:
   - `phase2SchemaAvailable=true`
   - summary counts `0` and no warning (`phase2DiagnosticsWarning=null`)
-- Sample data runbook review result is logged: **APPROVE WITH CONDITIONS**.
-- Review conditions are documented in runbook (mandatory supersession for SC-UNR-01 and observation required-fields checklist).
+- Controlled sample execution for read-only diagnostics is **passed** in `my-app-test`.
+- Sample data cleanup is **passed** (marker rows returned to zero).
 - Production/main operational rollout remains **NOT approved**.
 - Runtime/write integration remains **blocked**.
 - Next gate is owner decision between:
-  - **controlled sample execution plan/review**;
-  - **main Supabase rollout planning**.
+  - **main Supabase rollout planning**;
+  - **read-only integration into readiness/pipeline diagnostics planning**;
+  - **stop/freeze Phase 2 diagnostics as validated**.
 
 ### Acceptance gate summary (Phase 2)
 
@@ -1132,9 +1133,9 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
   - `docs/architecture/phase-2-read-only-diagnostics-contract.md`
 - Phase 2 diagnostics sample data runbook is logged (`PROPOSED / NOT EXECUTED`):
   - `docs/architecture/phase-2-read-only-diagnostics-sample-data-runbook.md`
-- Runbook review state is logged:
-  - `APPROVE WITH CONDITIONS`;
-  - conditions documented for controlled sample execution preparation.
+- Sample data runbook execution result is logged:
+  - `SAMPLE EXECUTION PASSED`;
+  - cleanup verified.
 - Read-only diagnostics smoke note is logged:
   - earlier Cursor/sandbox attempt blocked by DNS;
   - network-enabled local Terminal smoke passed for `my-app-test`.
@@ -1143,7 +1144,7 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
   - `docs/architecture/norway-school-identity-matching-spec.md`
   - `docs/architecture/route-engine-master-spec.md`
 - No production rollout/schema-write integration starts before:
-  - owner gate decision between controlled sample execution plan/review and main rollout planning;
+  - owner gate decision between main rollout planning, read-only diagnostics integration planning, or diagnostics freeze;
   - explicit Phase 2 integration approval;
   - explicit production operational approval.
 

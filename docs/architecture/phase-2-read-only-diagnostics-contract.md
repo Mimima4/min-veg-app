@@ -214,3 +214,9 @@ Runbook status update:
 
 - Controlled synthetic sample data runbook is proposed and not executed:
   - `docs/architecture/phase-2-read-only-diagnostics-sample-data-runbook.md`
+
+Sample data validation status update:
+
+- Controlled sample execution in `my-app-test` passed.
+- `scripts/diagnose-school-identity-phase2-readonly.mjs` is validated against synthetic sample rows.
+- Cleanup is verified (marker rows returned to zero).

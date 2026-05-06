@@ -204,3 +204,61 @@ Required fields for every planned publication row:
 4. Verify expected output.
 5. Cleanup sample rows.
 6. Verify cleanup counts.
+
+## 12. Controlled sample execution result
+
+Status:
+
+- **SAMPLE EXECUTION PASSED**
+- Target: `project_ref=egalvhjvdvmoqboxbwzo` / `my-app-test`
+
+Gate summary:
+
+- target gate: PASS
+- schema gate: PASS
+- marker clean gate: PASS
+- insert phase 1 (observations): 4/4 PASS
+- insert phase 2 (resolution decisions): 5/5 PASS
+- insert phase 3 (publication decisions): 3/3 PASS
+- diagnostic gate: PASS
+- cleanup gate: PASS
+- final invariant gate: PASS
+
+Diagnostic JSON summary:
+
+- `phase2SchemaAvailable=true`
+- `observationsCount=4`
+- `resolutionDecisionCount=5`
+- `publicationDecisionCount=3`
+- `publishableCount=1`
+- `needsReviewCount=3`
+- `unsupportedCount=2`
+- `unresolvedCount=1`
+- `phase2DiagnosticsWarning=null`
+
+`identityResolutionBySchoolCode` verification:
+
+- `SC-PUB-01`: `latestDecisionState=publishable`, `latestPublishabilityState=publishable`
+- `SC-REV-01`: `latestDecisionState=needs_review`, `latestPublishabilityState=needs_review`
+- `SC-UNS-01`: `latestDecisionState=unsupported_losa`, `latestPublishabilityState=blocked`
+- `SC-UNR-01`: `latestDecisionState=identity_unresolved`, `latestPublishabilityState=null`
+
+Latest-rule verification:
+
+- `SC-UNR-01` newer active `identity_unresolved` decision correctly won over older superseded `needs_review` row.
+
+Cleanup verification:
+
+- publication rows deleted: `3`
+- resolution rows deleted: `5`
+- observation rows deleted: `4`
+- final marker counts returned to `0`
+
+Explicit scope confirmation:
+
+- sample data was cleaned up
+- no runtime/write integration was enabled
+- no PSA publication was changed
+- no non-marker rows were touched
+- no Route Engine/UI/billing changes
+- main/prod not touched
