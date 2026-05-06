@@ -2,16 +2,16 @@
 
 ## 1. Status / boundary
 
-- Status: **PROPOSED / NOT EXECUTED**
-- This checklist does not approve main apply by itself.
-- No SQL execution is performed by this document.
-- No migration execution is performed by this document.
-- No DB writes are performed by this document.
+- Status: **CLOSED / COMPLETE — Phase 2 additive schema rollout to main only** — see §13–§15.
+- Broader Phase 2 programme effort (identity/location resolution, data fill, future integrations) is **not** closed by this document; separate owner gates apply.
+- This file is both a historical checklist/runbook and execution + closure evidence for **that schema rollout**; §3–§10 are historical preflight/apply procedure and must not be read as current pending apply status.
+- This checklist does not approve apply or downstream integrations by itself. **No SQL, migration, or DB execution is performed by this document** (this Markdown file does not run tools); factual apply and post-apply verification are recorded in **§13–§15**.
 - No backfill.
 - No runtime/write integration.
 - No Route Engine/UI/billing changes.
 - No PSA publication changes.
 - No operator workflow enablement.
+- This closure does not approve readiness or pipeline integration; standalone read-only diagnostics/helper boundaries remain per Phase 2 helper ADR/contract.
 
 ## 2. Tested evidence from `my-app-test`
 
@@ -176,9 +176,9 @@ Confirmations:
 
 Scope note:
 
-- Actual main apply was **NOT executed**.
-- Runtime/write integration remains blocked.
-- Next gate: **final main apply approval**.
+- **Pre-apply snapshot (§12):** at the time this section was written, preflight/dry-run had passed; main apply was **not yet** reflected here in the document timeline.
+- The «main apply not executed» wording above applies **only to this §12 snapshot** and is **superseded** by **§13–§15** (factual main apply, smoke, and checklist closure for schema-only scope).
+- Runtime/write integration remains **blocked**.
 
 ## 13. Main apply result
 
