@@ -1075,6 +1075,8 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
   - `docs/architecture/school-identity-location-resolution-schema-design-draft.md`
 - SQL/migration proposal artifact (`ACCEPTED WITH NOTES`):
   - `docs/architecture/school-identity-location-resolution-sql-migration-proposal.md`
+- Phase 2 read-only diagnostics integration contract (ADR):
+  - `docs/architecture/phase-2-read-only-diagnostics-contract.md`
 
 ### Implementation blocker (Phase 2)
 
@@ -1096,7 +1098,7 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
 - Production/main operational rollout remains **NOT approved**.
 - Runtime/write integration remains **blocked**.
 - Next gate is owner decision between:
-  - **Phase 2 read-only integration planning**;
+  - **implement separate read-only diagnostic script for `my-app-test`**;
   - **main Supabase rollout planning**.
 
 ### Acceptance gate summary (Phase 2)
@@ -1117,12 +1119,14 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
 - Test migration cycle is closed.
 - Production/main operational rollout remains blocked pending a separate approval gate.
 - Runtime/write integration remains blocked pending a separate Phase 2 integration approval.
+- Phase 2 read-only diagnostics ADR/contract is logged (`ACCEPTED FOR PLANNING`):
+  - `docs/architecture/phase-2-read-only-diagnostics-contract.md`
 - Read-only simulation plan is reviewed/approved.
 - No conflicts remain with locked specs:
   - `docs/architecture/norway-school-identity-matching-spec.md`
   - `docs/architecture/route-engine-master-spec.md`
 - No production rollout/schema-write integration starts before:
-  - owner gate decision between Phase 2 read-only integration planning and main rollout planning;
+  - owner gate decision between implementing separate read-only diagnostics in `my-app-test` and main rollout planning;
   - explicit Phase 2 integration approval;
   - explicit production operational approval.
 
