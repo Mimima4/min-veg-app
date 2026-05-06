@@ -7,6 +7,12 @@
 - No runtime integration is approved by this document.
 - No write integration is approved by this document.
 
+### Shared read-only helper boundary
+
+- Boundary ADR (helper module scope — **Planning only** until code lands):
+  - `docs/architecture/phase-2-read-only-diagnostics-helper-boundary-adr.md`
+- Helper boundary status: **ACCEPTED FOR PLANNING** (implementation not approved except as described in §11 Next gate).
+
 ## 2. Decision
 
 - First adopter for Phase 2 read-only diagnostics must be a **separate diagnostic script**.
@@ -133,10 +139,11 @@ Planned behavior:
 
 ## 11. Next gate
 
-- Implement separate read-only diagnostic script only after this ADR is accepted.
-- First implementation target: `my-app-test` only.
-- No integration into readiness/pipeline until script behavior is validated.
-- Sample data runbook artifact (`PROPOSED / NOT EXECUTED`):
+- Standalone diagnostic script is **implemented** and validated (`my-app-test` synthetic sample execution + cleanup; see sample data runbook).
+- **Next technical gate (only):** implement **shared read-only helper** per `phase-2-read-only-diagnostics-helper-boundary-adr.md` (`scripts/lib/phase2-readonly-diagnostics-helper.mjs`) and **refactor** `scripts/diagnose-school-identity-phase2-readonly.mjs` to use it — **CLI flat stdout parity required** (see boundary ADR §3B, §14).
+- **Must not**, in that change set, add imports into `classify-vgs-truth-readiness.mjs` or `run-vgs-truth-pipeline.mjs`.
+- Optional readiness/pipeline additive integration remains **not approved** until boundary ADR integration Step 3 and a separate owner gate.
+- Sample data runbook artifact:
   - `docs/architecture/phase-2-read-only-diagnostics-sample-data-runbook.md`
 
 ## 12. Smoke test note

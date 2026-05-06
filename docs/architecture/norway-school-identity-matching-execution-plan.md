@@ -1077,6 +1077,8 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
   - `docs/architecture/school-identity-location-resolution-sql-migration-proposal.md`
 - Phase 2 read-only diagnostics integration contract (ADR):
   - `docs/architecture/phase-2-read-only-diagnostics-contract.md`
+- Phase 2 shared read-only diagnostics helper boundary (ADR):
+  - `docs/architecture/phase-2-read-only-diagnostics-helper-boundary-adr.md`
 - Main Supabase rollout gate checklist:
   - `docs/architecture/phase-2-main-supabase-rollout-checklist.md`
 
@@ -1143,10 +1145,27 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
 - Production/main schema rollout is **completed**.
 - Phase 2 schema rollout is **complete**.
 - Runtime/write integration remains **blocked**.
-- Next gate:
-  - **owner decision:**
-    - **read-only integration into readiness/pipeline diagnostics planning**; or
-    - **stop/freeze Phase 2 schema rollout as complete**.
+
+### Phase 2 schema rollout closure
+
+- Status: **CLOSED / COMPLETE**.
+- State:
+  - Phase 2 schema rollout is **complete and frozen**.
+  - This closure covers **schema rollout only**.
+  - This closure does **not** approve runtime/write integration.
+  - This closure does **not** approve operator workflow.
+  - This closure does **not** approve PSA publication changes.
+  - This closure does **not** approve backfill.
+- Next official block (only if owner approves):
+  - **Phase 2 read-only integration planning** as a **separate new gate** (readiness/pipeline diagnostics scope only; no write path until a later explicit integration approval).
+
+### Phase 2 shared read-only helper — next technical gate
+
+- Boundary ADR: `docs/architecture/phase-2-read-only-diagnostics-helper-boundary-adr.md` — **ACCEPTED FOR PLANNING** (recommended planning track: PLAN SHARED HELPER FIRST).
+- **Next technical implementation gate:** extract **shared helper** + refactor **`scripts/diagnose-school-identity-phase2-readonly.mjs` only** with **parity** to current flat stdout JSON; **`MAX_OBSERVATIONS = 5000` in helper**.
+- **Runtime/write integration** remains **blocked**.
+- **Readiness/pipeline diagnostics integration** remains **not approved** until boundary ADR Step 3 and explicit owner gate.
+- **Phase 2 main schema rollout** remains **CLOSED / COMPLETE**.
 
 ### Acceptance gate summary (Phase 2)
 
@@ -1168,13 +1187,14 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
 - Runtime/write integration remains blocked pending a separate Phase 2 integration approval.
 - Phase 2 read-only diagnostics ADR/contract is logged (`ACCEPTED FOR PLANNING`):
   - `docs/architecture/phase-2-read-only-diagnostics-contract.md`
+- Phase 2 shared read-only diagnostics helper boundary ADR is logged (`ACCEPTED FOR PLANNING`):
+  - `docs/architecture/phase-2-read-only-diagnostics-helper-boundary-adr.md`
 - Phase 2 diagnostics sample data runbook is logged (`PROPOSED / NOT EXECUTED`):
   - `docs/architecture/phase-2-read-only-diagnostics-sample-data-runbook.md`
 - Sample data runbook execution result is logged:
   - `SAMPLE EXECUTION PASSED`;
   - cleanup verified.
-- Main rollout checklist artifact is logged (`PROPOSED / NOT EXECUTED`):
-  - `docs/architecture/phase-2-main-supabase-rollout-checklist.md`
+- Main rollout checklist lifecycle is **closed** (`docs/architecture/phase-2-main-supabase-rollout-checklist.md`); future integration work opens a **separate gate**.
 - Read-only diagnostics smoke note is logged:
   - earlier Cursor/sandbox attempt blocked by DNS;
   - network-enabled local Terminal smoke passed for `my-app-test`.
@@ -1182,9 +1202,14 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
 - No conflicts remain with locked specs:
   - `docs/architecture/norway-school-identity-matching-spec.md`
   - `docs/architecture/route-engine-master-spec.md`
+- Phase 2 schema rollout closure is logged (schema-only; frozen):
+  - migration applied in `my-app-test` and validated;
+  - diagnostics script implemented; synthetic sample/cleanup verified in test;
+  - migration applied to main `project_ref=bgmtxyfchtqjuvzuuoon`; main post-apply smoke passed;
+  - main Phase 2 tables exist with row counts `0`; no backfill; PSA publication unchanged; Route Engine/UI/billing untouched.
 - No runtime/write integration starts before:
-  - owner gate decision between read-only diagnostics integration planning or freeze/no further action on Phase 2 schema rollout;
-  - explicit Phase 2 integration approval.
+  - separate owner approval to open **Phase 2 read-only integration planning** gate; and
+  - explicit Phase 2 runtime/write integration approval (if ever pursued).
 
 ### Possible approaches
 

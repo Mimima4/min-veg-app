@@ -140,7 +140,7 @@ New tables remain internal/unreferenced until separate integration approval.
 - **APPLIED TO MAIN SCHEMA ONLY**
 - Runtime/write integration still blocked.
 - PSA publication unchanged.
-- Next gate: main post-apply read-only smoke.
+- Main post-apply read-only smoke completed; see **§14** and **§15 Checklist closure**.
 
 ## 12. Main preflight/dry-run result
 
@@ -226,9 +226,9 @@ Operational boundary confirmation:
 - No code/script changes.
 - No Route Engine/UI/billing changes.
 
-Next gate:
+Next gate (historical; superseded by checklist closure):
 
-- **main post-apply read-only smoke + freeze Phase 2 schema rollout**.
+- main post-apply read-only smoke completed; see **§15 Checklist closure**.
 
 ## 14. Main post-apply read-only smoke result
 
@@ -279,6 +279,13 @@ Schema rollout status:
 - No PSA publication change.
 - No operator workflow enabled.
 
-Next gate:
+Next gate (historical; superseded by checklist closure):
 
-- **owner decision between read-only integration planning and freeze/no further action**.
+- owner decision between read-only integration planning and freeze/no further action; see **§15 Checklist closure**.
+
+## 15. Checklist closure
+
+- Main schema rollout and main post-apply read-only smoke are **complete**.
+- This checklist’s execution lifecycle is **closed** for Phase 2 schema rollout.
+- Phase 2 schema rollout is **frozen** at schema-only scope: no assumed approval for runtime/write integration, operator workflow, PSA publication changes, or backfill.
+- Future integration or follow-on work must open a **separate owner gate** (e.g. Phase 2 read-only integration planning).

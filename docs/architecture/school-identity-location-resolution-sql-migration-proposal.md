@@ -636,8 +636,8 @@ Limitations:
 Gate implications:
 
 1. Test apply cycle is **closed**.
-2. Production/main rollout remains **NOT approved**.
-3. Runtime/write integration remains **blocked**.
+2. Production/main **schema rollout** is **closed / complete** (schema only).
+3. Runtime/write integration remains **blocked** until a separate explicit integration gate.
 
 Main rollout status:
 
@@ -646,10 +646,14 @@ Main rollout status:
   - applied migration `20260506112154_school_identity_location_resolution_phase2.sql`.
 - **MAIN POST-APPLY SMOKE PASSED**.
 - **PHASE 2 SCHEMA ROLLOUT COMPLETE**.
+- **PHASE 2 SCHEMA ROLLOUT CLOSED / COMPLETE**:
+  - **no backfill**;
+  - **no data inserted**;
+  - **runtime/write integration blocked**;
+  - **operator workflow not enabled**;
+  - **PSA publication unchanged**.
 - Runtime/write integration remains **blocked**.
-- No backfill inserted.
-- No data inserted.
 
-Next gate:
+Next official block (only if owner approves):
 
-- **owner decision: read-only integration planning or stop/freeze Phase 2 schema rollout as complete**
+- **Phase 2 read-only integration planning** as a **separate new gate** (does not imply write integration or operator workflow).
