@@ -1072,17 +1072,19 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
 
 ### Implementation blocker (Phase 2)
 
-- Phase 2 implementation is **blocked** until the Phase 2 architecture spec is reviewed and explicitly accepted.
+- Phase 2 architecture spec is **accepted with notes**.
+- The next blocked step is **DB model proposal**.
+- No schema/code/write integration starts until the DB model proposal is separately reviewed and approved.
 
 ### Acceptance gate summary (Phase 2)
 
-- Reviewed/accepted Phase 2 architecture spec decision is logged.
+- Phase 2 spec acceptance decision (`ACCEPTED WITH NOTES`) is logged.
 - Separate DB model proposal is reviewed/approved (not by this execution plan section alone).
 - Read-only simulation plan is reviewed/approved.
 - No conflicts remain with locked specs:
   - `docs/architecture/norway-school-identity-matching-spec.md`
   - `docs/architecture/route-engine-master-spec.md`
-- No write integration starts before explicit approval.
+- No schema/code/write integration starts before explicit approval of DB proposal + simulation gate.
 
 ### Possible approaches
 

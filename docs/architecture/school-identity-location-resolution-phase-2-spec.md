@@ -19,6 +19,24 @@ Phase 2 defines a nationwide identity/location resolution layer that:
 - This spec does not reinterpret or override locked rules in the normative specs above.
 - If a terminology or behavior conflict exists with locked specs, mark it as an unresolved architecture conflict and stop implementation until an explicit decision is recorded.
 
+## Acceptance status
+
+- Status: **ACCEPTED WITH NOTES**
+- No blocking conflicts found with:
+  - `docs/architecture/norway-school-identity-matching-spec.md`
+  - `docs/architecture/route-engine-master-spec.md`
+  - `docs/product-principles.md`
+  - Phase 1A closure in `docs/architecture/norway-school-identity-matching-execution-plan.md`
+- Implementation remains blocked until a separate DB model proposal is reviewed and approved.
+
+Notes for next revision (non-blocking):
+
+1. Add an explicit state-to-runtime implication table.
+2. Define a minimal acceptance evidence / ADR artifact.
+3. Make responsible provider vs delivery site explicit in DB proposal artifacts.
+4. Specify `needs_review` governance before operator workflow rollout.
+5. Publish decisions must require both `audit_ref` and `decision_basis_version`.
+
 ## 3. Nationwide scope
 
 The model is nationwide and must account for:
