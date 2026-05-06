@@ -1069,24 +1069,26 @@ Introduce explicit conceptual separation: **school identity** vs **NSR location 
 - Phase 2 detailed architecture boundary is defined in:
   - `docs/architecture/school-identity-location-resolution-phase-2-spec.md`
 - That document is the required design baseline for Phase 2 implementation planning.
-- DB model proposal artifact (created, not approved):
+- DB model proposal artifact (`ACCEPTED WITH NOTES`):
   - `docs/architecture/school-identity-location-resolution-db-model-proposal.md`
 
 ### Implementation blocker (Phase 2)
 
 - Phase 2 architecture spec is **accepted with notes**.
-- The next blocked step is **DB model proposal**.
-- No schema/code/write integration starts until the DB model proposal is separately reviewed and approved.
+- Phase 2 DB model proposal is **accepted with notes**.
+- The next blocked step is **schema design draft**.
+- No SQL/migrations/schema/code/write integration starts until schema design draft is separately reviewed and approved.
 
 ### Acceptance gate summary (Phase 2)
 
 - Phase 2 spec acceptance decision (`ACCEPTED WITH NOTES`) is logged.
-- Separate DB model proposal review/acceptance is the current gate (not approved by this section alone).
+- Phase 2 DB model proposal acceptance decision (`ACCEPTED WITH NOTES`) is logged.
+- Schema design draft review/acceptance is the current gate (not approved by this section alone).
 - Read-only simulation plan is reviewed/approved.
 - No conflicts remain with locked specs:
   - `docs/architecture/norway-school-identity-matching-spec.md`
   - `docs/architecture/route-engine-master-spec.md`
-- No schema/code/write integration starts before explicit approval of DB proposal + simulation gate.
+- No SQL/migrations/schema/code/write integration starts before explicit approval of schema design draft + simulation gate.
 
 ### Possible approaches
 

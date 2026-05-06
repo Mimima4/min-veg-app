@@ -28,8 +28,10 @@ Phase 2 defines a nationwide identity/location resolution layer that:
   - `docs/product-principles.md`
   - Phase 1A closure in `docs/architecture/norway-school-identity-matching-execution-plan.md`
 - Implementation remains blocked until a separate DB model proposal is reviewed and approved.
-- DB model proposal artifact created (not approved):
+- DB model proposal artifact status: **ACCEPTED WITH NOTES**:
   - `docs/architecture/school-identity-location-resolution-db-model-proposal.md`
+- Next blocked step: **schema design draft**.
+- No SQL/migration/schema/code/write integration starts until schema design draft is reviewed and approved.
 
 Notes for next revision (non-blocking):
 

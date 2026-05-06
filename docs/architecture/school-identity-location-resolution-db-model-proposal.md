@@ -206,9 +206,24 @@ Guardrail:
 
 - no matching-threshold tuning as substitute for identity/location/delivery modelling.
 
-## 12. Approval status
+## 12. Acceptance status
 
-- Status: **PROPOSAL / NOT YET APPROVED**
+- Status: **ACCEPTED WITH NOTES**
+- No blocking conflicts found with:
+  - `docs/architecture/school-identity-location-resolution-phase-2-spec.md`
+  - `docs/architecture/norway-school-identity-matching-spec.md`
+  - `docs/architecture/route-engine-master-spec.md`
+  - `docs/product-principles.md`
+  - Phase 2 gates in `docs/architecture/norway-school-identity-matching-execution-plan.md`
+- This proposal is the accepted baseline for the next **schema design draft** step.
 - No SQL/migration is approved by this proposal.
-- No schema/code/write integration is approved by this proposal.
-- Next step requires explicit review/acceptance decision.
+- No DB schema, code, or write integration is approved by this proposal.
+
+Notes to carry into schema design draft:
+
+1. Deterministic key governance for `identity_key` and `location_key`.
+2. Explicit state transition matrix.
+3. Stale comparison/revalidation criteria.
+4. Minimal operator audit payload schema.
+5. State-by-state nullability matrix for `responsible_provider_institution_id` vs `delivery_site_institution_id`.
+6. Retention/archival policy for append-only tables.
