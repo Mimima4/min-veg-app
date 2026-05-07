@@ -3,10 +3,12 @@
 ## 1. Status / boundary
 
 - Status: **PROPOSAL / NOT APPROVED**
+- This status is the proposal artifact / non-executable boundary for this document; it is **not** a deployment-status statement and must not be read as saying the reviewed migration was never applied.
+- Review/apply/smoke history is recorded later in this document and in the rollout checklist / execution plan.
 - Nationwide model intent.
 - No SQL execution in this proposal.
 - No migration file is created by this proposal.
-- No schema/code/write integration is approved by this proposal.
+- No schema/code/write integration is approved by this proposal; broader Phase 2 work remains separately gated.
 
 ### Main disclaimer
 
