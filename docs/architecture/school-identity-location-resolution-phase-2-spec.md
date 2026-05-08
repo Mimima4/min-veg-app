@@ -41,6 +41,17 @@ Notes for next revision (non-blocking):
 4. Specify `needs_review` governance before operator workflow rollout.
 5. Publish decisions must require both `audit_ref` and `decision_basis_version`.
 
+## Related non-normative planning artifacts
+
+- These artifacts are supporting planning documents only.
+- They do not change this spec's normative precedence.
+- They do not approve SQL, writes, extraction, report execution, runtime integration, readiness/pipeline integration, helper integration, operator workflow, PSA publication, or Route Engine changes.
+- They are used for planning Phase 2 validation-contour evidence handling.
+- Supporting planning artifacts:
+  - `docs/architecture/phase-2-validation-contour-data-resolution-backlog.md`
+  - `docs/architecture/phase-2-read-only-evidence-packet-format.md`
+  - `docs/architecture/phase-2-read-only-evidence-report-design.md`
+
 ## 3. Nationwide scope
 
 The model is nationwide and must account for:

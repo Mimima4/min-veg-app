@@ -10,6 +10,20 @@ Temporary planning artifact. **Delete after completion.**
 
 Plan implementation phases for Vilbli → NSR → PSA matching without hacks, manual mappings, or architecture drift.
 
+## Related Phase 2 validation planning artifacts
+
+- These are docs-only, non-canonical planning artifacts supporting Phase 2 validation/governance planning.
+- They do not approve extraction, report execution, runtime integration, readiness/pipeline integration, helper integration, operator workflow, PSA publication, Route Engine changes, or DB writes.
+- Canonical boundaries remain in:
+  - `docs/architecture/school-identity-location-resolution-phase-2-spec.md`
+  - `docs/architecture/norway-school-identity-matching-spec.md`
+  - `docs/architecture/route-engine-master-spec.md`
+  - `docs/architecture/phase-2-read-only-diagnostics-helper-boundary-adr.md` (helper boundary only; no helper scope expansion implied)
+- Planning artifacts:
+  - `docs/architecture/phase-2-validation-contour-data-resolution-backlog.md` — planning backlog / typed case model
+  - `docs/architecture/phase-2-read-only-evidence-packet-format.md` — single-case evidence packet format
+  - `docs/architecture/phase-2-read-only-evidence-report-design.md` — future multi-case report design
+
 ## Hard principles
 
 - No manual internet-derived lookup tables.  
