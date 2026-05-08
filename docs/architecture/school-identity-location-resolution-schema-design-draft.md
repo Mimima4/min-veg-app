@@ -3,6 +3,8 @@
 ## 1. Status / boundary
 
 - Status: **DRAFT / NOT APPROVED**
+- Note: this status describes the draft artifact / non-executable boundary, not a denial of later review lineage.
+- Acceptance context is recorded in the acceptance section below and related accepted-with-notes artifacts; no SQL/write/runtime/operator/PSA approval or broader Phase 2 completion is implied here.
 - Nationwide model intent only.
 - No SQL is defined in this draft.
 - No migrations are approved by this draft.

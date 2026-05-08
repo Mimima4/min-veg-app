@@ -6,6 +6,9 @@ Temporary planning artifact. **Delete after completion.**
 
 **Canonical spec:** `docs/architecture/norway-school-identity-matching-spec.md`
 
+Reader note: this file contains historical phase records; earlier helper/pipeline/readiness references are timeline context unless explicitly re-confirmed.
+Current helper boundary is governed by the Phase 2 helper ADR/contract, with standalone diagnostics as the approved consumer; readiness/pipeline/runtime/helper expansion remains separately gated and is not approved by this file.
+
 ## Purpose
 
 Plan implementation phases for Vilbli → NSR → PSA matching without hacks, manual mappings, or architecture drift.
