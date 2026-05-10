@@ -24,6 +24,7 @@
 - This document does not activate workflow, publication, or integration.
 - If classification wording here conflicts with the backlog, the backlog controls classification semantics.
 - This document does not change classification categories, case states, or governance gates from the backlog.
+- Related future Phase 4 planning artifact: `docs/architecture/phase-4-losa-official-source-evidence-refresh-design.md` — docs-only, non-canonical official-source evidence + automated refresh requirements for LOSA/external-delivery; it does not change packet shape, classification semantics, workflow, publication, or integration approval.
 
 ## 3. Authority / precedence
 

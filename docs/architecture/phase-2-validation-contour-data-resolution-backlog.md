@@ -312,6 +312,7 @@ High-level examples are documented across specs and execution notes. Current gap
 - Benefits: addresses core blocker class for `56` and similar future cases.
 - Risks: scope expansion if mixed with Phase 2 runtime expectations.
 - Required owner gate: explicit Phase 4 planning gate.
+- Related future Phase 4 planning artifact: `docs/architecture/phase-4-losa-official-source-evidence-refresh-design.md` — docs-only, non-canonical official-source evidence + automated refresh requirements; no script/job, DB/write, PSA, Route Engine, LOSA publication, or decision-row approval.
 
 ### Option 4 — Defer until additional evidence baseline is curated
 - Benefits: avoids premature classification drift.

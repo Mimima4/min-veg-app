@@ -33,6 +33,7 @@ Relationship rules:
 - This document does not change classification semantics.
 - This document does not approve extraction.
 - This document does not activate workflow, publication, or integration.
+- Related future Phase 4 planning artifact: `docs/architecture/phase-4-losa-official-source-evidence-refresh-design.md` — docs-only, non-canonical official-source evidence + automated refresh requirements for LOSA/external-delivery; it does not approve report execution, source fetch execution, PSA publication, Route Engine consumption, or decision-row writes.
 
 (Backlog defines problem type, packet defines single-case evidence shape, report defines future multi-case overview shape.)
 
