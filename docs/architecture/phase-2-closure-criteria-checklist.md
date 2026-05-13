@@ -164,6 +164,8 @@ The following patterns **must not** be used to claim progress, closure, or publi
 
 ## Allowed next strategic decisions
 
+Related namespace decision record: [`docs/architecture/phase-2-status-namespace-decisions.md`](./phase-2-status-namespace-decisions.md) defines the owner-approved namespace rules for `packet_status`, backlog classifications, Phase 2 decision states, and forbidden canonical status names. It must be consulted before drafting or updating Phase 2 evidence model closure criteria.
+
 Only **two** allowed strategic next decisions **from this snapshot** (both are **docs or gate** work first, **not** implementation):
 
 **A. Phase 2 evidence model closure**  
