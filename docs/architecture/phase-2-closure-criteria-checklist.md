@@ -5,7 +5,8 @@
 - **Status:** Docs-only control checklist  
 - **Scope:** School identity / location resolution Phase 2  
 - **Execution reference:** `docs/architecture/norway-school-identity-matching-execution-plan.md`  
-- **Repository checkpoint:** `0bb17f9` (from `git log -1 --oneline` at document creation)  
+- **Repository checkpoint:** `8d780ce Add Phase 2 to Phase 3 gate criteria` (from `git log -1 --oneline` at checklist reference refresh)  
+- **Checklist reference note:** Checklist reference refreshed after the Phase 2 operational documentation sequence was committed; operational approval states remain unchanged.  
 - **Created from:** Phase 2 closure readiness discussion  
 - **This document is not:** implementation approval  
 - **This document is not:** runtime/write approval  
@@ -44,6 +45,17 @@ Canonical boundaries remain in:
 - `docs/product-principles.md`  
 
 Planning artifacts (evidence packet, report design, validation backlog) do not, by themselves, approve execution or integration.
+
+**Related committed Phase 2 documentation artifacts (docs-only; not execution approval):**
+
+These are **documentation / boundary / criteria** artifacts only. They are **not** production truth execution, **not** runtime/write approval, **not** PSA materialization or publication approval, **not** Route Engine consumption approval, and **not** Phase 3 approval.
+
+- `docs/architecture/phase-2-evidence-model-closure-criteria.md`  
+- `docs/architecture/phase-2-operational-evidence-sufficiency-standard.md`  
+- `docs/architecture/phase-2-governance-review-closure.md`  
+- `docs/architecture/phase-2-production-truth-closure.md`  
+- `docs/architecture/phase-2-runtime-write-closure.md`  
+- `docs/architecture/phase-2-to-phase-3-gate-criteria.md`  
 
 ---
 
@@ -102,7 +114,7 @@ In **Source basis**, use a **file path**, a **section or nearby heading name**, 
 | Publishability contract | All publishability preconditions satisfied before `programme_school_availability`; no expansion without auditable evidence. | Contract documented in Phase 2 spec; not operationalized via populated publication decisions in main. | MUST_HAVE_BEFORE_PHASE_3 | PSA false positives | `docs/architecture/school-identity-location-resolution-phase-2-spec.md` — Publishability contract — preconditions list |
 | Auditability | Decision-bearing records include actor type, basis version, reason codes, `audit_ref`, supersession; append-only discipline. | Rules in Phase 2 spec Decision ownership / audit section. | MUST_HAVE_BEFORE_PHASE_3 | Silent manual truth | `docs/architecture/school-identity-location-resolution-phase-2-spec.md` — Decision ownership / audit — required fields and rules |
 | Operator/review boundary | Operator layer until explicitly modelled for family-facing; no UI masking of unresolved source truth. | Principles in Phase 2 spec; no approved operator workflow rollout captured in this checklist snapshot. | SHOULD_HAVE_BEFORE_PHASE_3; OWNER_GATE_REQUIRED | UX leakage of unresolved states into family-facing surfaces | `docs/architecture/school-identity-location-resolution-phase-2-spec.md` — Scope / non-scope — no family-facing display changes; `docs/architecture/school-identity-location-resolution-phase-2-spec.md` — Route Engine boundary — unresolved remains operator-layer |
-| Runtime/write boundary | No writes to Phase 2 tables and no integration until **explicit** Phase 2 runtime or write approval. | Blocked and not approved per execution plan Phase 2 closure entries. | BLOCKED; OWNER_GATE_REQUIRED | Unauthorized DB or pipeline truth mutation | `docs/architecture/norway-school-identity-matching-execution-plan.md` — Phase 2 schema rollout closure — runtime integration blocked; `docs/architecture/phase-2-read-only-diagnostics-helper-boundary-adr.md` — Status — runtime write integration blocked |
+| Runtime/write boundary | No writes to Phase 2 tables and no integration until **explicit** Phase 2 runtime or write approval. | Blocked and not approved per execution plan Phase 2 closure entries. | BLOCKED; OWNER_GATE_REQUIRED | Unauthorized DB or pipeline truth mutation | `docs/architecture/norway-school-identity-matching-execution-plan.md` — Phase 2 schema rollout closure — runtime integration blocked; `docs/architecture/phase-2-read-only-diagnostics-helper-boundary-adr.md` — Status — runtime write integration blocked; `docs/architecture/phase-2-runtime-write-closure.md` — Snapshot / status — documentation-only boundary |
 | PSA publication boundary | PSA unchanged unless separate publication approval; publishability contract enforced. | Rollout log states PSA publication unchanged after main migration. | OWNER_GATE_REQUIRED; MUST_HAVE_BEFORE_PHASE_3 | Unauthorized PSA expansion | `docs/architecture/norway-school-identity-matching-execution-plan.md` — Phase 2 implementation blocker — PSA unchanged; `docs/architecture/school-identity-location-resolution-phase-2-spec.md` — Scope / non-scope — PSA write expansion before model approval |
 | Route Engine consumption boundary | Route Engine uses **published** internal DB truth only; no random campus; unsupported LOSA not as ordinary school option. | Unchanged by Phase 2 rollout; normative rules in Route Engine and Phase 2 specs. | MUST_HAVE_BEFORE_PHASE_3 | Unsafe runtime routes | `docs/architecture/route-engine-master-spec.md` — VGS programme school availability — published internal truth; `docs/architecture/school-identity-location-resolution-phase-2-spec.md` — Route Engine boundary — published truth only |
 | UI/display boundary | Family-facing display policy for identity versus location **not** defined solely by Phase 2 schema closure. | Explicitly out of Phase 2 spec scope for Route and UI changes. | NOT_REQUIRED_FOR_PHASE_3; FUTURE_CONTOUR | N/A for Phase 2 document closure alone; product UI remains separate gate | `docs/architecture/school-identity-location-resolution-phase-2-spec.md` — Scope / non-scope — Route Engine UI and family-facing display |
@@ -138,6 +150,8 @@ This section does **not** approve Phase 3; it states what this checklist treats 
 
 The following **do not**, by themselves, block **defining** Phase 2 → Phase 3 **gate criteria** or documenting Phase 3 preconditions—provided hard gates above are not pretended satisfied:
 
+Phase 2 → Phase 3 gate criteria are now documented in `docs/architecture/phase-2-to-phase-3-gate-criteria.md`; this does not change operational prerequisites or owner-gated execution boundaries.
+
 - **Full family-facing UI or display policy** for identity versus location  
 - **Full LOSA implementation**  
 - **All county packets across Norway**  
@@ -166,13 +180,15 @@ The following patterns **must not** be used to claim progress, closure, or publi
 
 Related namespace decision record: [`docs/architecture/phase-2-status-namespace-decisions.md`](./phase-2-status-namespace-decisions.md) defines the owner-approved namespace rules for `packet_status`, backlog classifications, Phase 2 decision states, and forbidden canonical status names. It must be consulted before drafting or updating Phase 2 evidence model closure criteria.
 
-Only **two** allowed strategic next decisions **from this snapshot** (both are **docs or gate** work first, **not** implementation):
+**Strategic documentation snapshot (not a roadmap):** one documentation track from the earlier snapshot is now **completed as a committed artifact only**: `docs/architecture/phase-2-to-phase-3-gate-criteria.md` exists as **documentation-only transition gate criteria**. That document does **not** mean the Phase 2 → Phase 3 **gate has passed**, does **not** approve Phase 3 implementation, controlled 1:N PSA emission, runtime/write integration, PSA materialization, PSA publication, Route Engine consumption, or DB writes—all remain **blocked** until **separate** owner-approved execution gates. This checklist update does **not** create a new roadmap decision.
+
+Remaining **docs-first** emphasis in this snapshot:
 
 **A. Phase 2 evidence model closure**  
 Owner and architecture agree what counts as **sufficient evidence** for identity, alias, location, and NSR candidates; how evidence packets and backlog classifications relate to future decisions; and what remains explicitly **unsupported** until Phase 4. Does **not** mean running extraction scripts, writing SQL, or integrating helpers into pipeline or readiness.
 
-**B. Phase 2 → Phase 3 gate criteria**  
-A documented checklist of prerequisites before **any** Phase 3 implementation or controlled 1:N PSA emission begins, aligned with execution plan Phase 3 rules and locked specs. Does **not** mean starting Phase 3 coding, changing PSA, or changing Route Engine.
+**B. Phase 2 → Phase 3 gate criteria (documentation artifact — already committed)**  
+Prerequisites are documented in `docs/architecture/phase-2-to-phase-3-gate-criteria.md` (aligned with this checklist and the execution plan). This is **not** Phase 3 approval, **not** “gate passed,” and **not** permission to start Phase 3 coding, change PSA, change Route Engine, or perform DB writes.
 
 ---
 
@@ -181,5 +197,7 @@ A documented checklist of prerequisites before **any** Phase 3 implementation or
 **Current recommended next gate from this checklist snapshot:** Phase 2 evidence model closure.
 
 **Reason:** Phase 2 → Phase 3 criteria depend on a **clear evidence model**. Without this, Phase 3 may inherit hidden assumptions (for example treating diagnostics or schema presence as proof of resolvable truth), which conflicts with the publishability contract and hard invariants in `docs/architecture/school-identity-location-resolution-phase-2-spec.md`.
+
+The Phase 2 → Phase 3 gate criteria document now exists, but it does not approve Phase 3 or replace the remaining owner-gated operational/execution work.
 
 **Clarification:** this recommendation is **snapshot-bound** and may be changed by an explicit owner decision. It is **not** implementation approval.
