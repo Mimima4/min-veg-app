@@ -1081,6 +1081,8 @@ Array of objects:
 
 Introduce explicit conceptual separation: **school identity** vs **NSR location / avdeling**.
 
+Related control checklist: [`docs/architecture/phase-2-closure-criteria-checklist.md`](./phase-2-closure-criteria-checklist.md) defines the agreed Phase 2 closure levels, hard gates, and forbidden shortcuts before Phase 3 can be considered. It also clarifies that the frozen standalone helper integration branch is not the full Phase 2 roadmap and that Phase 3 must not inherit hidden truth from schema-only or diagnostics-only artifacts.
+
 ### Phase 2 architecture spec
 
 - Phase 2 detailed architecture boundary is defined in:
