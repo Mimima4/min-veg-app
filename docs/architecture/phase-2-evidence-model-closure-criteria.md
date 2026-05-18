@@ -2,18 +2,18 @@
 
 ## Snapshot / status
 
-- **Status:** Docs-only governance criteria v1  
-- **Scope:** Phase 2 evidence model documentation closure  
-- **Repository checkpoint:** `9d45de3 Add Phase 2 evidence model closure outline` (from `git log -1 --oneline` at document creation)  
-- **Created at (UTC):** 2026-05-13  
-- **Not Phase 2 production truth closure**  
-- **Not implementation approval**  
-- **Not runtime/write approval**  
-- **Not PSA publication approval**  
-- **Not Route Engine consumption approval**  
-- **Not Phase 3 start approval**  
-- **Does not change status namespaces**  
-- **Does not replace** canonical packet / backlog / Phase 2 decision-state sources  
+- **Status:** Docs-only governance criteria v1
+- **Scope:** Phase 2 evidence model documentation closure
+- **Repository checkpoint:** `9d45de3 Add Phase 2 evidence model closure outline` (from `git log -1 --oneline` at document creation)
+- **Created at (UTC):** 2026-05-13
+- **Not Phase 2 production truth closure**
+- **Not implementation approval**
+- **Not runtime/write approval**
+- **Not PSA publication approval**
+- **Not Route Engine consumption approval**
+- **Not Phase 3 start approval**
+- **Does not change status namespaces**
+- **Does not replace** canonical packet / backlog / Phase 2 decision-state sources
 
 ## Purpose
 
@@ -21,13 +21,13 @@ This document defines **documentation / governance** closure criteria for the Ph
 
 ## Source hierarchy
 
-1. `docs/architecture/phase-2-read-only-evidence-packet-format.md` is canonical for **`packet_status`**.  
-2. `docs/architecture/phase-2-validation-contour-data-resolution-backlog.md` is canonical for **backlog classification**.  
-3. `docs/architecture/school-identity-location-resolution-phase-2-spec.md` is canonical for **Phase 2 conceptual / decision states**.  
-4. `docs/architecture/phase-2-status-namespace-decisions.md` records owner-approved namespace decisions and must not override canonical sources.  
-5. `docs/architecture/phase-2-closure-criteria-checklist.md` is a **control summary** and must not create new canonical statuses.  
-6. `docs/architecture/phase-2-evidence-model-closure-outline.md` is **preparatory** and **non-canonical**.  
-7. `docs/architecture/norway-school-identity-matching-execution-plan.md` is **timeline / control context**.  
+1. `docs/architecture/phase-2-read-only-evidence-packet-format.md` is canonical for **`packet_status`**.
+2. `docs/architecture/phase-2-validation-contour-data-resolution-backlog.md` is canonical for **backlog classification**.
+3. `docs/architecture/school-identity-location-resolution-phase-2-spec.md` is canonical for **Phase 2 conceptual / decision states**.
+4. `docs/architecture/phase-2-status-namespace-decisions.md` records owner-approved namespace decisions and must not override canonical sources.
+5. `docs/architecture/phase-2-closure-criteria-checklist.md` is a **control summary** and must not create new canonical statuses.
+6. `docs/architecture/phase-2-evidence-model-closure-outline.md` is **preparatory** and **non-canonical**.
+7. `docs/architecture/norway-school-identity-matching-execution-plan.md` is **timeline / control context**.
 
 If this document conflicts with a canonical source, the **canonical source wins** and this document must be revised.
 
@@ -72,15 +72,15 @@ Authoritative rules: `docs/architecture/phase-2-status-namespace-decisions.md` (
 
 ## Decision boundary
 
-- Evidence packet does **not** decide truth.  
-- Source observation does **not** decide truth.  
-- Candidate does **not** decide truth.  
-- Diagnostics do **not** decide truth.  
-- Review-readiness does **not** publish truth.  
-- Identity/location decisions require **owner-gated** workflow.  
-- Publication decision requires **separate owner-gated** workflow.  
-- PSA materialization is **outside** evidence model closure.  
-- Route Engine consumption is **outside** evidence model closure.  
+- Evidence packet does **not** decide truth.
+- Source observation does **not** decide truth.
+- Candidate does **not** decide truth.
+- Diagnostics do **not** decide truth.
+- Review-readiness does **not** publish truth.
+- Identity/location decisions require **owner-gated** workflow.
+- Publication decision requires **separate owner-gated** workflow.
+- PSA materialization is **outside** evidence model closure.
+- Route Engine consumption is **outside** evidence model closure.
 
 ## Closure criteria (documentation governance)
 
@@ -103,20 +103,22 @@ Before execution: evidence extraction/report execution; writing Phase 2 tables; 
 
 ## Forbidden shortcuts
 
-- packet exists → publish  
-- ready_for_review → publish  
-- needs_review → operator workflow approved  
-- publishable → PSA publication  
-- helper diagnostics → publication truth  
-- first candidate wins  
-- multi-location → publishable  
-- LOSA → ordinary school availability  
-- schema exists → insert rows  
-- criteria document → production truth closure  
-- criteria document → runtime/write approval  
-- criteria document → Phase 3 start  
+- packet exists → publish
+- ready_for_review → publish
+- needs_review → operator workflow approved
+- publishable → PSA publication
+- helper diagnostics → publication truth
+- first candidate wins
+- multi-location → publishable
+- LOSA → ordinary school availability
+- schema exists → insert rows
+- criteria document → production truth closure
+- criteria document → runtime/write approval
+- criteria document → Phase 3 start
 
 ## Open owner decisions
+
+**Owner-adopted evidence sufficiency policy (M0 + decisions 1–8)** is recorded separately in `docs/architecture/phase-2-evidence-model-owner-decision-record.md` (2026-05-18). That record closes checklist **Phase 2 evidence model closure** at **documentation / owner policy** level only. It does **not** resolve the open items below unless explicitly stated there.
 
 Unresolved (not adopted here): whether evidence sufficiency uses levels (e.g. L1/L2); whether reviewer/audit metadata belongs in packet format or separate sign-off; whether publication decision enum values need a separate document; whether source observation/candidate/decision boundaries need an ADR before execution; how future operator workflow represents review states without namespace leakage.
 
@@ -124,13 +126,13 @@ If any earlier section would **resolve** these by implication, the question rema
 
 ## What this document allows next
 
-This document does not select or approve the next product or implementation step.  
+This document does not select or approve the next product or implementation step.
 It only allows the team to stop expanding Phase 2 evidence model terminology/governance documentation unless a later owner decision reopens it.
 
 Next owner-selected docs or product gates must be chosen separately and may include:
 
-- Phase 2 → Phase 3 gate criteria drafting;  
-- Phase 2 evidence execution planning under a separate owner gate;  
+- Phase 2 → Phase 3 gate criteria drafting;
+- Phase 2 evidence execution planning under a separate owner gate;
 - app/runtime work outside this evidence-model closure document, subject to existing specs and separate approval.
 
 No next step is automatically approved by this document.
