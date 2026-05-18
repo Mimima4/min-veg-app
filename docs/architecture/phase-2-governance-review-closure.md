@@ -107,6 +107,8 @@ This document **approves none** of: **active review workflow design**; **reviewe
 
 ## Open owner decisions carried forward
 
+**Owner-adopted governance/review policy (G0 + decisions G1–G9)** is recorded separately in `docs/architecture/phase-2-governance-review-owner-decision-record.md` (2026-05-18). That record closes checklist **Phase 2 governance/review closure** at **documentation / owner policy** level only. Active review workflow, storage/UI implementation, and operator rollout remain **future** separate gates. The OPEN items below are **implementation/design** deferrals unless explicitly resolved in that record (for example G9 adopts traceability now; exact storage channel remains OPEN).
+
 **OPEN:** who may review evidence in a future workflow; how reviewer authority is represented; where review/audit sign-off is stored; whether review wording should later become stored workflow states; how review labels avoid **namespace leakage**; how reasoning for “candidate inconsistent with evidence” becomes a **future auditable decision** if approved later.
 
 ## Final boundary statement
