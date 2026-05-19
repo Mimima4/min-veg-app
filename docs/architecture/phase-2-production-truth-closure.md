@@ -14,7 +14,7 @@
 - **Not Phase 3 approval**  
 - **Not active production truth**  
 - **Operational production truth closure:** **NOT CLOSED**  
-- **Does not satisfy** the production truth closure row in `phase-2-closure-criteria-checklist.md`  
+- **Checklist policy closure:** logged separately in `docs/architecture/phase-2-production-truth-owner-decision-record.md` (2026-05-18) at **documentation / owner policy** level only; this boundary document alone does **not** close operational production truth
 - **Does not change status namespaces**  
 - **Does not create** decision rows  
 - **Does not create** publication decisions  
