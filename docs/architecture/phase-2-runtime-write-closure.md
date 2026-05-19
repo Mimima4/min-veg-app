@@ -22,6 +22,7 @@
 - **Does not** create publication decisions
 - **Does not** create write paths
 - **Does not** satisfy the runtime/write closure row in `docs/architecture/phase-2-closure-criteria-checklist.md` as **executed** or **approved**
+- **Owner policy (2026-05-18):** runtime/write boundary policy adopted per `docs/architecture/phase-2-runtime-write-owner-decision-record.md`; **operational** runtime/write integration remains **BLOCKED / NOT APPROVED**
 
 ## Purpose
 

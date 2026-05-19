@@ -48,6 +48,7 @@ Notes for next revision (non-blocking):
 - They do not approve SQL, writes, extraction, report execution, runtime integration, readiness/pipeline integration, helper integration, operator workflow, PSA publication, or Route Engine changes.
 - Owner governance/review policy is recorded separately in `docs/architecture/phase-2-governance-review-owner-decision-record.md` (2026-05-18); that record does **not** approve operator workflow or runtime/write.
 - Owner production truth boundary policy is recorded separately in `docs/architecture/phase-2-production-truth-owner-decision-record.md` (2026-05-18); that record does **not** approve populated production rows, operational production truth closure, runtime/write, PSA, or Route consumption.
+- Owner runtime/write boundary policy is recorded separately in `docs/architecture/phase-2-runtime-write-owner-decision-record.md` (2026-05-18); that record does **not** approve Phase 2 table writes, operational runtime/write integration, helper/pipeline hookup, PSA, or Route consumption.
 - They are used for planning Phase 2 validation-contour evidence handling.
 - Supporting planning artifacts:
   - `docs/architecture/phase-2-validation-contour-data-resolution-backlog.md`
