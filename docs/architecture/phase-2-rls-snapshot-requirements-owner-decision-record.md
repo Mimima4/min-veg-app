@@ -389,7 +389,7 @@ This record logs **RLS snapshot requirements policy** at documentation level onl
 
 **NOT_READY_FOR_APPLY**, **EXECUTION_FORBIDDEN**, and **EXECUTION_PACKET_DRAFT_FORBIDDEN** remain unchanged.
 
-Any next checklist-priority item requires **separate read-only selection**. **Non-selected** future candidates include: negative-test planning; diagnostics compatibility planning; FORCE RLS separate decision; parity planning; owner-held live snapshot evidence planning; read-only migration/cleanup feasibility audit for MAIN clutter — each requires its **own** owner gate.
+Any next checklist-priority item requires **separate read-only selection**. **Non-selected** future candidates include: diagnostics compatibility planning; FORCE RLS separate decision; parity planning; redacted evidence artifact planning; read-only migration/cleanup feasibility audit for MAIN clutter — each requires its **own** owner gate.
 
 SQL, Supabase connect, Supabase apply, Gate 34B execution, staging apply, main apply, production apply, runtime/write implementation, Phase 2 row writes, PSA, Route, operator workflow, helper/pipeline integration, Phase 3, and Phase 4 execution remain **forbidden** until **explicitly** approved by **separate** gates.
 
@@ -398,5 +398,7 @@ SQL, Supabase connect, Supabase apply, Gate 34B execution, staging apply, main a
 ## Final boundary statement
 
 **Owner policy (2026-05-18):** RLS negative-test plan (N0–N16) per `docs/architecture/phase-2-rls-negative-test-plan-owner-decision-record.md` — plan only; no test execution, no pass evidence, no execution packet, no apply; **NOT_READY_FOR_APPLY** unchanged.
+
+**Owner policy (2026-05-18):** RLS owner-held snapshot evidence planning (E0–E18) per `docs/architecture/phase-2-rls-snapshot-evidence-planning-owner-decision-record.md` — planning only; no live snapshot, no Supabase connect, no test execution, no execution packet, no apply; MAIN/PROD primary; STAGING optional rehearsal only; **NOT_READY_FOR_APPLY** unchanged.
 
 Phase 2 RLS per-target snapshot **requirements** policy is owner-adopted in this record at documentation level only (S0–S14). **NOT_READY_FOR_APPLY**, **EXECUTION_FORBIDDEN**, and **EXECUTION_PACKET_DRAFT_FORBIDDEN** remain in force. **RLS_SNAPSHOT_REQUIREMENTS_POLICY_ADOPTED_DOCS_ONLY** does **not** mean apply is ready or safe, does **not** collect snapshot evidence, and does **not** permit execution packet drafting. Gate 34B execution, staging apply, main / owner-used RLS policy apply, production apply, cleanup, migration, runtime/write integration, Phase 2 row writes, operational production truth, PSA publication, PSA materialization, Route Engine consumption, operator workflow, helper/pipeline integration, Phase 3, and Phase 4 LOSA execution remain **blocked** until **separate** owner-approved gates.
