@@ -188,4 +188,6 @@ This document **approves none** of the following:
 
 Phase 2 to Phase 3 gate criteria are documentation-defined here, but Phase 3 implementation, controlled 1:N PSA emission, runtime/write integration, PSA materialization, PSA publication, Route Engine consumption, and DB writes remain blocked until separate owner-approved gates.
 
+**Owner policy (2026-05-18):** RLS apply **preconditions** policy in `docs/architecture/phase-2-rls-apply-preconditions-owner-decision-record.md` — **not** Phase 3 approval; **NOT_READY_FOR_APPLY** unchanged.
+
 **Owner policy (2026-05-18):** RLS apply readiness policy per `docs/architecture/phase-2-rls-apply-readiness-owner-decision-record.md` — **NOT_READY_FOR_APPLY**; **EXECUTION_FORBIDDEN**; Phase 2 → Phase 3 **gate not passed**.

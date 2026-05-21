@@ -339,3 +339,5 @@ SQL, Supabase apply, Gate 34B execution, staging apply, main apply, production a
 ## Final boundary statement
 
 Phase 2 RLS apply readiness policy is owner-adopted in this record at documentation level only. **NOT_READY_FOR_APPLY** and **EXECUTION_FORBIDDEN** remain in force. Gate 34B execution, staging apply, main / owner-used RLS policy apply, production apply, runtime/write integration, Phase 2 row writes, operational production truth, PSA publication, PSA materialization, Route Engine consumption, operator workflow, helper/pipeline integration, Phase 3, and Phase 4 LOSA execution remain **blocked** until **separate** owner-approved gates.
+
+**Owner policy (2026-05-18):** RLS apply **preconditions** policy (C0–C16) complements this record in `docs/architecture/phase-2-rls-apply-preconditions-owner-decision-record.md` — **not** execution approval; **NOT_READY_FOR_APPLY** unchanged.

@@ -103,3 +103,5 @@ The future execution prompt must include:
 Phase 2 staging RLS execution may be decision-recorded here for future prompt preparation only, but SQL execution, RLS enablement, policy creation, DB writes, runtime/write integration, admin dashboard integration, PSA publication, Route Engine consumption, Phase 3, production apply, and any partial app integration remain blocked until a separate owner-approved execution gate.
 
 **Owner policy (2026-05-18):** RLS apply readiness policy per `docs/architecture/phase-2-rls-apply-readiness-owner-decision-record.md` — **NOT_READY_FOR_APPLY**; Gate 34B execution and staging apply remain **forbidden** until separate gates.
+
+**Owner policy (2026-05-18):** RLS apply **preconditions** policy per `docs/architecture/phase-2-rls-apply-preconditions-owner-decision-record.md` — Gate 32 staging target planning only; **not** execution approval; **NOT_READY_FOR_APPLY** unchanged.
