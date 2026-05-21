@@ -119,3 +119,5 @@ Phase 2 RLS/security owner decisions are documentation-defined here, but RLS ena
 **Owner policy (2026-05-18):** RLS apply readiness policy (Q0–Q15) recorded separately in `docs/architecture/phase-2-rls-apply-readiness-owner-decision-record.md` — **NOT_READY_FOR_APPLY**; **EXECUTION_FORBIDDEN**.
 
 **Owner policy (2026-05-18):** RLS apply **preconditions** policy (C0–C16) in `docs/architecture/phase-2-rls-apply-preconditions-owner-decision-record.md` complements readiness policy — **not** execution approval; **NOT_READY_FOR_APPLY** unchanged.
+
+**Owner policy (2026-05-18):** RLS **target-map** policy (T0–T11) in `docs/architecture/phase-2-rls-target-map-owner-decision-record.md` — private labels only; **not** execution approval; **NOT_READY_FOR_APPLY** unchanged.
