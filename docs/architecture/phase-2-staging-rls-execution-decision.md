@@ -109,3 +109,5 @@ Phase 2 staging RLS execution may be decision-recorded here for future prompt pr
 **Owner policy (2026-05-18):** RLS **target-map** policy per `docs/architecture/phase-2-rls-target-map-owner-decision-record.md` — **STAGING-34B** label track; **not** execution approval; **NOT_READY_FOR_APPLY** unchanged.
 
 **Owner policy (2026-05-18):** RLS accountability policy (A0–A12) per `docs/architecture/phase-2-rls-accountability-owner-decision-record.md` — **STAGING-34B** executor/approver/rollback role labels; **not** execution approval; **NOT_READY_FOR_APPLY** unchanged.
+
+**Owner policy (2026-05-18):** RLS snapshot requirements (S0–S14) per `docs/architecture/phase-2-rls-snapshot-requirements-owner-decision-record.md` — requirements only; no live snapshot, no execution packet, no apply; **NOT_READY_FOR_APPLY** unchanged.

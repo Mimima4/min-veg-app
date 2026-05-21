@@ -195,3 +195,5 @@ Phase 2 to Phase 3 gate criteria are documentation-defined here, but Phase 3 imp
 **Owner policy (2026-05-18):** RLS accountability policy (A0–A12) per `docs/architecture/phase-2-rls-accountability-owner-decision-record.md` — **not** Phase 3 approval; **NOT_READY_FOR_APPLY** unchanged.
 
 **Owner policy (2026-05-18):** RLS apply readiness policy per `docs/architecture/phase-2-rls-apply-readiness-owner-decision-record.md` — **NOT_READY_FOR_APPLY**; **EXECUTION_FORBIDDEN**; Phase 2 → Phase 3 **gate not passed**.
+
+**Owner policy (2026-05-18):** RLS snapshot requirements (S0–S14) per `docs/architecture/phase-2-rls-snapshot-requirements-owner-decision-record.md` — requirements only; no live snapshot, no execution packet, no apply; **NOT_READY_FOR_APPLY** unchanged.

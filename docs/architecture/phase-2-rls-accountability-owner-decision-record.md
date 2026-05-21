@@ -281,4 +281,6 @@ SQL, Supabase apply, Gate 34B execution, staging apply, main apply, production a
 
 ## Final boundary statement
 
+**Owner policy (2026-05-18):** RLS snapshot requirements (S0–S14) per `docs/architecture/phase-2-rls-snapshot-requirements-owner-decision-record.md` — requirements only; no live snapshot, no execution packet, no apply; **NOT_READY_FOR_APPLY** unchanged.
+
 Phase 2 RLS accountability policy is owner-adopted in this record at documentation level only using role labels **TECH_EXECUTOR**, **OWNER**, and **ROLLBACK_OWNER** on **STAGING-34B** and **MAIN-OWNER-USED** (with **PROD = MAIN-OWNER-USED for now**). **NOT_READY_FOR_APPLY**, **EXECUTION_FORBIDDEN**, and **EXECUTION_PACKET_DRAFT_FORBIDDEN** remain in force. **RLS_ACCOUNTABILITY_POLICY_ADOPTED_DOCS_ONLY** does **not** mean apply is ready or safe. Gate 34B execution, staging apply, main / owner-used RLS policy apply, production apply, cleanup, migration, runtime/write integration, Phase 2 row writes, operational production truth, PSA publication, PSA materialization, Route Engine consumption, operator workflow, helper/pipeline integration, Phase 3, and Phase 4 LOSA execution remain **blocked** until **separate** owner-approved gates.
