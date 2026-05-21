@@ -107,3 +107,5 @@ Phase 2 staging RLS execution may be decision-recorded here for future prompt pr
 **Owner policy (2026-05-18):** RLS apply **preconditions** policy per `docs/architecture/phase-2-rls-apply-preconditions-owner-decision-record.md` — Gate 32 staging target planning only; **not** execution approval; **NOT_READY_FOR_APPLY** unchanged.
 
 **Owner policy (2026-05-18):** RLS **target-map** policy per `docs/architecture/phase-2-rls-target-map-owner-decision-record.md` — **STAGING-34B** label track; **not** execution approval; **NOT_READY_FOR_APPLY** unchanged.
+
+**Owner policy (2026-05-18):** RLS accountability policy (A0–A12) per `docs/architecture/phase-2-rls-accountability-owner-decision-record.md` — **STAGING-34B** executor/approver/rollback role labels; **not** execution approval; **NOT_READY_FOR_APPLY** unchanged.

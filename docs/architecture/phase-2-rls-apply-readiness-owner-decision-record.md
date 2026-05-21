@@ -343,3 +343,5 @@ Phase 2 RLS apply readiness policy is owner-adopted in this record at documentat
 **Owner policy (2026-05-18):** RLS apply **preconditions** policy (C0–C16) complements this record in `docs/architecture/phase-2-rls-apply-preconditions-owner-decision-record.md` — **not** execution approval; **NOT_READY_FOR_APPLY** unchanged.
 
 **Owner policy (2026-05-18):** RLS **target-map** policy (T0–T11) in `docs/architecture/phase-2-rls-target-map-owner-decision-record.md` — private labels only; **not** execution approval; **NOT_READY_FOR_APPLY** unchanged.
+
+**Owner policy (2026-05-18):** RLS accountability policy (A0–A12) per `docs/architecture/phase-2-rls-accountability-owner-decision-record.md` — role labels only; **not** execution approval; **NOT_READY_FOR_APPLY** unchanged.
