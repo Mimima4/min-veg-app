@@ -390,3 +390,5 @@ Phase 2 RLS apply preconditions policy is owner-adopted in this record at docume
 **Owner policy (2026-05-18):** RLS accountability policy (A0–A12) per `docs/architecture/phase-2-rls-accountability-owner-decision-record.md` — operationalizes C4/C5 at role-label level; **not** execution approval; **NOT_READY_FOR_APPLY** unchanged.
 
 **Owner policy (2026-05-18):** RLS snapshot requirements (S0–S14) per `docs/architecture/phase-2-rls-snapshot-requirements-owner-decision-record.md` — requirements only; no live snapshot, no execution packet, no apply; **NOT_READY_FOR_APPLY** unchanged.
+
+**Owner policy (2026-05-18):** RLS negative-test plan (N0–N16) per `docs/architecture/phase-2-rls-negative-test-plan-owner-decision-record.md` — plan only; no test execution, no pass evidence, no execution packet, no apply; **NOT_READY_FOR_APPLY** unchanged.

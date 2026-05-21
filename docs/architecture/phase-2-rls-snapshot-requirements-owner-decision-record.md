@@ -397,4 +397,6 @@ SQL, Supabase connect, Supabase apply, Gate 34B execution, staging apply, main a
 
 ## Final boundary statement
 
+**Owner policy (2026-05-18):** RLS negative-test plan (N0–N16) per `docs/architecture/phase-2-rls-negative-test-plan-owner-decision-record.md` — plan only; no test execution, no pass evidence, no execution packet, no apply; **NOT_READY_FOR_APPLY** unchanged.
+
 Phase 2 RLS per-target snapshot **requirements** policy is owner-adopted in this record at documentation level only (S0–S14). **NOT_READY_FOR_APPLY**, **EXECUTION_FORBIDDEN**, and **EXECUTION_PACKET_DRAFT_FORBIDDEN** remain in force. **RLS_SNAPSHOT_REQUIREMENTS_POLICY_ADOPTED_DOCS_ONLY** does **not** mean apply is ready or safe, does **not** collect snapshot evidence, and does **not** permit execution packet drafting. Gate 34B execution, staging apply, main / owner-used RLS policy apply, production apply, cleanup, migration, runtime/write integration, Phase 2 row writes, operational production truth, PSA publication, PSA materialization, Route Engine consumption, operator workflow, helper/pipeline integration, Phase 3, and Phase 4 LOSA execution remain **blocked** until **separate** owner-approved gates.
