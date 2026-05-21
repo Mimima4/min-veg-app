@@ -355,3 +355,5 @@ This means the packet exists for later owner-approved execution. It does **not**
 ## 12. Final boundary statement
 
 Phase 2 staging RLS execution packet is documented here for future owner-approved manual execution only, but SQL execution, RLS enablement, policy creation in DB, DB writes beyond RLS/policy DDL, runtime/write integration, admin dashboard integration, PSA publication, Route Engine consumption, Phase 3, production apply, and any partial app integration remain blocked until a separate Gate 34B owner execution approval.
+
+**Owner policy (2026-05-18):** RLS apply readiness policy per `docs/architecture/phase-2-rls-apply-readiness-owner-decision-record.md` — packet existence does **not** mean **NOT_READY_FOR_APPLY** is cleared; **EXECUTION_FORBIDDEN** until explicit Gate 34B execution gate.

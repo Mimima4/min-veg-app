@@ -140,3 +140,5 @@ Until separate owner-approved security and implementation gates:
 ## 9. Final boundary statement
 
 Phase 2 RLS apply readiness may be decision-recorded here, but SQL execution, RLS enablement, policy creation, DB writes, runtime/write integration, admin dashboard integration, PSA publication, Route Engine consumption, Phase 3, and any partial app integration remain blocked until separate owner-approved security and implementation gates.
+
+**Owner policy (2026-05-18):** RLS apply readiness owner/security policy (Q0–Q15) adopted per `docs/architecture/phase-2-rls-apply-readiness-owner-decision-record.md` — **NOT_READY_FOR_APPLY**; **EXECUTION_FORBIDDEN**; does **not** approve Gate 34B execution, staging apply, main apply, or production apply.
