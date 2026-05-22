@@ -386,7 +386,7 @@ This record logs **RLS FORCE RLS policy** at documentation level only. It does *
 
 **NOT_READY_FOR_APPLY**, **EXECUTION_FORBIDDEN**, and **EXECUTION_PACKET_DRAFT_FORBIDDEN** remain unchanged.
 
-Any next checklist-priority item requires **separate read-only selection**. **Non-selected** future candidates include: parity planning; negative-test **execution** planning (separate gate); redacted evidence artifact planning; live snapshot collection gate; read-only migration/cleanup feasibility audit for MAIN clutter — each requires its **own** owner gate.
+Any next checklist-priority item requires **separate read-only selection**. **Non-selected** future candidates include: negative-test **execution** planning (separate gate); redacted evidence artifact planning; live snapshot collection gate; read-only migration/cleanup feasibility audit for MAIN clutter — each requires its **own** owner gate.
 
 SQL, Supabase connect, Supabase apply, `ALTER TABLE ... FORCE ROW LEVEL SECURITY`, live snapshot collection, test execution, Gate 34B execution, staging apply, main apply, production apply, runtime/write implementation, Phase 2 row writes, PSA, Route, operator workflow, helper/pipeline integration, Phase 3, and Phase 4 execution remain **forbidden** until **explicitly** approved by **separate** gates.
 

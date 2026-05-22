@@ -412,7 +412,7 @@ This record logs **RLS negative-test plan policy** at documentation level only. 
 
 **NOT_READY_FOR_APPLY**, **EXECUTION_FORBIDDEN**, and **EXECUTION_PACKET_DRAFT_FORBIDDEN** remain unchanged.
 
-Any next checklist-priority item requires **separate read-only selection**. **Non-selected** future candidates include: parity planning; negative-test execution planning (separate gate); read-only migration/cleanup feasibility audit for MAIN clutter — each requires its **own** owner gate.
+Any next checklist-priority item requires **separate read-only selection**. **Non-selected** future candidates include: negative-test execution planning (separate gate); read-only migration/cleanup feasibility audit for MAIN clutter — each requires its **own** owner gate.
 
 SQL, Supabase connect, Supabase apply, test execution, Gate 34B execution, staging apply, main apply, production apply, runtime/write implementation, Phase 2 row writes, PSA, Route, operator workflow, helper/pipeline integration, Phase 3, and Phase 4 execution remain **forbidden** until **explicitly** approved by **separate** gates.
 
@@ -425,5 +425,7 @@ SQL, Supabase connect, Supabase apply, test execution, Gate 34B execution, stagi
 **Owner policy (2026-05-18):** RLS diagnostics compatibility planning (D0–D20) per `docs/architecture/phase-2-rls-diagnostics-compatibility-planning-owner-decision-record.md` — planning only; no diagnostics re-run, no compatibility pass, no Supabase connect, no execution packet, no apply; MAIN/PROD primary; STAGING optional rehearsal only; **NOT_READY_FOR_APPLY** unchanged.
 
 **Owner policy (2026-05-18):** RLS FORCE RLS policy (F0–F18) per `docs/architecture/phase-2-rls-force-rls-owner-decision-record.md` — first apply: FORCE excluded; no FORCE enabled; no SQL/Supabase; no execution packet, no apply; MAIN/PROD primary; STAGING optional rehearsal only; **NOT_READY_FOR_APPLY** unchanged.
+
+**Owner policy (2026-05-18):** RLS parity evidence planning (P0–P18) per `docs/architecture/phase-2-rls-parity-evidence-planning-owner-decision-record.md` — planning only; no parity evidence collected; no STAGING→MAIN transfer approved; no SQL/Supabase; no execution packet, no apply; MAIN/PROD primary; STAGING optional rehearsal only; **NOT_READY_FOR_APPLY** unchanged.
 
 Phase 2 RLS negative-test **plan** policy is owner-adopted in this record at documentation level only (N0–N16). **NOT_READY_FOR_APPLY**, **EXECUTION_FORBIDDEN**, and **EXECUTION_PACKET_DRAFT_FORBIDDEN** remain in force. **RLS_NEGATIVE_TEST_PLAN_POLICY_ADOPTED_DOCS_ONLY** does **not** mean tests ran, passed, or apply is ready. **Plan ≠ test execution ≠ test pass ≠ apply ≠ execution packet.** Gate 34B execution, staging apply, main / owner-used RLS policy apply, production apply, cleanup, migration, runtime/write integration, Phase 2 row writes, operational production truth, PSA publication, PSA materialization, Route Engine consumption, operator workflow, helper/pipeline integration, Phase 3, and Phase 4 LOSA execution remain **blocked** until **separate** owner-approved gates.
