@@ -170,6 +170,7 @@ Do **not** infer SQL/Supabase/apply/packet approval from this file.
 - `docs/architecture/phase-2-closure-criteria-checklist.md` — Section Q + post-Q safe summary subsection
 - `docs/architecture/phase-2-rls-main-diagnostics-pre-rls-baseline-execution-gate-owner-decision-record.md` — BL0–BL20 (pre-RLS baseline execution gate; checkpoint `87430e2`)
 - `docs/architecture/phase-2-rls-main-diagnostics-pre-rls-baseline-review-summary.md` — pre-RLS baseline capture + review (after this Tier 1 summary; checkpoint `de1386e`)
+- `docs/architecture/phase-2-rls-main-tranche-a-exposure-inventory-review-summary.md` — Tranche A exposure inventory capture + review (S-post; after R-post)
 
 ---
 
