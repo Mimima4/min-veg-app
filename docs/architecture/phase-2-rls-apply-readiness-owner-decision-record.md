@@ -363,3 +363,5 @@ Phase 2 RLS apply readiness policy is owner-adopted in this record at documentat
 **Owner policy (2026-05-18):** RLS live snapshot MAIN collection execution gate (SE0–SE20) per `docs/architecture/phase-2-rls-live-snapshot-collection-execution-gate-owner-decision-record.md` — bounded read-only MAIN connect approved for one capture session; role labels in git only (SE17); **NOT_READY_FOR_APPLY** unchanged; apply/packet/SQL still forbidden.
 
 **Safe summary (2026-05-19):** MAIN-OWNER-USED Tier 1 snapshot capture was completed and owner-reviewed as PASS_WITH_SECURITY_FINDINGS per `phase-2-rls-main-snapshot-capture-review-summary.md` — detailed evidence owner-held; RLS off / FORCE off / 0 policies / anon-authenticated grants finding; **NOT_READY_FOR_APPLY** unchanged.
+
+**Safe summary (2026-05-19):** MAIN-OWNER-USED diagnostics pre-RLS baseline was completed and owner-reviewed as PASS_BASELINE_CAPTURED per `phase-2-rls-main-diagnostics-pre-rls-baseline-review-summary.md` — **not** apply readiness; detailed output owner-held; **NOT_READY_FOR_APPLY** unchanged.
