@@ -370,7 +370,7 @@ This record logs **RLS live snapshot collection gate definition** at documentati
 
 **NOT_READY_FOR_APPLY**, **EXECUTION_FORBIDDEN**, and **EXECUTION_PACKET_DRAFT_FORBIDDEN** remain unchanged.
 
-Any next checklist-priority item requires **separate read-only selection**. **Non-selected** future candidates include: **live snapshot collection execution** gate (MAIN-OWNER-USED primary); redacted evidence artifact planning; read-only migration/cleanup feasibility audit for MAIN clutter — each requires its **own** owner gate.
+Any next checklist-priority item requires **separate read-only selection**. **Non-selected** future candidates include: redacted evidence artifact planning; read-only migration/cleanup feasibility audit for MAIN clutter — each requires its **own** owner gate.
 
 SQL, Supabase connect, Supabase apply, snapshot **collection**, test execution, Gate 34B execution, staging apply, main apply, production apply, runtime/write implementation, Phase 2 row writes, PSA, Route, operator workflow, helper/pipeline integration, Phase 3, and Phase 4 execution remain **forbidden** until **explicitly** approved by **separate** gates.
 
@@ -379,5 +379,7 @@ SQL, Supabase connect, Supabase apply, snapshot **collection**, test execution, 
 ## Final boundary statement
 
 **Owner policy (2026-05-18):** RLS parity evidence planning (P0–P18) per `docs/architecture/phase-2-rls-parity-evidence-planning-owner-decision-record.md` — planning only; no parity evidence collected; no STAGING→MAIN transfer approved; no SQL/Supabase; no execution packet, no apply; MAIN/PROD primary; STAGING optional rehearsal only; **NOT_READY_FOR_APPLY** unchanged.
+
+**Owner policy (2026-05-18):** RLS live snapshot MAIN collection execution gate (SE0–SE20) per `docs/architecture/phase-2-rls-live-snapshot-collection-execution-gate-owner-decision-record.md` — bounded read-only MAIN connect approved for one capture session; not snapshot collected/reviewed; role labels in git only (SE17); **NOT_READY_FOR_APPLY** unchanged; apply/packet/SQL still forbidden.
 
 Phase 2 RLS **live snapshot collection gate** is owner-defined in this record at documentation level only (SG0–SG18). **NOT_READY_FOR_APPLY**, **EXECUTION_FORBIDDEN**, and **EXECUTION_PACKET_DRAFT_FORBIDDEN** remain in force. **RLS_LIVE_SNAPSHOT_COLLECTION_GATE_DEFINED_DOCS_ONLY** does **not** mean Supabase connect occurred, snapshot evidence exists, or apply is ready. **Gate defined ≠ connect approved ≠ evidence collected ≠ review done ≠ apply approved.** **MAIN-OWNER-USED** / **PROD** is the **primary** collection target when execution is ever approved; **STAGING-34B** is **optional rehearsal only**. Gate 34B execution, staging apply, main / owner-used RLS policy apply, production apply, cleanup, migration, runtime/write integration, Phase 2 row writes, operational production truth, PSA publication, PSA materialization, Route Engine consumption, operator workflow, helper/pipeline integration, Phase 3, and Phase 4 LOSA execution remain **blocked** until **separate** owner-approved gates.
