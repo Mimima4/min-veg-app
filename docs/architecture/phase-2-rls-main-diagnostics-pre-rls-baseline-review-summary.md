@@ -172,8 +172,8 @@ Inconsistency between **0 row counts** and **non-zero diagnostics counters** wou
 
 This safe summary does **not** select an execution gate. Candidate next gates (separate owner selection):
 
-1. **Negative-test execution gate** — MAIN Tier 1 snapshot + review and pre-RLS diagnostics baseline are now captured/reviewed; security findings still block apply regardless.
-2. **Tier 2 completion or defer** — if broader Tier 2 fields remain open before negative-test execution.
+1. **Tranche A read-only exposure inventory** (operational) — gate adopted per `phase-2-rls-main-negative-test-execution-gate-owner-decision-record.md` (Section S); **Tranche A only**; **Tranche B not approved**; **write attempts not approved**; charter read-only exposure inventory owner-held; then bounded MAIN read-only session + review + future S-post safe summary; **NOT_READY_FOR_APPLY** unchanged.
+2. **Tier 2 completion or defer** — if broader Tier 2 fields remain open before future Tranche B / write-denial gates.
 3. **Redacted evidence artifact** — only if owner requires git-visible evidence beyond safe summaries.
 
 Do **not** infer SQL, Supabase connect, apply, packet, or negative-test **execution** approval from this file.
@@ -187,6 +187,7 @@ Do **not** infer SQL, Supabase connect, apply, packet, or negative-test **execut
 - `docs/architecture/phase-2-read-only-diagnostics-contract.md` — approved consumer and output fields
 - `docs/architecture/phase-2-read-only-diagnostics-helper-boundary-adr.md` — helper boundary
 - `docs/architecture/phase-2-rls-diagnostics-compatibility-planning-owner-decision-record.md` — post-RLS planning (D)
+- `docs/architecture/phase-2-rls-main-negative-test-execution-gate-owner-decision-record.md` — NT0–NT21 Tranche A read-only exposure gate (Section S); Tranche B not approved; write attempts not approved
 - `docs/architecture/phase-2-closure-criteria-checklist.md` — Section R + R-post
 
 ---
