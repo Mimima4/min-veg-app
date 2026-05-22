@@ -207,3 +207,5 @@ Phase 2 to Phase 3 gate criteria are documentation-defined here, but Phase 3 imp
 **Owner policy (2026-05-18):** RLS FORCE RLS policy (F0–F18) per `docs/architecture/phase-2-rls-force-rls-owner-decision-record.md` — first apply: FORCE excluded; no FORCE enabled; no SQL/Supabase; no execution packet, no apply; MAIN/PROD primary; STAGING optional rehearsal only; **NOT_READY_FOR_APPLY** unchanged.
 
 **Owner policy (2026-05-18):** RLS parity evidence planning (P0–P18) per `docs/architecture/phase-2-rls-parity-evidence-planning-owner-decision-record.md` — planning only; no parity evidence collected; no STAGING→MAIN transfer approved; no SQL/Supabase; no execution packet, no apply; MAIN/PROD primary; STAGING optional rehearsal only; **NOT_READY_FOR_APPLY** unchanged.
+
+**Owner policy (2026-05-18):** RLS live snapshot collection gate (SG0–SG18) per `docs/architecture/phase-2-rls-live-snapshot-collection-gate-owner-decision-record.md` — gate defined only; no Supabase connect; no snapshot collected; no collection execution approved; MAIN/PROD primary; STAGING optional rehearsal only; **NOT_READY_FOR_APPLY** unchanged.

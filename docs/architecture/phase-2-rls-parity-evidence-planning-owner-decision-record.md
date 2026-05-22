@@ -407,7 +407,7 @@ This record logs **RLS parity evidence planning policy** at documentation level 
 
 **NOT_READY_FOR_APPLY**, **EXECUTION_FORBIDDEN**, and **EXECUTION_PACKET_DRAFT_FORBIDDEN** remain unchanged.
 
-Any next checklist-priority item requires **separate read-only selection**. **Non-selected** future candidates include: redacted evidence artifact planning; negative-test **execution** gate; live snapshot collection gate; parity **evidence collection** gate; read-only migration/cleanup feasibility audit for MAIN clutter — each requires its **own** owner gate.
+Any next checklist-priority item requires **separate read-only selection**. **Non-selected** future candidates include: redacted evidence artifact planning; negative-test **execution** gate; live snapshot **collection execution** gate; parity **evidence collection** gate; read-only migration/cleanup feasibility audit for MAIN clutter — each requires its **own** owner gate.
 
 SQL, Supabase connect, Supabase apply, parity evidence collection, test execution, Gate 34B execution, staging apply, main apply, production apply, runtime/write implementation, Phase 2 row writes, PSA, Route, operator workflow, helper/pipeline integration, Phase 3, and Phase 4 execution remain **forbidden** until **explicitly** approved by **separate** gates.
 
@@ -416,5 +416,7 @@ SQL, Supabase connect, Supabase apply, parity evidence collection, test executio
 ## Final boundary statement
 
 **Owner policy (2026-05-18):** RLS FORCE RLS policy (F0–F18) per `docs/architecture/phase-2-rls-force-rls-owner-decision-record.md` — first apply: FORCE excluded; no FORCE enabled; no SQL/Supabase; no execution packet, no apply; MAIN/PROD primary; STAGING optional rehearsal only; **NOT_READY_FOR_APPLY** unchanged.
+
+**Owner policy (2026-05-18):** RLS live snapshot collection gate (SG0–SG18) per `docs/architecture/phase-2-rls-live-snapshot-collection-gate-owner-decision-record.md` — gate defined only; no Supabase connect; no snapshot collected; no collection execution approved; MAIN/PROD primary; STAGING optional rehearsal only; **NOT_READY_FOR_APPLY** unchanged.
 
 Phase 2 RLS **parity evidence planning** policy is owner-adopted in this record at documentation level only (P0–P18). **NOT_READY_FOR_APPLY**, **EXECUTION_FORBIDDEN**, and **EXECUTION_PACKET_DRAFT_FORBIDDEN** remain in force. **RLS_PARITY_EVIDENCE_PLANNING_POLICY_ADOPTED_DOCS_ONLY** does **not** mean parity was checked, evidence exists, or staging results count for main. **Planning adopted ≠ parity evidence collected ≠ transfer approved ≠ apply approved.** **MAIN-OWNER-USED** / **PROD** is the **primary safety target**; **STAGING-34B** is **optional rehearsal only**. Gate 34B execution, staging apply, main / owner-used RLS policy apply, production apply, cleanup, migration, runtime/write integration, Phase 2 row writes, operational production truth, PSA publication, PSA materialization, Route Engine consumption, operator workflow, helper/pipeline integration, Phase 3, and Phase 4 LOSA execution remain **blocked** until **separate** owner-approved gates.
