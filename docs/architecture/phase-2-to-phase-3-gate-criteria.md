@@ -203,3 +203,5 @@ Phase 2 to Phase 3 gate criteria are documentation-defined here, but Phase 3 imp
 **Owner policy (2026-05-18):** RLS owner-held snapshot evidence planning (E0–E18) per `docs/architecture/phase-2-rls-snapshot-evidence-planning-owner-decision-record.md` — planning only; no live snapshot, no Supabase connect, no test execution, no execution packet, no apply; MAIN/PROD primary; STAGING optional rehearsal only; **NOT_READY_FOR_APPLY** unchanged.
 
 **Owner policy (2026-05-18):** RLS diagnostics compatibility planning (D0–D20) per `docs/architecture/phase-2-rls-diagnostics-compatibility-planning-owner-decision-record.md` — planning only; no diagnostics re-run, no compatibility pass, no Supabase connect, no execution packet, no apply; MAIN/PROD primary; STAGING optional rehearsal only; **NOT_READY_FOR_APPLY** unchanged.
+
+**Owner policy (2026-05-18):** RLS FORCE RLS policy (F0–F18) per `docs/architecture/phase-2-rls-force-rls-owner-decision-record.md` — first apply: FORCE excluded; no FORCE enabled; no SQL/Supabase; no execution packet, no apply; MAIN/PROD primary; STAGING optional rehearsal only; **NOT_READY_FOR_APPLY** unchanged.

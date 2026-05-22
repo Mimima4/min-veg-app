@@ -448,7 +448,7 @@ Observe only — never drive publication, write, readiness, PSA, Route, or famil
 | PASS/FAIL/UNCLEAR interpretation on RLS path | Negative-test execution/pass |
 | Before/after RLS re-test planning rule | Execution packet |
 | Owner-held default; safe summary storage | Gate 34B / apply tracks |
-| Single consumer unchanged; no pipeline integration | FORCE decision |
+| Single consumer unchanged; no pipeline integration | FORCE **enablement** |
 | STAGING ≠ MAIN substitution rule | Parity evidence |
 | Good-state diagnostics behavior criterion (policy) | Operational good-state **values** |
 | Rollback trigger on FAIL/UNCLEAR (policy) | Helper/pipeline integration |
@@ -491,12 +491,14 @@ This record logs **RLS diagnostics compatibility planning policy** at documentat
 
 **NOT_READY_FOR_APPLY**, **EXECUTION_FORBIDDEN**, and **EXECUTION_PACKET_DRAFT_FORBIDDEN** remain unchanged.
 
-Any next checklist-priority item requires **separate read-only selection**. **Non-selected** future candidates include: FORCE RLS separate decision; parity planning; negative-test **execution** planning (separate gate); redacted evidence artifact planning; live snapshot collection gate; read-only migration/cleanup feasibility audit for MAIN clutter — each requires its **own** owner gate.
+Any next checklist-priority item requires **separate read-only selection**. **Non-selected** future candidates include: parity planning; negative-test **execution** planning (separate gate); redacted evidence artifact planning; live snapshot collection gate; read-only migration/cleanup feasibility audit for MAIN clutter — each requires its **own** owner gate.
 
 SQL, Supabase connect, Supabase apply, live snapshot collection, diagnostics re-run execution, test execution, Gate 34B execution, staging apply, main apply, production apply, runtime/write implementation, Phase 2 row writes, PSA, Route, operator workflow, helper/pipeline integration, Phase 3, and Phase 4 execution remain **forbidden** until **explicitly** approved by **separate** gates.
 
 ---
 
 ## Final boundary statement
+
+**Owner policy (2026-05-18):** RLS FORCE RLS policy (F0–F18) per `docs/architecture/phase-2-rls-force-rls-owner-decision-record.md` — first apply: FORCE excluded; no FORCE enabled; no SQL/Supabase; no execution packet, no apply; MAIN/PROD primary; STAGING optional rehearsal only; **NOT_READY_FOR_APPLY** unchanged.
 
 Phase 2 RLS diagnostics compatibility **planning** policy is owner-adopted in this record at documentation level only (D0–D20). **NOT_READY_FOR_APPLY**, **EXECUTION_FORBIDDEN**, and **EXECUTION_PACKET_DRAFT_FORBIDDEN** remain in force. **RLS_DIAGNOSTICS_COMPATIBILITY_PLANNING_POLICY_ADOPTED_DOCS_ONLY** does **not** mean diagnostics were re-run, passed, or apply is ready. **Planning adopted ≠ compatibility pass ≠ tests run ≠ apply approved.** **MAIN-OWNER-USED** / **PROD** is the **primary safety target**; **STAGING-34B** is **optional rehearsal only** and **never** substitutes MAIN/PROD compatibility results or approval. Gate 34B execution, staging apply, main / owner-used RLS policy apply, production apply, cleanup, migration, runtime/write integration, Phase 2 row writes, operational production truth, PSA publication, PSA materialization, Route Engine consumption, operator workflow, helper/pipeline integration, Phase 3, and Phase 4 LOSA execution remain **blocked** until **separate** owner-approved gates.
