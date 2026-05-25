@@ -182,6 +182,7 @@ Do **not** infer SQL, Supabase connect, apply, packet, Tranche B, or write-denia
 - `docs/architecture/phase-2-rls-main-diagnostics-pre-rls-baseline-review-summary.md` — R-post
 - `docs/architecture/phase-2-rls-negative-test-plan-owner-decision-record.md` — N plan (N6 deferred for Tranche A)
 - `docs/architecture/phase-2-closure-criteria-checklist.md` — Section S + S-post
+- `docs/architecture/phase-2-rls-main-deny-posture-planning-gate-owner-decision-record.md` — Section T (DP0–DP21; planning only)
 
 ---
 
