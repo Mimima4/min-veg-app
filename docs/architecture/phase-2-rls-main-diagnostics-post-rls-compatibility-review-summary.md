@@ -192,7 +192,7 @@ Material divergence between **R-post** and this session without documented cause
 
 This safe summary does **not** select or approve an execution gate.
 
-1. **Tranche B** — next **possible** security discussion item; requires **separate** owner/security gate; **not** approved by this **V-post**.
+1. **Tranche B** — Section **W** execution gate (`phase-2-rls-main-negative-test-tranche-b-execution-gate-owner-decision-record.md`); chartered session + **W-post**; **not** Q4 pass until **W-post** review.
 2. **Write-denial tests** — separate future gate; **not** approved here.
 3. **Q4 / N12** — remain **not** claimed; execution packet remains **forbidden**.
 4. **Runtime/write**, PSA, Route, Phase 3/4 — remain **blocked**.
