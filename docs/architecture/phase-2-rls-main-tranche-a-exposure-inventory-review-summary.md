@@ -183,7 +183,10 @@ Do **not** infer SQL, Supabase connect, apply, packet, Tranche B, or write-denia
 - `docs/architecture/phase-2-rls-negative-test-plan-owner-decision-record.md` — N plan (N6 deferred for Tranche A)
 - `docs/architecture/phase-2-closure-criteria-checklist.md` — Section S + S-post
 - `docs/architecture/phase-2-rls-main-deny-posture-planning-gate-owner-decision-record.md` — Section T (DP0–DP21; planning only)
-- `docs/architecture/phase-2-rls-main-deny-posture-apply-execution-gate-owner-decision-record.md` — Section U (DA0–DA21; docs-level adoption; filled charter before connect)
+- `docs/architecture/phase-2-rls-main-deny-posture-apply-execution-gate-owner-decision-record.md` — Section U (DA0–DA21)
+- `docs/architecture/phase-2-rls-main-deny-posture-apply-review-summary.md` — U-post (2026-05-26)
+
+**Owner policy (2026-05-26):** MAIN Option B deny-posture apply completed and U-post **PASS_POST_APPLY_VERIFICATION** per `phase-2-rls-main-deny-posture-apply-review-summary.md` — RLS on all 7; FORCE off; 14 policies; rows 0; Tranche B/write-denial/Q4/N12 not approved; **NOT_READY_FOR_APPLY** unchanged.
 
 ---
 

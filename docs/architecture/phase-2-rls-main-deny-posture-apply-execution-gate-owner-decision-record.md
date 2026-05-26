@@ -267,8 +267,12 @@ Rollback artifact restores **Q-post** good-restored-state (RLS off, FORCE off, 0
 
 ## Final boundary statement
 
-**DA0–DA21 are adopted at owner/security docs level** (`RLS_MAIN_DENY_POSTURE_APPLY_EXECUTION_GATE_ADOPTED_BOUNDED_DOCS_ONLY`). This **does not** mean SQL has run. This **does not** mean an apply session may run **without** a **filled owner-held charter**. This **does not** approve Tranche B or write-denial tests. This **does not** claim Q4 or N12 pass. This **does not** approve packet, runtime/write, PSA, Route, Phase 3, or Phase 4. **NOT_READY_FOR_APPLY** is **unchanged**.
+**DA0–DA21 are adopted at owner/security docs level** (`RLS_MAIN_DENY_POSTURE_APPLY_EXECUTION_GATE_ADOPTED_BOUNDED_DOCS_ONLY`). Apply session is documented in **U-post**; this record does **not** authorize any further apply sessions **without** a new filled charter and owner-approved gate/amendment. This **does not** approve Tranche B or write-denial tests. This **does not** claim Q4 or N12 pass. This **does not** approve packet, runtime/write, PSA, Route, Phase 3, or Phase 4. **NOT_READY_FOR_APPLY** is **unchanged**.
 
 **Tranche B** requires deny posture applied and reviewed (U-post), **post-RLS diagnostics pass**, and a **separate** Tranche B gate — **in that order** (DA14–DA18 chain).
 
-**Related:** Section **T** (planning); Section **U** (checklist); future **U-post** apply review safe summary; future post-RLS diagnostics pass gate.
+## U-post apply review (owner policy)
+
+**Owner policy (2026-05-26):** MAIN Option B deny-posture apply session **completed** and post-apply verification **PASS_POST_APPLY_VERIFICATION** per `phase-2-rls-main-deny-posture-apply-review-summary.md` — RLS **on** all **7**; FORCE **off** all **7**; **14** expected policies present (2 per table); rows **all 0**; rollback **not** invoked; bundle/rollback/filled charter **owner-held** only. **Does not** approve Tranche B, write-denial tests, Q4/N12 pass, execution packet, post-RLS diagnostics pass execution, or runtime/write. **NOT_READY_FOR_APPLY** unchanged.
+
+**Related:** Section **T** (planning); Section **U** (checklist); **U-post** — `phase-2-rls-main-deny-posture-apply-review-summary.md`; future post-RLS diagnostics pass gate.
