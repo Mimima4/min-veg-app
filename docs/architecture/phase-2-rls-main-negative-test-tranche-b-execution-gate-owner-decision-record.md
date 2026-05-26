@@ -187,19 +187,39 @@ TB1–TB21 do **not** authorize apply, packet draft, further RLS apply, GRANT/RE
 
 | Closes / approves | Does not close |
 |-------------------|----------------|
-| TB0–TB21 Tranche B execution gate on paper | Tranche B session **performed** |
-| One bounded MAIN Tranche B connect | Tranche B **reviewed** |
-| Prerequisites chain (U-post + V-post) recorded | **Q4 pass** claimed |
-| | **N12 packet pass** |
-| | Execution packet / apply |
-| | Runtime/write, PSA, Route, Phase 3/4 |
+| TB0–TB21 Tranche B execution gate on paper | Automatic **Q4 pass** |
+| One bounded MAIN Tranche B connect (gate adoption) | **Q4** owner/security **review decision** |
+| Prerequisites chain (U-post + V-post) recorded | Route/PSA **UNCLEAR** resolution |
+| Tranche B session **completed** (**W-post**) | **N12 packet pass** |
+| Client-role read/write denial **PASS** (anon/authenticated) | Execution packet / apply |
+| No persistent test rows (final check) | Runtime/write, PSA, Route, Phase 3/4 |
+
+---
+
+## W-post safe summary (2026-05-26)
+
+Per `phase-2-rls-main-negative-test-tranche-b-review-summary.md` (**W-post**):
+
+| Field | Status |
+|-------|--------|
+| Tranche B session | **completed** |
+| R3G read-denial / R4G write-denial | **PASS** |
+| anon / authenticated read | **PASS** |
+| anon / authenticated write | **PASS** |
+| Persistent test rows | **no** |
+| Route / PSA | **UNCLEAR** / **not tested** |
+| Q4 pass claimed | **no** (not automatic) |
+| Q4 status | **READY_FOR_OWNER_SECURITY_REVIEW_WITH_ROUTE_PSA_LIMITATION** |
+| NOT_READY_FOR_APPLY | **unchanged** |
+
+**W-post** records session evidence only. **Q4** requires **separate** owner/security review with explicit Route/PSA limitation handling.
 
 ---
 
 ## Final boundary statement
 
-**Owner policy (2026-05-26):** **U-post** and **V-post** complete per safe summaries; **NOT_READY_FOR_APPLY** unchanged.
+**Owner policy (2026-05-26):** **U-post** and **V-post** complete per safe summaries; bounded Tranche B session **completed** per **W-post**; **NOT_READY_FOR_APPLY** unchanged.
 
-Phase 2 RLS **MAIN Tranche B Q4-blocking deny pass execution gate** is owner-adopted (TB0–TB21). **`RLS_MAIN_NEGATIVE_TEST_TRANCHE_B_Q4_BLOCKING_DENY_PASS_EXECUTION_GATE_ADOPTED_BOUNDED`** approves **one bounded** Tranche B negative-test session on **MAIN** only. **Q4 pass is not claimed** at gate adoption. **N12 packet pass is not claimed.** **Apply, packet, and runtime/write remain forbidden.** **Execution gate adopted ≠ session run ≠ Q4 pass reviewed ≠ apply approved.**
+Phase 2 RLS **MAIN Tranche B Q4-blocking deny pass execution gate** is owner-adopted (TB0–TB21). **`RLS_MAIN_NEGATIVE_TEST_TRANCHE_B_Q4_BLOCKING_DENY_PASS_EXECUTION_GATE_ADOPTED_BOUNDED`** approved **one bounded** Tranche B negative-test session on **MAIN** (now **completed**). Client-role read/write denial checks **PASS**; Route/PSA **UNCLEAR**. **Q4 pass is not claimed automatically.** **Q4 is ready for owner/security review with Route/PSA limitation.** **N12 packet pass is not claimed.** **Apply, packet, and runtime/write remain forbidden.**
 
-**Related:** Section **W** (checklist); charter template `phase-2-rls-main-negative-test-tranche-b-charter-template.md`; review safe summary template `phase-2-rls-main-negative-test-tranche-b-review-summary-template.md` (**W-post** after session); NT (Tranche A); **V-post**; **U-post**.
+**Related:** Section **W** (checklist); **W-post** `phase-2-rls-main-negative-test-tranche-b-review-summary.md`; charter template `phase-2-rls-main-negative-test-tranche-b-charter-template.md`; review template `phase-2-rls-main-negative-test-tranche-b-review-summary-template.md`; NT (Tranche A); **V-post**; **U-post**.

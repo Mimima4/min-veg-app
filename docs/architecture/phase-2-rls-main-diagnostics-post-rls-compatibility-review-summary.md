@@ -192,8 +192,8 @@ Material divergence between **R-post** and this session without documented cause
 
 This safe summary does **not** select or approve an execution gate.
 
-1. **Tranche B** — Section **W** execution gate (`phase-2-rls-main-negative-test-tranche-b-execution-gate-owner-decision-record.md`); chartered session + **W-post**; **not** Q4 pass until **W-post** review.
-2. **Write-denial tests** — separate future gate; **not** approved here.
+1. **Tranche B** — session **completed**; **W-post** `phase-2-rls-main-negative-test-tranche-b-review-summary.md`; client-role denial **PASS**; Route/PSA **UNCLEAR**; **Q4** owner/security review next — **not** automatic pass.
+2. **Extended** write-denial / Route / PSA paths beyond **W-post** scope — **not** approved here.
 3. **Q4 / N12** — remain **not** claimed; execution packet remains **forbidden**.
 4. **Runtime/write**, PSA, Route, Phase 3/4 — remain **blocked**.
 
@@ -210,7 +210,8 @@ Do **not** infer Tranche B execution, write-denial tests, packet draft, or globa
 - `docs/architecture/phase-2-read-only-diagnostics-helper-boundary-adr.md` — helper boundary
 - `docs/architecture/phase-2-rls-diagnostics-compatibility-planning-owner-decision-record.md` — D0–D20
 - `docs/architecture/phase-2-rls-main-negative-test-execution-gate-owner-decision-record.md` — NT gate; Tranche B not approved
-- `docs/architecture/phase-2-closure-criteria-checklist.md` — Section **V** + **V-post**
+- `docs/architecture/phase-2-rls-main-negative-test-tranche-b-review-summary.md` — **W-post**
+- `docs/architecture/phase-2-closure-criteria-checklist.md` — Section **V** + **V-post**; Section **W** + **W-post**
 
 ---
 
