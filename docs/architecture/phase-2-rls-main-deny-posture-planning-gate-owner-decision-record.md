@@ -481,7 +481,7 @@ Planning uses credentials and detailed targets **outside git**.
 
 ## Recommended next gate (informational only)
 
-**Operational next step (outside this file):** owner-held deny-posture planning pack per DP13 (option review, SQL human review notes, rollback sketch, Tier 2 label, Route/PSA label); then adopt **separate** **deny-posture apply execution** gate when planning review is complete and Option A/B is closed (or defer blockers documented).
+**Operational next step (outside this file):** **deny-posture apply execution** gate adopted at docs level per `phase-2-rls-main-deny-posture-apply-execution-gate-owner-decision-record.md` (Section **U**, DA0–DA21, 2026-05-19) — **filled owner-held charter** required before connect; apply session **not** executed by that adoption alone.
 
 **Must not** run draft SQL, charter Tranche B, or claim Q4/N12/apply ready under this planning gate.
 

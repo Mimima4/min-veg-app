@@ -460,3 +460,5 @@ Phase 2 RLS **MAIN Tranche A read-only exposure inventory gate** is owner-adopte
 **Safe summary (2026-05-19):** MAIN-OWNER-USED Tranche A read-only exposure inventory completed and owner-reviewed as **PASS_WITH_EXPOSURE_FINDINGS** per `phase-2-rls-main-tranche-a-exposure-inventory-review-summary.md` — exposure findings on all 7 Phase 2 tables; rows all 0; Q4/N12 pass not claimed; Tranche B/write attempts not approved; **NOT_READY_FOR_APPLY** unchanged.
 
 **Owner policy (2026-05-19):** MAIN deny-posture planning gate adopted per `phase-2-rls-main-deny-posture-planning-gate-owner-decision-record.md` — planning only; no SQL/apply; Option A/B review path defined; Tranche B/write-denial not approved; **NOT_READY_FOR_APPLY** unchanged.
+
+**Owner policy (2026-05-19):** MAIN deny-posture **apply execution** gate adopted at **docs level** per `phase-2-rls-main-deny-posture-apply-execution-gate-owner-decision-record.md` (Section **U**) — filled charter required before connect; apply **not** executed; **NOT_READY_FOR_APPLY** unchanged.
