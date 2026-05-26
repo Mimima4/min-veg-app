@@ -162,7 +162,7 @@ This record safely summarizes the completed bounded **MAIN-OWNER-USED** / **PROD
 
 This safe summary does **not** select or approve the next execution gate.
 
-1. **Post-RLS diagnostics compatibility pass** — next required gate (separate owner/security gate + execution); **not** Tranche B first.
+1. **Post-RLS diagnostics compatibility pass** — Section **V** execution gate + owner-held charter; then **V-post** safe summary; **not** Tranche B first.
 2. **Tranche B** — only after U-post **and** post-RLS diagnostics pass, with **separate** owner/security gate.
 3. **Write-denial tests** — separate future gate.
 4. **Q4 / N12** — remain **not** claimed; execution packet remains **forbidden**.
