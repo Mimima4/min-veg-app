@@ -64,4 +64,4 @@
 ## Related
 
 - `phase-2-rls-negative-test-plan-owner-decision-record.md` (N6)
-- Future: `phase-2-rls-main-negative-test-tranche-b-review-summary.md` (**W-post**)
+- `phase-2-rls-main-negative-test-tranche-b-review-summary-template.md` — copy after session → commit as **W-post** safe summary when reviewed

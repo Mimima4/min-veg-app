@@ -202,4 +202,4 @@ TB1–TB21 do **not** authorize apply, packet draft, further RLS apply, GRANT/RE
 
 Phase 2 RLS **MAIN Tranche B Q4-blocking deny pass execution gate** is owner-adopted (TB0–TB21). **`RLS_MAIN_NEGATIVE_TEST_TRANCHE_B_Q4_BLOCKING_DENY_PASS_EXECUTION_GATE_ADOPTED_BOUNDED`** approves **one bounded** Tranche B negative-test session on **MAIN** only. **Q4 pass is not claimed** at gate adoption. **N12 packet pass is not claimed.** **Apply, packet, and runtime/write remain forbidden.** **Execution gate adopted ≠ session run ≠ Q4 pass reviewed ≠ apply approved.**
 
-**Related:** Section **W** (checklist); charter template `phase-2-rls-main-negative-test-tranche-b-charter-template.md`; future **W-post** safe summary; NT (Tranche A); **V-post**; **U-post**.
+**Related:** Section **W** (checklist); charter template `phase-2-rls-main-negative-test-tranche-b-charter-template.md`; review safe summary template `phase-2-rls-main-negative-test-tranche-b-review-summary-template.md` (**W-post** after session); NT (Tranche A); **V-post**; **U-post**.
