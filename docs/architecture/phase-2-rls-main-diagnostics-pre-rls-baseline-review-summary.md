@@ -154,7 +154,7 @@ Inconsistency between **0 row counts** and **non-zero diagnostics counters** wou
 
 | Item | Status |
 |------|--------|
-| Diagnostics post-RLS compatibility **pass** (execution) | not closed |
+| Diagnostics post-RLS compatibility **pass** (execution) | **closed** — see **V-post** |
 | Negative-test execution | not closed |
 | Negative-test pass | not closed |
 | Tier 2 other fields (if incomplete) | not closed |
@@ -189,7 +189,8 @@ Do **not** infer SQL, Supabase connect, apply, packet, or negative-test **execut
 - `docs/architecture/phase-2-rls-diagnostics-compatibility-planning-owner-decision-record.md` — post-RLS planning (D)
 - `docs/architecture/phase-2-rls-main-negative-test-execution-gate-owner-decision-record.md` — NT0–NT21 Tranche A read-only exposure gate (Section S); Tranche B not approved; write attempts not approved
 - `docs/architecture/phase-2-rls-main-tranche-a-exposure-inventory-review-summary.md` — S-post safe summary
-- `docs/architecture/phase-2-closure-criteria-checklist.md` — Section R + R-post + S + S-post
+- `docs/architecture/phase-2-rls-main-diagnostics-post-rls-compatibility-review-summary.md` — **V-post**
+- `docs/architecture/phase-2-closure-criteria-checklist.md` — Section R + R-post + S + S-post + V + V-post
 
 ---
 

@@ -162,8 +162,8 @@ This record safely summarizes the completed bounded **MAIN-OWNER-USED** / **PROD
 
 This safe summary does **not** select or approve the next execution gate.
 
-1. **Post-RLS diagnostics compatibility pass** — Section **V** execution gate + owner-held charter; then **V-post** safe summary; **not** Tranche B first.
-2. **Tranche B** — only after U-post **and** post-RLS diagnostics pass, with **separate** owner/security gate.
+1. **Post-RLS diagnostics compatibility pass** — **completed**; **V-post** RLS-path **PASS** per `phase-2-rls-main-diagnostics-post-rls-compatibility-review-summary.md`.
+2. **Tranche B** — next **possible** gate discussion only; requires **separate** owner/security gate; **not** approved by U-post or V-post.
 3. **Write-denial tests** — separate future gate.
 4. **Q4 / N12** — remain **not** claimed; execution packet remains **forbidden**.
 5. **Runtime/write**, PSA, Route, Phase 3/4 — remain **blocked**.
@@ -179,7 +179,8 @@ Do **not** infer Tranche B, write-denial tests, packet draft, or global apply-re
 - `docs/architecture/phase-2-rls-main-snapshot-capture-review-summary.md` — Q-post
 - `docs/architecture/phase-2-rls-main-tranche-a-exposure-inventory-review-summary.md` — S-post
 - `docs/architecture/phase-2-rls-main-diagnostics-pre-rls-baseline-review-summary.md` — R-post
-- `docs/architecture/phase-2-closure-criteria-checklist.md` — Section **U** + U-post
+- `docs/architecture/phase-2-rls-main-diagnostics-post-rls-compatibility-review-summary.md` — **V-post**
+- `docs/architecture/phase-2-closure-criteria-checklist.md` — Section **U** + U-post + Section **V** + V-post
 
 ---
 
@@ -193,4 +194,4 @@ Do **not** infer Tranche B, write-denial tests, packet draft, or global apply-re
 - **NOT_READY_FOR_APPLY** unchanged.
 - **EXECUTION_PACKET_DRAFT_FORBIDDEN** unchanged.
 - Deny posture **applied on MAIN** (catalog verify) **≠** deny posture **verified for Q4**.
-- Tranche B, write-denial tests, post-RLS pass execution, packet, and runtime/write remain **blocked** until **separate** gates.
+- Tranche B, write-denial tests, execution packet, and runtime/write remain **blocked** until **separate** gates (post-RLS diagnostics compatibility **PASS** — **V-post**).

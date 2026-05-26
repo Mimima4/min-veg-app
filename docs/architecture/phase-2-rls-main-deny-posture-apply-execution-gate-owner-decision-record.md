@@ -273,6 +273,10 @@ Rollback artifact restores **Q-post** good-restored-state (RLS off, FORCE off, 0
 
 ## U-post apply review (owner policy)
 
-**Owner policy (2026-05-26):** MAIN Option B deny-posture apply session **completed** and post-apply verification **PASS_POST_APPLY_VERIFICATION** per `phase-2-rls-main-deny-posture-apply-review-summary.md` — RLS **on** all **7**; FORCE **off** all **7**; **14** expected policies present (2 per table); rows **all 0**; rollback **not** invoked; bundle/rollback/filled charter **owner-held** only. **Does not** approve Tranche B, write-denial tests, Q4/N12 pass, execution packet, post-RLS diagnostics pass execution, or runtime/write. **NOT_READY_FOR_APPLY** unchanged.
+**Owner policy (2026-05-26):** MAIN Option B deny-posture apply session **completed** and post-apply verification **PASS_POST_APPLY_VERIFICATION** per `phase-2-rls-main-deny-posture-apply-review-summary.md` — RLS **on** all **7**; FORCE **off** all **7**; **14** expected policies present (2 per table); rows **all 0**; rollback **not** invoked; bundle/rollback/filled charter **owner-held** only. **Does not** approve Tranche B, write-denial tests, Q4/N12 pass, execution packet, or runtime/write. **NOT_READY_FOR_APPLY** unchanged.
 
-**Related:** Section **T** (planning); Section **U** (checklist); **U-post** — `phase-2-rls-main-deny-posture-apply-review-summary.md`; future post-RLS diagnostics pass gate.
+## V-post diagnostics review (owner policy)
+
+**Owner policy (2026-05-26):** MAIN post-RLS diagnostics compatibility session **completed**; RLS-path **PASS** per `phase-2-rls-main-diagnostics-post-rls-compatibility-review-summary.md`. Tranche B still requires **separate** gate. **NOT_READY_FOR_APPLY** unchanged.
+
+**Related:** Section **T** (planning); Section **U** (checklist); **U-post** — `phase-2-rls-main-deny-posture-apply-review-summary.md`; Section **V** — `phase-2-rls-main-diagnostics-post-rls-compatibility-execution-gate-owner-decision-record.md`; **V-post** — `phase-2-rls-main-diagnostics-post-rls-compatibility-review-summary.md`.
