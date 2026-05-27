@@ -182,6 +182,14 @@ EPD1–EPD25 do **not** authorize Supabase connect, packet SQL execution, apply,
 
 ---
 
+## Draft preparation verification (owner-held — informational)
+
+**Operational (2026-05-27):** Owner-held packet draft outline **completed** per charter `MAIN-EP-DRAFT-2026-05-27-01` (files: `owner-held/phase-2-rls-main-execution-packet-draft-charter-filled.md`, `owner-held/phase-2-rls-main-execution-packet-draft-outline.md`; **not** in git). Default post-U-post scope; **no** repeat deny DDL block.
+
+**Outcome note (2026-05-27):** Z-D-draft-outcome recorded as **`DRAFT_COMPLETE_WITH_DOCUMENTED_GAPS`** in `phase-2-rls-main-execution-packet-draft-outcome-owner-decision-record.md`. Packet execution/apply remain blocked; **NOT_READY_FOR_APPLY** unchanged.
+
+---
+
 ## Final boundary statement
 
-Phase 2 RLS **MAIN execution packet draft gate** is owner-adopted (EPD0–EPD25). **`RLS_MAIN_EXECUTION_PACKET_DRAFT_GATE_ADOPTED_BOUNDED`** permits **bounded owner-held packet draft preparation only**. **Git packet draft remains forbidden.** **Packet execution is not approved.** **NOT_READY_FOR_APPLY** remains unchanged at gate adoption.
+Phase 2 RLS **MAIN execution packet draft gate** is owner-adopted (EPD0–EPD25). **`RLS_MAIN_EXECUTION_PACKET_DRAFT_GATE_ADOPTED_BOUNDED`** permits **bounded owner-held packet draft preparation only**. At gate adoption, owner-held draft was **not** complete; outcome recorded separately. **Git packet draft remains forbidden.** **Packet execution is not approved.** **NOT_READY_FOR_APPLY** remains unchanged.

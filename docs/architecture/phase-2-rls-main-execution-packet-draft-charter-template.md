@@ -4,7 +4,8 @@
 |-------|--------|
 | **Document type** | **Template** — copy to **owner-held** before draft preparation |
 | **Gate** | `phase-2-rls-main-execution-packet-draft-gate-owner-decision-record.md` (EPD0–EPD25; Section **Z-D**) |
-| **Basis checkpoint (Z-planning-outcome)** | `cf0f7b1` (or HEAD after Section **Z-D** commit) |
+| **Basis checkpoint (Z-planning-outcome)** | `cf0f7b1` |
+| **Section Z-D gate checkpoint** | `74127fe` (or HEAD after Section **Z-D** commit) |
 | **Target** | **MAIN-OWNER-USED** / **PROD** (= MAIN) only |
 
 **Forbidden:** git commit of packet SQL/rollback; Supabase execution; U-post re-apply (default); treating draft prep as execution approval.
