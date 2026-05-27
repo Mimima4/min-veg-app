@@ -197,6 +197,14 @@ Planning **does not** waive **EXECUTION_PACKET_DRAFT_FORBIDDEN**.
 
 ---
 
+## Planning review verification (owner-held — informational)
+
+**Operational (2026-05-27):** Bounded draft-planning review **completed** per owner-held charter `MAIN-EP-DRAFT-PLAN-2026-05-27-01` (file: `owner-held/phase-2-rls-main-execution-packet-draft-planning-charter-filled.md`; **not** in git). Grep verification **PASS**; §6 draft-gate labels **not** selected in charter.
+
+**Outcome note (2026-05-27):** Z-planning outcome recorded as **`DRAFT_PLANNING_READY_WITH_DOCUMENTED_GAPS`** in `phase-2-rls-main-execution-packet-draft-planning-outcome-owner-decision-record.md` (**Z-planning-outcome**). Packet draft/execution/apply remain blocked; **NOT_READY_FOR_APPLY** unchanged.
+
+---
+
 ## Final boundary statement
 
-Phase 2 RLS **MAIN execution packet draft planning gate** is owner-adopted (EPDP0–EPDP25). **`RLS_MAIN_EXECUTION_PACKET_DRAFT_PLANNING_GATE_ADOPTED_BOUNDED`** approves **bounded planning/review only** on **MAIN**. **Packet draft is not approved.** **Packet execution is not approved.** **NOT_READY_FOR_APPLY** and **EXECUTION_PACKET_DRAFT_FORBIDDEN** remain unchanged at gate adoption.
+Phase 2 RLS **MAIN execution packet draft planning gate** is owner-adopted (EPDP0–EPDP25). **`RLS_MAIN_EXECUTION_PACKET_DRAFT_PLANNING_GATE_ADOPTED_BOUNDED`** approves **bounded planning/review only** on **MAIN**. At gate adoption, **packet draft was not approved**; planning outcome is recorded separately. **Packet execution is not approved.** **NOT_READY_FOR_APPLY** and **EXECUTION_PACKET_DRAFT_FORBIDDEN** remain unchanged.

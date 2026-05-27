@@ -4,7 +4,8 @@
 |-------|--------|
 | **Document type** | **Template** — copy to **owner-held** before planning review |
 | **Gate** | `phase-2-rls-main-execution-packet-draft-planning-gate-owner-decision-record.md` (EPDP0–EPDP25; Section **Z**) |
-| **Basis checkpoint (Y-N12-outcome)** | `4b2e184` (or HEAD after Section **Z** commit) |
+| **Basis checkpoint (Y-N12-outcome)** | `4b2e184` |
+| **Section Z gate checkpoint** | `fa5b602` (or HEAD after Section **Z** commit) |
 | **Target** | **MAIN-OWNER-USED** / **PROD** (= MAIN) only |
 
 **Forbidden:** treating planning as packet draft approval; re-running U-post deny apply; SQL; Supabase; packet execution; apply by implication.
