@@ -2,6 +2,8 @@ import Link from "next/link";
 import { LocalePageShell } from "@/components/layout/locale-page-shell";
 import ForgotPasswordForm from "./forgot-password-form";
 
+export const dynamic = "force-dynamic";
+
 export default async function ForgotPasswordPage({
   params,
   searchParams,

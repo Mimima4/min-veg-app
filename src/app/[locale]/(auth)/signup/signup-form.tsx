@@ -9,8 +9,6 @@ type Props = {
 };
 
 export default function SignupForm({ locale, entry }: Props) {
-  const supabase = createClient();
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -37,6 +35,7 @@ export default function SignupForm({ locale, entry }: Props) {
     setMessage("");
     setErrorMessage("");
 
+    const supabase = createClient();
     const { error } = await supabase.auth.signUp({
       email,
       password,

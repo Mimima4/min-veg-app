@@ -8,8 +8,6 @@ type Props = {
 };
 
 export default function ResetPasswordForm({ locale }: Props) {
-  const supabase = createClient();
-
   const [password, setPassword] = useState("");
   const [ready, setReady] = useState(false);
   const [message, setMessage] = useState("");
@@ -17,6 +15,7 @@ export default function ResetPasswordForm({ locale }: Props) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    const supabase = createClient();
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event) => {
@@ -34,7 +33,7 @@ export default function ResetPasswordForm({ locale }: Props) {
     return () => {
       subscription.unsubscribe();
     };
-  }, [supabase]);
+  }, []);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -42,6 +41,7 @@ export default function ResetPasswordForm({ locale }: Props) {
     setMessage("");
     setErrorMessage("");
 
+    const supabase = createClient();
     const { error } = await supabase.auth.updateUser({
       password,
     });

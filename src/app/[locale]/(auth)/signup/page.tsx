@@ -2,6 +2,8 @@ import Link from "next/link";
 import { LocalePageShell } from "@/components/layout/locale-page-shell";
 import SignupForm from "./signup-form";
 
+export const dynamic = "force-dynamic";
+
 function getSignupCopy(entry?: string) {
   switch (entry) {
     case "trial":

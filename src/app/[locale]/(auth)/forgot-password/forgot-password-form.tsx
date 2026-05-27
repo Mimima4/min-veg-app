@@ -12,8 +12,6 @@ export default function ForgotPasswordForm({
   locale,
   fromAccount = false,
 }: Props) {
-  const supabase = createClient();
-
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -27,6 +25,7 @@ export default function ForgotPasswordForm({
 
     const redirectSuffix = fromAccount ? "?from=account" : "";
 
+    const supabase = createClient();
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/${locale}/reset-password${redirectSuffix}`,
     });

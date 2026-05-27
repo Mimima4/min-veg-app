@@ -14,7 +14,6 @@ export default function LoginForm({
   mode = "standard",
 }: Props) {
   const router = useRouter();
-  const supabase = createClient();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,6 +25,7 @@ export default function LoginForm({
     setLoading(true);
     setErrorMessage("");
 
+    const supabase = createClient();
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
