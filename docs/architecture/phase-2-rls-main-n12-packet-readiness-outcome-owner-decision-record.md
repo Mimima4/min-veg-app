@@ -137,7 +137,7 @@ This record does **not** store secrets, raw logs, project identifiers, service k
 
 ### N12O13 — Next gate (informational)
 
-**Owner/security decision:** **Yes.** Next gate is **execution packet draft planning gate** (docs-only planning/review — **not** draft, **not** execution) unless owner selects a different separate gate. Closing remaining N12 gaps (app/browser, diagnostics N6 execution) may require **separate** negative-test execution gates before `N12_PASS_CLAIMED`.
+**Owner/security decision:** **Yes.** Next gate is **execution packet draft planning gate** — adopted at docs level as Section **Z** in `phase-2-rls-main-execution-packet-draft-planning-gate-owner-decision-record.md` (EPDP0–EPDP25). Planning only — **not** draft, **not** execution. Closing remaining N12 gaps (app/browser, diagnostics N6 execution) may require **separate** negative-test execution gates before `N12_PASS_CLAIMED`.
 
 ### N12O14 — Priority rule
 
