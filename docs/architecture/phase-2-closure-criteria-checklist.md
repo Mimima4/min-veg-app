@@ -87,10 +87,13 @@ These are **documentation / boundary / criteria** artifacts only. They are **not
 - `docs/architecture/phase-2-rls-main-negative-test-tranche-b-charter-template.md` — **template** for owner-held Tranche B session charter
 - `docs/architecture/phase-2-rls-main-negative-test-tranche-b-review-summary-template.md` — **template** for **W-post** safe summary after session
 - `docs/architecture/phase-2-rls-main-negative-test-tranche-b-review-summary.md` — **safe summary** of completed MAIN Tranche B bounded negative-test session (**W-post**); client-role anon/auth read/write denial **PASS**; Route/PSA **UNCLEAR**; **Q4 pass not claimed**; **NOT_READY_FOR_APPLY** unchanged
+- `docs/architecture/phase-2-rls-main-q4-review-owner-decision-record.md` — MAIN Q4 owner/security review decision (Section **W-Q4**); **reviewed-with-limitation**; Route/PSA **UNCLEAR**; full Q4 pass **not** claimed; **NOT_READY_FOR_APPLY** unchanged
 
 **Checklist reference note (2026-05-26):** **MAIN Tranche B negative-test review safe summary (W-post)** logged per `phase-2-rls-main-negative-test-tranche-b-review-summary.md` — bounded Tranche B session **completed** on **MAIN-OWNER-USED**; R3G read-denial **PASS**; R4G write-denial **PASS**; anon/authenticated read **PASS**; anon/authenticated write **PASS**; persistent rows **no**; final row counts **0** on all **7** tables; raw data exposure **none observed**; Route/PSA **UNCLEAR** / **not tested**; **Q4 pass not claimed**; **Q4** **READY_FOR_OWNER_SECURITY_REVIEW_WITH_ROUTE_PSA_LIMITATION**; **N12** not claimed; packet/runtime/write **not** approved; **NOT_READY_FOR_APPLY** unchanged; **EXECUTION_PACKET_DRAFT_FORBIDDEN** unchanged. Does **not** mean automatic **Q4** pass, **N12** pass, packet ready, runtime/write ready, Route/PSA approved, or apply-ready globally.
 
 **Checklist reference note (2026-05-26):** **MAIN Tranche B Q4-blocking deny pass execution gate (Section W)** logged per `phase-2-rls-main-negative-test-tranche-b-execution-gate-owner-decision-record.md` — follows **U-post** + **V-post**; **one bounded** Tranche B negative-test session on **MAIN-OWNER-USED** approved; N6 outcomes required for future Q4 pass claim; write attempts **expecting denial only**; **does not** execute tests at gate adoption; **does not** claim Q4 or N12 pass; **NOT_READY_FOR_APPLY** unchanged. Tranche B session **completed** per **W-post**; **Q4** not automatically reviewed — see `phase-2-rls-main-negative-test-tranche-b-review-summary.md`.
+
+**Checklist reference note (2026-05-26):** **MAIN Q4 owner/security review decision (W-Q4)** logged per `phase-2-rls-main-q4-review-owner-decision-record.md` — owner/security review of **W-post** completed **with Route/PSA limitation**; client-role denial evidence accepted; full Q4 pass **not** claimed; Route/PSA remain **UNCLEAR**; next gate identified as Route/PSA review; **N12** not claimed; packet/runtime/write not approved; **NOT_READY_FOR_APPLY** unchanged. Does **not** mean full Q4 pass, N12 pass, packet ready, runtime/write ready, Route/PSA approved, apply-ready globally, or NOT_READY_FOR_APPLY cleared.
 
 **Checklist reference note (2026-05-26):** **MAIN post-RLS diagnostics compatibility review safe summary (V-post)** logged per `phase-2-rls-main-diagnostics-post-rls-compatibility-review-summary.md` — bounded read-only post-RLS session **completed**; RLS-path verdict **PASS**; phase2SchemaAvailable **true**; phase2DiagnosticsWarning **none**; identityResolutionSummary counters **all 0**; identityResolutionBySchoolCode **empty**; same CLI params as **R-post** (values **owner-held**); rollback **not** invoked; charter `MAIN-POST-RLS-DIAG-2026-05-26-01` **owner-held**; **does not** approve Tranche B or write-denial tests; **does not** claim Q4 or N12 pass; **does not** approve execution packet or runtime/write; **NOT_READY_FOR_APPLY** unchanged; **EXECUTION_PACKET_DRAFT_FORBIDDEN** unchanged. Does **not** mean RLS is production-safe, deny posture verified for Q4, or apply-ready globally.
 
@@ -531,6 +534,32 @@ Safe summary: `phase-2-rls-main-negative-test-tranche-b-review-summary.md`.
 **Explicitly not closed (Section W + W-post):** filled charter in repo; **Q4** owner/security **review decision**; Route/PSA resolution or owner exception; automatic **Q4** pass; **N12** packet pass; execution packet; apply; runtime/write; PSA/Route activation; Phase 3/4.
 
 Does **not** mean automatic **Q4** pass, **N12** pass, packet ready, runtime/write ready, Route/PSA approved, or **NOT_READY_FOR_APPLY** cleared.
+
+## Section W-Q4 — Q4 owner/security review with Route/PSA limitation (logged at docs level 2026-05-26)
+
+Owner/security Q4 review decision is logged in `phase-2-rls-main-q4-review-owner-decision-record.md`. This review accepts **W-post** client-role denial evidence and records an explicit Route/PSA limitation. It does **not** claim full Q4 pass and does **not** unblock packet/runtime/write/apply.
+
+| Field | Status |
+|-------|--------|
+| Decision | Q4 owner/security review completed **with limitation** |
+| Record | `phase-2-rls-main-q4-review-owner-decision-record.md` |
+| W-post evidence | accepted for client-role denial only |
+| anon/auth read denial | **PASS** / **PASS** |
+| anon/auth write denial | **PASS** / **PASS** |
+| persistent rows | **none** (final row counts **0** on all 7) |
+| Route | `ROUTE_NOT_TESTED_UNCLEAR` |
+| PSA | `PSA_NOT_TESTED_UNCLEAR` |
+| Q4 full pass | **not** claimed |
+| N12 | **not** claimed |
+| Next gate | Route/PSA review gate |
+| NOT_READY_FOR_APPLY | **unchanged** |
+| EXECUTION_PACKET_DRAFT_FORBIDDEN | **unchanged** |
+
+**Closed at docs/review level (Section W-Q4):** Q4 owner/security review decision recorded; W-post client-role denial evidence accepted; Route/PSA limitation recorded; next gate identified.
+
+**Explicitly not closed (Section W-Q4):** full Q4 pass; Route/PSA review gate execution; N12 packet pass; execution packet; runtime/write; PSA/Route activation; production truth; publication/materialization; operator/admin workflow; Phase 3/4; NOT_READY_FOR_APPLY clearance.
+
+Does **not** mean full Q4 pass, N12 pass, packet ready, runtime/write ready, Route/PSA approved, apply-ready globally, production-safe, or NOT_READY_FOR_APPLY cleared.
 
 **B. Phase 2 → Phase 3 gate criteria (documentation artifact — already committed)**
 Prerequisites are documented in `docs/architecture/phase-2-to-phase-3-gate-criteria.md` (aligned with this checklist and the execution plan). This is **not** Phase 3 approval, **not** “gate passed,” and **not** permission to start Phase 3 coding, change PSA, change Route Engine, or perform DB writes.
