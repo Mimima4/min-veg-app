@@ -190,7 +190,29 @@ async function buildAccessStateFromFamilyAccount(args: {
   };
 }
 
+function hasPublicSupabaseEnv() {
+  return Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() &&
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim()
+  );
+}
+
 export async function getUserAccessState(): Promise<UserAccessState> {
+  if (!hasPublicSupabaseEnv()) {
+    return {
+      kind: "anonymous",
+      email: null,
+      displayName: null,
+      pendingEntrySource: null,
+      hasPermanentPaidAccess: false,
+      trialUsed: false,
+      trialAvailable: false,
+      familyAccount: null,
+      activation: null,
+      isFamilyPartner: false,
+    };
+  }
+
   const supabase = await createClient();
 
   const {

@@ -10,12 +10,12 @@ type Props = {
 
 export default function SignOutButton({ locale }: Props) {
   const router = useRouter();
-  const supabase = createClient();
   const [loading, setLoading] = useState(false);
 
   async function handleSignOut() {
     setLoading(true);
 
+    const supabase = createClient();
     const { error } = await supabase.auth.signOut();
 
     setLoading(false);
