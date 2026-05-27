@@ -94,8 +94,11 @@ These are **documentation / boundary / criteria** artifacts only. They are **not
 - `docs/architecture/phase-2-rls-main-route-psa-wiring-review-summary.md` — **safe summary** of completed MAIN Route/PSA wiring review (**X-post**); Route/PSA **NO_TOUCH**; diagnostics non-product; **Q4 full pass not claimed**; **NOT_READY_FOR_APPLY** unchanged
 - `docs/architecture/phase-2-rls-main-q4-finalization-gate-owner-decision-record.md` — MAIN **Q4 finalization** gate (Q4F0–Q4F21; Section **W-Q4F**); follows **W-post** + **W-Q4** + **X-post**; outcome **pending** at gate adoption; **NOT_READY_FOR_APPLY** unchanged
 - `docs/architecture/phase-2-rls-main-q4-finalization-decision-charter-template.md` — **template** for owner-held Q4 finalization outcome charter
+- `docs/architecture/phase-2-rls-main-q4-finalization-outcome-owner-decision-record.md` — MAIN Q4 finalization **outcome** (**W-Q4F-post**); `Q4_PASS_WITH_DOCUMENTED_GAPS`; gaps recorded; **N12** not claimed; packet/runtime blocked; **NOT_READY_FOR_APPLY** unchanged
 
 **Checklist reference note (2026-05-27):** **MAIN Q4 finalization gate (Section W-Q4F)** logged per `phase-2-rls-main-q4-finalization-gate-owner-decision-record.md` — follows **W-post** + **W-Q4** + **X-post**; **bounded docs-only** finalization framework adopted; **Q4 outcome `Q4_OUTCOME_PENDING`** at gate adoption; **full Q4 pass not claimed**; **N12** not claimed; packet/apply/runtime not approved; **NOT_READY_FOR_APPLY** unchanged; **EXECUTION_PACKET_DRAFT_FORBIDDEN** unchanged. Does **not** mean Q4 outcome recorded, full Q4 pass, N12 pass, packet ready, or apply-ready globally.
+
+**Checklist reference note (2026-05-27):** **MAIN Q4 finalization outcome (W-Q4F-post)** logged per `phase-2-rls-main-q4-finalization-outcome-owner-decision-record.md` — Q4 finalized as **`Q4_PASS_WITH_DOCUMENTED_GAPS`**; W-post client-role evidence accepted; X-post Route/PSA **NO_TOUCH** accepted; app/browser shortcut **NOT_TESTED** carried forward; **N12** not claimed; execution packet/runtime/write not approved; **NOT_READY_FOR_APPLY** unchanged; **EXECUTION_PACKET_DRAFT_FORBIDDEN** unchanged. Does **not** mean full Q4 pass, N12 pass, packet ready, runtime/write ready, PSA/Route approved, apply-ready globally, production-safe, or NOT_READY_FOR_APPLY cleared.
 
 **Checklist reference note (2026-05-27):** **MAIN Route/PSA wiring review safe summary (X-post)** logged per `phase-2-rls-main-route-psa-wiring-review-summary.md` — bounded repo/docs/spec review **completed** on **MAIN-OWNER-USED**; Route **ROUTE_NO_TOUCH**; PSA **PSA_NO_TOUCH**; runtime `src/` direct refs to seven Phase 2 tables **none found**; diagnostics helper **non-product** diagnostics/admin-only; docs/spec future refs **future-only** owner-gated; Route/PSA negative-test gate **not required now**; W-Q4 limitation **narrowed** at wiring level; **Q4 full pass not claimed**; **N12** not claimed; packet/runtime/write not approved; **NOT_READY_FOR_APPLY** unchanged; **EXECUTION_PACKET_DRAFT_FORBIDDEN** unchanged. Does **not** mean full Q4 pass, N12 pass, packet ready, runtime/write ready, PSA/Route approved, apply-ready globally, production-safe, or NOT_READY_FOR_APPLY cleared.
 
@@ -640,6 +643,27 @@ Owner-adopted **Q4 finalization** gate is logged in `phase-2-rls-main-q4-finaliz
 **Explicitly not closed (Section W-Q4F):** **Q4 outcome** recorded in git; full Q4 pass; N12 packet pass; execution packet; apply; runtime/write; PSA/Route activation; NOT_READY_FOR_APPLY clearance (unless separate future owner decisions).
 
 Does **not** mean Q4 outcome recorded, full Q4 pass, N12 pass, packet ready, runtime/write ready, or apply-ready globally.
+
+#### W-Q4F-post — MAIN Q4 finalization outcome (logged 2026-05-27)
+
+Outcome record: `phase-2-rls-main-q4-finalization-outcome-owner-decision-record.md`.
+
+| Field | Status |
+|-------|--------|
+| Outcome | `Q4_PASS_WITH_DOCUMENTED_GAPS` |
+| W-post evidence accepted | **yes** |
+| X-post Route/PSA NO_TOUCH accepted | **yes** |
+| app/browser shortcut | **NOT_TESTED** (documented gap) |
+| N12 | **not** claimed |
+| execution packet / runtime-write | **not** approved |
+| NOT_READY_FOR_APPLY | **unchanged** |
+| EXECUTION_PACKET_DRAFT_FORBIDDEN | **unchanged** |
+
+**Closed at docs level (Section W-Q4F + W-Q4F-post):** Q4 outcome recorded as `Q4_PASS_WITH_DOCUMENTED_GAPS`; documented gaps captured; next gate identified as N12 packet/readiness **planning** gate.
+
+**Explicitly not closed (Section W-Q4F + W-Q4F-post):** full Q4 pass; N12 packet pass; execution packet; apply; runtime/write; PSA/Route activation; production truth; publication/materialization; Phase 3/4; NOT_READY_FOR_APPLY clearance.
+
+Does **not** mean full Q4 pass, N12 pass, packet ready, runtime/write ready, PSA/Route approved, apply-ready globally, production-safe, or NOT_READY_FOR_APPLY cleared.
 
 **B. Phase 2 → Phase 3 gate criteria (documentation artifact — already committed)**
 Prerequisites are documented in `docs/architecture/phase-2-to-phase-3-gate-criteria.md` (aligned with this checklist and the execution plan). This is **not** Phase 3 approval, **not** “gate passed,” and **not** permission to start Phase 3 coding, change PSA, change Route Engine, or perform DB writes.
