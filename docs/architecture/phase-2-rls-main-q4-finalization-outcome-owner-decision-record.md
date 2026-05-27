@@ -169,7 +169,7 @@ This record does **not** store secrets, raw logs, project identifiers, service k
 
 ## Next gate (informational only)
 
-- Next gate is **N12 packet/readiness planning gate**.
+- Next gate is **N12 packet/readiness planning gate** — adopted at docs level as Section **Y** in `phase-2-rls-main-n12-packet-readiness-planning-gate-owner-decision-record.md` (N12P0–N12P21).
 - It must remain planning/review only unless separately owner-approved.
 - N12 planning must explicitly account for documented gaps (especially app/browser shortcut **NOT_TESTED**).
 - Packet execution remains forbidden.

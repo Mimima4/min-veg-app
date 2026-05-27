@@ -32,7 +32,7 @@ It **does not** approve **SQL**, **Supabase connect**, **new negative-test sessi
 
 **Finalization gate adopted ≠ Q4 outcome recorded ≠ full Q4 pass ≠ N12 pass ≠ apply approved.**
 
-**Outcome note (2026-05-27):** Q4 finalization outcome recorded as **`Q4_PASS_WITH_DOCUMENTED_GAPS`** in `phase-2-rls-main-q4-finalization-outcome-owner-decision-record.md`. N12/packet/runtime/write remain blocked; **NOT_READY_FOR_APPLY** unchanged.
+**Outcome note (2026-05-27):** Q4 finalization outcome recorded as **`Q4_PASS_WITH_DOCUMENTED_GAPS`** in `phase-2-rls-main-q4-finalization-outcome-owner-decision-record.md`. **Section Y** N12 packet/readiness **planning** gate adopted in `phase-2-rls-main-n12-packet-readiness-planning-gate-owner-decision-record.md` — **N12 pass not claimed**; packet draft/runtime/write remain blocked; **NOT_READY_FOR_APPLY** unchanged.
 
 **Primary target:** **MAIN-OWNER-USED** / **PROD** (= MAIN) only.
 
