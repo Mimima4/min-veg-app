@@ -4,7 +4,7 @@
 
 | Field | Value |
 |--------|--------|
-| **Status** | Owner/security **Route/PSA wiring review** gate — **NOT_READY_FOR_APPLY** / **no** Supabase connect / **no** Route–PSA negative-test execution approved |
+| **Status** | Owner/security **Route/PSA wiring review** gate — wiring review **completed** (**X-post**); Route/PSA **NO_TOUCH**; **NOT_READY_FOR_APPLY** unchanged / **no** Route–PSA negative-test execution approved |
 | **Closure label** | `RLS_MAIN_ROUTE_PSA_WIRING_REVIEW_GATE_ADOPTED_BOUNDED` |
 | **Scope** | **Wiring review only** — bounded read-only assessment whether Route and/or PSA touch the **seven** Phase 2 tables on **MAIN-OWNER-USED** (XR0–XR21); **no** live negative tests at gate adoption |
 | **Date (UTC)** | 2026-05-27 |
@@ -17,9 +17,9 @@ It **follows** **W-post** (Tranche B client-role denial **PASS**; Route/PSA **UN
 
 It **does not** approve **SQL execution**, **Supabase connect**, **negative-test connect** for Route/PSA paths, **RLS/policy changes**, **GRANT/REVOKE**, **DML**, **test rows**, **full Q4 pass**, **N12 packet pass**, **execution packet** draft, **Gate 34B**, staging/main/production apply, **runtime/write**, **PSA publication/materialization**, or **Route Engine consumption**.
 
-**Current MAIN state (U-post / W-post / W-Q4):** RLS **on** all **7**; FORCE **off**; **14** deny policies; aggregate rows **0**; client-role anon/auth read/write denial **PASS** (W-post); Route/PSA outcomes **not tested** / **UNCLEAR** at Tranche B; Q4 **reviewed-with-limitation** only.
+**Current MAIN state (U-post / W-post / W-Q4 / X-post):** RLS **on** all **7**; FORCE **off**; **14** deny policies; aggregate rows **0**; client-role anon/auth read/write denial **PASS** (W-post); Route/PSA product runtime **NO_TOUCH** (X-post); Q4 **reviewed-with-limitation** at W-Q4 — **full Q4 pass not claimed**.
 
-**Adopting this record does NOT change NOT_READY_FOR_APPLY.** Route/PSA limitation is **not resolved** until wiring review is **performed**, **captured owner-held**, and **reviewed** in an **X-post** safe summary (or explicit owner exception recorded in a separate gate).
+**Adopting this record did NOT change NOT_READY_FOR_APPLY.** Route/PSA limitation is **narrowed** at wiring-review level per **X-post** (`phase-2-rls-main-route-psa-wiring-review-summary.md`); **full Q4** / **N12** / packet / runtime/write remain **not** approved.
 
 **Wiring review gate adopted ≠ wiring review performed ≠ Route/PSA N6 pass ≠ full Q4 pass ≠ N12 pass ≠ apply approved.**
 
@@ -277,18 +277,33 @@ Stricter checklist, N plan, W-post/W-Q4 chain, Q/C records, canonical Route/Phas
 
 ---
 
+## X-post safe summary (2026-05-27)
+
+**X-post** safe summary (`phase-2-rls-main-route-psa-wiring-review-summary.md`; charter `MAIN-ROUTE-PSA-WIRING-2026-05-27-01` **owner-held**):
+
+| Field | Status |
+|-------|--------|
+| Wiring review | **completed** (bounded repo/docs/spec) |
+| Route (product runtime) | **ROUTE_NO_TOUCH** |
+| PSA (product runtime) | **PSA_NO_TOUCH** |
+| Diagnostics helper | **non-product** diagnostics/admin-only |
+| Docs/spec future refs | **future-only** owner-gated |
+| Route/PSA negative-test gate required now | **no** |
+| **Q4** full pass | **not** claimed |
+| **N12** / packet / runtime-write | **not** approved |
+| **NOT_READY_FOR_APPLY** | **unchanged** |
+
+---
+
 ## Recommended next gate (informational only)
 
-**Operational next step (outside this file):** perform **one bounded** owner-held wiring review per charter; publish **X-post** safe summary; then:
+**Operational next step (outside this file):** **OWNER** / **SECURITY_APPROVER** **Q4-finalization** decision considering **W-post** + **X-post** (including any remaining N6 gaps such as app/browser shortcut **NOT_TESTED**).
 
-- If `*_NO_TOUCH_PHASE2_TABLES_CONFIRMED` for both Route and PSA → owner/security **X-post** review whether limitation is **narrowed** enough for partial Q4 advancement (still **not** automatic full Q4 pass).
-- If `*_TOUCHES_PHASE2_REQUIRES_NEGATIVE_TEST` → adopt **separate** Route/PSA negative-test **execution** gate before N6 Route/PSA pass claims.
-- If `*_WIRING_UNCLEAR_STOP` → **stop** (N11); no N12 / packet / runtime/write discussion.
-
-N12 / execution packet / runtime-write remain **blocked** until Route/PSA limitation is **resolved or owner/security records a safe bounded exception** per W-Q4.
+- If future code makes Route or PSA touch the **seven** Phase 2 tables → **new** wiring review and likely Route/PSA negative-test **execution** gate.
+- **N12** / execution packet / runtime-write remain **blocked** — **X-post** does **not** unblock automatically.
 
 ---
 
 ## Final boundary statement
 
-Phase 2 RLS **MAIN Route/PSA wiring review gate** is owner-adopted in this record (XR0–XR21). **`RLS_MAIN_ROUTE_PSA_WIRING_REVIEW_GATE_ADOPTED_BOUNDED`** approves **bounded read-only wiring review only** on **MAIN**. **Wiring review is not performed at gate adoption.** **Route/PSA N6 denial is not claimed.** **Full Q4 pass is not claimed.** **N12 packet pass is not claimed.** **Apply, packet, Supabase connect for tests, and runtime/write remain forbidden.** **NOT_READY_FOR_APPLY** and **EXECUTION_PACKET_DRAFT_FORBIDDEN** remain unchanged.
+Phase 2 RLS **MAIN Route/PSA wiring review gate** is owner-adopted in this record (XR0–XR21). **`RLS_MAIN_ROUTE_PSA_WIRING_REVIEW_GATE_ADOPTED_BOUNDED`** approved **bounded read-only wiring review** on **MAIN**; review **completed** per **X-post**. Route/PSA product runtime **NO_TOUCH**; diagnostics **non-product**; future docs **owner-gated**. **Route/PSA N6 live deny tests not required now** for current wiring — **not** a substitute for separate **Q4-finalization**. **Full Q4 pass is not claimed.** **N12 packet pass is not claimed.** **Apply, packet, Supabase connect for tests, and runtime/write remain forbidden.** **NOT_READY_FOR_APPLY** and **EXECUTION_PACKET_DRAFT_FORBIDDEN** remain unchanged.

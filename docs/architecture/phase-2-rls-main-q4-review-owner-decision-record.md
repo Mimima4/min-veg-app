@@ -183,11 +183,9 @@ This record does **not** approve N12 packet pass, execution packet drafting, app
 
 ## Next gate (informational only)
 
-This record does **not** select or approve an execution gate beyond recording that the next gate should be a Route/PSA review gate.
+Route/PSA wiring review gate (Section **X**) was the next gate identified at W-Q4 adoption. **X-post** safe summary (2026-05-27): Route/PSA wiring review **completed** per `phase-2-rls-main-route-psa-wiring-review-summary.md` — current Route product runtime **ROUTE_NO_TOUCH**; current PSA product runtime **PSA_NO_TOUCH**; diagnostics helper **non-product**; future refs **owner-gated**; **N12**/packet/runtime **not** approved; **NOT_READY_FOR_APPLY** unchanged.
 
-Route/PSA review must determine whether Route or PSA touches these 7 Phase 2 tables, through which path(s) and role(s), and whether additional negative tests are required before any future Q4 full pass claim.
-
-N12 / execution packet / runtime-write cannot proceed before Route/PSA limitation is resolved or owner/security explicitly records a safe exception.
+**Operational next step:** **OWNER** / **SECURITY_APPROVER** **Q4-finalization** decision (W-post + X-post). N12 / execution packet / runtime-write cannot proceed **automatically** from X-post.
 
 ---
 

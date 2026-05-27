@@ -133,9 +133,9 @@ Bounded-session labels below. **Partial pass forbidden** for any future **Q4** c
 - Client-role read denial and bounded write-denial checks **passed** for **anon** and **authenticated** on the **7** Phase 2 tables (R3G/R4G safe interpretation).
 - **No** persistent rows were created; final row counts remain **0** on all **7** tables.
 - This **strengthens** RLS deny-posture evidence for tested client roles; it does **not** prove Route or PSA paths.
-- Route and PSA were **not tested** and remain **UNCLEAR** (N11 — not pass by omission).
-- Because Route/PSA remain **UNCLEAR**, this **W-post** does **not** by itself close **Q4**.
-- **Q4** is **ready** for **OWNER** / **SECURITY_APPROVER** review with explicit Route/PSA limitation — a **separate** Q4-reviewed decision is required to claim **Q4** pass.
+- Route and PSA were **not tested** and remain **UNCLEAR** (N11 — not pass by omission) **at Tranche B session time**.
+- **X-post** (2026-05-27): bounded wiring review classified Route/PSA product runtime **NO_TOUCH** — see `phase-2-rls-main-route-psa-wiring-review-summary.md`; does **not** retroactively change Tranche B session labels; **Q4 full pass not claimed** in X-post.
+- **W-Q4** recorded Q4 **reviewed-with-limitation**; **Q4-finalization** may consider **W-post** + **X-post** together.
 - **N12** packet pass is **not** claimed.
 - Execution packet remains **forbidden**.
 - Runtime/write remains **blocked**.
