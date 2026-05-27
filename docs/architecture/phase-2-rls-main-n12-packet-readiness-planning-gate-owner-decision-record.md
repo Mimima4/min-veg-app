@@ -6,7 +6,7 @@
 |--------|--------|
 | **Status** | Owner/security **N12 packet/readiness planning** gate — **NOT_READY_FOR_APPLY** / **EXECUTION_PACKET_DRAFT_FORBIDDEN** / **N12 pass not claimed** |
 | **Closure label** | `RLS_MAIN_N12_PACKET_READINESS_PLANNING_GATE_ADOPTED_BOUNDED` |
-| **Scope** | **Planning/review only** — bounded N12 packet/readiness planning on **MAIN-OWNER-USED** (N12P0–N12P21); **not** execution packet draft; **not** packet execution |
+| **Scope** | **Planning/review only** — bounded N12 packet/readiness planning on **MAIN-OWNER-USED** (N12P0–N12P25); **not** execution packet draft; **not** packet execution |
 | **Date (UTC)** | 2026-05-27 |
 | **Repository checkpoint** | `9ffa12d` (MAIN Q4 finalization outcome — **W-Q4F-post**) |
 | **Control reference** | `docs/architecture/phase-2-closure-criteria-checklist.md` — Section **Y** (RLS MAIN N12 packet/readiness planning gate) |
@@ -68,9 +68,9 @@ This record does **not** store secrets, raw logs, SQL output, or PII in git.
 
 ## Meta-rule N12P0
 
-All **Yes** decisions (N12P1–N12P21) adopt **MAIN N12 packet/readiness planning gate** on paper and approve **bounded planning/review** per charter template only.
+All **Yes** decisions (N12P1–N12P25) adopt **MAIN N12 packet/readiness planning gate** on paper and approve **bounded planning/review** per charter template only.
 
-N12P1–N12P21 do **not** authorize SQL, Supabase, new tests, execution packet draft, packet execution, apply, runtime/write, PSA/Route activation, or Phase 3/4.
+N12P1–N12P25 do **not** authorize SQL, Supabase, new tests, execution packet draft, packet execution, apply, runtime/write, PSA/Route activation, or Phase 3/4.
 
 ---
 
@@ -195,8 +195,45 @@ Planning must **not** treat partial satisfaction as automatic **N12 pass**.
 
 **Owner decision:** **Yes.** On conflict, stricter safety rule and canonical N12 triple-gate win over speed.
 
+### Decision N12P22 — Two verdicts: repo vs charter
+
+**Owner decision:** **Yes.** Agents and owners must report **two** distinct verdicts after bounded planning work:
+
+| Verdict | Meaning |
+|---------|---------|
+| **Safe to continue (repo)** | Git precheck only: correct branch/HEAD; owner-held charter not committed; no accidental tracked N12 outcome/Y-post/packet files; prior dirty leftovers untouched |
+| **Planning review complete (charter)** | Owner-held filled charter only: §5 **Planning review completed (UTC)** set; §5 checklist rows reviewed/accepted; §8 OWNER + SECURITY_APPROVER sign-off **yes** with UTC dates |
+
+**Planning review complete (charter)** does **not** imply **Safe to continue** authorizes writing a git N12 outcome record without a **separate** prompt.
+
+### Decision N12P23 — Charter §6 outcome codes immutable in filled charter
+
+**Owner decision:** **Yes.** In the owner-held filled charter, §6 **Possible later N12 outcome labels** must keep all **Selected by this charter?** cells as **`no` (fixed)**. Filled charters must **not** select an outcome code. Outcome selection belongs only in a **separate** repo-safe N12 outcome record after a **separate** owner review prompt.
+
+### Decision N12P24 — Candidate outcome ≠ permission for repo outcome record
+
+**Owner decision:** **Yes.** Charter §9 (or external planning synthesis) may record a **recommended candidate** code (e.g. `N12_PASS_WITH_DOCUMENTED_GAPS`) for a **future** separate prompt. **Candidate ≠ final outcome claimed.** **Candidate ≠ permission** to create `phase-2-rls-main-n12-*-outcome*.md` in git without an explicit **separate** owner-approved outcome-record prompt. Verdict **`READY_FOR_REPO_SAFE_N12_OUTCOME_RECORD_PROMPT`** is informational only and is **not** repo truth until the outcome record exists and is committed.
+
+### Decision N12P25 — Post-review verification without printing charter
+
+**Owner decision:** **Yes.** After owner-held planning review (Part B), verification must use **grep-only** checks on the filled charter path (under `owner-held/`, gitignored). **Do not** print or paste the full charter into chat or git. Minimum grep checks:
+
+- `N12 pass claimed` → **no**
+- `NOT_READY_FOR_APPLY` / `EXECUTION_PACKET_DRAFT_FORBIDDEN` → **unchanged**
+- §5 `Planning review completed` / `reviewed/accepted` → present when claiming planning complete
+- §8 `OWNER` / `SECURITY_APPROVER` → `Approved?` **yes** with UTC date
+- §6 `Selected by this charter?` → all **no** (no outcome selected in charter)
+
+---
+
+## Planning review verification (owner-held — informational)
+
+**Operational (2026-05-27):** Bounded planning review **completed** per owner-held charter `MAIN-N12-PLAN-2026-05-27-01` (file: `owner-held/phase-2-rls-main-n12-packet-readiness-planning-charter-filled.md`; **not** in git). Grep verification **PASS**; §6 outcomes **not** selected in charter.
+
+**Outcome note (2026-05-27):** N12 outcome recorded as **`N12_PASS_WITH_DOCUMENTED_GAPS`** in `phase-2-rls-main-n12-packet-readiness-outcome-owner-decision-record.md` (**Y-N12-outcome**). **`N12_PASS_CLAIMED` not claimed.** Execution packet draft/runtime/write/apply remain blocked; **NOT_READY_FOR_APPLY** unchanged.
+
 ---
 
 ## Final boundary statement
 
-Phase 2 RLS **MAIN N12 packet/readiness planning gate** is owner-adopted (N12P0–N12P21). **`RLS_MAIN_N12_PACKET_READINESS_PLANNING_GATE_ADOPTED_BOUNDED`** approves **bounded planning/review only** on **MAIN**. **N12 pass is not claimed.** **Execution packet draft is not approved.** **NOT_READY_FOR_APPLY** and **EXECUTION_PACKET_DRAFT_FORBIDDEN** remain unchanged at gate adoption.
+Phase 2 RLS **MAIN N12 packet/readiness planning gate** is owner-adopted (N12P0–N12P25). **`RLS_MAIN_N12_PACKET_READINESS_PLANNING_GATE_ADOPTED_BOUNDED`** approves **bounded planning/review only** on **MAIN**. At gate adoption, **N12 pass was not claimed**; outcome is recorded separately in the N12 outcome record. **Execution packet draft is not approved.** **NOT_READY_FOR_APPLY** and **EXECUTION_PACKET_DRAFT_FORBIDDEN** remain unchanged.

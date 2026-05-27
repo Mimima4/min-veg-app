@@ -58,7 +58,7 @@ This record does **not** store secrets, raw logs, project identifiers, service k
 | PSA (product runtime wiring) | **PSA_NO_TOUCH** |
 | diagnostics helper | non-product diagnostics/admin-only |
 | future docs/spec wiring | future-only owner-gated |
-| N12 claimed | **no** |
+| N12 at Q4 finalization | **not claimed** (later partial N12 outcome separate) |
 | NOT_READY_FOR_APPLY | unchanged |
 | EXECUTION_PACKET_DRAFT_FORBIDDEN | unchanged |
 
@@ -68,7 +68,7 @@ This record does **not** store secrets, raw logs, project identifiers, service k
 
 - **App/browser shortcut remains NOT_TESTED** (N6 row); no new tests are approved by this outcome.
 - **Diagnostics N6 rows are not closed by test execution** (Tranche B marked NOT_TESTED). Diagnostics remains classified non-product; this is not a substitute for “diagnostics ≠ published truth” proof via execution.
-- **N12 packet pass not claimed.**
+- **N12 full pass (`N12_PASS_CLAIMED`) not claimed** at Q4 finalization; partial N12 outcome recorded later via separate gate chain.
 - **Execution packet remains forbidden.**
 - **Runtime/write remains blocked.**
 - **PSA/Route activation remains blocked.**
@@ -100,9 +100,9 @@ This record does **not** store secrets, raw logs, project identifiers, service k
 
 **Owner/security decision:** **Yes.** App/browser shortcut remains **NOT_TESTED** and is carried forward as a documented gap.
 
-### Q4FO5 — N12 packet pass not claimed
+### Q4FO5 — N12 outcome at Q4 finalization time
 
-**Owner/security decision:** **Yes.** N12 packet pass is **not** claimed.
+**Owner/security decision:** **Yes.** At Q4 finalization time, N12 packet pass was **not** claimed. **Subsequent (2026-05-27):** partial N12 outcome `N12_PASS_WITH_DOCUMENTED_GAPS` recorded separately — see `phase-2-rls-main-n12-packet-readiness-outcome-owner-decision-record.md`; **not** `N12_PASS_CLAIMED`.
 
 ### Q4FO6 — Execution packet remains forbidden
 
@@ -124,9 +124,9 @@ This record does **not** store secrets, raw logs, project identifiers, service k
 
 **Owner/security decision:** **Yes.** NOT_READY_FOR_APPLY remains unchanged.
 
-### Q4FO11 — Next gate selection
+### Q4FO11 — Next gate selection (at Q4 finalization time)
 
-**Owner/security decision:** **Yes.** Next gate is **N12 packet/readiness planning gate** (planning/review only unless separately owner-approved). This is **not** packet execution and not runtime/write.
+**Owner/security decision:** **Yes.** At Q4 finalization time, next gate was **N12 packet/readiness planning gate** (planning/review only). **Subsequent (2026-05-27):** Section **Y** + **Y-N12-outcome** — see Next gate section below.
 
 ### Q4FO12 — Priority rule
 
@@ -145,13 +145,13 @@ This record does **not** store secrets, raw logs, project identifiers, service k
 | W-post client-role denial evidence accepted | closed |
 | X-post Route/PSA NO_TOUCH accepted for current wiring | closed |
 | Documented gaps recorded | closed |
-| Next gate identified as N12 packet/readiness planning gate | closed |
+| Next gate identified as N12 packet/readiness planning gate | closed (superseded by N12 outcome 2026-05-27) |
 
 ### Does not close
 
 | Item | Status |
 |------|--------|
-| N12 packet pass | not closed |
+| N12 full pass (`N12_PASS_CLAIMED`) | not closed (partial `N12_PASS_WITH_DOCUMENTED_GAPS` recorded separately) |
 | execution packet | not closed |
 | runtime/write | not closed |
 | Phase 2 row writes | not closed |
@@ -167,14 +167,10 @@ This record does **not** store secrets, raw logs, project identifiers, service k
 
 ---
 
-## Next gate (informational only)
+## Next gate (informational only — historical at Q4 finalization)
 
-- Next gate is **N12 packet/readiness planning gate** — adopted at docs level as Section **Y** in `phase-2-rls-main-n12-packet-readiness-planning-gate-owner-decision-record.md` (N12P0–N12P21).
-- It must remain planning/review only unless separately owner-approved.
-- N12 planning must explicitly account for documented gaps (especially app/browser shortcut **NOT_TESTED**).
-- Packet execution remains forbidden.
-- Runtime/write remains blocked.
-- PSA/Route activation remains blocked.
+- At Q4 finalization, next gate was **N12 packet/readiness planning gate** (Section **Y**).
+- **Subsequent (2026-05-27):** N12 outcome `N12_PASS_WITH_DOCUMENTED_GAPS` recorded in `phase-2-rls-main-n12-packet-readiness-outcome-owner-decision-record.md`. **Operational next step:** execution packet **draft planning** gate (docs-only) — **not** packet draft or execution unless separately approved.
 
 ---
 
