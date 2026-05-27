@@ -181,7 +181,7 @@ Review scope: Route Engine / route generation read paths and PSA / `programme_sc
 
 ## Next gate (informational only)
 
-- Next step may be **OWNER** / **SECURITY_APPROVER** **Q4-finalization** decision considering **W-post** + **X-post** together (including any remaining N6 gaps).
+- Next step: **Q4 finalization** per Section **W-Q4F** (`phase-2-rls-main-q4-finalization-gate-owner-decision-record.md`) — owner-held charter → record **one** outcome code; weighing **W-post** + **X-post** (including any remaining N6 gaps).
 - **N12** / packet / runtime/write cannot proceed **automatically** from **X-post**.
 - If future code changes make Route or PSA touch the **seven** Phase 2 tables, a **new** Route/PSA wiring review and likely Route/PSA negative-test execution gate are required.
 - Execution packet remains **forbidden**.
