@@ -201,7 +201,7 @@ Planning **does not** waive **EXECUTION_PACKET_DRAFT_FORBIDDEN**.
 
 **Operational (2026-05-27):** Bounded draft-planning review **completed** per owner-held charter `MAIN-EP-DRAFT-PLAN-2026-05-27-01` (file: `owner-held/phase-2-rls-main-execution-packet-draft-planning-charter-filled.md`; **not** in git). Grep verification **PASS**; §6 draft-gate labels **not** selected in charter.
 
-**Outcome note (2026-05-27):** Z-planning outcome recorded as **`DRAFT_PLANNING_READY_WITH_DOCUMENTED_GAPS`** in `phase-2-rls-main-execution-packet-draft-planning-outcome-owner-decision-record.md` (**Z-planning-outcome**). Packet draft/execution/apply remain blocked; **NOT_READY_FOR_APPLY** unchanged.
+**Outcome note (2026-05-27):** Z-planning outcome recorded as **`DRAFT_PLANNING_READY_WITH_DOCUMENTED_GAPS`** in `phase-2-rls-main-execution-packet-draft-planning-outcome-owner-decision-record.md` (**Z-planning-outcome**). **Section Z-D** execution packet **draft** gate adopted in `phase-2-rls-main-execution-packet-draft-gate-owner-decision-record.md` — owner-held draft permitted; git SQL forbidden; execution blocked; **NOT_READY_FOR_APPLY** unchanged.
 
 ---
 

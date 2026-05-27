@@ -109,7 +109,7 @@ This record does **not** store secrets, SQL bundles, rollback SQL, charter bodie
 
 ### EPDPO11 — Next gate (informational)
 
-**Owner/security decision:** **Yes.** Next gate is **execution packet draft gate** (separate — drafting only, not execution) **or** gap-closure negative-test execution gates — owner selects via separate prompt.
+**Owner/security decision:** **Yes.** Next gate is **execution packet draft gate** — adopted at docs level as Section **Z-D** in `phase-2-rls-main-execution-packet-draft-gate-owner-decision-record.md` (EPD0–EPD25). Owner-held draft preparation only — **not** execution. Gap-closure tests remain available via separate gates.
 
 ### EPDPO12 — STAGING boundary
 
