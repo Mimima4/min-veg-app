@@ -126,6 +126,7 @@ These are **documentation / boundary / criteria** artifacts only. They are **not
 - `docs/architecture/phase-2-rls-main-apply-gate-selection-planning-owner-decision-record.md` — MAIN **apply gate selection/planning** record (AP0–AP8; Section **Z-AP**); docs-only planning step; no SQL/connect/apply approval; **NOT_READY_FOR_APPLY** unchanged
 - `docs/architecture/phase-2-rls-main-apply-gate-outcome-approval-chain-owner-decision-record.md` — MAIN **apply gate outcome/approval chain** record (APC0–APC8; Section **Z-APC**); docs-only sequencing step; no SQL/connect/apply approval; **NOT_READY_FOR_APPLY** unchanged
 - `docs/architecture/phase-2-rls-main-apply-gate-outcome-owner-decision-record.md` — MAIN **apply gate outcome** record (**Z-APC-post**); sequencing completed in repo-safe form; approval/execution not issued; **NOT_READY_FOR_APPLY** unchanged
+- `docs/architecture/phase-2-rls-main-apply-approval-selection-owner-decision-record.md` — MAIN **apply approval selection** record (APS0–APS7; Section **Z-APPSEL**); docs-only branch selection; no SQL/connect/apply execution approval; **NOT_READY_FOR_APPLY** unchanged
 
 **Checklist reference note (2026-05-27):** **MAIN execution packet execution gate (Section Z-E)** logged per `phase-2-rls-main-execution-packet-execution-gate-owner-decision-record.md` — follows **Z-D-draft-outcome**; **framework only** (variant A); **no** Supabase connect; **no** packet SQL execution at adoption; G1–G6 carried forward (not closed); U-post re-apply **not** default; git packet SQL **forbidden**; connect requires filled owner-held charter + **separate** prompt; **NOT_READY_FOR_APPLY** unchanged. Does **not** mean session ran, gaps closed, or apply-ready globally.
 
@@ -156,6 +157,8 @@ These are **documentation / boundary / criteria** artifacts only. They are **not
 **Checklist reference note (2026-05-28):** **MAIN apply gate outcome/approval chain (Section Z-APC)** logged per `phase-2-rls-main-apply-gate-outcome-approval-chain-owner-decision-record.md` — follows Section **Z-AP**; defines outcome-before-approval sequencing and separate approval checkpoint; no SQL/connect/apply/runtime approvals granted by chain adoption.
 
 **Checklist reference note (2026-05-28):** **MAIN apply gate outcome (Z-APC-post)** logged per `phase-2-rls-main-apply-gate-outcome-owner-decision-record.md` — apply-gate outcome documented in repo-safe form; separate approval checkpoint still required; SQL/connect/apply/runtime approvals not issued; **NOT_READY_FOR_APPLY** unchanged.
+
+**Checklist reference note (2026-05-28):** **MAIN apply approval selection (Section Z-APPSEL)** logged per `phase-2-rls-main-apply-approval-selection-owner-decision-record.md` — follows `Z-APC-post`; selects apply approval branch as next controlled direction; execution/runtime approvals remain blocked.
 
 **Checklist reference note (2026-05-27):** **MAIN execution packet draft outcome (Z-D-draft-outcome)** logged per `phase-2-rls-main-execution-packet-draft-outcome-owner-decision-record.md` — follows Section **Z-D** + owner-held draft `MAIN-EP-DRAFT-2026-05-27-01`; outcome **`DRAFT_COMPLETE_WITH_DOCUMENTED_GAPS`**; post-U-post outline accepted; **no** default deny DDL repeat; packet execution/apply **not** approved; **NOT_READY_FOR_APPLY** unchanged; git packet SQL **forbidden**. Does **not** mean SQL executed, U-post re-applied, or apply-ready globally.
 
@@ -1070,6 +1073,26 @@ Owner-adopted **apply gate outcome/approval chain** is logged in `phase-2-rls-ma
 
 Does **not** mean apply execution is approved.
 
+## Section Z-APPSEL — MAIN apply approval selection (logged at docs level 2026-05-28)
+
+Owner-adopted **apply approval selection** is logged in `phase-2-rls-main-apply-approval-selection-owner-decision-record.md`. Follows `Z-APC-post` and selects apply approval as the next controlled branch.
+
+| Field | Status |
+|-------|--------|
+| Record | Apply approval selection recorded at **docs level** |
+| Prerequisites | `Z-AP` + `Z-APC` + `Z-APC-post` |
+| Target | **MAIN-OWNER-USED** only |
+| Scope | One bounded docs-only branch-selection step |
+| SQL / connect / apply execution | **not** approved |
+| Runtime/write | **not** approved |
+| NOT_READY_FOR_APPLY | **unchanged** |
+
+**Closed at docs level (Section Z-APPSEL):** APS0–APS7 recorded; apply approval branch selection documented.
+
+**Explicitly not closed (Section Z-APPSEL):** apply approval; apply execution; runtime/write; `NOT_READY_FOR_APPLY` clearance issuance.
+
+Does **not** mean apply execution is approved.
+
 **B. Phase 2 → Phase 3 gate criteria (documentation artifact — already committed)**
 Prerequisites are documented in `docs/architecture/phase-2-to-phase-3-gate-criteria.md` (aligned with this checklist and the execution plan). This is **not** Phase 3 approval, **not** “gate passed,” and **not** permission to start Phase 3 coding, change PSA, change Route Engine, or perform DB writes.
 
@@ -1077,11 +1100,11 @@ Prerequisites are documented in `docs/architecture/phase-2-to-phase-3-gate-crite
 
 ## Current recommended next gate
 
-**Current recommended next gate from this checklist snapshot:** Next checklist-priority item requires **separate read-only selection** among remaining **Not closed** / **Blocked** gates after **Z-APC-post**. This update does **not** grant clearance, apply, or runtime/write approval.
+**Current recommended next gate from this checklist snapshot:** **Selected and recorded:** Section **Z-APPSEL** (MAIN apply approval branch selection). Selection does **not** grant clearance, apply execution, or runtime/write approval.
 
 **Status refresh (2026-05-28):** Prior wording that pointed to a **G1** operational next step is superseded by recorded outcomes (**Z-E-post** `EXECUTION_SESSION_COMPLETE_PASS`, **Z-G1-post** `G1_GAP_CLOSURE_PASS`, **Z-G2-post** `G2_GAP_CLOSURE_PASS`) and by **Z-N12C-post** claim-review outcome (`N12_PASS_CLAIMED`) with boundaries preserved.
 
-**Separate read-only selection (2026-05-28):** Remaining blocked set still includes clearance issuance, apply approval, and runtime/write approval. Consolidated record selected apply branch; Section **Z-AP** recorded planning and Section **Z-APC-post** recorded outcome while keeping approvals blocked.
+**Separate read-only selection (2026-05-28):** Remaining blocked set still includes clearance issuance, apply approval, and runtime/write approval. Sections **Z-AP** and **Z-APC-post** prepared the apply branch; Section **Z-APPSEL** records explicit apply-approval branch selection while keeping execution blocked.
 
 **Clarification:** Historical context text below may still mention earlier chain steps (for traceability). Selection authority for "what is next" is the two lines above in this section.
 
