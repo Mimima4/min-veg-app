@@ -141,6 +141,7 @@ These are **documentation / boundary / criteria** artifacts only. They are **not
 - `docs/architecture/phase-3-psa-materialization-publication-gate-owner-decision-record.md` — **Phase 3 PSA materialization/publication gate** record (P3PSA0–P3PSA9; Section **P3-PSA**); PSA gate boundary captured after `P3-RW`; Route execution remains separately gated
 - `docs/architecture/phase-3-route-engine-consumption-gate-owner-decision-record.md` — **Phase 3 Route Engine consumption gate** record (P3R0–P3R9; Section **P3-ROUTE**); Route gate boundary captured after `P3-PSA`; consolidated readiness/closure summary remains next ordered doc
 - `docs/architecture/phase-3-consolidated-readiness-closure-summary-owner-decision-record.md` — **Phase 3 consolidated readiness/closure summary** record (P3C0–P3C9; Section **P3-CLOSE**); planned docs sequence closure recorded with execution boundaries preserved
+- `docs/architecture/phase-3-post-bundle-next-step-selection-owner-decision-record.md` — **Phase 3 post-bundle next-step selection** record (P3NS0–P3NS6; Section **P3-NEXTSEL**); selects transition direction after `P3-CLOSE` while preserving execution boundaries
 
 **Checklist reference note (2026-05-27):** **MAIN execution packet execution gate (Section Z-E)** logged per `phase-2-rls-main-execution-packet-execution-gate-owner-decision-record.md` — follows **Z-D-draft-outcome**; **framework only** (variant A); **no** Supabase connect; **no** packet SQL execution at adoption; G1–G6 carried forward (not closed); U-post re-apply **not** default; git packet SQL **forbidden**; connect requires filled owner-held charter + **separate** prompt; **NOT_READY_FOR_APPLY** unchanged. Does **not** mean session ran, gaps closed, or apply-ready globally.
 
@@ -201,6 +202,8 @@ These are **documentation / boundary / criteria** artifacts only. They are **not
 **Checklist reference note (2026-05-28):** **Phase 3 Route Engine consumption gate (Section P3-ROUTE)** logged per `phase-3-route-engine-consumption-gate-owner-decision-record.md` — follows `P3-PSA`; Route gate boundary recorded in repo-safe form; consolidated readiness/closure summary remains next ordered doc.
 
 **Checklist reference note (2026-05-28):** **Phase 3 consolidated readiness/closure summary (Section P3-CLOSE)** logged per `phase-3-consolidated-readiness-closure-summary-owner-decision-record.md` — follows `P3-ROUTE`; planned docs sequence closure recorded in repo-safe form; execution boundaries preserved.
+
+**Checklist reference note (2026-05-28):** **Phase 3 post-bundle next-step selection (Section P3-NEXTSEL)** logged per `phase-3-post-bundle-next-step-selection-owner-decision-record.md` — follows `P3-CLOSE`; selected direction is transition to operational execution-gates; this selection itself does not grant execution approvals.
 
 **Checklist reference note (2026-05-27):** **MAIN execution packet draft outcome (Z-D-draft-outcome)** logged per `phase-2-rls-main-execution-packet-draft-outcome-owner-decision-record.md` — follows Section **Z-D** + owner-held draft `MAIN-EP-DRAFT-2026-05-27-01`; outcome **`DRAFT_COMPLETE_WITH_DOCUMENTED_GAPS`**; post-U-post outline accepted; **no** default deny DDL repeat; packet execution/apply **not** approved; **NOT_READY_FOR_APPLY** unchanged; git packet SQL **forbidden**. Does **not** mean SQL executed, U-post re-applied, or apply-ready globally.
 
@@ -1346,6 +1349,23 @@ Owner/security consolidated summary is logged in `phase-3-consolidated-readiness
 
 Does **not** mean operational execution closure is complete.
 
+## Section P3-NEXTSEL — Phase 3 post-bundle next-step selection (logged at docs level 2026-05-28)
+
+Owner/security post-bundle selection is logged in `phase-3-post-bundle-next-step-selection-owner-decision-record.md`. Follows `P3-CLOSE` and records explicit direction for what comes after completion of the planned Phase 3 docs sequence.
+
+| Field | Status |
+|-------|--------|
+| Record | Phase 3 post-bundle next-step selection recorded at **docs level** |
+| Prerequisite | `P3-CLOSE` recorded |
+| Selected direction | proceed to operational execution-gates |
+| Execution approvals in this record | **not** granted |
+
+**Closed at docs level (Section P3-NEXTSEL):** P3NS0–P3NS6 recorded; post-bundle direction selected.
+
+**Explicitly not closed (Section P3-NEXTSEL):** operational execution/runtime-write/DB writes/PSA/Route approvals.
+
+Does **not** mean execution is approved by selection alone.
+
 **B. Phase 2 → Phase 3 gate criteria (documentation artifact — already committed)**
 Prerequisites are documented in `docs/architecture/phase-2-to-phase-3-gate-criteria.md` (aligned with this checklist and the execution plan). This is **not** Phase 3 approval, **not** “gate passed,” and **not** permission to start Phase 3 coding, change PSA, change Route Engine, or perform DB writes.
 
@@ -1353,11 +1373,11 @@ Prerequisites are documented in `docs/architecture/phase-2-to-phase-3-gate-crite
 
 ## Current recommended next gate
 
-**Current recommended next gate from this checklist snapshot:** **Selected and recorded:** Section **P3-CLOSE** (Phase 3 consolidated readiness/closure summary). Docs sequence closure is recorded; no further Phase 3 docs are pending in this consolidated bundle.
+**Current recommended next gate from this checklist snapshot:** **Selected and recorded:** Section **P3-NEXTSEL** (Phase 3 post-bundle next-step selection). Direction is set to operational execution-gates; next step is a separate execution-gate entry record.
 
 **Status refresh (2026-05-28):** Prior wording that pointed to a **G1** operational next step is superseded by recorded outcomes (**Z-E-post** `EXECUTION_SESSION_COMPLETE_PASS`, **Z-G1-post** `G1_GAP_CLOSURE_PASS`, **Z-G2-post** `G2_GAP_CLOSURE_PASS`) and by **Z-N12C-post** claim-review outcome (`N12_PASS_CLAIMED`) with boundaries preserved.
 
-**Separate read-only selection (2026-05-28):** After `Z-OCLOSE-post`, owner selected Phase 3 workstream and requested one-step docs consolidation. `P3-PLAN` recorded planning entry, `P3-DOCSPLAN` recorded the ordered bundle, `P3-PLAN-post` recorded planning outcome, `P3-IMPL` recorded implementation-gate boundary, `P3-RW` recorded runtime/write gate boundary, `P3-PSA` recorded PSA gate boundary, `P3-ROUTE` recorded Route gate boundary, and `P3-CLOSE` now records consolidated docs-sequence closure. Execution remains separately gated.
+**Separate read-only selection (2026-05-28):** After `Z-OCLOSE-post`, owner selected Phase 3 workstream and requested one-step docs consolidation. `P3-PLAN` recorded planning entry, `P3-DOCSPLAN` recorded the ordered bundle, `P3-PLAN-post` recorded planning outcome, `P3-IMPL` recorded implementation-gate boundary, `P3-RW` recorded runtime/write gate boundary, `P3-PSA` recorded PSA gate boundary, `P3-ROUTE` recorded Route gate boundary, `P3-CLOSE` recorded consolidated docs-sequence closure, and `P3-NEXTSEL` now records post-bundle direction selection to operational execution-gates. Execution remains separately gated until explicit execution-gate approval.
 
 **Clarification:** Historical context text below may still mention earlier chain steps (for traceability). Selection authority for "what is next" is the two lines above in this section.
 
