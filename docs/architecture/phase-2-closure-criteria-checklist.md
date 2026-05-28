@@ -118,6 +118,8 @@ These are **documentation / boundary / criteria** artifacts only. They are **not
 - `docs/architecture/phase-2-rls-main-n12-pass-claimed-review-outcome-owner-decision-record.md` — MAIN **N12_PASS_CLAIMED review outcome** (**Z-N12C-post**); owner/security `Q1–Q8 = yes`; claim recorded with boundaries; apply/runtime not approved; **NOT_READY_FOR_APPLY** unchanged
 - `docs/architecture/phase-2-rls-main-apply-readiness-clearance-review-gate-owner-decision-record.md` — MAIN **apply-readiness clearance review** gate (ARC0–ARC12; Section **Z-AR**); docs-only review path; clearance/apply/runtime not approved at adoption; **NOT_READY_FOR_APPLY** unchanged
 - `docs/architecture/phase-2-rls-main-apply-readiness-clearance-review-outcome-owner-decision-record.md` — MAIN **apply-readiness clearance review outcome** (**Z-AR-post**); owner/security `Q1–Q8 = yes`; review complete with boundaries; clearance/apply/runtime not approved; **NOT_READY_FOR_APPLY** unchanged
+- `docs/architecture/phase-2-rls-main-not-ready-for-apply-final-clearance-review-gate-owner-decision-record.md` — MAIN **NOT_READY_FOR_APPLY final clearance review** gate (CLR0–CLR12; Section **Z-CLR**); docs-only final review path; clearance/apply/runtime not approved at adoption; **NOT_READY_FOR_APPLY** unchanged
+- `docs/architecture/phase-2-rls-main-not-ready-for-apply-final-clearance-review-outcome-owner-decision-record.md` — MAIN **NOT_READY_FOR_APPLY final clearance review outcome** (**Z-CLR-post**); owner/security `Q1–Q8 = yes`; review complete with boundaries; clearance/apply/runtime not approved; **NOT_READY_FOR_APPLY** unchanged
 
 **Checklist reference note (2026-05-27):** **MAIN execution packet execution gate (Section Z-E)** logged per `phase-2-rls-main-execution-packet-execution-gate-owner-decision-record.md` — follows **Z-D-draft-outcome**; **framework only** (variant A); **no** Supabase connect; **no** packet SQL execution at adoption; G1–G6 carried forward (not closed); U-post re-apply **not** default; git packet SQL **forbidden**; connect requires filled owner-held charter + **separate** prompt; **NOT_READY_FOR_APPLY** unchanged. Does **not** mean session ran, gaps closed, or apply-ready globally.
 
@@ -132,6 +134,10 @@ These are **documentation / boundary / criteria** artifacts only. They are **not
 **Checklist reference note (2026-05-28):** **MAIN apply-readiness clearance review gate (Section Z-AR)** logged per `phase-2-rls-main-apply-readiness-clearance-review-gate-owner-decision-record.md` — follows `phase-2-rls-apply-readiness-owner-decision-record.md` + **Z-E-post** + **Z-G1-post** + **Z-G2-post** + **Z-N12C-post**; one bounded docs-only owner/security clearance-review path; `NOT_READY_FOR_APPLY` clearance/apply/runtime **not** approved at gate adoption.
 
 **Checklist reference note (2026-05-28):** **MAIN apply-readiness clearance review outcome (Z-AR-post)** logged per `phase-2-rls-main-apply-readiness-clearance-review-outcome-owner-decision-record.md` — owner/security response `Q1–Q8 = yes`; review completion recorded with boundaries preserved; `NOT_READY_FOR_APPLY` clearance/apply/runtime **not** approved.
+
+**Checklist reference note (2026-05-28):** **MAIN NOT_READY_FOR_APPLY final clearance review gate (Section Z-CLR)** logged per `phase-2-rls-main-not-ready-for-apply-final-clearance-review-gate-owner-decision-record.md` — follows apply-readiness baseline + **Z-E-post** + **Z-G1-post** + **Z-G2-post** + **Z-N12C-post** + **Z-AR-post**; one bounded docs-only final clearance-review path; `NOT_READY_FOR_APPLY` clearance/apply/runtime **not** approved at gate adoption.
+
+**Checklist reference note (2026-05-28):** **MAIN NOT_READY_FOR_APPLY final clearance review outcome (Z-CLR-post)** logged per `phase-2-rls-main-not-ready-for-apply-final-clearance-review-outcome-owner-decision-record.md` — owner/security response `Q1–Q8 = yes`; final review completion recorded with boundaries preserved; `NOT_READY_FOR_APPLY` clearance/apply/runtime **not** approved.
 
 **Checklist reference note (2026-05-27):** **MAIN execution packet draft outcome (Z-D-draft-outcome)** logged per `phase-2-rls-main-execution-packet-draft-outcome-owner-decision-record.md` — follows Section **Z-D** + owner-held draft `MAIN-EP-DRAFT-2026-05-27-01`; outcome **`DRAFT_COMPLETE_WITH_DOCUMENTED_GAPS`**; post-U-post outline accepted; **no** default deny DDL repeat; packet execution/apply **not** approved; **NOT_READY_FOR_APPLY** unchanged; git packet SQL **forbidden**. Does **not** mean SQL executed, U-post re-applied, or apply-ready globally.
 
@@ -960,6 +966,28 @@ Owner-adopted **apply-readiness clearance review gate** is logged in `phase-2-rl
 
 Does **not** mean clearance is granted or that apply/runtime are approved.
 
+## Section Z-CLR — MAIN NOT_READY_FOR_APPLY final clearance review gate (logged at docs level 2026-05-28)
+
+Owner-adopted **NOT_READY_FOR_APPLY final clearance review gate** is logged in `phase-2-rls-main-not-ready-for-apply-final-clearance-review-gate-owner-decision-record.md`. Follows apply-readiness policy baseline plus **Z-E-post**, **Z-G1-post**, **Z-G2-post**, **Z-N12C-post**, and **Z-AR-post**, and opens one bounded docs-only owner/security final review path for possible clearance decision.
+
+| Field | Status |
+|-------|--------|
+| Gate | Final clearance review gate adopted at **docs level** |
+| Prerequisites | apply-readiness baseline + **Z-E-post** + **Z-G1-post** + **Z-G2-post** + **Z-N12C-post** + **Z-AR-post** |
+| Target | **MAIN-OWNER-USED** only |
+| Scope | One bounded docs-only final clearance-review path |
+| SQL / connect / apply | **not** approved |
+| Runtime/write | **not** approved |
+| NOT_READY_FOR_APPLY | **unchanged** |
+
+**Closed at docs level (Section Z-CLR):** CLR0–CLR12 adopted; bounded final clearance-review decision path documented.
+
+**Follow-up (2026-05-28):** `phase-2-rls-main-not-ready-for-apply-final-clearance-review-outcome-owner-decision-record.md` recorded as **Z-CLR-post** with owner/security response `Q1–Q8 = yes`; final review completion recorded with strict boundaries; `NOT_READY_FOR_APPLY` clearance/apply/runtime remain **not approved**.
+
+**Explicitly not closed (Section Z-CLR + Z-CLR-post):** `NOT_READY_FOR_APPLY` clearance outcome; apply; runtime/write.
+
+Does **not** mean clearance is granted or that apply/runtime are approved.
+
 **B. Phase 2 → Phase 3 gate criteria (documentation artifact — already committed)**
 Prerequisites are documented in `docs/architecture/phase-2-to-phase-3-gate-criteria.md` (aligned with this checklist and the execution plan). This is **not** Phase 3 approval, **not** “gate passed,” and **not** permission to start Phase 3 coding, change PSA, change Route Engine, or perform DB writes.
 
@@ -967,11 +995,11 @@ Prerequisites are documented in `docs/architecture/phase-2-to-phase-3-gate-crite
 
 ## Current recommended next gate
 
-**Current recommended next gate from this checklist snapshot:** Next checklist-priority item requires **separate read-only selection** among remaining **Not closed** / **Blocked** gates after **Z-AR-post**. This update does **not** grant clearance, apply, or runtime/write approval.
+**Current recommended next gate from this checklist snapshot:** Next checklist-priority item requires **separate read-only selection** among remaining **Not closed** / **Blocked** gates after **Z-CLR-post**. This update does **not** grant clearance, apply, or runtime/write approval.
 
 **Status refresh (2026-05-28):** Prior wording that pointed to a **G1** operational next step is superseded by recorded outcomes (**Z-E-post** `EXECUTION_SESSION_COMPLETE_PASS`, **Z-G1-post** `G1_GAP_CLOSURE_PASS`, **Z-G2-post** `G2_GAP_CLOSURE_PASS`) and by **Z-N12C-post** claim-review outcome (`N12_PASS_CLAIMED`) with boundaries preserved.
 
-**Separate read-only selection (2026-05-28):** Remaining blocked set includes apply approval, runtime/write approval, and `NOT_READY_FOR_APPLY` clearance. Priority was set to the apply-readiness / clearance branch and is now recorded as Section **Z-AR**; execution/apply actions remain blocked unless separately owner-approved.
+**Separate read-only selection (2026-05-28):** Remaining blocked set includes `NOT_READY_FOR_APPLY` final clearance outcome, apply approval, and runtime/write approval. Priority after **Z-AR-post** is now recorded as Section **Z-CLR**; execution/apply actions remain blocked unless separately owner-approved.
 
 **Clarification:** Historical context text below may still mention earlier chain steps (for traceability). Selection authority for "what is next" is the two lines above in this section.
 
