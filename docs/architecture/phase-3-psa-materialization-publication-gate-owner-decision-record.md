@@ -1,55 +1,105 @@
-# Phase 3 PSA Materialization/Publication Gate Owner/Security Decision Record
+# Phase 3 PSA Operational Gate Owner/Security Decision Record
 
 ## Snapshot / status
 
 | Field | Value |
 |-------|--------|
-| **Status** | Owner/security Phase 3 PSA materialization/publication gate adopted at docs level |
-| **Closure label** | `PHASE_3_PSA_GATE_ADOPTED` |
-| **Scope** | One bounded docs-only PSA gate definition after `P3-RW` |
+| **Status** | Concrete Phase 3 PSA operational gate framework recorded at docs level |
+| **Status code** | `P3_PSA_OPERATIONAL_GATE_FRAMEWORK_RECORDED` |
+| **Scope** | Concrete PSA gate framework after `P3-RW` and `P3-NEXTSEL` |
 | **Date (UTC)** | 2026-05-28 |
 | **Control reference** | `docs/architecture/phase-2-closure-criteria-checklist.md` — Section **P3-PSA** |
 
-This record defines the PSA materialization/publication gate boundary for Phase 3 after runtime/write gate adoption.
+This record defines the concrete **Phase 3 PSA materialization/publication gate** framework and control boundaries.
 
-This record does **not** itself approve Route Engine consumption.
+This record does **not** approve PSA materialization/publication execution, does **not** approve runtime/write execution, does **not** approve DB writes, does **not** approve Route Engine consumption, does **not** approve SQL/Supabase execution, and does **not** approve production truth/materialization.
 
 ---
 
-## Owner/security gate decisions (P3PSA0–P3PSA9)
+## PSA scope (P3PSA-SCOPE)
 
-### Decision P3PSA0 — Scope is PSA gate definition only
-**Owner/security decision:** **Yes.** This is a docs-only PSA gate definition step.
+The scope of this gate is limited to PSA-gate control framing for Phase 3:
 
-### Decision P3PSA1 — Preconditions accepted
-**Owner/security decision:** **Yes.** Inputs include `P3-PLAN`, `P3-DOCSPLAN`, `P3-PLAN-post`, `P3-IMPL`, and `P3-RW`.
+1. define PSA target surfaces and explicit non-goals;
+2. define prerequisites and dependency mapping from implementation/runtime-write scope;
+3. define forbidden actions before explicit downstream approvals;
+4. define owner/security approval requirements for any future execution proposal;
+5. define QA requirements for readiness review;
+6. define STOP conditions that block progression.
 
-### Decision P3PSA2 — PSA materialization/publication track may be considered under gate controls
-**Owner/security decision:** **Yes.** Consideration is in-scope under this gate.
+Out of scope: execution authorization and operational activation.
 
-### Decision P3PSA3 — Runtime/write boundaries remain in force
-**Owner/security decision:** **Yes.** Prior runtime/write boundaries remain unchanged by this record.
+---
 
-### Decision P3PSA4 — DB write boundaries remain in force
-**Owner/security decision:** **Yes.** DB write boundaries remain unchanged by this record.
+## Prerequisites (P3PSA-PREREQ)
 
-### Decision P3PSA5 — Route Engine consumption remains separately gated
-**Owner/security decision:** **Yes.** No Route execution approval granted here.
+All of the following must be present and traceable before this gate can be considered "ready for approval review":
 
-### Decision P3PSA6 — Stop/priority rules preserved
-**Owner/security decision:** **Yes.** `FAIL/UNCLEAR => STOP (N11)` and stricter-rule-wins remain binding.
+1. `P3-PLAN`, `P3-DOCSPLAN`, `P3-PLAN-post`, `P3-IMPL`, `P3-RW`, `P3-CLOSE`, and `P3-NEXTSEL` recorded;
+2. explicit dependency map from PSA scope to `P3-ROUTE`;
+3. unresolved PSA risk register with owner/security visibility;
+4. repo-safe evidence index and owner-held references where required;
+5. no contradiction with global boundaries (`NOT_READY_FOR_APPLY`, stricter-rule-wins, N11 STOP semantics).
 
-### Decision P3PSA7 — Evidence posture preserved
-**Owner/security decision:** **Yes.** Owner-held vs repo-safe boundaries remain unchanged.
+Missing or unclear prerequisite status => STOP.
 
-### Decision P3PSA8 — Prior global boundaries remain in force
-**Owner/security decision:** **Yes.** `NOT_READY_FOR_APPLY` and execution boundaries remain unchanged by this record.
+---
 
-### Decision P3PSA9 — Next ordered gate required
-**Owner/security decision:** **Yes.** Next ordered document is the Phase 3 Route Engine consumption gate.
+## Forbidden actions before explicit downstream approvals (P3PSA-FORBID)
+
+Until separate approvals are recorded, all items below remain forbidden by this gate:
+
+1. PSA materialization or publication execution in any environment;
+2. runtime/write execution;
+3. DB write execution of any kind;
+4. Route Engine consumption enablement;
+5. SQL/Supabase connect or execute operations;
+6. production truth/materialization activities;
+7. any interpretation that this gate implies execution approval.
+
+---
+
+## Owner/security approval requirements (P3PSA-APPROVAL)
+
+Before any transition from this gate into executable proposals, the following are required:
+
+1. explicit OWNER and SECURITY_APPROVER approvals recorded in repo-safe form;
+2. explicit statement that approval target is a next gate review only, not direct execution;
+3. explicit carry-forward of forbidden actions until separately cleared;
+4. explicit confirmation that FAIL/UNCLEAR outcomes trigger STOP;
+5. explicit confirmation that owner-held artifacts remain outside repo unless sanitized.
+
+Absent any required approval element => STOP.
+
+---
+
+## QA requirements (P3PSA-QA)
+
+Minimum QA checklist for this gate artifact:
+
+1. scope/prerequisites/forbidden/approvals/STOP sections present and consistent;
+2. all boundary statements non-contradictory and execution-safe;
+3. references to prior records valid and current;
+4. no raw sensitive evidence or owner-held secrets committed;
+5. wording does not imply execution authorization.
+
+Any QA FAIL/UNCLEAR => STOP and revise before progression.
+
+---
+
+## STOP conditions (P3PSA-STOP)
+
+Progression from this gate must stop immediately if any of the following occurs:
+
+1. prerequisite evidence missing, ambiguous, or contradictory;
+2. boundary contradiction or implied execution enablement;
+3. missing OWNER or SECURITY_APPROVER approval requirements;
+4. QA FAIL/UNCLEAR outcome;
+5. attempt to perform forbidden actions listed in this gate;
+6. any condition matching `FAIL/UNCLEAR => STOP (N11)`.
 
 ---
 
 ## Final boundary statement
 
-Section **P3-PSA** records a PSA materialization/publication gate definition only. It does not authorize Route Engine consumption.
+Section **P3-PSA** is a concrete operational-gate framework record only. It establishes controls and readiness criteria, but does not grant execution permissions of any kind.
