@@ -136,6 +136,7 @@ These are **documentation / boundary / criteria** artifacts only. They are **not
 - `docs/architecture/phase-3-planning-gate-owner-decision-record.md` — **Phase 3 planning gate** record (P3G0–P3G8; Section **P3-PLAN**); docs-only planning entry after `Z-OCLOSE-post`; no implementation/runtime/write/PSA/Route execution approvals
 - `docs/architecture/phase-3-consolidated-docs-plan-owner-decision-record.md` — **Phase 3 consolidated docs plan** record (P3D0–P3D7; Section **P3-DOCSPLAN**); one-step bundle of required Phase 3 documents and sequence; planning-only, no execution approvals
 - `docs/architecture/phase-3-planning-outcome-owner-decision-record.md` — **Phase 3 planning outcome** record (**P3-PLAN-post**); planning outcome captured in repo-safe form; implementation/runtime/write/PSA/Route approvals not issued
+- `docs/architecture/phase-3-implementation-gate-owner-decision-record.md` — **Phase 3 implementation gate** record (P3I0–P3I9; Section **P3-IMPL**); implementation gate boundary captured after `P3-PLAN-post`; runtime/write/PSA/Route approvals not issued
 
 **Checklist reference note (2026-05-27):** **MAIN execution packet execution gate (Section Z-E)** logged per `phase-2-rls-main-execution-packet-execution-gate-owner-decision-record.md` — follows **Z-D-draft-outcome**; **framework only** (variant A); **no** Supabase connect; **no** packet SQL execution at adoption; G1–G6 carried forward (not closed); U-post re-apply **not** default; git packet SQL **forbidden**; connect requires filled owner-held charter + **separate** prompt; **NOT_READY_FOR_APPLY** unchanged. Does **not** mean session ran, gaps closed, or apply-ready globally.
 
@@ -186,6 +187,8 @@ These are **documentation / boundary / criteria** artifacts only. They are **not
 **Checklist reference note (2026-05-28):** **Phase 3 consolidated docs plan (Section P3-DOCSPLAN)** logged per `phase-3-consolidated-docs-plan-owner-decision-record.md` — follows `P3-PLAN`; consolidates required Phase 3 docs into one ordered bundle; execution/runtime approvals remain separately gated.
 
 **Checklist reference note (2026-05-28):** **Phase 3 planning outcome (P3-PLAN-post)** logged per `phase-3-planning-outcome-owner-decision-record.md` — follows `P3-PLAN` + `P3-DOCSPLAN`; planning outcome recorded in repo-safe form; implementation/runtime/write/PSA/Route approvals remain separately gated.
+
+**Checklist reference note (2026-05-28):** **Phase 3 implementation gate (Section P3-IMPL)** logged per `phase-3-implementation-gate-owner-decision-record.md` — follows `P3-PLAN-post`; implementation gate boundary recorded in repo-safe form; runtime/write/PSA/Route approvals remain separately gated.
 
 **Checklist reference note (2026-05-27):** **MAIN execution packet draft outcome (Z-D-draft-outcome)** logged per `phase-2-rls-main-execution-packet-draft-outcome-owner-decision-record.md` — follows Section **Z-D** + owner-held draft `MAIN-EP-DRAFT-2026-05-27-01`; outcome **`DRAFT_COMPLETE_WITH_DOCUMENTED_GAPS`**; post-U-post outline accepted; **no** default deny DDL repeat; packet execution/apply **not** approved; **NOT_READY_FOR_APPLY** unchanged; git packet SQL **forbidden**. Does **not** mean SQL executed, U-post re-applied, or apply-ready globally.
 
@@ -1241,6 +1244,26 @@ Does **not** mean Phase 3 implementation is approved.
 
 Does **not** mean Phase 3 implementation is approved.
 
+## Section P3-IMPL — Phase 3 implementation gate (logged at docs level 2026-05-28)
+
+Owner-adopted **Phase 3 implementation gate** is logged in `phase-3-implementation-gate-owner-decision-record.md`. Follows `P3-PLAN-post` and defines one bounded implementation-gate boundary before runtime/write execution gate steps.
+
+| Field | Status |
+|-------|--------|
+| Record | Phase 3 implementation gate recorded at **docs level** |
+| Prerequisites | `P3-PLAN` + `P3-DOCSPLAN` + `P3-PLAN-post` |
+| Scope | One bounded docs-only implementation-gate step |
+| Runtime/write execution | **not** approved |
+| DB writes | **not** approved |
+| PSA publication/materialization | **not** approved |
+| Route Engine consumption | **not** approved |
+
+**Closed at docs level (Section P3-IMPL):** P3I0–P3I9 recorded; implementation-gate boundary documented.
+
+**Explicitly not closed (Section P3-IMPL):** runtime/write execution approval; DB writes; PSA publication/materialization; Route Engine consumption.
+
+Does **not** mean runtime/write or publication execution is approved.
+
 **B. Phase 2 → Phase 3 gate criteria (documentation artifact — already committed)**
 Prerequisites are documented in `docs/architecture/phase-2-to-phase-3-gate-criteria.md` (aligned with this checklist and the execution plan). This is **not** Phase 3 approval, **not** “gate passed,” and **not** permission to start Phase 3 coding, change PSA, change Route Engine, or perform DB writes.
 
@@ -1248,11 +1271,11 @@ Prerequisites are documented in `docs/architecture/phase-2-to-phase-3-gate-crite
 
 ## Current recommended next gate
 
-**Current recommended next gate from this checklist snapshot:** **Selected and recorded:** Section **P3-PLAN-post** (Phase 3 planning outcome record). Outcome is recorded; next ordered document from consolidated bundle is the Phase 3 implementation gate.
+**Current recommended next gate from this checklist snapshot:** **Selected and recorded:** Section **P3-IMPL** (Phase 3 implementation gate). Gate boundary is recorded; next ordered document from consolidated bundle is the Phase 3 runtime/write execution gate.
 
 **Status refresh (2026-05-28):** Prior wording that pointed to a **G1** operational next step is superseded by recorded outcomes (**Z-E-post** `EXECUTION_SESSION_COMPLETE_PASS`, **Z-G1-post** `G1_GAP_CLOSURE_PASS`, **Z-G2-post** `G2_GAP_CLOSURE_PASS`) and by **Z-N12C-post** claim-review outcome (`N12_PASS_CLAIMED`) with boundaries preserved.
 
-**Separate read-only selection (2026-05-28):** After `Z-OCLOSE-post`, owner selected Phase 3 workstream and requested one-step docs consolidation. `P3-PLAN` recorded planning entry, `P3-DOCSPLAN` recorded the ordered bundle, and `P3-PLAN-post` now records planning outcome. Execution remains separately gated.
+**Separate read-only selection (2026-05-28):** After `Z-OCLOSE-post`, owner selected Phase 3 workstream and requested one-step docs consolidation. `P3-PLAN` recorded planning entry, `P3-DOCSPLAN` recorded the ordered bundle, `P3-PLAN-post` recorded planning outcome, and `P3-IMPL` now records implementation-gate boundary. Execution remains separately gated.
 
 **Clarification:** Historical context text below may still mention earlier chain steps (for traceability). Selection authority for "what is next" is the two lines above in this section.
 
