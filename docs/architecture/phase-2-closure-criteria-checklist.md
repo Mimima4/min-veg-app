@@ -122,6 +122,7 @@ These are **documentation / boundary / criteria** artifacts only. They are **not
 - `docs/architecture/phase-2-rls-main-not-ready-for-apply-final-clearance-review-outcome-owner-decision-record.md` — MAIN **NOT_READY_FOR_APPLY final clearance review outcome** (**Z-CLR-post**); owner/security `Q1–Q8 = yes`; review complete with boundaries; clearance/apply/runtime not approved; **NOT_READY_FOR_APPLY** unchanged
 - `docs/architecture/phase-2-rls-main-not-ready-for-apply-final-clearance-decision-gate-owner-decision-record.md` — MAIN **NOT_READY_FOR_APPLY final clearance decision** gate (CLRD0–CLRD12; Section **Z-CLRD**); docs-only final decision path; clearance/apply/runtime not approved at adoption; **NOT_READY_FOR_APPLY** unchanged
 - `docs/architecture/phase-2-rls-main-not-ready-for-apply-final-clearance-decision-outcome-owner-decision-record.md` — MAIN **NOT_READY_FOR_APPLY final clearance decision outcome** (**Z-CLRD-post**); owner/security `Q1–Q8 = yes`; decision complete with boundaries; clearance/apply/runtime not approved; **NOT_READY_FOR_APPLY** unchanged
+- `docs/architecture/phase-2-rls-main-consolidated-next-steps-owner-decision-record.md` — MAIN **consolidated next steps** record (CNS0–CNS8); one-step docs consolidation after **Z-CLRD-post**; selects apply planning branch; runtime/write deferred; boundaries unchanged
 
 **Checklist reference note (2026-05-27):** **MAIN execution packet execution gate (Section Z-E)** logged per `phase-2-rls-main-execution-packet-execution-gate-owner-decision-record.md` — follows **Z-D-draft-outcome**; **framework only** (variant A); **no** Supabase connect; **no** packet SQL execution at adoption; G1–G6 carried forward (not closed); U-post re-apply **not** default; git packet SQL **forbidden**; connect requires filled owner-held charter + **separate** prompt; **NOT_READY_FOR_APPLY** unchanged. Does **not** mean session ran, gaps closed, or apply-ready globally.
 
@@ -144,6 +145,8 @@ These are **documentation / boundary / criteria** artifacts only. They are **not
 **Checklist reference note (2026-05-28):** **MAIN NOT_READY_FOR_APPLY final clearance decision gate (Section Z-CLRD)** logged per `phase-2-rls-main-not-ready-for-apply-final-clearance-decision-gate-owner-decision-record.md` — follows apply-readiness baseline + **Z-E-post** + **Z-G1-post** + **Z-G2-post** + **Z-N12C-post** + **Z-AR-post** + **Z-CLR-post**; one bounded docs-only final decision path; `NOT_READY_FOR_APPLY` clearance/apply/runtime **not** approved at gate adoption.
 
 **Checklist reference note (2026-05-28):** **MAIN NOT_READY_FOR_APPLY final clearance decision outcome (Z-CLRD-post)** logged per `phase-2-rls-main-not-ready-for-apply-final-clearance-decision-outcome-owner-decision-record.md` — owner/security response `Q1–Q8 = yes`; final decision completion recorded with boundaries preserved; `NOT_READY_FOR_APPLY` clearance/apply/runtime **not** approved.
+
+**Checklist reference note (2026-05-28):** **MAIN consolidated next steps** recorded per `phase-2-rls-main-consolidated-next-steps-owner-decision-record.md` — docs-churn reduction mode enabled; apply gate selection/planning chosen as next branch; runtime/write branch deferred; no SQL/connect/execution approvals introduced; boundaries unchanged.
 
 **Checklist reference note (2026-05-27):** **MAIN execution packet draft outcome (Z-D-draft-outcome)** logged per `phase-2-rls-main-execution-packet-draft-outcome-owner-decision-record.md` — follows Section **Z-D** + owner-held draft `MAIN-EP-DRAFT-2026-05-27-01`; outcome **`DRAFT_COMPLETE_WITH_DOCUMENTED_GAPS`**; post-U-post outline accepted; **no** default deny DDL repeat; packet execution/apply **not** approved; **NOT_READY_FOR_APPLY** unchanged; git packet SQL **forbidden**. Does **not** mean SQL executed, U-post re-applied, or apply-ready globally.
 
@@ -1023,11 +1026,11 @@ Prerequisites are documented in `docs/architecture/phase-2-to-phase-3-gate-crite
 
 ## Current recommended next gate
 
-**Current recommended next gate from this checklist snapshot:** Next checklist-priority item requires **separate read-only selection** among remaining **Not closed** / **Blocked** gates after **Z-CLRD-post**. This update does **not** grant clearance, apply, or runtime/write approval.
+**Current recommended next gate from this checklist snapshot:** **Selected via consolidation record:** proceed to **apply gate selection/planning** as the next controlled branch. No extra intermediate branch-selection docs are required before that planning step.
 
 **Status refresh (2026-05-28):** Prior wording that pointed to a **G1** operational next step is superseded by recorded outcomes (**Z-E-post** `EXECUTION_SESSION_COMPLETE_PASS`, **Z-G1-post** `G1_GAP_CLOSURE_PASS`, **Z-G2-post** `G2_GAP_CLOSURE_PASS`) and by **Z-N12C-post** claim-review outcome (`N12_PASS_CLAIMED`) with boundaries preserved.
 
-**Separate read-only selection (2026-05-28):** Remaining blocked set includes `NOT_READY_FOR_APPLY` final clearance outcome, apply approval, and runtime/write approval. Priority after **Z-CLR-post** was recorded as Section **Z-CLRD**; execution/apply actions remain blocked unless separately owner-approved.
+**Separate read-only selection (2026-05-28):** Remaining blocked set still includes clearance issuance, apply approval, and runtime/write approval. Consolidated record selects apply planning branch first and defers runtime/write until later approval.
 
 **Clarification:** Historical context text below may still mention earlier chain steps (for traceability). Selection authority for "what is next" is the two lines above in this section.
 
