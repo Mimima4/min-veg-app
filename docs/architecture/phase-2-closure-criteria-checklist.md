@@ -110,10 +110,15 @@ These are **documentation / boundary / criteria** artifacts only. They are **not
 - `docs/architecture/phase-2-rls-main-g1-app-browser-gap-closure-execution-gate-owner-decision-record.md` — MAIN **G1 app/browser gap-closure** execution gate (G1E0–G1E21; Section **Z-G1**); one bounded G1-only path; packet/apply not approved; **NOT_READY_FOR_APPLY** unchanged
 - `docs/architecture/phase-2-rls-main-g1-app-browser-gap-closure-charter-template.md` — **template** for owner-held G1 app/browser session charter
 - `docs/architecture/phase-2-rls-main-g1-app-browser-gap-closure-review-summary-template.md` — **template** for repo-safe G1 outcome summary
+- `docs/architecture/phase-2-rls-main-g2-diagnostics-n6-gap-closure-execution-gate-owner-decision-record.md` — MAIN **G2 diagnostics N6 gap-closure** execution gate (G2E0–G2E21; Section **Z-G2**); one bounded G2-only path; packet/apply not approved; **NOT_READY_FOR_APPLY** unchanged
+- `docs/architecture/phase-2-rls-main-g2-diagnostics-n6-gap-closure-charter-template.md` — **template** for owner-held G2 diagnostics N6 session charter
+- `docs/architecture/phase-2-rls-main-g2-diagnostics-n6-gap-closure-review-summary-template.md` — **template** for repo-safe G2 outcome summary
 
 **Checklist reference note (2026-05-27):** **MAIN execution packet execution gate (Section Z-E)** logged per `phase-2-rls-main-execution-packet-execution-gate-owner-decision-record.md` — follows **Z-D-draft-outcome**; **framework only** (variant A); **no** Supabase connect; **no** packet SQL execution at adoption; G1–G6 carried forward (not closed); U-post re-apply **not** default; git packet SQL **forbidden**; connect requires filled owner-held charter + **separate** prompt; **NOT_READY_FOR_APPLY** unchanged. Does **not** mean session ran, gaps closed, or apply-ready globally.
 
 **Checklist reference note (2026-05-28):** **MAIN G1 app/browser gap-closure execution gate (Section Z-G1)** logged per `phase-2-rls-main-g1-app-browser-gap-closure-execution-gate-owner-decision-record.md` — follows **Z-E**; one bounded G1-only app/browser negative-test path; packet SQL/apply **not** approved; G2 diagnostics N6 remains open; `N12_PASS_CLAIMED` not claimed; **NOT_READY_FOR_APPLY** unchanged. Does **not** mean G1 is closed at gate adoption or connect/session already ran.
+
+**Checklist reference note (2026-05-28):** **MAIN G2 diagnostics N6 gap-closure execution gate (Section Z-G2)** logged per `phase-2-rls-main-g2-diagnostics-n6-gap-closure-execution-gate-owner-decision-record.md` — follows **Z-G1-post** + **Z-E**; one bounded G2-only diagnostics session path; packet SQL/apply **not** approved; G1 remains closed; `N12_PASS_CLAIMED` not claimed; **NOT_READY_FOR_APPLY** unchanged. Does **not** mean G2 is closed at gate adoption or execution packet session approved.
 
 **Checklist reference note (2026-05-27):** **MAIN execution packet draft outcome (Z-D-draft-outcome)** logged per `phase-2-rls-main-execution-packet-draft-outcome-owner-decision-record.md` — follows Section **Z-D** + owner-held draft `MAIN-EP-DRAFT-2026-05-27-01`; outcome **`DRAFT_COMPLETE_WITH_DOCUMENTED_GAPS`**; post-U-post outline accepted; **no** default deny DDL repeat; packet execution/apply **not** approved; **NOT_READY_FOR_APPLY** unchanged; git packet SQL **forbidden**. Does **not** mean SQL executed, U-post re-applied, or apply-ready globally.
 
@@ -850,7 +855,7 @@ Owner-adopted **execution packet execution** gate (**framework only**) is logged
 
 Does **not** mean SQL ran, gaps closed, or apply-ready globally.
 
-**Follow-up (2026-05-28):** Section **Z-G1** gap-closure execution gate adopted (docs-level). **Operational next step:** owner-held G1 charter + bounded G1 session + safe summary (separate). Does **not** mean NOT_READY_FOR_APPLY cleared.
+**Follow-up (2026-05-28):** Section **Z-G1** gap-closure chain recorded with **Z-G1-post** (`G1_GAP_CLOSURE_PASS`). **Operational next step:** Section **Z-G2** gate adoption + owner-held G2 charter + bounded G2 diagnostics session + safe summary. Does **not** mean NOT_READY_FOR_APPLY cleared.
 
 ## Section Z-G1 — MAIN G1 app/browser gap-closure execution gate (logged at docs level 2026-05-28)
 
@@ -873,6 +878,28 @@ Owner-adopted **G1 app/browser gap-closure execution gate** is logged in `phase-
 **Explicitly not closed (Section Z-G1 + Z-G1-post):** G2 diagnostics N6 closure; `N12_PASS_CLAIMED`; execution packet connect/session; apply; NOT_READY_FOR_APPLY clearance.
 
 Does **not** mean G2 is closed, execution packet session approved, or apply-ready globally.
+
+## Section Z-G2 — MAIN G2 diagnostics N6 gap-closure execution gate (logged at docs level 2026-05-28)
+
+Owner-adopted **G2 diagnostics N6 gap-closure execution gate** is logged in `phase-2-rls-main-g2-diagnostics-n6-gap-closure-execution-gate-owner-decision-record.md`. Follows **Z-G1-post** and **Z-E** framework adoption and opens one bounded G2-only diagnostics session path on MAIN.
+
+| Field | Status |
+|-------|--------|
+| Gate | G2 diagnostics N6 gap-closure execution gate adopted at **docs level** |
+| Prerequisites | **Z-E** + **V-post** + **Z-G1-post** |
+| Target | **MAIN-OWNER-USED** only |
+| Scope | One bounded G2-only diagnostics session |
+| Packet SQL / apply | **not** approved |
+| G1 app/browser | **closed** (carried) |
+| NOT_READY_FOR_APPLY | **unchanged** |
+
+**Closed at docs level (Section Z-G2):** G2E0–G2E21 adopted; owner-held G2 charter template linked; G2 review summary template linked.
+
+**Follow-up (2026-05-28):** `phase-2-rls-main-g2-diagnostics-n6-gap-closure-review-summary.md` recorded as **Z-G2-post** (`MAIN-G2-DIAG-N6-POST-2026-05-28-01`) with `G2_GAP_CLOSURE_PASS`; diagnostics N6 execution path **PASS**; diagnostics compatibility outcome **PASS**; no persistent rows **PASS**; N11 stop absent **PASS**; `G2` marked **closed**; `G1` remains **closed**; `N12_PASS_CLAIMED` not claimed; **NOT_READY_FOR_APPLY** unchanged.
+
+**Explicitly not closed (Section Z-G2 + Z-G2-post):** `N12_PASS_CLAIMED`; execution packet connect/session; apply; NOT_READY_FOR_APPLY clearance.
+
+Does **not** mean execution packet session approved or apply-ready globally.
 
 **B. Phase 2 → Phase 3 gate criteria (documentation artifact — already committed)**
 Prerequisites are documented in `docs/architecture/phase-2-to-phase-3-gate-criteria.md` (aligned with this checklist and the execution plan). This is **not** Phase 3 approval, **not** “gate passed,” and **not** permission to start Phase 3 coding, change PSA, change Route Engine, or perform DB writes.
