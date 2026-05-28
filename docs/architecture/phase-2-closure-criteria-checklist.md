@@ -107,6 +107,7 @@ These are **documentation / boundary / criteria** artifacts only. They are **not
 - `docs/architecture/phase-2-rls-main-execution-packet-execution-gate-owner-decision-record.md` — MAIN execution packet **execution** gate (EPE0–EPE25; Section **Z-E**); **framework only**; **no** connect/SQL at adoption; **NOT_READY_FOR_APPLY** unchanged
 - `docs/architecture/phase-2-rls-main-execution-packet-execution-charter-template.md` — **template** for owner-held execution session charter
 - `docs/architecture/phase-2-rls-main-execution-packet-execution-review-summary-template.md` — **template** for **Z-E-post** safe summary after session
+- `docs/architecture/phase-2-rls-main-execution-packet-execution-review-summary.md` — MAIN execution packet execution **review safe summary** (**Z-E-post**); `EXECUTION_SESSION_COMPLETE_PASS`; verification scope; rollback not invoked; **NOT_READY_FOR_APPLY** unchanged
 - `docs/architecture/phase-2-rls-main-g1-app-browser-gap-closure-execution-gate-owner-decision-record.md` — MAIN **G1 app/browser gap-closure** execution gate (G1E0–G1E21; Section **Z-G1**); one bounded G1-only path; packet/apply not approved; **NOT_READY_FOR_APPLY** unchanged
 - `docs/architecture/phase-2-rls-main-g1-app-browser-gap-closure-charter-template.md` — **template** for owner-held G1 app/browser session charter
 - `docs/architecture/phase-2-rls-main-g1-app-browser-gap-closure-review-summary-template.md` — **template** for repo-safe G1 outcome summary
@@ -851,9 +852,11 @@ Owner-adopted **execution packet execution** gate (**framework only**) is logged
 
 **Closed at docs level (Section Z-E):** EPE0–EPE25 adopted; execution charter template linked; **Z-E-post** review template linked; risk-matrix boundaries reiterated; connect requires charter + **separate** prompt.
 
-**Explicitly not closed (Section Z-E, framework adoption snapshot):** filled execution charter; connect approval; packet **execution** session; **Z-E-post** summary; gap-closure G1/G2; apply; NOT_READY_FOR_APPLY clearance.
+**Follow-up (2026-05-28):** `phase-2-rls-main-execution-packet-execution-review-summary.md` recorded as **Z-E-post** (`MAIN-EP-EXEC-POST-2026-05-28-01`) with `EXECUTION_SESSION_COMPLETE_PASS`; post-U-post scope **PASS**; no unintended changes (rows/policies/RLS expected posture) **PASS**; N11 stop absent **PASS**; rollback not invoked; G1/G2 closed; `N12_PASS_CLAIMED` not claimed; **NOT_READY_FOR_APPLY** unchanged.
 
-Does **not** mean SQL ran, gaps closed, or apply-ready globally.
+**Explicitly not closed (Section Z-E + Z-E-post):** `N12_PASS_CLAIMED`; apply; NOT_READY_FOR_APPLY clearance.
+
+Does **not** mean apply-ready globally or NOT_READY_FOR_APPLY cleared.
 
 **Follow-up (2026-05-28):** Section **Z-G1** gap-closure chain recorded with **Z-G1-post** (`G1_GAP_CLOSURE_PASS`). **Operational next step:** Section **Z-G2** gate adoption + owner-held G2 charter + bounded G2 diagnostics session + safe summary. Does **not** mean NOT_READY_FOR_APPLY cleared.
 

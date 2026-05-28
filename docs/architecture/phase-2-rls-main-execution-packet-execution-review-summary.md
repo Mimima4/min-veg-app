@@ -15,10 +15,10 @@
 
 | Field | Fill |
 |-------|------|
-| Summary ID | `MAIN-EP-EXEC-POST-YYYY-MM-DD-01` |
+| Summary ID | `MAIN-EP-EXEC-POST-2026-05-28-01` |
 | Charter ID (owner-held ref) | `MAIN-EP-EXEC-2026-05-28-01` |
 | Connect prompt ID (owner-held ref) | `MAIN-EP-EXEC-CONNECT-2026-05-28-01` |
-| Session date (UTC) | YYYY-MM-DD |
+| Session date (UTC) | 2026-05-28 |
 | **OWNER** / **SECURITY_APPROVER** review | role labels only |
 
 ---
@@ -27,10 +27,10 @@
 
 | Item | Result |
 |------|--------|
-| Post-U-post scope only (no default deny re-apply) | TBD |
-| DDL executed? | TBD |
-| Verification-only session? | TBD |
-| Rollback invoked? | TBD |
+| Post-U-post scope only (no default deny re-apply) | PASS |
+| DDL executed? | no (verification scope) |
+| Verification-only session? | yes |
+| Rollback invoked? | no |
 
 ---
 
@@ -38,11 +38,11 @@
 
 | Check | Pass / fail / unclear |
 |-------|----------------------|
-| U-post posture unchanged or as expected | TBD |
-| Row counts 0 on Phase 2 tables (if checked) | TBD |
-| RLS still on all 7 (if checked) | TBD |
-| Policy count unchanged (if checked) | TBD |
-| N11 stop not triggered | TBD |
+| U-post posture unchanged or as expected | PASS |
+| Row counts 0 on Phase 2 tables (if checked) | PASS |
+| RLS still on all 7 (if checked) | PASS |
+| Policy count unchanged (if checked) | PASS |
+| N11 stop not triggered | PASS |
 
 ---
 
@@ -61,9 +61,9 @@
 
 | Code | Selected? |
 |------|-----------|
-| `EXECUTION_SESSION_COMPLETE_WITH_DOCUMENTED_GAPS` | |
-| `EXECUTION_SESSION_COMPLETE_PASS` | |
-| `EXECUTION_SESSION_STOP_N11` | |
+| `EXECUTION_SESSION_COMPLETE_WITH_DOCUMENTED_GAPS` | no |
+| `EXECUTION_SESSION_COMPLETE_PASS` | yes |
+| `EXECUTION_SESSION_STOP_N11` | no |
 
 ---
 
