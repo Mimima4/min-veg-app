@@ -868,9 +868,11 @@ Owner-adopted **G1 app/browser gap-closure execution gate** is logged in `phase-
 
 **Closed at docs level (Section Z-G1):** G1E0–G1E21 adopted; owner-held G1 charter template linked; G1 review summary template linked.
 
-**Explicitly not closed (Section Z-G1, gate adoption snapshot):** G1 session run; G1 closure verdict; G2 diagnostics N6 closure; `N12_PASS_CLAIMED`; execution packet connect/session; apply; NOT_READY_FOR_APPLY clearance.
+**Follow-up (2026-05-28):** `phase-2-rls-main-g1-app-browser-gap-closure-review-summary.md` recorded as **Z-G1-post** (`MAIN-G1-APP-BROWSER-POST-2026-05-28-01`) with `G1_GAP_CLOSURE_PASS`; read-denial **PASS**; write-denial **PASS**; no persistent rows **PASS**; N11 stop absent **PASS**; `G1` marked **closed**; `G2` diagnostics N6 remains **open**; `N12_PASS_CLAIMED` not claimed; **NOT_READY_FOR_APPLY** unchanged.
 
-Does **not** mean G1 is closed or session already executed.
+**Explicitly not closed (Section Z-G1 + Z-G1-post):** G2 diagnostics N6 closure; `N12_PASS_CLAIMED`; execution packet connect/session; apply; NOT_READY_FOR_APPLY clearance.
+
+Does **not** mean G2 is closed, execution packet session approved, or apply-ready globally.
 
 **B. Phase 2 → Phase 3 gate criteria (documentation artifact — already committed)**
 Prerequisites are documented in `docs/architecture/phase-2-to-phase-3-gate-criteria.md` (aligned with this checklist and the execution plan). This is **not** Phase 3 approval, **not** “gate passed,” and **not** permission to start Phase 3 coding, change PSA, change Route Engine, or perform DB writes.
