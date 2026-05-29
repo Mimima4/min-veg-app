@@ -147,6 +147,9 @@ These are **documentation / boundary / criteria** artifacts only. They are **not
 - `docs/architecture/phase-3-implementation-execution-review-summary.md` — **safe summary** of completed bounded P3-IMPL implementation session (**P3-IMPL-POST**); charter `P3-IMPL-EXEC-2026-05-29-01`; scaffold at `7ed7014`; runtime/write/DB/SQL/PSA/Route/production truth/Phase 4 **not** approved
 - `docs/architecture/phase-3-runtime-write-execution-approval-owner-decision-record.md` — **Phase 3 runtime/write execution approval** record (P3RWA0–P3RWA12 **Yes**; Section **P3-RW-APPROVAL**); second execution-approval path **adopted** after **P3-IMPL-POST**; bounded owner-held charter preparation **permitted**; runtime/write session/DB/SQL/PSA/Route/production truth/Phase 4 **not** approved
 - `docs/architecture/phase-3-runtime-write-execution-charter-template.md` — **template** for owner-held Phase 3 runtime/write execution session charter (not execution authority alone)
+- `docs/architecture/phase-3-runtime-write-execution-review-summary.md` — **safe summary** of completed bounded P3-RW planning session (**P3-RW-POST**); charter `P3-RW-EXEC-2026-05-29-01`; checkpoint `f412bea`; PSA/Route/production truth/activation **not** approved
+- `docs/architecture/phase-3-psa-execution-approval-owner-decision-record.md` — **Phase 3 PSA execution approval** record (P3PSAA0–P3PSAA12 **Yes**; Section **P3-PSA-APPROVAL**); third execution-approval path **adopted** after **P3-RW-POST**; bounded owner-held charter preparation **permitted**; PSA session/DB/SQL/Route/production truth/Phase 4 **not** approved
+- `docs/architecture/phase-3-psa-execution-charter-template.md` — **template** for owner-held Phase 3 PSA execution session charter (not execution authority alone)
 
 **Checklist reference note (2026-05-27):** **MAIN execution packet execution gate (Section Z-E)** logged per `phase-2-rls-main-execution-packet-execution-gate-owner-decision-record.md` — follows **Z-D-draft-outcome**; **framework only** (variant A); **no** Supabase connect; **no** packet SQL execution at adoption; G1–G6 carried forward (not closed); U-post re-apply **not** default; git packet SQL **forbidden**; connect requires filled owner-held charter + **separate** prompt; **NOT_READY_FOR_APPLY** unchanged. Does **not** mean session ran, gaps closed, or apply-ready globally.
 
@@ -219,6 +222,12 @@ These are **documentation / boundary / criteria** artifacts only. They are **not
 **Checklist reference note (2026-05-29):** **Phase 3 runtime/write execution approval gate (Section P3-RW-APPROVAL)** logged per `phase-3-runtime-write-execution-approval-owner-decision-record.md` — follows **P3-IMPL-POST** + **P3-RW** operational framework; **P3RWA0–P3RWA12** adopted at docs level; bounded owner-held charter preparation **permitted**; **not** runtime/write session approval; filled charter + separate prompt + pre-session QA required before any session; **P3-PSA**/**P3-ROUTE** remain separate; **NOT_READY_FOR_APPLY** unchanged.
 
 **Checklist reference note (2026-05-29):** **Phase 3 runtime/write execution charter template** added per `phase-3-runtime-write-execution-charter-template.md` — follows **P3-RW-APPROVAL**; copy to owner-held and fill before pre-session QA; template alone does **not** approve runtime/write session, DB/SQL, PSA, Route, or NOT_READY_FOR_APPLY clearance.
+
+**Checklist reference note (2026-05-29):** **Phase 3 bounded runtime/write planning session outcome (P3-RW-POST)** logged per `phase-3-runtime-write-execution-review-summary.md` — follows charter `P3-RW-EXEC-2026-05-29-01` + prior scaffold; outcome `P3_RW_BOUNDED_PLANNING_COMPLETE_PASS` at `f412bea`; planning-only non-wired extensions; runtime/write **activation** **not** approved; **P3-PSA**/**P3-ROUTE** execution approvals remain separate; **X-post** **NO_TOUCH**; **NOT_READY_FOR_APPLY** unchanged.
+
+**Checklist reference note (2026-05-29):** **Phase 3 PSA execution approval gate (Section P3-PSA-APPROVAL)** logged per `phase-3-psa-execution-approval-owner-decision-record.md` — follows **P3-RW-POST** + **P3-PSA** operational framework; **P3PSAA0–P3PSAA12** adopted at docs level; bounded owner-held charter preparation **permitted**; **not** PSA session approval; filled charter + separate prompt + pre-session QA required before any session; **P3-ROUTE** remains separate; **X-post** **NO_TOUCH**; **NOT_READY_FOR_APPLY** unchanged.
+
+**Checklist reference note (2026-05-29):** **Phase 3 PSA execution charter template** added per `phase-3-psa-execution-charter-template.md` — follows **P3-PSA-APPROVAL**; copy to owner-held and fill before pre-session QA; template alone does **not** approve PSA session, materialization/publication, DB/SQL, Route, or NOT_READY_FOR_APPLY clearance.
 
 **Checklist reference note (2026-05-27):** **MAIN execution packet draft outcome (Z-D-draft-outcome)** logged per `phase-2-rls-main-execution-packet-draft-outcome-owner-decision-record.md` — follows Section **Z-D** + owner-held draft `MAIN-EP-DRAFT-2026-05-27-01`; outcome **`DRAFT_COMPLETE_WITH_DOCUMENTED_GAPS`**; post-U-post outline accepted; **no** default deny DDL repeat; packet execution/apply **not** approved; **NOT_READY_FOR_APPLY** unchanged; git packet SQL **forbidden**. Does **not** mean SQL executed, U-post re-applied, or apply-ready globally.
 
@@ -1354,9 +1363,11 @@ Does **not** mean DB writes or publication execution is approved. Does **not** m
 
 **Closed at docs level (Section P3-RW-APPROVAL):** P3RWA-SCOPE through P3RWA-BOUNDARY documented; **P3RWA0–P3RWA12** **Yes**; repo-safe charter **template** recorded (`phase-3-runtime-write-execution-charter-template.md`).
 
-**Explicitly not closed (Section P3-RW-APPROVAL):** filled owner-held charter; pre-session QA **PASS**; separate runtime/write execution prompt; runtime/write execution session; **P3-PSA** / **P3-ROUTE** execution approvals.
+**Explicitly not closed (Section P3-RW-APPROVAL):** runtime/write **activation**; **P3-PSA** / **P3-ROUTE** execution approvals.
 
 Does **not** mean runtime/write may run at gate adoption alone. **Gate adopted ≠ charter filled ≠ session run.**
+
+**Closed at docs level (P3-RW bounded session):** **P3-RW-POST** recorded (`phase-3-runtime-write-execution-review-summary.md`); bounded runtime/write planning session complete at `f412bea`; outcome `P3_RW_BOUNDED_PLANNING_COMPLETE_PASS`.
 
 ## Section P3-PSA — Phase 3 PSA materialization/publication gate (logged at docs level 2026-05-28)
 
@@ -1371,9 +1382,30 @@ Owner-adopted **Phase 3 PSA materialization/publication gate** is logged in `pha
 
 **Closed at docs level (Section P3-PSA):** P3PSA0–P3PSA9 recorded; PSA gate boundary documented.
 
-**Explicitly not closed (Section P3-PSA):** Route Engine consumption.
+**Explicitly not closed (Section P3-PSA):** Route Engine consumption; **PSA execution approval** (see **P3-PSA-APPROVAL**).
 
-Does **not** mean Route execution is approved.
+Does **not** mean Route execution is approved. Does **not** mean PSA materialization/publication execution is approved — operational framework only.
+
+## Section P3-PSA-APPROVAL — Phase 3 PSA execution approval gate (adopted at docs level 2026-05-29)
+
+**Phase 3 PSA execution approval gate** is logged in `phase-3-psa-execution-approval-owner-decision-record.md`. Follows **P3-RW-POST** and **P3-PSA** operational framework; defines the **third execution-approval path** for bounded Phase 3 PSA planning (distinct from Section **P3-PSA** operational framework).
+
+| Field | Status |
+|-------|--------|
+| Record | Phase 3 PSA execution approval gate **adopted** at **docs level** (**P3PSAA0–P3PSAA12** **Yes**) |
+| Prerequisites | **P3-RW-APPROVAL** + **P3-RW-POST** + **P3-PSA** operational framework |
+| Scope | Execution-approval path adopted; bounded owner-held charter preparation **permitted** |
+| PSA session / materialization / publication | **not** approved (charter + pre-session QA **PASS** + separate prompt still required) |
+| DB writes / SQL / Supabase | **not** approved |
+| Route Engine consumption | **not** approved |
+| **X-post** Route/PSA product runtime | **NO_TOUCH** (default) |
+| `NOT_READY_FOR_APPLY` | **unchanged** |
+
+**Closed at docs level (Section P3-PSA-APPROVAL):** P3PSAA-SCOPE through P3PSAA-BOUNDARY documented; **P3PSAA0–P3PSAA12** **Yes**; repo-safe charter **template** recorded (`phase-3-psa-execution-charter-template.md`).
+
+**Explicitly not closed (Section P3-PSA-APPROVAL):** filled owner-held charter (repo copy optional); pre-session QA **PASS** at charter level; separate PSA execution prompt; PSA bounded planning session; **P3-ROUTE** execution approval; PSA materialization/publication execution; runtime/write **activation**.
+
+Does **not** mean PSA may run at gate adoption alone. **Gate adopted ≠ charter filled ≠ session run.**
 
 ## Section P3-ROUTE — Phase 3 Route Engine consumption gate (logged at docs level 2026-05-28)
 
@@ -1433,7 +1465,7 @@ Prerequisites are documented in `docs/architecture/phase-2-to-phase-3-gate-crite
 
 ## Current recommended next gate
 
-**Current recommended next gate from this checklist snapshot:** Section **P3-RW-APPROVAL** — gate adopted (**P3RWA0–P3RWA12** **Yes**); charter **template** in repo; runtime/write session **not** approved. **Next owner action:** copy `phase-3-runtime-write-execution-charter-template.md` to owner-held, fill charter, complete pre-session QA (**PASS**), then issue separate runtime/write execution prompt before any bounded session.
+**Current recommended next gate from this checklist snapshot:** Section **P3-PSA-APPROVAL** — gate adopted (**P3PSAA0–P3PSAA12** **Yes**); charter **template** in repo; PSA session **not** approved. **Next owner action:** owner-held charter `P3-PSA-EXEC-2026-05-29-01` filled with pre-session QA (**PASS**); issue separate **PSA execution prompt** before any bounded planning session under `src/lib/phase3-operationalization/**` only.
 
 **Status refresh (2026-05-28):** Prior wording that pointed to a **G1** operational next step is superseded by recorded outcomes (**Z-E-post** `EXECUTION_SESSION_COMPLETE_PASS`, **Z-G1-post** `G1_GAP_CLOSURE_PASS`, **Z-G2-post** `G2_GAP_CLOSURE_PASS`) and by **Z-N12C-post** claim-review outcome (`N12_PASS_CLAIMED`) with boundaries preserved.
 
