@@ -34,6 +34,7 @@
 | `docs/architecture/route-engine-master-spec.md` | VGS identity rules pointer to matching spec; **internal DB truth / publishable truth** posture for runtime (e.g. §Stage context around Vilbli/NSR and “internal DB truth only”). |
 | `docs/architecture/norway-school-identity-matching-execution-plan.md` | Timeline / control context; **hard principles** aligned with matching spec; **explicit** statement that canonical boundaries remain in Phase 2 + Route specs (this plan does not approve integration). |
 | `docs/architecture/phase-2-closure-criteria-checklist.md` | Distinct “Phase 2 done” meanings (docs/schema vs standalone diagnostics vs production truth vs runtime/write); **hard gates** vs planning. |
+| `docs/architecture/phase-0-6-processing-contour-owner-decision-record.md` | **Request-only** Phase 0–6 contour; operational main matcher (green) vs on-demand processor (abort/non-green); **no** auto route/UI activation. |
 | `docs/architecture/phase-2-to-phase-3-gate-criteria.md` | Phase 3 **not** auto-started from docs/schema/diagnostics alone; aggregates checklist without replacing it. |
 | `docs/architecture/phase-2-runtime-write-closure.md` | Runtime/write / PSA / Route consumption remain **not approved** at documentation boundary layer. |
 | `docs/architecture/phase-2-production-truth-closure.md` | Separation of evidence, candidates, decisions, publication decisions, PSA, Route; **no hidden production truth** from docs/diagnostics. |
@@ -58,6 +59,8 @@
 | Return-to-truth | Only via auditable decision + publication boundary | Stays in operator/review layer until gates passed | Published truth after **separate** approved materialization | Auto-return from Phase 2 to Route without publication gate | `school-identity-location-resolution-phase-2-spec.md` — **§11**, **§12**; `phase-2-production-truth-closure.md` — decision vs publication |
 
 ## 5. Activation triggers
+
+**Phase 0–6 request-only rule (binding, 2026-05-29):** Problem-tail / Phase 2 processing contour activation for **product-adjacent** work requires an **explicit owner request** with case ID. Pipeline abort or non-green readiness **alone** does **not** auto-start Phase 0–6 processing or produce responses. Green counties (e.g. `03` Oslo-class) use the **operational main matcher** only for route/UI truth paths. See `phase-0-6-processing-contour-owner-decision-record.md` §4–§6.
 
 | Trigger / condition | Canonical token? | Source basis | Meaning | Output / handling | Must not happen |
 |---------------------|------------------|--------------|---------|-------------------|-----------------|

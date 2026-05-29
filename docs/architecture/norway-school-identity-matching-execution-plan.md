@@ -26,6 +26,8 @@ Plan implementation phases for Vilbli → NSR → PSA matching without hacks, ma
   - `docs/architecture/phase-2-validation-contour-data-resolution-backlog.md` — planning backlog / typed case model
   - `docs/architecture/phase-2-read-only-evidence-packet-format.md` — single-case evidence packet format
   - `docs/architecture/phase-2-read-only-evidence-report-design.md` — future multi-case report design
+- Owner policy (activation boundary, 2026-05-29):
+  - `docs/architecture/phase-0-6-processing-contour-owner-decision-record.md` — **request-only** Phase 0–6 contour; green counties (`03` etc.) = operational main matcher; abort counties (`56` etc.) = explicit case request before on-demand processing
 
 ## Hard principles
 

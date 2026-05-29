@@ -53,6 +53,7 @@ The following repository documents govern or contextualize this record:
 - `docs/architecture/phase-2-read-only-diagnostics-helper-boundary-adr.md` — helper boundary
 - `docs/architecture/phase-2-problem-contour-activation-read-model-map.md` — clean vs problem path; future admin boundary
 - `docs/architecture/phase-4-source-truth-contour-map.md` — Phase 4 LOSA / external-delivery relationship crosswalk (docs-only)
+- `docs/architecture/phase-0-6-processing-contour-owner-decision-record.md` — Phase 0–6 **request-only** contour policy; operational vs on-demand processor (2026-05-29)
 
 **Conflict rule:** if this record conflicts with a canonical source, the **canonical source wins** and this record must be revised.
 

@@ -54,6 +54,8 @@ Notes for next revision (non-blocking):
   - `docs/architecture/phase-2-validation-contour-data-resolution-backlog.md`
   - `docs/architecture/phase-2-read-only-evidence-packet-format.md`
   - `docs/architecture/phase-2-read-only-evidence-report-design.md`
+- Owner activation policy (non-normative for matching rules; binding for product boundary):
+  - `docs/architecture/phase-0-6-processing-contour-owner-decision-record.md` — Phase 0–6 processing contour is **request-only**; does not approve writes, PSA, Route, or UI
 
 ## 3. Nationwide scope
 

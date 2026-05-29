@@ -33,6 +33,7 @@ Planning note (historical):
   - **`MAX_OBSERVATIONS = 5000`** (must live in the helper so every caller inherits the same cap).
 - The helper **must not write**.
 - The helper output **must not influence** readiness, writes, PSA publication/publishability decisions, or pipeline control flow.
+- Diagnostics output **must not** auto-activate the Phase 0–6 processing contour (request-only per `phase-0-6-processing-contour-owner-decision-record.md`).
 
 ## 3. Output format split
 

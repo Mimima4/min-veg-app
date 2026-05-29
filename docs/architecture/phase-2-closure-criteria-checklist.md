@@ -154,6 +154,14 @@ These are **documentation / boundary / criteria** artifacts only. They are **not
 - `docs/architecture/phase-3-route-engine-consumption-execution-approval-owner-decision-record.md` — **Phase 3 Route execution approval** record (P3RTAA0–P3RTAA12 **Yes**; Section **P3-ROUTE-APPROVAL**); fourth execution-approval path **adopted** after **P3-PSA-POST**; bounded owner-held charter preparation **permitted**; Route session/DB/SQL/PSA/production truth/Phase 4 **not** approved
 - `docs/architecture/phase-3-route-engine-consumption-execution-charter-template.md` — **template** for owner-held Phase 3 Route execution session charter (not execution authority alone)
 - `docs/architecture/phase-3-route-engine-consumption-execution-review-summary.md` — **safe summary** of completed bounded P3-ROUTE planning session (**P3-ROUTE-POST**); charter `P3-ROUTE-EXEC-2026-05-29-01`; checkpoint `d552832`; operational Route consumption/activation **not** approved; **X-post** **NO_TOUCH**
+- `docs/architecture/phase-0-6-processing-contour-owner-decision-record.md` — **Phase 0–6 processing contour** policy (P06-0–P06-8); **request-only**; operational main matcher (Oslo `03` class) vs on-demand processor (Finnmark `56` class); **no** auto route/UI/verification activation
+- `docs/architecture/phase-2-operational-verification-only-execution-gate-owner-decision-record.md` — **operational verification-only** execution gate (OVE0–OVE21; Section **Z-OV**); permission stack **#1**; bounded non-product verification on **MAIN-OWNER-USED**; Phase 0–6 contour **must not** change app/UI/product paths; session error ⇒ **STOP** (no self-heal); **no UI truth**; clearance/apply/truth-write/UI integration **not** approved; **NOT_READY_FOR_APPLY** unchanged
+- `docs/architecture/phase-2-operational-verification-only-execution-charter-template.md` — **template** for owner-held operational verification-only session charter
+- `docs/architecture/phase-2-operational-verification-only-execution-review-summary-template.md` — **template** for repo-safe **Z-OV-post** outcome summary
+
+**Checklist reference note (2026-05-29):** **Phase 0–6 processing contour policy (Section P06)** logged per `phase-0-6-processing-contour-owner-decision-record.md` — request-only activation; Oslo-class green counties use operational main matcher only; Finnmark-class abort counties require explicit case request before on-demand processing; no auto route/UI hook.
+
+**Checklist reference note (2026-05-29):** **Operational verification-only execution gate (Section Z-OV)** logged per `phase-2-operational-verification-only-execution-gate-owner-decision-record.md` — follows owner-agreed three-permission stack (**#1** verification-only); prerequisites include **U-post**, **V-post**, **W-post**, **X-post** (**NO_TOUCH**), **Z-CLRD-post**, **Z-APPISS-post**, and **P3-ROUTE-POST** planning path; one bounded **non-product** verification session path on **MAIN-OWNER-USED**; Phase 0–6 contour **must not** change application UI/product paths; session error/unexpected write ⇒ **STOP** (no autonomous repair in same session); **no** permission stack **#2** truth write or **#3** UI integration; apply/clearance/runtime-write **not** approved; **NOT_READY_FOR_APPLY** unchanged. Does **not** mean verification session ran or **Z-OV-post** recorded.
 
 **Checklist reference note (2026-05-27):** **MAIN execution packet execution gate (Section Z-E)** logged per `phase-2-rls-main-execution-packet-execution-gate-owner-decision-record.md` — follows **Z-D-draft-outcome**; **framework only** (variant A); **no** Supabase connect; **no** packet SQL execution at adoption; G1–G6 carried forward (not closed); U-post re-apply **not** default; git packet SQL **forbidden**; connect requires filled owner-held charter + **separate** prompt; **NOT_READY_FOR_APPLY** unchanged. Does **not** mean session ran, gaps closed, or apply-ready globally.
 
@@ -1502,9 +1510,55 @@ Prerequisites are documented in `docs/architecture/phase-2-to-phase-3-gate-crite
 
 ---
 
+## Section Z-OV — Operational verification-only execution gate (logged at docs level 2026-05-29)
+
+Owner-adopted **operational verification-only execution gate** is logged in `phase-2-operational-verification-only-execution-gate-owner-decision-record.md`. Implements owner-agreed **permission stack #1**: practically verify phases in **non-product** contours without exposing unprocessed, unconfirmed, or unformatted data as application truth.
+
+| Field | Status |
+|-------|--------|
+| Gate | Operational verification-only execution gate adopted at **docs level** (OVE0–OVE21) |
+| Permission stack | **#1** verification-only only (**#2** truth write and **#3** UI integration remain **separate** gates) |
+| Phase 0–6 contour | **Request-only** — no request ⇒ no response; **must not** change app/UI/product paths; green counties = operational matcher only; non-green/abort = explicit case request → processed output via non-product channels (`phase-0-6-processing-contour-owner-decision-record.md`) |
+| Session discipline | **Any** error / unexpected output / unexpected write / parser ambiguity ⇒ **STOP** — **no** self-heal in same session |
+| Prerequisites | **U-post** + **V-post** + **W-post** + **X-post** + **Z-CLRD-post** + **Z-APPISS-post** + **P3-ROUTE-POST** (planning path; scaffold non-wired) |
+| Target | **MAIN-OWNER-USED** / **PROD** primary |
+| Scope | One bounded verification-only session after filled owner-held charter + separate execution prompt + pre-session QA **PASS** |
+| UI truth | **forbidden** |
+| Apply / clearance | **not** approved; **NOT_READY_FOR_APPLY** **unchanged** |
+
+**Closed at docs level (Section Z-OV):** OVE0–OVE21 adopted; owner-held charter template linked; **Z-OV-post** review summary template linked.
+
+**Explicitly not closed (Section Z-OV):** **Z-OV-post** safe summary in git; verification session completion; permission stack **#2** / **#3**; runtime/write product activation; PSA publication; Route product consumption.
+
+**Operational next step (Section Z-OV):** owner-held charter + pre-session QA **PASS** + verification-only execution prompt → one bounded session → **Z-OV-post** safe summary. Pipeline dry-run CLI: **`--dry-run`** only (not `--dry-run=true`).
+
+---
+
+## Section P06 — Phase 0–6 processing contour policy (logged at docs level 2026-05-29)
+
+Owner-adopted **Phase 0–6 processing contour** policy is logged in `phase-0-6-processing-contour-owner-decision-record.md` (P06-0–P06-8). Defines **two contours**: **A** operational main matcher (Vilbli→NSR→PSA for green counties) vs **B** request-only processor for non-green / pipeline-abort cases.
+
+| Field | Status |
+|-------|--------|
+| Activation | **Request-only** — no explicit request ⇒ Contour **B** produces **no** work and **no** response |
+| Oslo `03` class | Contour **A** sufficient; Contour **B** **must not** auto-join route/UI build |
+| Finnmark `56` class | Pipeline **ABORT** / non-green readiness — Contour **A** **stops**; Contour **B** only after explicit case request |
+| Product UI | Contour **B** output **forbidden** as UI truth until permission stack **#3** |
+| Z-OV (#1) | May read diagnostics; **not** substitute for Contour **B** case processing or **#2** PSA writes |
+
+**Closed at docs level (Section P06):** P06-0–P06-8 adopted; Oslo/Finnmark reference cases recorded; request/response minimum contract recorded.
+
+**Explicitly not closed (Section P06):** Finnmark resolution; Phase 2 table population; PSA/Route/UI integration; any automatic hook from pipeline abort to Contour **B**.
+
+**Relationship to Z-OV:** Z-OV verification sessions **must** comply with P06 — verification does **not** auto-activate Contour **B** on green counties.
+
+---
+
 ## Current recommended next gate
 
-**Current recommended next gate from this checklist snapshot:** **Owner selection — post Phase 3 execution-approval planning path.** All four bounded planning POSTs recorded in non-wired scaffold: **P3-IMPL-POST** (`7ed7014`) → **P3-RW-POST** (`f412bea`) → **P3-PSA-POST** (`87ddeb0`) → **P3-ROUTE-POST** (`d552832`). **Does not** approve operational Route/PSA consumption, runtime/write activation, DB/SQL, production truth, apply, or Phase 4/LOSA. **X-post** **NO_TOUCH** and **NOT_READY_FOR_APPLY** unchanged. **Next owner action:** explicit selection of next operational workstream (separate from planning scaffold); no auto-progression from planning path completion.
+**Current recommended next gate from this checklist snapshot:** **Section Z-OV operational verification-only path (permission stack #1).** Gate and templates recorded; **next owner action:** owner-held charter + pre-session QA **PASS** + verification-only execution prompt → one bounded MAIN session → **Z-OV-post** safe summary. **Does not** approve UI truth integration, operational production truth writes (#2), apply, `NOT_READY_FOR_APPLY` clearance, runtime/write product activation, PSA publication, or Route product consumption. **X-post** **NO_TOUCH** unchanged.
+
+**Alternate tracks (separate owner selection — not auto-progression from Z-OV):** Z-AP* apply governance continuation; permission stack **#2** / **#3** only after explicit separate gates; Phase 3 operational execution remains separately gated from P3 planning POSTs (`7ed7014` → `f412bea` → `87ddeb0` → `d552832`).
 
 **Status refresh (2026-05-28):** Prior wording that pointed to a **G1** operational next step is superseded by recorded outcomes (**Z-E-post** `EXECUTION_SESSION_COMPLETE_PASS`, **Z-G1-post** `G1_GAP_CLOSURE_PASS`, **Z-G2-post** `G2_GAP_CLOSURE_PASS`) and by **Z-N12C-post** claim-review outcome (`N12_PASS_CLAIMED`) with boundaries preserved.
 

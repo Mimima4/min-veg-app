@@ -20,6 +20,9 @@
 # production
 /build
 
+# owner-held (charters, SQL bundles, session logs — never commit)
+/owner-held/
+
 # misc
 .DS_Store
 *.pem
