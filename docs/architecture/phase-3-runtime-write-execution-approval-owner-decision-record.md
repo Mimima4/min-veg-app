@@ -4,8 +4,9 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | Concrete Phase 3 runtime/write **execution approval gate** framework recorded at docs level |
-| **Status code** | `P3_RUNTIME_WRITE_EXECUTION_APPROVAL_GATE_FRAMEWORK_RECORDED` |
+| **Status** | Phase 3 runtime/write **execution approval gate** adopted at docs level (**P3RWA0–P3RWA12** **Yes**); bounded owner-held runtime/write charter preparation permitted; **runtime/write session not approved** |
+| **Status code** | `P3_RUNTIME_WRITE_EXECUTION_APPROVAL_GATE_ADOPTED_BOUNDED_FRAMEWORK_ONLY` |
+| **Prior status code** | `P3_RUNTIME_WRITE_EXECUTION_APPROVAL_GATE_FRAMEWORK_RECORDED` |
 | **Scope** | Second execution-approval path gate after **P3-IMPL-APPROVAL** and **P3-IMPL-POST** |
 | **Date (UTC)** | 2026-05-29 |
 | **Control reference** | `docs/architecture/phase-2-closure-criteria-checklist.md` — Section **P3-RW-APPROVAL** |
@@ -14,7 +15,7 @@ This record defines the **concrete runtime/write execution-approval path gate** 
 
 It is **not** the same artifact as `phase-3-runtime-write-execution-gate-owner-decision-record.md` (Section **P3-RW** operational framework only). That prior record established gate controls; **this** record establishes what may be approved on the runtime/write execution-approval path and what remains forbidden.
 
-**Adopting this record does NOT execute runtime/write.** It does **not** authorize DB writes, connect/session, or write-path activation by itself. A **future** bounded runtime/write session still requires: filled owner-held charter + pre-session QA **PASS** + **separate** runtime/write execution prompt.
+**Adopting this record (P3RWA0–P3RWA12 **Yes**) does NOT execute runtime/write.** It does **not** authorize DB writes, connect/session, or write-path activation by itself. A **future** bounded runtime/write session still requires: filled owner-held charter from `phase-3-runtime-write-execution-charter-template.md` + pre-session QA **PASS** + **separate** runtime/write execution prompt.
 
 ---
 
@@ -59,7 +60,7 @@ Bounded scope for the **runtime/write execution approval path** only:
 
 5. repo-safe summary confirms scaffold isolated and non-wired (`phase-3-implementation-execution-review-summary.md`);
 6. gap register includes: **X-post** Route/PSA **NO_TOUCH**, production truth **not closed**, `NOT_READY_FOR_APPLY` unchanged, **2B.25**/**2B.26** **NOT_RUN**;
-7. owner-held runtime/write execution charter **filled** (charter ID owner-held; not committed if sensitive);
+7. owner-held runtime/write execution charter **filled** from `phase-3-runtime-write-execution-charter-template.md` (charter ID owner-held; not committed if sensitive);
 8. pre-session QA **PASS** (repo-safe);
 9. **separate** owner runtime/write execution prompt for **one** bounded session.
 
@@ -216,52 +217,52 @@ All **Yes** decisions (**P3RWA0–P3RWA12**) adopt the **Phase 3 runtime/write e
 
 ### Decision P3RWA0 — Scope
 
-**Owner decision:** _(pending adoption)_ **Execution approval gate framework only** — not runtime/write session; not connect at adoption.
+**Owner decision:** **Yes.** **Execution approval gate adopted at docs level** — not runtime/write session; not connect at adoption; charter + pre-session QA **PASS** + separate runtime/write execution prompt still required.
 
 ### Decision P3RWA1 — Prerequisites
 
-**Owner decision:** _(pending adoption)_ **P3-IMPL-APPROVAL** + **P3-IMPL-POST** + **P3-RW** operational framework recorded.
+**Owner decision:** **Yes.** **P3-IMPL-APPROVAL** + **P3-IMPL-POST** (`b82c678` / `7ed7014`) + **P3-RW** operational framework recorded.
 
 ### Decision P3RWA2 — Allowed areas (charter prep only at adoption)
 
-**Owner decision:** _(pending adoption)_ Charter preparation permitted; in-session work **not** approved until separate prompt + QA **PASS**; default allowed path planning extensions under `src/lib/phase3-operationalization/**` only.
+**Owner decision:** **Yes.** Charter preparation permitted; in-session work **not** approved until separate prompt + QA **PASS**; default allowed path planning extensions under `src/lib/phase3-operationalization/**` only.
 
 ### Decision P3RWA3 — Forbidden actions carry-forward
 
-**Owner decision:** _(pending adoption)_ **P3RWA-FORBID** binding; **X-post** **NO_TOUCH**; **2B.25**/**2B.26** **NOT_RUN** not treated as closed; scaffold non-wired.
+**Owner decision:** **Yes.** **P3RWA-FORBID** binding; **X-post** **NO_TOUCH**; **2B.25**/**2B.26** **NOT_RUN** not treated as closed; scaffold non-wired.
 
 ### Decision P3RWA4 — Owner/security approvals before session
 
-**Owner decision:** _(pending adoption)_ Separate OWNER + SECURITY_APPROVER on filled charter + pre-session QA **PASS** + separate runtime/write execution prompt required.
+**Owner decision:** **Yes.** Separate OWNER + SECURITY_APPROVER on filled charter + pre-session QA **PASS** + separate runtime/write execution prompt required.
 
 ### Decision P3RWA5 — QA before execution
 
-**Owner decision:** _(pending adoption)_ Pre-session QA **PASS** required; **FAIL/UNCLEAR => STOP (N11)**.
+**Owner decision:** **Yes.** Pre-session QA **PASS** required; **FAIL/UNCLEAR => STOP (N11)**.
 
 ### Decision P3RWA6 — STOP conditions
 
-**Owner decision:** _(pending adoption)_ **P3RWA-STOP** binding; stricter-rule-wins.
+**Owner decision:** **Yes.** **P3RWA-STOP** binding; stricter-rule-wins.
 
 ### Decision P3RWA7 — Rollback / safe-state
 
-**Owner decision:** _(pending adoption)_ Charter must define rollback before session; DB posture unchanged by repo rollback alone.
+**Owner decision:** **Yes.** Charter must define rollback before session; DB posture unchanged by repo rollback alone.
 
 ### Decision P3RWA8 — P3-PSA separate
 
-**Owner decision:** _(pending adoption)_ PSA execution approval **not** granted by this gate.
+**Owner decision:** **Yes.** PSA execution approval **not** granted by this gate.
 
 ### Decision P3RWA9 — P3-ROUTE separate
 
-**Owner decision:** _(pending adoption)_ Route execution approval **not** granted by this gate.
+**Owner decision:** **Yes.** Route execution approval **not** granted by this gate.
 
 ### Decision P3RWA10 — NOT_READY_FOR_APPLY unchanged
 
-**Owner decision:** _(pending adoption)_ Does **not** clear `NOT_READY_FOR_APPLY` or approve RLS apply/packet SQL.
+**Owner decision:** **Yes.** Does **not** clear `NOT_READY_FOR_APPLY` or approve RLS apply/packet SQL.
 
 ### Decision P3RWA11 — P3-IMPL-POST boundary
 
-**Owner decision:** _(pending adoption)_ **P3-IMPL-POST** does **not** substitute for **P3-RW-APPROVAL** adoption or runtime/write session.
+**Owner decision:** **Yes.** **P3-IMPL-POST** does **not** substitute for **P3-RW-APPROVAL** adoption or runtime/write session.
 
 ### Decision P3RWA12 — Final boundary
 
-**Owner decision:** _(pending adoption)_ **P3RWA-BOUNDARY** accepted; two-step model binding.
+**Owner decision:** **Yes.** **P3RWA-BOUNDARY** accepted; two-step model binding.
