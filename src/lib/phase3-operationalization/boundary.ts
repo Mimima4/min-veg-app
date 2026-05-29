@@ -44,7 +44,10 @@ export const PHASE3_GATE_ORDER = [
 export type Phase3GateId = (typeof PHASE3_GATE_ORDER)[number];
 
 export const PHASE3_CHARTER_REFERENCE = {
-  charterId: "P3-IMPL-EXEC-2026-05-29-01",
-  approvalGateCommit: "5941f66",
-  charterTemplateCommit: "44e4b91",
+  implCharterId: "P3-IMPL-EXEC-2026-05-29-01",
+  implApprovalGateCommit: "5941f66",
+  implCharterTemplateCommit: "44e4b91",
+  rwCharterId: "P3-RW-EXEC-2026-05-29-01",
+  rwApprovalGateCommit: "b24acc8",
+  rwCharterTemplateCommit: "b24acc8",
 } as const;

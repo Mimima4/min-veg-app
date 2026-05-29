@@ -10,7 +10,7 @@ This folder holds an **isolated Phase 3 operationalization boundary scaffold** o
 
 ## Does not approve or implement
 
-- runtime/write execution
+- runtime/write **activation** (write-path or product runtime)
 - DB writes
 - SQL / Supabase
 - PSA materialization or publication
@@ -23,6 +23,20 @@ This folder holds an **isolated Phase 3 operationalization boundary scaffold** o
 
 `P3-IMPL` → `P3-RW` → `P3-PSA` → `P3-ROUTE`
 
-## Charter
+## Charters (owner-held)
 
-Owner-held charter `P3-IMPL-EXEC-2026-05-29-01` under **P3-IMPL-APPROVAL** (`5941f66`). Changes here require a separate bounded implementation-execution prompt and must stay within this directory unless the charter is amended.
+| Slice | Charter ID | Approval gate |
+|-------|------------|---------------|
+| Implementation scaffold | `P3-IMPL-EXEC-2026-05-29-01` | **P3-IMPL-APPROVAL** (`5941f66`) |
+| Runtime/write planning | `P3-RW-EXEC-2026-05-29-01` | **P3-RW-APPROVAL** (`b24acc8`) |
+
+Changes require a separate bounded execution prompt per slice and must stay within this directory unless the charter is amended.
+
+## Modules
+
+| File | Role |
+|------|------|
+| `boundary.ts` | Gate order, forbidden actions, charter refs |
+| `types.ts` | Planning state types |
+| `guards.ts` | Pure invariant checks (no IO) |
+| `runtime-write-planning.ts` | P3-RW planning labels only (non-wired) |
