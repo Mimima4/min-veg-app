@@ -50,4 +50,7 @@ export const PHASE3_CHARTER_REFERENCE = {
   rwCharterId: "P3-RW-EXEC-2026-05-29-01",
   rwApprovalGateCommit: "b24acc8",
   rwCharterTemplateCommit: "b24acc8",
+  psaCharterId: "P3-PSA-EXEC-2026-05-29-01",
+  psaApprovalGateCommit: "dfdaf7f",
+  psaCharterTemplateCommit: "dfdaf7f",
 } as const;

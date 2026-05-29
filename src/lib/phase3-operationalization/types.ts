@@ -4,6 +4,7 @@
  */
 
 import type { Phase3ForbiddenAction, Phase3GateId } from "./boundary";
+import type { Phase3PsaPlanningForbidden } from "./psa-planning";
 import type { Phase3RwPlanningForbidden } from "./runtime-write-planning";
 
 /** Planning-only readiness; does not imply execution approval. */
@@ -11,6 +12,7 @@ export type Phase3PlanningReadiness =
   | "not_started"
   | "boundary_scaffold_recorded"
   | "p3_rw_planning_boundary_recorded"
+  | "p3_psa_planning_boundary_recorded"
   | "awaiting_p3_rw_gate"
   | "awaiting_p3_psa_gate"
   | "awaiting_p3_route_gate"
@@ -33,6 +35,23 @@ export type Phase3OperationalizationPlanningState = {
   notesRef?: string;
 };
 
+/** PSA materialization/publication planning slice (no execution). */
+export type Phase3PsaPlanningReadiness =
+  | "not_started"
+  | "psa_planning_labels_recorded"
+  | "blocked_fail_unclear";
+
+export type Phase3PsaPlanningState = {
+  scopeLabel: string;
+  readiness: Phase3PsaPlanningReadiness;
+  activePsaForbidden: readonly Phase3PsaPlanningForbidden[];
+  materializationExecuted: false;
+  publicationExecuted: false;
+  xPostRoutePsaProductRuntime: "NO_TOUCH";
+  notReadyForApplyUnchanged: true;
+  notesRef?: string;
+};
+
 export type Phase3RuntimeWritePlanningState = {
   scopeLabel: string;
   readiness: Phase3RuntimeWritePlanningReadiness;
@@ -48,4 +67,5 @@ export type Phase3ScaffoldMetadata = {
   isolated: true;
   productConsumption: false;
   rwPlanningSlice: "0.1.0-rw-planning";
+  psaPlanningSlice: "0.1.0-psa-planning";
 };

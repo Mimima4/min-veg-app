@@ -8,12 +8,18 @@ import {
   PHASE3_GATE_ORDER,
 } from "./boundary";
 import {
+  PHASE3_PSA_PLANNING_FORBIDDEN,
+  PHASE3_PSA_PLANNING_SCOPE_LABEL,
+} from "./psa-planning";
+import {
   PHASE3_RW_PLANNING_FORBIDDEN,
   PHASE3_RW_PLANNING_SCOPE_LABEL,
 } from "./runtime-write-planning";
 import type {
   Phase3OperationalizationPlanningState,
   Phase3PlanningReadiness,
+  Phase3PsaPlanningReadiness,
+  Phase3PsaPlanningState,
   Phase3RuntimeWritePlanningReadiness,
   Phase3RuntimeWritePlanningState,
 } from "./types";
@@ -22,6 +28,7 @@ const PLANNING_READINESS_LABELS: readonly Phase3PlanningReadiness[] = [
   "not_started",
   "boundary_scaffold_recorded",
   "p3_rw_planning_boundary_recorded",
+  "p3_psa_planning_boundary_recorded",
   "awaiting_p3_rw_gate",
   "awaiting_p3_psa_gate",
   "awaiting_p3_route_gate",
@@ -30,6 +37,12 @@ const PLANNING_READINESS_LABELS: readonly Phase3PlanningReadiness[] = [
 
 const RW_PLANNING_READINESS_LABELS: readonly Phase3RuntimeWritePlanningReadiness[] =
   ["not_started", "rw_planning_labels_recorded", "blocked_fail_unclear"];
+
+const PSA_PLANNING_READINESS_LABELS: readonly Phase3PsaPlanningReadiness[] = [
+  "not_started",
+  "psa_planning_labels_recorded",
+  "blocked_fail_unclear",
+];
 
 export function isPhase3PlanningReadiness(
   value: string,
@@ -121,12 +134,61 @@ export function createDefaultRuntimeWritePlanningState(): Phase3RuntimeWritePlan
   };
 }
 
+export function isPhase3PsaPlanningReadiness(
+  value: string,
+): value is Phase3PsaPlanningReadiness {
+  return (PSA_PLANNING_READINESS_LABELS as readonly string[]).includes(value);
+}
+
+export function isAllowedPhase3PsaScopeLabel(scopeLabel: string): boolean {
+  return scopeLabel === PHASE3_PSA_PLANNING_SCOPE_LABEL;
+}
+
+export function assertPsaPlanningInvariants(state: Phase3PsaPlanningState): boolean {
+  if (!isAllowedPhase3PsaScopeLabel(state.scopeLabel)) {
+    return false;
+  }
+  if (!isPhase3PsaPlanningReadiness(state.readiness)) {
+    return false;
+  }
+  if (state.materializationExecuted !== false) {
+    return false;
+  }
+  if (state.publicationExecuted !== false) {
+    return false;
+  }
+  if (state.xPostRoutePsaProductRuntime !== "NO_TOUCH") {
+    return false;
+  }
+  if (state.notReadyForApplyUnchanged !== true) {
+    return false;
+  }
+  for (const action of state.activePsaForbidden) {
+    if (!(PHASE3_PSA_PLANNING_FORBIDDEN as readonly string[]).includes(action)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+export function createDefaultPsaPlanningState(): Phase3PsaPlanningState {
+  return {
+    scopeLabel: PHASE3_PSA_PLANNING_SCOPE_LABEL,
+    readiness: "psa_planning_labels_recorded",
+    activePsaForbidden: [...PHASE3_PSA_PLANNING_FORBIDDEN],
+    materializationExecuted: false,
+    publicationExecuted: false,
+    xPostRoutePsaProductRuntime: "NO_TOUCH",
+    notReadyForApplyUnchanged: true,
+  };
+}
+
 export function createDefaultPlanningState(): Phase3OperationalizationPlanningState {
   return {
     scopeLabel: PHASE3_ALLOWED_SCOPE_LABEL,
-    readiness: "p3_rw_planning_boundary_recorded",
-    currentGate: "P3-RW",
-    nextGate: "P3-PSA",
+    readiness: "p3_psa_planning_boundary_recorded",
+    currentGate: "P3-PSA",
+    nextGate: "P3-ROUTE",
     activeForbiddenActions: [...PHASE3_FORBIDDEN_ACTIONS],
     notReadyForApplyUnchanged: true,
     runtimeWired: false,

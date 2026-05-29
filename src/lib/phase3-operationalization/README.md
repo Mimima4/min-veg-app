@@ -11,13 +11,14 @@ This folder holds an **isolated Phase 3 operationalization boundary scaffold** o
 ## Does not approve or implement
 
 - runtime/write **activation** (write-path or product runtime)
+- PSA materialization or publication **execution**
 - DB writes
 - SQL / Supabase
-- PSA materialization or publication
 - Route Engine consumption
 - production truth / materialization
 - Phase 4 / LOSA
 - clearing `NOT_READY_FOR_APPLY`
+- **X-post** Route/PSA product runtime changes (default **NO_TOUCH**)
 
 ## Gate order (documentation only)
 
@@ -29,6 +30,7 @@ This folder holds an **isolated Phase 3 operationalization boundary scaffold** o
 |-------|------------|---------------|
 | Implementation scaffold | `P3-IMPL-EXEC-2026-05-29-01` | **P3-IMPL-APPROVAL** (`5941f66`) |
 | Runtime/write planning | `P3-RW-EXEC-2026-05-29-01` | **P3-RW-APPROVAL** (`b24acc8`) |
+| PSA planning | `P3-PSA-EXEC-2026-05-29-01` | **P3-PSA-APPROVAL** (`dfdaf7f`) |
 
 Changes require a separate bounded execution prompt per slice and must stay within this directory unless the charter is amended.
 
@@ -40,3 +42,4 @@ Changes require a separate bounded execution prompt per slice and must stay with
 | `types.ts` | Planning state types |
 | `guards.ts` | Pure invariant checks (no IO) |
 | `runtime-write-planning.ts` | P3-RW planning labels only (non-wired) |
+| `psa-planning.ts` | P3-PSA planning labels only (non-wired; **X-post** **NO_TOUCH**) |
