@@ -143,6 +143,7 @@ These are **documentation / boundary / criteria** artifacts only. They are **not
 - `docs/architecture/phase-3-consolidated-readiness-closure-summary-owner-decision-record.md` — **Phase 3 consolidated readiness/closure summary** record (P3C0–P3C9; Section **P3-CLOSE**); planned docs sequence closure recorded with execution boundaries preserved
 - `docs/architecture/phase-3-post-bundle-next-step-selection-owner-decision-record.md` — **Phase 3 post-bundle next-step selection** record (P3NS0–P3NS6; Section **P3-NEXTSEL**); selects transition direction after `P3-CLOSE` while preserving execution boundaries
 - `docs/architecture/phase-3-implementation-execution-approval-owner-decision-record.md` — **Phase 3 implementation execution approval** record (P3IA0–P3IA12 **Yes**; Section **P3-IMPL-APPROVAL**); first execution-approval path gate **adopted** after operational frameworks; bounded owner-held charter preparation **permitted**; implementation execution session/runtime/write/DB/SQL/PSA/Route/production truth/Phase 4 **not** approved
+- `docs/architecture/phase-3-implementation-execution-charter-template.md` — **template** for owner-held Phase 3 implementation execution session charter (not execution authority alone)
 
 **Checklist reference note (2026-05-27):** **MAIN execution packet execution gate (Section Z-E)** logged per `phase-2-rls-main-execution-packet-execution-gate-owner-decision-record.md` — follows **Z-D-draft-outcome**; **framework only** (variant A); **no** Supabase connect; **no** packet SQL execution at adoption; G1–G6 carried forward (not closed); U-post re-apply **not** default; git packet SQL **forbidden**; connect requires filled owner-held charter + **separate** prompt; **NOT_READY_FOR_APPLY** unchanged. Does **not** mean session ran, gaps closed, or apply-ready globally.
 
@@ -207,6 +208,8 @@ These are **documentation / boundary / criteria** artifacts only. They are **not
 **Checklist reference note (2026-05-28):** **Phase 3 post-bundle next-step selection (Section P3-NEXTSEL)** logged per `phase-3-post-bundle-next-step-selection-owner-decision-record.md` — follows `P3-CLOSE`; selected direction is transition to operational execution-gates; this selection itself does not grant execution approvals.
 
 **Checklist reference note (2026-05-29):** **Phase 3 implementation execution approval gate (Section P3-IMPL-APPROVAL)** logged per `phase-3-implementation-execution-approval-owner-decision-record.md` — follows `P3-NEXTSEL` + operational frameworks (**P3-IMPL**, **P3-RW**, **P3-PSA**, **P3-ROUTE**); **P3IA0–P3IA12** adopted at docs level; bounded owner-held charter preparation **permitted**; **not** implementation execution session approval; filled charter + pre-session QA **PASS** + separate implementation-execution prompt required before any code session; **P3-RW**/**P3-PSA**/**P3-ROUTE** execution approvals remain separate; **NOT_READY_FOR_APPLY** unchanged.
+
+**Checklist reference note (2026-05-29):** **Phase 3 implementation execution charter template** added per `phase-3-implementation-execution-charter-template.md` — follows **P3-IMPL-APPROVAL**; copy to owner-held and fill before pre-session QA; template alone does **not** approve implementation session, runtime/write, DB/SQL, PSA, Route, or NOT_READY_FOR_APPLY clearance.
 
 **Checklist reference note (2026-05-27):** **MAIN execution packet draft outcome (Z-D-draft-outcome)** logged per `phase-2-rls-main-execution-packet-draft-outcome-owner-decision-record.md` — follows Section **Z-D** + owner-held draft `MAIN-EP-DRAFT-2026-05-27-01`; outcome **`DRAFT_COMPLETE_WITH_DOCUMENTED_GAPS`**; post-U-post outline accepted; **no** default deny DDL repeat; packet execution/apply **not** approved; **NOT_READY_FOR_APPLY** unchanged; git packet SQL **forbidden**. Does **not** mean SQL executed, U-post re-applied, or apply-ready globally.
 
@@ -1298,7 +1301,7 @@ Does **not** mean runtime/write or publication execution is approved. Does **not
 | Route Engine consumption | **not** approved |
 | `NOT_READY_FOR_APPLY` | **unchanged** |
 
-**Closed at docs level (Section P3-IMPL-APPROVAL):** P3IA-SCOPE through P3IA-BOUNDARY documented; **P3IA0–P3IA12** owner/security decisions **Yes**; execution-approval path adopted; bounded owner-held charter preparation **permitted**.
+**Closed at docs level (Section P3-IMPL-APPROVAL):** P3IA-SCOPE through P3IA-BOUNDARY documented; **P3IA0–P3IA12** owner/security decisions **Yes**; execution-approval path adopted; bounded owner-held charter preparation **permitted**; repo-safe charter **template** recorded (`phase-3-implementation-execution-charter-template.md`).
 
 **Explicitly not closed (Section P3-IMPL-APPROVAL):** filled owner-held charter; pre-session QA PASS; separate implementation-execution prompt; implementation execution session; **P3-RW** / **P3-PSA** / **P3-ROUTE** execution approvals.
 
@@ -1398,7 +1401,7 @@ Prerequisites are documented in `docs/architecture/phase-2-to-phase-3-gate-crite
 
 ## Current recommended next gate
 
-**Current recommended next gate from this checklist snapshot:** Section **P3-IMPL-APPROVAL** — gate adopted (**P3IA0–P3IA12** **Yes**); implementation execution **not** approved. **Next owner action:** prepare owner-held implementation execution charter, complete pre-session QA (**PASS**), then issue separate implementation-execution prompt before any bounded code session.
+**Current recommended next gate from this checklist snapshot:** Section **P3-IMPL-APPROVAL** — gate adopted (**P3IA0–P3IA12** **Yes**); charter **template** in repo; implementation execution **not** approved. **Next owner action:** copy `phase-3-implementation-execution-charter-template.md` to owner-held, fill charter, complete pre-session QA (**PASS**), then issue separate implementation-execution prompt before any bounded code session.
 
 **Status refresh (2026-05-28):** Prior wording that pointed to a **G1** operational next step is superseded by recorded outcomes (**Z-E-post** `EXECUTION_SESSION_COMPLETE_PASS`, **Z-G1-post** `G1_GAP_CLOSURE_PASS`, **Z-G2-post** `G2_GAP_CLOSURE_PASS`) and by **Z-N12C-post** claim-review outcome (`N12_PASS_CLAIMED`) with boundaries preserved.
 

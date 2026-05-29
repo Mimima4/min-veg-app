@@ -66,7 +66,7 @@ All must be satisfied before any **implementation execution session** may begin 
 
 5. repo-safe implementation scope summary aligned with `P3-IMPL` operational framework (targets + non-goals);
 6. documented gap register includes at minimum: Route/PSA **NO_TOUCH** carry-forward (**X-post**), operational production truth **not closed**, runtime/write **not approved**, `NOT_READY_FOR_APPLY` unchanged;
-7. owner-held implementation execution charter **filled** from approved template (charter ID owner-held; not committed to git if sensitive);
+7. owner-held implementation execution charter **filled** from `phase-3-implementation-execution-charter-template.md` (charter ID owner-held; not committed to git if sensitive);
 8. pre-implementation QA checklist completed with outcome **PASS** (repo-safe QA summary only);
 9. **separate** owner implementation-execution prompt issued for **one** bounded session (not automatic at gate adoption).
 
