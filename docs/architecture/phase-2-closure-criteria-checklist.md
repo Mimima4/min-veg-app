@@ -163,6 +163,14 @@ These are **documentation / boundary / criteria** artifacts only. They are **not
 - `docs/architecture/phase-2-operational-verification-only-execution-charter-template.md` — **template** for owner-held operational verification-only session charter
 - `docs/architecture/phase-2-operational-verification-only-execution-review-summary-template.md` — **template** for repo-safe **Z-OV-post** outcome summary
 - `docs/architecture/phase-2-operational-verification-only-execution-review-summary.md` — **safe summary** of completed bounded operational verification-only session (**Z-OV-post**); charter `MAIN-OP-VERIFY-2026-05-31-01`; outcome `OPERATIONAL_VERIFICATION_PASS`; Oslo app-truth preserved; permission **#2** / **#3** not opened; **NOT_READY_FOR_APPLY** unchanged
+- `docs/architecture/phase-2-operational-truth-write-green-counties-execution-gate-owner-decision-record.md` — **operational truth write (#2) green counties** execution gate (TW2G0–TW2G25; Section **B-GREEN-#2**); Contour **A** PSA refresh on **MAIN-OWNER-USED**; default counties `11`/`46`/`50` (`03`/`15` charter-explicit; `15` pipeline ABORT); Oslo `03` charter-explicit only; **not** `56`/Contour **B**/Phase 2 table writes/UI (**#3**); **NOT_READY_FOR_APPLY** unchanged
+- `docs/architecture/phase-2-operational-truth-write-green-counties-execution-charter-template.md` — **template** for owner-held #2 green-counties session charter
+- `docs/architecture/phase-2-operational-truth-write-green-counties-execution-review-summary-template.md` — **template** for repo-safe **B-GREEN-#2-post** outcome summary
+- `docs/architecture/phase-2-operational-truth-write-green-counties-execution-review-summary.md` — **safe summary** of completed bounded #2 green-counties session (**B-GREEN-#2-post**); charter `MAIN-TRUTH-WRITE-GREEN-2026-05-31-01`; outcome `OPERATIONAL_TRUTH_WRITE_PASS`; counties `11`/`46`/`50` written; `03`/`15`/`56` not in scope; **#3** not opened; **NOT_READY_FOR_APPLY** unchanged
+
+**Checklist reference note (2026-05-31):** **Operational truth write green counties session outcome (B-GREEN-#2-post)** logged per `phase-2-operational-truth-write-green-counties-execution-review-summary.md` — MAIN session `MAIN-TRUTH-WRITE-GREEN-2026-05-31-01`; `11`/`46`/`50` PSA refresh pass; Oslo `03` / Møre `15` / Finnmark `56` not written; **#3** / LOSA impl / `NOT_READY_FOR_APPLY` unchanged.
+
+**Checklist reference note (2026-05-31):** **Operational truth write green counties gate (Section B-GREEN-#2)** logged per `phase-2-operational-truth-write-green-counties-execution-gate-owner-decision-record.md` — owner track step **B** gate adopted at docs level after **P4-LOSA-FM-post** + **Z-OV-post**; permission stack **#2** only; Finnmark `56` **out of scope**; pipeline CLI **`--dry-run`** vs write discipline recorded. Session outcome recorded separately in **B-GREEN-#2-post** note below.
 
 **Checklist reference note (2026-05-29):** **Phase 0–6 processing contour policy (Section P06)** logged per `phase-0-6-processing-contour-owner-decision-record.md` — request-only activation; Oslo-class green counties use operational main matcher only; Finnmark-class abort counties require explicit case request before on-demand processing; no auto route/UI hook.
 
@@ -1596,13 +1604,37 @@ Owner-adopted **Phase 4 LOSA Finnmark slice** per `phase-4-losa-finnmark-slice-o
 | Acceptance | **`ACCEPTED WITH NOTES`** per `phase-4-losa-finnmark-publishability-contract-acceptance-owner-decision-record.md` |
 | **A.2** (LOSA contract) | **closed** at docs level |
 | **A.3** (Contour A retry `56`) | **not** closed — separate charter |
-| **B** (green #2) | planning **unblocked** — separate permission **#2** gate + charter required |
+| **B** (green #2) | **closed** at execution level — session `MAIN-TRUTH-WRITE-GREEN-2026-05-31-01`; **B-GREEN-#2-post** `OPERATIONAL_TRUTH_WRITE_PASS` (`11`/`46`/`50`) |
+
+---
+
+## Section B-GREEN-#2 — Operational truth write green counties (logged at docs level 2026-05-31)
+
+Owner-adopted **operational truth write (#2)** gate per `phase-2-operational-truth-write-green-counties-execution-gate-owner-decision-record.md` (TW2G0–TW2G25). Owner track step **B** after **P4-LOSA-FM-post** and **Z-OV-post**.
+
+| Field | Status |
+|-------|--------|
+| Permission stack | **#2** operational PSA refresh via Contour **A** — **not** **#3** UI |
+| Default counties | `11`, `46`, `50` |
+| Oslo `03` | charter-explicit only (Z-OV preserved 10/10 without pipeline) |
+| Møre `15` | **excluded** from default — pipeline ABORT (`ambiguous=1`); Vilbli-aligned display preserved |
+| Excluded | Finnmark `56`, non-green readiness, Contour **B**, Phase 2 seven-table writes |
+| Prerequisites | **Z-OV-post** + **P4-LOSA-FM-post** + **P06** + **U/V/W/X-post** |
+| Session discipline | error / ABORT / out-of-scope write ⇒ **STOP** — no self-heal in same session |
+| CLI | pre-flight **`--dry-run`** only; write **without** `--dry-run`; never `--dry-run=true` |
+| Apply / clearance | **not** approved; **NOT_READY_FOR_APPLY** **unchanged** |
+
+**Closed at docs level (Section B-GREEN-#2):** TW2G0–TW2G25 adopted; charter + review summary templates linked; bounded session `MAIN-TRUTH-WRITE-GREEN-2026-05-31-01` completed; **B-GREEN-#2-post** safe summary in git; outcome `OPERATIONAL_TRUTH_WRITE_PASS` for `11`/`46`/`50`.
+
+**Explicitly not closed (Section B-GREEN-#2):** permission **#3** UI; Finnmark operational resolution; LOSA refresh execution; county `15` pipeline refresh; Oslo `03` unless future charter.
+
+**Operational next step (Section B-GREEN-#2):** owner selects next track — optional **A.3** `56` dry-run charter; **#3** UI gate; LOSA implementation; or `15` identity case — **not** automatic from #2 pass.
 
 ---
 
 ## Current recommended next gate
 
-**Current recommended next gate from this checklist snapshot:** **Owner track step B — permission #2 operational truth refresh for green counties** (`03`, `11`, `15`, `46`, `50`) — adopt separate **#2** gate (if not already) + owner-held charter + pipeline writes per county scope; **Oslo `03` only if explicitly in charter**; **not** Finnmark `56` bulk PSA. **Alternate:** optional **A.3** Contour **A** dry-run retry charter for `56` (read-only/diagnostics; expect ABORT until evidence). **Does not** authorize UI (**#3**), LOSA fetch implementation, or `NOT_READY_FOR_APPLY` clearance. **P06-CONTOUR-B-post**, **P4-LOSA-FM-post**, and **Z-OV-post** remain recorded; **X-post** **NO_TOUCH** unchanged.
+**Current recommended next gate from this checklist snapshot:** **Post B-GREEN-#2 owner selection** — optional **A.3** Contour **A** dry-run charter for `56` (read-only; expect ABORT); separate permission **#3** UI gate; LOSA refresh **implementation** (Finnmark); county `15` ambiguity resolution (not bulk #2); or commit remaining **B-GREEN-#2** gate docs if uncommitted. **Does not** authorize `NOT_READY_FOR_APPLY` clearance. **B-GREEN-#2-post**, **P4-LOSA-FM-post**, **P06-CONTOUR-B-post**, and **Z-OV-post** remain recorded; **X-post** **NO_TOUCH** unchanged.
 
 **Alternate tracks (separate owner selection — not auto-progression from Z-OV):** Z-AP* apply governance continuation; permission stack **#2** / **#3** only after explicit separate gates; Phase 3 operational execution remains separately gated from P3 planning POSTs (`7ed7014` → `f412bea` → `87ddeb0` → `d552832`).
 
