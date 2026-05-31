@@ -100,7 +100,7 @@ Finnmark `56` / `electrician` cannot use Contour **A** (Vilbli → NSR → PSA) 
 
 ### P4LFM-7 — Next artifact
 
-**Decision:** **Yes.** Repo artifact **`phase-4-losa-finnmark-publishability-contract-draft.md`** created (**DRAFT**); **owner acceptance pending**.
+**Decision:** **Yes.** Repo artifact **`phase-4-losa-finnmark-publishability-contract-draft.md`** created; acceptance recorded **`ACCEPTED WITH NOTES`** in **`phase-4-losa-finnmark-publishability-contract-acceptance-owner-decision-record.md`** (**P4-LOSA-FM-post**).
 
 ### P4LFM-8 — NOT_READY_FOR_APPLY
 

@@ -4,7 +4,7 @@
 
 | Field | Value |
 |--------|--------|
-| **Status** | **DRAFT** — Finnmark slice deliverable under **P4-LOSA-FM** |
+| **Status** | **`ACCEPTED WITH NOTES`** (2026-05-31) — see `phase-4-losa-finnmark-publishability-contract-acceptance-owner-decision-record.md` |
 | **Scope** | Publishability **contract** for **LOSA / external-delivery** rows affecting county **`56`** (nationwide-applicable patterns) |
 | **Date (UTC)** | 2026-05-31 |
 | **Entry** | `phase-4-losa-finnmark-slice-owner-decision-record.md` + `phase-0-6-contour-b-finnmark-processing-review-summary.md` |
@@ -136,9 +136,9 @@ Publication to **`programme_school_availability`** for LOSA-class observations i
 | Step | Status after this draft |
 |------|-------------------------|
 | **A.1** Contour B packet + P06-CONTOUR-B-post | **done** |
-| **A.2** Phase 4 LOSA slice (this draft) | **draft ready for owner review** |
-| **A.3** Contour A retry charter for `56` | **pending** contract acceptance + evidence |
-| **B** Green counties #2 truth refresh | **deferred** until A.2 reviewable — unchanged |
+| **A.2** Phase 4 LOSA slice (this contract) | **`ACCEPTED WITH NOTES`** (P4-LOSA-FM-post) |
+| **A.3** Contour A retry charter for `56` | **pending** — separate charter; evidence may still block dry-run pass |
+| **B** Green counties #2 truth refresh | **unblocked at planning level** — requires separate permission **#2** gate + charter |
 | **C** Z-AP* apply | **deferred** |
 
 ---
@@ -147,14 +147,14 @@ Publication to **`programme_school_availability`** for LOSA-class observations i
 
 | # | Question | pass? |
 |---|----------|-------|
-| 1 | Provider vs delivery site separation clear? | |
-| 2 | Tier 1+2 claim requirements sufficient for Finnmark? | |
-| 3 | Phase 2 states correctly **non-publishable** until gates? | |
-| 4 | No Vilbli-as-legal-truth shortcut? | |
-| 5 | No UI/PSA/implementation implied? | |
-| 6 | Nationwide applicability preserved (Finnmark = reference, not exception rule)? | |
+| 1 | Provider vs delivery site separation clear? | **yes** |
+| 2 | Tier 1+2 claim requirements sufficient for Finnmark? | **yes** |
+| 3 | Phase 2 states correctly **non-publishable** until gates? | **yes** |
+| 4 | No Vilbli-as-legal-truth shortcut? | **yes** |
+| 5 | No UI/PSA/implementation implied? | **yes** |
+| 6 | Nationwide applicability preserved (Finnmark = reference, not exception rule)? | **yes** |
 
-**Target acceptance labels:** `ACCEPTED` | `ACCEPTED WITH NOTES` | `REJECTED — revise draft`
+**Recorded acceptance (2026-05-31):** **`ACCEPTED WITH NOTES`** — `phase-4-losa-finnmark-publishability-contract-acceptance-owner-decision-record.md`
 
 ---
 
