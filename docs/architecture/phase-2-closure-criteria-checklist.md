@@ -155,12 +155,19 @@ These are **documentation / boundary / criteria** artifacts only. They are **not
 - `docs/architecture/phase-3-route-engine-consumption-execution-charter-template.md` — **template** for owner-held Phase 3 Route execution session charter (not execution authority alone)
 - `docs/architecture/phase-3-route-engine-consumption-execution-review-summary.md` — **safe summary** of completed bounded P3-ROUTE planning session (**P3-ROUTE-POST**); charter `P3-ROUTE-EXEC-2026-05-29-01`; checkpoint `d552832`; operational Route consumption/activation **not** approved; **X-post** **NO_TOUCH**
 - `docs/architecture/phase-0-6-processing-contour-owner-decision-record.md` — **Phase 0–6 processing contour** policy (P06-0–P06-8); **request-only**; operational main matcher (Oslo `03` class) vs on-demand processor (Finnmark `56` class); **no** auto route/UI/verification activation
+- `docs/architecture/phase-0-6-contour-b-finnmark-processing-review-summary.md` — **Contour B** Finnmark `56` processing safe summary (**P06-CONTOUR-B-post**); `CONTOUR_B_PROCESSING_PASS_PACKET_READY_FOR_REVIEW`; **22** unmatched / **17** LOSA hints; main matcher retry **not** approved; owner next = Phase 4 LOSA slice
+- `docs/architecture/phase-4-losa-finnmark-slice-owner-decision-record.md` — **Phase 4 LOSA Finnmark slice** adopted (**P4-LOSA-FM**; P4LFM-0–P4LFM-8); docs-only; targets LOSA blocker for `56`; **not** fetch/PSA/Route/UI
+- `docs/architecture/phase-4-losa-finnmark-publishability-contract-draft.md` — **DRAFT** Finnmark LOSA publishability contract (provider vs delivery site; tiered claims; Phase 2 state mapping; publication blocked rules) — **owner review pending**
 - `docs/architecture/phase-2-operational-verification-only-execution-gate-owner-decision-record.md` — **operational verification-only** execution gate (OVE0–OVE21; Section **Z-OV**); permission stack **#1**; bounded non-product verification on **MAIN-OWNER-USED**; Phase 0–6 contour **must not** change app/UI/product paths; session error ⇒ **STOP** (no self-heal); **no UI truth**; clearance/apply/truth-write/UI integration **not** approved; **NOT_READY_FOR_APPLY** unchanged
 - `docs/architecture/phase-2-operational-verification-only-execution-charter-template.md` — **template** for owner-held operational verification-only session charter
 - `docs/architecture/phase-2-operational-verification-only-execution-review-summary-template.md` — **template** for repo-safe **Z-OV-post** outcome summary
 - `docs/architecture/phase-2-operational-verification-only-execution-review-summary.md` — **safe summary** of completed bounded operational verification-only session (**Z-OV-post**); charter `MAIN-OP-VERIFY-2026-05-31-01`; outcome `OPERATIONAL_VERIFICATION_PASS`; Oslo app-truth preserved; permission **#2** / **#3** not opened; **NOT_READY_FOR_APPLY** unchanged
 
 **Checklist reference note (2026-05-29):** **Phase 0–6 processing contour policy (Section P06)** logged per `phase-0-6-processing-contour-owner-decision-record.md` — request-only activation; Oslo-class green counties use operational main matcher only; Finnmark-class abort counties require explicit case request before on-demand processing; no auto route/UI hook.
+
+**Checklist reference note (2026-05-31):** **Contour B Finnmark processing (P06-CONTOUR-B-post)** logged per `phase-0-6-contour-b-finnmark-processing-review-summary.md` — case `P06-CASE-FINNMARK-56-2026-05-31-01`; pipeline ABORT baseline **22** unmatched / **17** LOSA hints; readiness `missing_programme_rows`; evidence packet `ready_for_review` (detail owner-held); **no** PSA/UI/#2/#3; owner direction → **Phase 4 LOSA Finnmark slice**.
+
+**Checklist reference note (2026-05-31):** **Phase 4 LOSA Finnmark slice (Section P4-LOSA-FM)** logged per `phase-4-losa-finnmark-slice-owner-decision-record.md` — active step-A.2 after P06-CONTOUR-B-post; contract draft `phase-4-losa-finnmark-publishability-contract-draft.md` (**DRAFT in git — owner acceptance pending**); **not** LOSA execution/fetch; step **B** green #2 deferred until contract **accepted**.
 
 **Checklist reference note (2026-05-31):** **Operational verification-only session outcome (Z-OV-post)** logged per `phase-2-operational-verification-only-execution-review-summary.md` — bounded MAIN session `MAIN-OP-VERIFY-2026-05-31-01`; outcome `OPERATIONAL_VERIFICATION_PASS`; read-only diagnostics + dry-run county `11` only; Oslo `03` pipeline not run; Oslo active app-truth PSA rows unchanged (10/10); SIG-01..06 pass; P06 request-only preserved; **no** permission **#2** / **#3**; **NOT_READY_FOR_APPLY** unchanged.
 
@@ -1551,15 +1558,36 @@ Owner-adopted **Phase 0–6 processing contour** policy is logged in `phase-0-6-
 
 **Closed at docs level (Section P06):** P06-0–P06-8 adopted; Oslo/Finnmark reference cases recorded; request/response minimum contract recorded.
 
-**Explicitly not closed (Section P06):** Finnmark resolution; Phase 2 table population; PSA/Route/UI integration; any automatic hook from pipeline abort to Contour **B**.
+**Explicitly not closed (Section P06):** Finnmark **operational** resolution; Phase 2 table population; PSA/Route/UI integration for `56`; automatic hook from pipeline abort to Contour **B**.
+
+**Closed at docs level (Section P06 — Contour B):** first bounded Contour **B** session for `56` recorded (**P06-CONTOUR-B-post**); processed evidence posture `ready_for_review`; LOSA blocker routed to **P4-LOSA-FM**.
 
 **Relationship to Z-OV:** Z-OV verification sessions **must** comply with P06 — verification does **not** auto-activate Contour **B** on green counties.
 
 ---
 
+## Section P4-LOSA-FM — Phase 4 LOSA Finnmark slice (logged at docs level 2026-05-31)
+
+Owner-adopted **Phase 4 LOSA Finnmark slice** per `phase-4-losa-finnmark-slice-owner-decision-record.md` (P4LFM-0–P4LFM-8). Active workstream after **P06-CONTOUR-B-post** to define LOSA/external-delivery publishability for county **`56`** reference case.
+
+| Field | Status |
+|-------|--------|
+| Slice type | **Docs / contract design only** |
+| Entry evidence | **P06-CONTOUR-B-post** (22 unmatched; 17 LOSA hints; `missing_programme_rows`) |
+| Controlling Phase 4 docs | Registry + refresh-design + source-truth crosswalk |
+| Next artifact | `phase-4-losa-finnmark-publishability-contract-draft.md` (**DRAFT in git — owner review pending**) |
+| Implementation | **not** approved (no fetch, job, SQL, PSA, Route) |
+| Owner track | **A→B→C** — step **B** green #2 **deferred** until slice contract reviewable |
+
+**Closed at docs level (Section P4-LOSA-FM):** slice adopted; scope and deliverables defined; P4LFM-0–P4LFM-8 recorded.
+
+**Explicitly not closed (Section P4-LOSA-FM):** contract **acceptance** (DRAFT exists; not yet `ACCEPTED`); LOSA refresh execution; Finnmark PSA; Route/UI; Phase 2 row writes; `56` main matcher retry pass.
+
+---
+
 ## Current recommended next gate
 
-**Current recommended next gate from this checklist snapshot:** **Owner selection after Z-OV-post** — separate permission **#2** operational truth-write gate (if desired; still no UI), **or** Z-AP* apply governance continuation, **or** other explicitly gated track. **Z-OV (#1) bounded verification for `MAIN-OP-VERIFY-2026-05-31-01` is recorded complete** (`OPERATIONAL_VERIFICATION_PASS`). **Does not** approve UI truth integration (#3), apply, `NOT_READY_FOR_APPLY` clearance, runtime/write product activation, PSA publication, or Route product consumption. **X-post** **NO_TOUCH** unchanged.
+**Current recommended next gate from this checklist snapshot:** **Section P4-LOSA-FM — Phase 4 LOSA Finnmark slice** — **owner review and accept** (or reject) the **DRAFT** `phase-4-losa-finnmark-publishability-contract-draft.md` (§10 acceptance checklist; labels: `ACCEPTED` | `ACCEPTED WITH NOTES` | `REJECTED`) using registry + refresh-design + **P06-CONTOUR-B-post** baseline. **Does not** authorize fetch/implementation, PSA writes for `56`, or UI integration. **Step B** (green counties permission **#2** operational refresh) remains **after** contract **acceptance** per owner track **A→B→C**. **Z-OV-post** and **P06-CONTOUR-B-post** remain recorded; **X-post** **NO_TOUCH** unchanged; **NOT_READY_FOR_APPLY** unchanged.
 
 **Alternate tracks (separate owner selection — not auto-progression from Z-OV):** Z-AP* apply governance continuation; permission stack **#2** / **#3** only after explicit separate gates; Phase 3 operational execution remains separately gated from P3 planning POSTs (`7ed7014` → `f412bea` → `87ddeb0` → `d552832`).
 
