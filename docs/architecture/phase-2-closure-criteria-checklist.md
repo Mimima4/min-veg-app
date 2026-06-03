@@ -1762,7 +1762,7 @@ Owner-adopted **A.3** read-only Contour **A** baseline gate per `phase-2-contour
 
 ---
 
-**Current recommended next gate from this checklist snapshot:** owner review of **4** CONFIRMED + Tier 2 SNIPPET rows; optional **Contour B update-3** (read-only) to relink **16** snapshots — **not** #2/`56`, **not** #3. **P4-LOSA-CONFIRMED-REGJERINGEN-3C-post** recorded. **NOT_READY_FOR_APPLY** unchanged.
+**Current recommended next gate from this checklist snapshot:** **owner review** of owner-held **4** CONFIRMED + Tier 2 SNIPPET rows (provider/delivery/programme — homepage-only rows: SNIPPET only unless manually cited). **Pause** new LOSA curls/pilots unless a **verified 200** URL gate exists (e.g. Lovdata full §14-4, Nord-Salten programme). **Contour B update-3** = optional audit only (low ROI; update-2 already shows stable **2/22/0** with **16** snapshots). **Not** #2/`56`, **not** #3, **not** matcher retry. **P4-LOSA-CONFIRMED-REGJERINGEN-3C-post** closes current evidence tranche. **NOT_READY_FOR_APPLY** unchanged.
 
 **Alternate tracks (separate owner selection — not auto-progression from Z-OV):** Z-AP* apply governance continuation; permission stack **#2** / **#3** only after explicit separate gates; Phase 3 operational execution remains separately gated from P3 planning POSTs (`7ed7014` → `f412bea` → `87ddeb0` → `d552832`).
 
