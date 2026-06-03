@@ -158,6 +158,8 @@ These are **documentation / boundary / criteria** artifacts only. They are **not
 - `docs/architecture/phase-0-6-contour-b-finnmark-processing-review-summary.md` — **Contour B** Finnmark `56` processing safe summary (**P06-CONTOUR-B-post**); `CONTOUR_B_PROCESSING_PASS_PACKET_READY_FOR_REVIEW`; **22** unmatched / **17** LOSA hints; main matcher retry **not** approved; owner next = Phase 4 LOSA slice
 - `docs/architecture/phase-0-6-contour-b-finnmark-56-update-execution-gate-owner-decision-record.md` — **Contour B Finnmark update** gate (**P06-CONTOUR-B-UPDATE**); read-only MAIN refresh + LOSA pilot manifest; **not** #2/#3/PSA write
 - `docs/architecture/phase-0-6-contour-b-finnmark-56-update-execution-review-summary.md` — **safe summary** (**P06-CONTOUR-B-UPDATE-post**); `CONTOUR_B_UPDATE_PASS_LOSA_EVIDENCE_LINKED`; **2/22/0** + **17** LOSA hints consistent with P06/A3; **10** pilot snapshots linked
+- `docs/architecture/phase-0-6-contour-b-finnmark-56-update-2-execution-gate-owner-decision-record.md` — **P06-CONTOUR-B-UPDATE-2** (read-only refresh after snippet/CONFIRMED tranche)
+- `docs/architecture/phase-0-6-contour-b-finnmark-56-update-2-execution-review-summary.md` — **P06-CONTOUR-B-UPDATE-2-post**; **2/22/0** unchanged; **15** snapshots + evidence aggregates linked
 - `docs/architecture/phase-4-losa-claim-extraction-pilot-execution-gate-owner-decision-record.md` — **LOSA claim extraction pilot** gate (**P4-LOSA-CLAIM-EXTRACT**); owner-held snapshots only; **no** `CONFIRMED` in pilot
 - `docs/architecture/phase-4-losa-claim-extraction-pilot-execution-review-summary.md` — **safe summary** (**P4-LOSA-CLAIM-EXTRACT-post**); `LOSA_CLAIM_EXTRACTION_PILOT_PASS`; **10** sources; **17** candidate signals; **0** confirmed
 - `docs/architecture/phase-4-losa-evidence-refresh-pilot-3-tier1-deep-urls-owner-decision-record.md` — **Pilot 3** deep Tier 1 URLs (**P4-LOSA-REFRESH-PILOT-3**)
@@ -1752,7 +1754,7 @@ Owner-adopted **A.3** read-only Contour **A** baseline gate per `phase-2-contour
 
 ---
 
-**Current recommended next gate from this checklist snapshot:** optional bounded **Tier 2 CONFIRMED** charter (programme row); **Regjeringen** deep; read-only **Contour B** refresh — **not** #2/`56`, **not** #3. **P4-LOSA-SNIPPET-SESSION-2-post** recorded. **NOT_READY_FOR_APPLY** unchanged.
+**Current recommended next gate from this checklist snapshot:** optional bounded **Tier 2 CONFIRMED** charter (Alta programme row); **Regjeringen** deep charter — **not** #2/`56`, **not** #3. **P06-CONTOUR-B-UPDATE-2-post** confirms matcher **2/22/0** stable. **NOT_READY_FOR_APPLY** unchanged.
 
 **Alternate tracks (separate owner selection — not auto-progression from Z-OV):** Z-AP* apply governance continuation; permission stack **#2** / **#3** only after explicit separate gates; Phase 3 operational execution remains separately gated from P3 planning POSTs (`7ed7014` → `f412bea` → `87ddeb0` → `d552832`).
 
