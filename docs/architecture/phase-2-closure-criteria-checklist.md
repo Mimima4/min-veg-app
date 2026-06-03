@@ -160,6 +160,10 @@ These are **documentation / boundary / criteria** artifacts only. They are **not
 - `docs/architecture/phase-0-6-contour-b-finnmark-56-update-execution-review-summary.md` — **safe summary** (**P06-CONTOUR-B-UPDATE-post**); `CONTOUR_B_UPDATE_PASS_LOSA_EVIDENCE_LINKED`; **2/22/0** + **17** LOSA hints consistent with P06/A3; **10** pilot snapshots linked
 - `docs/architecture/phase-4-losa-claim-extraction-pilot-execution-gate-owner-decision-record.md` — **LOSA claim extraction pilot** gate (**P4-LOSA-CLAIM-EXTRACT**); owner-held snapshots only; **no** `CONFIRMED` in pilot
 - `docs/architecture/phase-4-losa-claim-extraction-pilot-execution-review-summary.md` — **safe summary** (**P4-LOSA-CLAIM-EXTRACT-post**); `LOSA_CLAIM_EXTRACTION_PILOT_PASS`; **10** sources; **17** candidate signals; **0** confirmed
+- `docs/architecture/phase-4-losa-evidence-refresh-pilot-3-tier1-deep-urls-owner-decision-record.md` — **Pilot 3** deep Tier 1 URLs (**P4-LOSA-REFRESH-PILOT-3**)
+- `docs/architecture/phase-4-losa-evidence-refresh-pilot-3-execution-review-summary.md` — **P4-LOSA-REFRESH-PILOT-3-post**; **4/4** deep fetches HTTP 200; Regjeringen deferred
+
+**Checklist reference note (2026-06-03):** **LOSA refresh Pilot 3 (P4-LOSA-REFRESH-PILOT-3-post)** — deep Udir/Lovdata/Stortinget pages after owner claim review; **0** CONFIRMED; snippet session next.
 - `docs/architecture/phase-4-losa-finnmark-slice-owner-decision-record.md` — **Phase 4 LOSA Finnmark slice** adopted (**P4-LOSA-FM**; P4LFM-0–P4LFM-8); docs-only; targets LOSA blocker for `56`; **not** fetch/PSA/Route/UI
 - `docs/architecture/phase-4-losa-finnmark-publishability-contract-draft.md` — Finnmark LOSA publishability contract — **`ACCEPTED WITH NOTES`** (2026-05-31)
 - `docs/architecture/phase-4-losa-finnmark-publishability-contract-acceptance-owner-decision-record.md` — contract acceptance (**P4-LOSA-FM-post**; P4LFM-ACC-0–P4LFM-ACC-5); **not** implementation/PSA/Route/UI/`56` retry
@@ -1738,7 +1742,7 @@ Owner-adopted **A.3** read-only Contour **A** baseline gate per `phase-2-contour
 
 ---
 
-**Current recommended next gate from this checklist snapshot:** **owner review** of claim-candidates artifact (promote to evidence packet / human `CONFIRMED` discipline) **or** additional school-batch pilot **or** structured publication-blocker review doc — **not** #2 write on `56`, **not** #3 UI. **P4-LOSA-CLAIM-EXTRACT-post**, **P06-CONTOUR-B-UPDATE-post**, P4 refresh pilots, **A3**, **B-GREEN-#2-post**, **P4-LOSA-FM-post** recorded. **NOT_READY_FOR_APPLY** unchanged.
+**Current recommended next gate from this checklist snapshot:** **snippet session** (7× `QUEUE_HUMAN_SNIPPET` from owner-claim-decisions) **or** Regjeringen deep URL gate — **not** #2/`56`, **not** #3. **P4-LOSA-REFRESH-PILOT-3-post**, **P4-LOSA-CLAIM-EXTRACT-post**, **P06-CONTOUR-B-UPDATE-post**, P4 pilots 1/2/2b, **A3**, **B-GREEN-#2-post**, **P4-LOSA-FM-post** recorded. **NOT_READY_FOR_APPLY** unchanged.
 
 **Alternate tracks (separate owner selection — not auto-progression from Z-OV):** Z-AP* apply governance continuation; permission stack **#2** / **#3** only after explicit separate gates; Phase 3 operational execution remains separately gated from P3 planning POSTs (`7ed7014` → `f412bea` → `87ddeb0` → `d552832`).
 
