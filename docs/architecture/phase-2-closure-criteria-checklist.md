@@ -178,6 +178,10 @@ These are **documentation / boundary / criteria** artifacts only. They are **not
 - `docs/architecture/phase-4-losa-evidence-refresh-implementation-execution-review-summary.md` — **safe summary** (**P4-LOSA-REFRESH-IMPL-post**); charter `MAIN-LOSA-REFRESH-PILOT-2026-05-31-01`; `LOSA_REFRESH_PILOT_PASS`; Tier 1 **4/4** HTTP 200 + fingerprints; `refresh_blocked_source_coverage_missing` expected; **not** #2/#3/PSA; **NOT_READY_FOR_APPLY** unchanged
 - `docs/architecture/phase-4-losa-evidence-refresh-pilot-2-tier2-curated-urls-owner-decision-record.md` — **Pilot 2** curated Tier 2/3 URL list for Finnmark `56` reference (**P4-LOSA-REFRESH-PILOT-2**); **not** per-school scale
 - `docs/architecture/phase-4-losa-evidence-refresh-pilot-2-execution-review-summary.md` — **safe summary** (**P4-LOSA-REFRESH-PILOT-2-post**); charter `MAIN-LOSA-REFRESH-PILOT-2-2026-06-03-01`; `LOSA_REFRESH_PILOT_PASS_WITH_GAPS`; **3/3** chartered fetches HTTP 200; school pattern deferred; **NOT_READY_FOR_APPLY** unchanged
+- `docs/architecture/phase-4-losa-evidence-refresh-pilot-2b-tier2-school-urls-owner-decision-record.md` — **Pilot 2b** per-school official landings (3 schools; matching-spec anchor; **P4-LOSA-REFRESH-PILOT-2B**)
+- `docs/architecture/phase-4-losa-evidence-refresh-pilot-2b-execution-review-summary.md` — **safe summary** (**P4-LOSA-REFRESH-PILOT-2B-post**); `LOSA_REFRESH_PILOT_PASS_WITH_GAPS`; **3/3** school landings HTTP 200; ~22 unmatched still out of scope; **NOT_READY_FOR_APPLY** unchanged
+
+**Checklist reference note (2026-06-03):** **LOSA evidence refresh Pilot 2b session (P4-LOSA-REFRESH-PILOT-2B-post)** logged per `phase-4-losa-evidence-refresh-pilot-2b-execution-review-summary.md` — after Pilot 2 post; bounded `*.vgs.no` school homepages; not matcher/PSA closure.
 
 **Checklist reference note (2026-06-03):** **LOSA evidence refresh Pilot 2 session (P4-LOSA-REFRESH-PILOT-2-post)** logged per `phase-4-losa-evidence-refresh-pilot-2-execution-review-summary.md` — after Pilot 1 post; curated fylke/kommune ref + Tier 3 supporting; `T2_OFFICIAL_SCHOOL_PATTERN` deferred by design.
 
@@ -1687,7 +1691,15 @@ Owner-adopted **A.3** read-only Contour **A** baseline gate per `phase-2-contour
 | Storage | owner-held snapshots; git safe summary only |
 | **not** authorized | PSA, Phase 2 DML, UI (#3), #2 write `56`, cron, runtime truth |
 
-**Operational next step:** Pilot 1 **complete** (**P4-LOSA-REFRESH-IMPL-post**). Pilot 2 **complete** (**P4-LOSA-REFRESH-PILOT-2-post**). Next: **owner-selected** — per-school Tier 2 session, claim extraction, or Contour **B** / operational — **not** auto-progression.
+**Operational next step:** Pilots **1**, **2**, **2b** complete at bounded evidence level. Next: **owner-selected** — more school batches, claim extraction, or Contour **B** — **not** auto-progression.
+
+## Section P4-LOSA-REFRESH-PILOT-2B — LOSA Pilot 2b school landings (logged 2026-06-03)
+
+| Field | Status |
+|-------|--------|
+| Pilot | **2b** — 3 official school homepages (`*.vgs.no`) |
+| Anchor | matching spec §1 / §2 / §5 |
+| Outcome | `LOSA_REFRESH_PILOT_PASS_WITH_GAPS`; ~22 unmatched unchanged |
 
 ## Section P4-LOSA-REFRESH-PILOT-2 — LOSA Pilot 2 Tier 2 curated (logged 2026-06-03)
 
@@ -1700,7 +1712,7 @@ Owner-adopted **A.3** read-only Contour **A** baseline gate per `phase-2-contour
 
 ---
 
-**Current recommended next gate from this checklist snapshot:** **owner-selected** — bounded **per-school Tier 2** charter **or** Finnmark **Contour B** / operational **or** claim-extraction pilot. **P4-LOSA-REFRESH-PILOT-2-post**, **P4-LOSA-REFRESH-IMPL-post**, **A3**, **B-GREEN-#2-post**, **P4-LOSA-FM-post** recorded. **Not** #2 write on `56`, **not** #3 UI. **NOT_READY_FOR_APPLY** unchanged.
+**Current recommended next gate from this checklist snapshot:** **owner-selected** — additional school-batch pilot **or** bounded **claim extraction** from owner-held snapshots **or** Finnmark **Contour B** operational. **P4-LOSA-REFRESH-PILOT-2B-post**, **P4-LOSA-REFRESH-PILOT-2-post**, **P4-LOSA-REFRESH-IMPL-post**, **A3**, **B-GREEN-#2-post**, **P4-LOSA-FM-post** recorded. **Not** #2 write on `56`, **not** #3 UI. **NOT_READY_FOR_APPLY** unchanged.
 
 **Alternate tracks (separate owner selection — not auto-progression from Z-OV):** Z-AP* apply governance continuation; permission stack **#2** / **#3** only after explicit separate gates; Phase 3 operational execution remains separately gated from P3 planning POSTs (`7ed7014` → `f412bea` → `87ddeb0` → `d552832`).
 
