@@ -176,6 +176,8 @@ These are **documentation / boundary / criteria** artifacts only. They are **not
 - `docs/architecture/phase-4-losa-evidence-refresh-pilot-3c-regjeringen-execution-review-summary.md` — **P4-LOSA-REFRESH-PILOT-3C-REGJERINGEN-post**; **1/1** HTTP 200
 - `docs/architecture/phase-4-losa-evidence-snippet-regjeringen-3c-execution-gate-owner-decision-record.md` — **P4-LOSA-SNIPPET-REGJERINGEN-3C**
 - `docs/architecture/phase-4-losa-evidence-snippet-regjeringen-3c-execution-review-summary.md` — **P4-LOSA-SNIPPET-REGJERINGEN-3C-post**; **2/2** from Prop 57 HTML
+- `docs/architecture/phase-4-losa-confirmed-promotion-regjeringen-3c-gate-owner-decision-record.md` — **P4-LOSA-CONFIRMED-REGJERINGEN-3C** (max 1 forarbeid row)
+- `docs/architecture/phase-4-losa-confirmed-regjeringen-3c-execution-review-summary.md` — **P4-LOSA-CONFIRMED-REGJERINGEN-3C-post**; **4** total CONFIRMED owner-held
 - `docs/architecture/phase-4-losa-evidence-snippet-session-2-execution-gate-owner-decision-record.md` — **P4-LOSA-SNIPPET-SESSION-2** (3 programme rows; Pilot 3b)
 - `docs/architecture/phase-4-losa-evidence-snippet-session-2-execution-review-summary.md` — **P4-LOSA-SNIPPET-SESSION-2-post**; **3/3** captured; **0** new CONFIRMED
 
@@ -1760,7 +1762,7 @@ Owner-adopted **A.3** read-only Contour **A** baseline gate per `phase-2-contour
 
 ---
 
-**Current recommended next gate from this checklist snapshot:** optional bounded **Regjeringen CONFIRMED** (max 1 forarbeid row) after owner review; provider/delivery CONFIRMED only manual — **not** #2/`56`, **not** #3. **P4-LOSA-SNIPPET-REGJERINGEN-3C-post** recorded. **NOT_READY_FOR_APPLY** unchanged.
+**Current recommended next gate from this checklist snapshot:** owner review of **4** CONFIRMED + Tier 2 SNIPPET rows; optional **Contour B update-3** (read-only) to relink **16** snapshots — **not** #2/`56`, **not** #3. **P4-LOSA-CONFIRMED-REGJERINGEN-3C-post** recorded. **NOT_READY_FOR_APPLY** unchanged.
 
 **Alternate tracks (separate owner selection — not auto-progression from Z-OV):** Z-AP* apply governance continuation; permission stack **#2** / **#3** only after explicit separate gates; Phase 3 operational execution remains separately gated from P3 planning POSTs (`7ed7014` → `f412bea` → `87ddeb0` → `d552832`).
 
