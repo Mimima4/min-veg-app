@@ -172,6 +172,15 @@ These are **documentation / boundary / criteria** artifacts only. They are **not
 - `docs/architecture/phase-2-contour-a-finnmark-56-baseline-execution-review-summary-template.md` — **template** for **A3-CONTOUR-A-56-post** safe summary
 - `docs/architecture/phase-2-contour-a-finnmark-56-baseline-execution-review-summary.md` — **safe summary** (**A3-CONTOUR-A-56-post**); charter `MAIN-CONTOUR-A-56-BASELINE-2026-05-31-01`; `CONTOUR_A_56_BASELINE_CAPTURED`; dry-run **2/22/0** + ABORT; **not** #2/#3/LOSA impl
 
+- `docs/architecture/phase-4-losa-evidence-refresh-implementation-execution-gate-owner-decision-record.md` — **LOSA evidence refresh implementation** pilot gate (LRI0–LRI24; **P4-LOSA-REFRESH-IMPL**); Pilot 1 Tier 1 fetches only; owner-held snapshots; **not** PSA/Route/UI/#2 `56`/cron; **NOT_READY_FOR_APPLY** unchanged
+- `docs/architecture/phase-4-losa-evidence-refresh-implementation-execution-charter-template.md` — **template** for owner-held LOSA refresh pilot charter
+- `docs/architecture/phase-4-losa-evidence-refresh-implementation-execution-review-summary-template.md` — **template** for **P4-LOSA-REFRESH-IMPL-post**
+- `docs/architecture/phase-4-losa-evidence-refresh-implementation-execution-review-summary.md` — **safe summary** (**P4-LOSA-REFRESH-IMPL-post**); charter `MAIN-LOSA-REFRESH-PILOT-2026-05-31-01`; `LOSA_REFRESH_PILOT_PASS`; Tier 1 **4/4** HTTP 200 + fingerprints; `refresh_blocked_source_coverage_missing` expected; **not** #2/#3/PSA; **NOT_READY_FOR_APPLY** unchanged
+
+**Checklist reference note (2026-06-03):** **LOSA evidence refresh Pilot 1 session (P4-LOSA-REFRESH-IMPL-post)** logged per `phase-4-losa-evidence-refresh-implementation-execution-review-summary.md` — after **A3-CONTOUR-A-56-post**; Tier 1 fetches only; owner-held snapshots; refresh blocked on coverage until Tier 2 — **not** a pilot failure.
+
+**Checklist reference note (2026-05-31):** **LOSA evidence refresh implementation gate (Section P4-LOSA-REFRESH-IMPL)** logged per `phase-4-losa-evidence-refresh-implementation-execution-gate-owner-decision-record.md` — follows **A3-CONTOUR-A-56-post**; Pilot 1 Tier 1 registry URLs only; session outcome in **P4-LOSA-REFRESH-IMPL-post** note above.
+
 **Checklist reference note (2026-05-31):** **Contour A Finnmark `56` baseline session (A3-CONTOUR-A-56-post)** logged per `phase-2-contour-a-finnmark-56-baseline-execution-review-summary.md` — read-only MAIN capture after **B-GREEN-#2-post**; **ABORT** `unmatched=22` consistent with **P06-CONTOUR-B-post**; **A.3** closed at execution level; Finnmark resolution **not** closed.
 
 **Checklist reference note (2026-05-31):** **Contour A Finnmark `56` baseline gate (Section A3-CONTOUR-A-56)** logged per `phase-2-contour-a-finnmark-56-baseline-execution-gate-owner-decision-record.md` — follows **B-GREEN-#2-post** + **P4-LOSA-FM-post** + **P06-CONTOUR-B-post**; read-only classify + dry-run on `56`; structured **ABORT** = valid capture; session **not** run at adoption. Does **not** mean **A3-CONTOUR-A-56-post** recorded.
@@ -1664,7 +1673,21 @@ Owner-adopted **A.3** read-only Contour **A** baseline gate per `phase-2-contour
 
 ## Current recommended next gate
 
-**Current recommended next gate from this checklist snapshot:** **LOSA evidence refresh implementation gate** (Finnmark / nationwide patterns per **P4-LOSA-FM-post**) — docs-level gate + owner-held charter; **not** #2 write `56`, **not** **#3** UI. **A.3**, **B-GREEN-#2-post**, **P06-CONTOUR-B-post** recorded. **NOT_READY_FOR_APPLY** unchanged.
+## Section P4-LOSA-REFRESH-IMPL — LOSA evidence refresh implementation pilot (logged 2026-05-31)
+
+| Field | Status |
+|-------|--------|
+| Pilot | **1** — Tier 1 registry canonical URLs only (`T1_*`) |
+| Reference | Finnmark **`56`** (nationwide-applicable patterns) |
+| Fetch | headless HTTP — charter-listed URLs only |
+| Storage | owner-held snapshots; git safe summary only |
+| **not** authorized | PSA, Phase 2 DML, UI (#3), #2 write `56`, cron, runtime truth |
+
+**Operational next step:** Pilot 1 **complete** (**P4-LOSA-REFRESH-IMPL-post** recorded). Next requires **explicit owner selection** (e.g. Pilot 2 Tier 2, Contour **B**, claim extraction pilot) — **not** auto-progression.
+
+---
+
+**Current recommended next gate from this checklist snapshot:** **owner-selected** follow-on — **Pilot 2** (Tier 2 URLs + separate charter) **or** Finnmark **Contour B** / operational tracks **or** permission **#3** only after separate gate. **P4-LOSA-REFRESH-IMPL-post**, **A3**, **B-GREEN-#2-post**, **P4-LOSA-FM-post** recorded. **Not** #2 write on `56`, **not** full LOSA automation. **NOT_READY_FOR_APPLY** unchanged.
 
 **Alternate tracks (separate owner selection — not auto-progression from Z-OV):** Z-AP* apply governance continuation; permission stack **#2** / **#3** only after explicit separate gates; Phase 3 operational execution remains separately gated from P3 planning POSTs (`7ed7014` → `f412bea` → `87ddeb0` → `d552832`).
 
