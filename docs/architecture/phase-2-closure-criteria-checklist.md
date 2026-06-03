@@ -164,6 +164,8 @@ These are **documentation / boundary / criteria** artifacts only. They are **not
 - `docs/architecture/phase-4-losa-evidence-refresh-pilot-3-execution-review-summary.md` — **P4-LOSA-REFRESH-PILOT-3-post**; **4/4** deep fetches HTTP 200; Regjeringen deferred
 - `docs/architecture/phase-4-losa-evidence-snippet-session-execution-gate-owner-decision-record.md` — **P4-LOSA-SNIPPET-SESSION** (7 queued rows)
 - `docs/architecture/phase-4-losa-evidence-snippet-session-execution-review-summary.md` — **P4-LOSA-SNIPPET-SESSION-post**; **7/7** `SNIPPET_CAPTURED`; **0** CONFIRMED
+- `docs/architecture/phase-4-losa-evidence-refresh-pilot-3b-program-urls-owner-decision-record.md` — **P4-LOSA-REFRESH-PILOT-3B** (Alta program deep; curl only)
+- `docs/architecture/phase-4-losa-confirmed-promotion-udir-fjern-gate-owner-decision-record.md` — **P4-LOSA-CONFIRMED-UDIR-FJERN** (max 2 CONFIRMED; owner-held only)
 
 **Checklist reference note (2026-06-03):** **LOSA snippet session (P4-LOSA-SNIPPET-SESSION-post)** — owner-held excerpts for 7 claim rows; Nordkapp tagged LOSA_CONTEXT; not publication closure.
 
@@ -1746,7 +1748,7 @@ Owner-adopted **A.3** read-only Contour **A** baseline gate per `phase-2-contour
 
 ---
 
-**Current recommended next gate from this checklist snapshot:** **owner human review** of `evidence-snippets-2026-06-03.json` → optional **CONFIRMED promotion** gate (separate) **or** Regjeringen deep URL charter — **not** #2/`56`, **not** #3. **P4-LOSA-SNIPPET-SESSION-post**, Pilot 3, claim extract, Contour B update, P4 pilots, **A3**, **B-GREEN-#2-post**, **P4-LOSA-FM-post** recorded. **NOT_READY_FOR_APPLY** unchanged.
+**Current recommended next gate from this checklist snapshot:** **Pilot 3b** program fetch (Alta) and/or owner-held **CONFIRMED Udir fjern** (`promote-udir-fjern-confirmed.mjs`) — **not** #2/`56`, **not** #3. Gates **P4-LOSA-REFRESH-PILOT-3B** + **P4-LOSA-CONFIRMED-UDIR-FJERN** adopted at docs level. **NOT_READY_FOR_APPLY** unchanged.
 
 **Alternate tracks (separate owner selection — not auto-progression from Z-OV):** Z-AP* apply governance continuation; permission stack **#2** / **#3** only after explicit separate gates; Phase 3 operational execution remains separately gated from P3 planning POSTs (`7ed7014` → `f412bea` → `87ddeb0` → `d552832`).
 
