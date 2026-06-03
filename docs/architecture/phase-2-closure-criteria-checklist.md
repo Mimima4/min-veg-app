@@ -167,6 +167,14 @@ These are **documentation / boundary / criteria** artifacts only. They are **not
 - `docs/architecture/phase-2-operational-truth-write-green-counties-execution-charter-template.md` — **template** for owner-held #2 green-counties session charter
 - `docs/architecture/phase-2-operational-truth-write-green-counties-execution-review-summary-template.md` — **template** for repo-safe **B-GREEN-#2-post** outcome summary
 - `docs/architecture/phase-2-operational-truth-write-green-counties-execution-review-summary.md` — **safe summary** of completed bounded #2 green-counties session (**B-GREEN-#2-post**); charter `MAIN-TRUTH-WRITE-GREEN-2026-05-31-01`; outcome `OPERATIONAL_TRUTH_WRITE_PASS`; counties `11`/`46`/`50` written; `03`/`15`/`56` not in scope; **#3** not opened; **NOT_READY_FOR_APPLY** unchanged
+- `docs/architecture/phase-2-contour-a-finnmark-56-baseline-execution-gate-owner-decision-record.md` — **Contour A Finnmark `56` baseline** gate (CA56B0–CA56B22; Section **A3-CONTOUR-A-56**); owner track **A.3**; **#1 read-only**; `56` dry-run only; **ABORT acceptable**; **not** #2/#3/LOSA impl/Contour **B** re-run; **NOT_READY_FOR_APPLY** unchanged
+- `docs/architecture/phase-2-contour-a-finnmark-56-baseline-execution-charter-template.md` — **template** for owner-held A.3 session charter
+- `docs/architecture/phase-2-contour-a-finnmark-56-baseline-execution-review-summary-template.md` — **template** for **A3-CONTOUR-A-56-post** safe summary
+- `docs/architecture/phase-2-contour-a-finnmark-56-baseline-execution-review-summary.md` — **safe summary** (**A3-CONTOUR-A-56-post**); charter `MAIN-CONTOUR-A-56-BASELINE-2026-05-31-01`; `CONTOUR_A_56_BASELINE_CAPTURED`; dry-run **2/22/0** + ABORT; **not** #2/#3/LOSA impl
+
+**Checklist reference note (2026-05-31):** **Contour A Finnmark `56` baseline session (A3-CONTOUR-A-56-post)** logged per `phase-2-contour-a-finnmark-56-baseline-execution-review-summary.md` — read-only MAIN capture after **B-GREEN-#2-post**; **ABORT** `unmatched=22` consistent with **P06-CONTOUR-B-post**; **A.3** closed at execution level; Finnmark resolution **not** closed.
+
+**Checklist reference note (2026-05-31):** **Contour A Finnmark `56` baseline gate (Section A3-CONTOUR-A-56)** logged per `phase-2-contour-a-finnmark-56-baseline-execution-gate-owner-decision-record.md` — follows **B-GREEN-#2-post** + **P4-LOSA-FM-post** + **P06-CONTOUR-B-post**; read-only classify + dry-run on `56`; structured **ABORT** = valid capture; session **not** run at adoption. Does **not** mean **A3-CONTOUR-A-56-post** recorded.
 
 **Checklist reference note (2026-05-31):** **Operational truth write green counties session outcome (B-GREEN-#2-post)** logged per `phase-2-operational-truth-write-green-counties-execution-review-summary.md` — MAIN session `MAIN-TRUTH-WRITE-GREEN-2026-05-31-01`; `11`/`46`/`50` PSA refresh pass; Oslo `03` / Møre `15` / Finnmark `56` not written; **#3** / LOSA impl / `NOT_READY_FOR_APPLY` unchanged.
 
@@ -1603,7 +1611,7 @@ Owner-adopted **Phase 4 LOSA Finnmark slice** per `phase-4-losa-finnmark-slice-o
 | Contract | `phase-4-losa-finnmark-publishability-contract-draft.md` |
 | Acceptance | **`ACCEPTED WITH NOTES`** per `phase-4-losa-finnmark-publishability-contract-acceptance-owner-decision-record.md` |
 | **A.2** (LOSA contract) | **closed** at docs level |
-| **A.3** (Contour A retry `56`) | **not** closed — separate charter |
+| **A.3** (Contour A baseline `56`) | **closed** — **A3-CONTOUR-A-56-post** `CONTOUR_A_56_BASELINE_CAPTURED` |
 | **B** (green #2) | **closed** at execution level — session `MAIN-TRUTH-WRITE-GREEN-2026-05-31-01`; **B-GREEN-#2-post** `OPERATIONAL_TRUTH_WRITE_PASS` (`11`/`46`/`50`) |
 
 ---
@@ -1628,13 +1636,35 @@ Owner-adopted **operational truth write (#2)** gate per `phase-2-operational-tru
 
 **Explicitly not closed (Section B-GREEN-#2):** permission **#3** UI; Finnmark operational resolution; LOSA refresh execution; county `15` pipeline refresh; Oslo `03` unless future charter.
 
-**Operational next step (Section B-GREEN-#2):** owner selects next track — optional **A.3** `56` dry-run charter; **#3** UI gate; LOSA implementation; or `15` identity case — **not** automatic from #2 pass.
+**Operational next step (Section B-GREEN-#2):** **B** execution **closed** — see **A3-CONTOUR-A-56** for owner track **A.3**.
+
+---
+
+## Section A3-CONTOUR-A-56 — Contour A Finnmark `56` baseline (logged at docs level 2026-05-31)
+
+Owner-adopted **A.3** read-only Contour **A** baseline gate per `phase-2-contour-a-finnmark-56-baseline-execution-gate-owner-decision-record.md` (CA56B0–CA56B22).
+
+| Field | Status |
+|-------|--------|
+| Owner track | **A.3** after **A.2** + **B-GREEN-#2-post** |
+| Permission stack | **#1 read-only** — not **#2** / **#3** |
+| County | **`56` only** |
+| Commands | classify + `run-vgs-truth-pipeline --dry-run` |
+| Expected | structured **ABORT** acceptable (baseline capture) |
+| Contour **B** | **not** in scope (P06-CONTOUR-B-post already recorded) |
+| LOSA implementation | **not** authorized |
+
+**Closed at docs level (Section A3-CONTOUR-A-56):** CA56B0–CA56B22 adopted; session `MAIN-CONTOUR-A-56-BASELINE-2026-05-31-01` completed; **A3-CONTOUR-A-56-post** recorded; outcome `CONTOUR_A_56_BASELINE_CAPTURED`.
+
+**Explicitly not closed (Section A3-CONTOUR-A-56):** Finnmark operational resolution; LOSA refresh execution; **#2** write `56`; **#3** UI.
+
+**Operational next step (Section A3-CONTOUR-A-56):** owner track **A** complete at baseline level → **LOSA refresh implementation** execution gate (docs adoption, then bounded exec charter).
 
 ---
 
 ## Current recommended next gate
 
-**Current recommended next gate from this checklist snapshot:** **Post B-GREEN-#2 owner selection** — optional **A.3** Contour **A** dry-run charter for `56` (read-only; expect ABORT); separate permission **#3** UI gate; LOSA refresh **implementation** (Finnmark); county `15` ambiguity resolution (not bulk #2); or commit remaining **B-GREEN-#2** gate docs if uncommitted. **Does not** authorize `NOT_READY_FOR_APPLY` clearance. **B-GREEN-#2-post**, **P4-LOSA-FM-post**, **P06-CONTOUR-B-post**, and **Z-OV-post** remain recorded; **X-post** **NO_TOUCH** unchanged.
+**Current recommended next gate from this checklist snapshot:** **LOSA evidence refresh implementation gate** (Finnmark / nationwide patterns per **P4-LOSA-FM-post**) — docs-level gate + owner-held charter; **not** #2 write `56`, **not** **#3** UI. **A.3**, **B-GREEN-#2-post**, **P06-CONTOUR-B-post** recorded. **NOT_READY_FOR_APPLY** unchanged.
 
 **Alternate tracks (separate owner selection — not auto-progression from Z-OV):** Z-AP* apply governance continuation; permission stack **#2** / **#3** only after explicit separate gates; Phase 3 operational execution remains separately gated from P3 planning POSTs (`7ed7014` → `f412bea` → `87ddeb0` → `d552832`).
 
