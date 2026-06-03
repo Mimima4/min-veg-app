@@ -158,6 +158,8 @@ These are **documentation / boundary / criteria** artifacts only. They are **not
 - `docs/architecture/phase-0-6-contour-b-finnmark-processing-review-summary.md` — **Contour B** Finnmark `56` processing safe summary (**P06-CONTOUR-B-post**); `CONTOUR_B_PROCESSING_PASS_PACKET_READY_FOR_REVIEW`; **22** unmatched / **17** LOSA hints; main matcher retry **not** approved; owner next = Phase 4 LOSA slice
 - `docs/architecture/phase-0-6-contour-b-finnmark-56-update-execution-gate-owner-decision-record.md` — **Contour B Finnmark update** gate (**P06-CONTOUR-B-UPDATE**); read-only MAIN refresh + LOSA pilot manifest; **not** #2/#3/PSA write
 - `docs/architecture/phase-0-6-contour-b-finnmark-56-update-execution-review-summary.md` — **safe summary** (**P06-CONTOUR-B-UPDATE-post**); `CONTOUR_B_UPDATE_PASS_LOSA_EVIDENCE_LINKED`; **2/22/0** + **17** LOSA hints consistent with P06/A3; **10** pilot snapshots linked
+- `docs/architecture/phase-4-losa-claim-extraction-pilot-execution-gate-owner-decision-record.md` — **LOSA claim extraction pilot** gate (**P4-LOSA-CLAIM-EXTRACT**); owner-held snapshots only; **no** `CONFIRMED` in pilot
+- `docs/architecture/phase-4-losa-claim-extraction-pilot-execution-review-summary.md` — **safe summary** (**P4-LOSA-CLAIM-EXTRACT-post**); `LOSA_CLAIM_EXTRACTION_PILOT_PASS`; **10** sources; **17** candidate signals; **0** confirmed
 - `docs/architecture/phase-4-losa-finnmark-slice-owner-decision-record.md` — **Phase 4 LOSA Finnmark slice** adopted (**P4-LOSA-FM**; P4LFM-0–P4LFM-8); docs-only; targets LOSA blocker for `56`; **not** fetch/PSA/Route/UI
 - `docs/architecture/phase-4-losa-finnmark-publishability-contract-draft.md` — Finnmark LOSA publishability contract — **`ACCEPTED WITH NOTES`** (2026-05-31)
 - `docs/architecture/phase-4-losa-finnmark-publishability-contract-acceptance-owner-decision-record.md` — contract acceptance (**P4-LOSA-FM-post**; P4LFM-ACC-0–P4LFM-ACC-5); **not** implementation/PSA/Route/UI/`56` retry
@@ -182,6 +184,8 @@ These are **documentation / boundary / criteria** artifacts only. They are **not
 - `docs/architecture/phase-4-losa-evidence-refresh-pilot-2-execution-review-summary.md` — **safe summary** (**P4-LOSA-REFRESH-PILOT-2-post**); charter `MAIN-LOSA-REFRESH-PILOT-2-2026-06-03-01`; `LOSA_REFRESH_PILOT_PASS_WITH_GAPS`; **3/3** chartered fetches HTTP 200; school pattern deferred; **NOT_READY_FOR_APPLY** unchanged
 - `docs/architecture/phase-4-losa-evidence-refresh-pilot-2b-tier2-school-urls-owner-decision-record.md` — **Pilot 2b** per-school official landings (3 schools; matching-spec anchor; **P4-LOSA-REFRESH-PILOT-2B**)
 - `docs/architecture/phase-4-losa-evidence-refresh-pilot-2b-execution-review-summary.md` — **safe summary** (**P4-LOSA-REFRESH-PILOT-2B-post**); `LOSA_REFRESH_PILOT_PASS_WITH_GAPS`; **3/3** school landings HTTP 200; ~22 unmatched still out of scope; **NOT_READY_FOR_APPLY** unchanged
+
+**Checklist reference note (2026-06-03):** **LOSA claim extraction pilot (P4-LOSA-CLAIM-EXTRACT-post)** logged per `phase-4-losa-claim-extraction-pilot-execution-review-summary.md` — keyword candidates from **10** refresh snapshots; **0** `CONFIRMED`; not publication/matcher closure.
 
 **Checklist reference note (2026-06-03):** **Contour B Finnmark update session (P06-CONTOUR-B-UPDATE-post)** logged per `phase-0-6-contour-b-finnmark-56-update-execution-review-summary.md` — after P4 LOSA pilots 1/2/2b + A3; packet posture refreshed; matcher ABORT unchanged; LOSA blocker narrowed not removed.
 
@@ -1695,7 +1699,16 @@ Owner-adopted **A.3** read-only Contour **A** baseline gate per `phase-2-contour
 | Storage | owner-held snapshots; git safe summary only |
 | **not** authorized | PSA, Phase 2 DML, UI (#3), #2 write `56`, cron, runtime truth |
 
-**Operational next step:** Contour **B update** recorded (**P06-CONTOUR-B-UPDATE-post**). Next: **owner-selected** — claim extraction, more school pilots, or Contour **A** reconsideration charter — **not** auto #2/#3.
+**Operational next step:** Claim extraction pilot recorded (**P4-LOSA-CLAIM-EXTRACT-post**). Next: **owner review** of owner-held candidates **or** additional school pilot **or** publication/evidence packet structuring — **not** auto #2/#3.
+
+## Section P4-LOSA-CLAIM-EXTRACT — LOSA claim extraction pilot (logged 2026-06-03)
+
+| Field | Status |
+|-------|--------|
+| Input | **10** pilot snapshots (owner-held) |
+| Labels | `EXTRACTION_CANDIDATE` / `UNKNOWN` only |
+| `CONFIRMED` | **0** |
+| Outcome | `LOSA_CLAIM_EXTRACTION_PILOT_PASS` |
 
 ## Section P06-CONTOUR-B-UPDATE — Contour B Finnmark update (logged 2026-06-03)
 
@@ -1725,7 +1738,7 @@ Owner-adopted **A.3** read-only Contour **A** baseline gate per `phase-2-contour
 
 ---
 
-**Current recommended next gate from this checklist snapshot:** **owner-selected** — bounded **claim extraction** from owner-held LOSA + packet artifacts **or** additional school-batch pilot **or** explicit Contour **A** reconsideration charter (still expects ABORT until programme/identity gates). **P06-CONTOUR-B-UPDATE-post**, **P4-LOSA-REFRESH-PILOT-2B-post**, **P4-LOSA-REFRESH-PILOT-2-post**, **P4-LOSA-REFRESH-IMPL-post**, **A3**, **B-GREEN-#2-post**, **P4-LOSA-FM-post** recorded. **Not** #2 write on `56`, **not** #3 UI. **NOT_READY_FOR_APPLY** unchanged.
+**Current recommended next gate from this checklist snapshot:** **owner review** of claim-candidates artifact (promote to evidence packet / human `CONFIRMED` discipline) **or** additional school-batch pilot **or** structured publication-blocker review doc — **not** #2 write on `56`, **not** #3 UI. **P4-LOSA-CLAIM-EXTRACT-post**, **P06-CONTOUR-B-UPDATE-post**, P4 refresh pilots, **A3**, **B-GREEN-#2-post**, **P4-LOSA-FM-post** recorded. **NOT_READY_FOR_APPLY** unchanged.
 
 **Alternate tracks (separate owner selection — not auto-progression from Z-OV):** Z-AP* apply governance continuation; permission stack **#2** / **#3** only after explicit separate gates; Phase 3 operational execution remains separately gated from P3 planning POSTs (`7ed7014` → `f412bea` → `87ddeb0` → `d552832`).
 
