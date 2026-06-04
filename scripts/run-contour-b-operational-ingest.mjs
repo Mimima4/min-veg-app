@@ -29,6 +29,7 @@ export async function runContourBOperationalIngest({
   countyCode,
   dryRun = false,
   supabase,
+  vilbliHtml = null,
 }) {
   if (!supabase) {
     throw new Error("runContourBOperationalIngest requires a supabase client");
@@ -44,6 +45,7 @@ export async function runContourBOperationalIngest({
     professionSlug: profession,
     countyCode: county,
     supabase,
+    vilbliHtml,
   });
 
   const eligibility = assessContourBOperationalEligibility({
@@ -69,6 +71,7 @@ export async function runContourBOperationalIngest({
     isDryRun: dryRun,
     isContourBPartial: true,
     supabase,
+    vilbliHtml,
   });
 }
 

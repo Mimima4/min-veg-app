@@ -4,36 +4,72 @@ Batch verify/ingest for eligible `(profession, county)` pairs. **Not** invoked o
 
 ## Cadence
 
-**Every 6 months:** 1 January and 1 July 00:00 UTC (`vercel.json` cron).
+**Every 6 months** — automated via **home-IP relay** (see below). Vilbli.no returns a stub (~2KB, HTTP 202) to Vercel/datacenter IPs, so **do not** rely on Vercel Cron to fetch Vilbli directly.
 
-## Recommended automation (no GitHub secrets)
+## Production automation (required)
 
-1. Deploy on **Vercel** with existing app env:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `SUPABASE_SERVICE_ROLE_KEY` (already required for admin routes)
-2. Add **`CRON_SECRET`** in **Vercel → Project → Environment Variables** (Production).  
-   Vercel Cron sends `Authorization: Bearer <CRON_SECRET>` — this is **not** the service role; it only **triggers** the job.
-3. Cron hits:  
-   `GET /api/internal/vgs/run-contour-b-operational-scheduler`  
-   (configured in `vercel.json`).
+1. **Mac (or any network where Vilbli returns full HTML ~97KB)** with `.env.local`:
+   - `VERCEL_APP_URL` (e.g. `https://min-veg-app.vercel.app`)
+   - `CRON_SECRET` (same as Vercel Production)
 
-On **Vercel**, `npm run build` runs `scripts/vercel-bundle/build.mjs` (esbuild, devDependency only) and writes `src/server/vgs/generated/contour-b-scheduler.bundle.mjs` (gitignored, created at build). The API imports that file via a **static path** so it is included in the serverless bundle.
-
-Optional: reuse `BILLING_SYNC_SECRET` as the bearer value instead of a separate `CRON_SECRET` (same header patterns as billing internal routes).
-
-## Do not use
-
-- **GitHub Actions** with Supabase keys in repository secrets (removed from repo).
-- Manual CLI as the primary operator path (scripts remain for debugging).
-
-## Local / debug only
+2. **Dry-run one county:**
 
 ```bash
-node scripts/run-contour-b-operational-scheduler.mjs [--dry-run] [--profession electrician] [--county 56]
+set -a && source .env.local && set +a
+node scripts/relay-contour-b-vilbli-to-production.mjs --dry-run --county 56
 ```
 
-## External cron alternative
+3. **Full batch (all pipeline counties):**
 
-If not on Vercel: any HTTPS cron (e.g. cron-job.org) may `GET` the deployed URL with  
-`Authorization: Bearer <CRON_SECRET>` or header `x-internal-secret`.  
-Store **only** the trigger secret on the cron provider — **not** `SUPABASE_SERVICE_ROLE_KEY`.
+```bash
+node scripts/relay-contour-b-vilbli-to-production.mjs --dry-run
+node scripts/relay-contour-b-vilbli-to-production.mjs   # production write
+```
+
+4. **Schedule every 6 months (macOS launchd example):**
+
+```xml
+<!-- ~/Library/LaunchAgents/no.minveg.contour-b-relay.plist -->
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>no.minveg.contour-b-relay</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>-lc</string>
+    <string>cd /path/to/min-veg-app && set -a && source .env.local && set +a && node scripts/relay-contour-b-vilbli-to-production.mjs</string>
+  </array>
+  <key>StartCalendarInterval</key>
+  <array>
+    <dict><key>Month</key><integer>1</integer><key>Day</key><integer>1</integer><key>Hour</key><integer>3</integer></dict>
+    <dict><key>Month</key><integer>7</integer><key>Day</key><integer>1</integer><key>Hour</key><integer>3</integer></dict>
+  </array>
+</dict>
+</plist>
+```
+
+Load: `launchctl load ~/Library/LaunchAgents/no.minveg.contour-b-relay.plist`
+
+## API endpoints
+
+| Endpoint | Role |
+|----------|------|
+| `POST /api/internal/vgs/ingest-contour-b-vilbli-relay` | Accepts `{ professionSlug, countyCode, dryRun?, vilbliHtml }` — **production processing** |
+| `GET /api/internal/vgs/run-contour-b-operational-scheduler` | On Vercel returns `vilbli_direct_fetch_blocked_on_vercel` — use relay instead |
+| `?vilbliProbe=<county>` | Diagnostic (direct fetch from caller’s IP — on Vercel still shows block) |
+
+Auth: `Authorization: Bearer <CRON_SECRET>` or `x-internal-secret`.
+
+## Local-only (no Vercel)
+
+```bash
+node scripts/run-contour-b-operational-scheduler.mjs [--dry-run] [--county 56]
+```
+
+Uses direct Vilbli fetch from your machine + local Supabase env.
+
+## Build
+
+`npm run build` runs `scripts/vercel-bundle/build.mjs` → `src/server/vgs/generated/contour-b-scheduler.bundle.mjs` (gitignored, created at build).

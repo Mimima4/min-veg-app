@@ -1,3 +1,4 @@
+import { loadVilbliCountyHtml } from "./lib/load-vilbli-county-html.mjs";
 import { vilbliFetch } from "./lib/vilbli-fetch.mjs";
 import { isMainModule } from "./lib/is-main-module.mjs";
 import { classifyReadiness } from "./classify-vgs-truth-readiness.mjs";
@@ -656,6 +657,7 @@ export async function runVgsTruthPipeline({
   isDryRun = false,
   isContourBPartial = false,
   supabase,
+  vilbliHtml = null,
 }) {
   if (!supabase) {
     throw new Error("runVgsTruthPipeline requires a supabase client");
@@ -721,11 +723,15 @@ export async function runVgsTruthPipeline({
   };
 
   // 1) Load/extract Vilbli structure + availability.
-  const response = await vilbliFetch(sourceUrl);
-  if (!response.ok) {
-    throw new Error(`ABORT: Vilbli extraction failed with status ${response.status}`);
+  const { html, httpStatus } = await loadVilbliCountyHtml({ sourceUrl, vilbliHtml });
+  if (httpStatus < 200 || httpStatus >= 300) {
+    throw new Error(`ABORT: Vilbli extraction failed with status ${httpStatus}`);
   }
-  const html = await response.text();
+  if (html.length < 10_000) {
+    throw new Error(
+      `ABORT: Vilbli HTML too short (${html.length} bytes). Use relay from a non-datacenter IP.`
+    );
+  }
   const extracted = extractVilbliStagesFromHtml({
     html,
     countySlug: countyMeta.slug,

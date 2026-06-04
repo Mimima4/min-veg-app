@@ -1,8 +1,1 @@
-{
-  "crons": [
-    {
-      "path": "/api/internal/vgs/run-contour-b-operational-scheduler",
-      "schedule": "0 0 1 1,7 *"
-    }
-  ]
-}
+{}

@@ -1,4 +1,4 @@
-import { vilbliFetch } from "./lib/vilbli-fetch.mjs";
+import { loadVilbliCountyHtml } from "./lib/load-vilbli-county-html.mjs";
 import { isMainModule } from "./lib/is-main-module.mjs";
 import { getVgsPathDefinition, mapProgrammeToPathNode } from "./vgs-path-definitions.mjs";
 import { extractVilbliStagesFromHtml } from "./vilbli-stage-extraction-helper.mjs";
@@ -276,7 +276,12 @@ function withIdentitySemanticsDiagnostics(result) {
   };
 }
 
-export async function classifyReadiness({ professionSlug, countyCode, supabase }) {
+export async function classifyReadiness({
+  professionSlug,
+  countyCode,
+  supabase,
+  vilbliHtml = null,
+}) {
   if (!supabase) {
     throw new Error("classifyReadiness requires a supabase client");
   }
@@ -376,9 +381,8 @@ export async function classifyReadiness({ professionSlug, countyCode, supabase }
   } else {
     sourceUrl = pathDefinition.sourceModel.buildVilbliUrl(countyMeta.slug);
     try {
-      const response = await vilbliFetch(sourceUrl);
-      const html = await response.text();
-      if (!response.ok) {
+      const { html, httpStatus } = await loadVilbliCountyHtml({ sourceUrl, vilbliHtml });
+      if (httpStatus < 200 || httpStatus >= 300 || html.length < 10_000) {
         sourceExtractionFailed = true;
       } else {
         const extracted = extractVilbliStagesFromHtml({

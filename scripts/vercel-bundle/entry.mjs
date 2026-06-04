@@ -30,20 +30,90 @@ function buildPairList({ profession, county }) {
   return pairs;
 }
 
-export async function runContourBOperationalSchedulerBundled({
-  dryRun = false,
-  profession,
-  county,
-} = {}) {
+function createSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) {
     throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
   }
-
-  const supabase = createClient(url, key, {
+  return createClient(url, key, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
+}
+
+/** Process one county when Vilbli HTML was fetched off-Vercel (home IP relay). */
+export async function runContourBCountyRelay({
+  professionSlug,
+  countyCode,
+  dryRun = false,
+  vilbliHtml,
+}) {
+  const supabase = createSupabaseAdmin();
+  const profession = String(professionSlug ?? "").trim();
+  const county = String(countyCode ?? "").trim();
+  if (!profession || !county || !vilbliHtml) {
+    throw new Error("profession, county, and vilbliHtml are required");
+  }
+
+  const readiness = await classifyReadiness({
+    professionSlug: profession,
+    countyCode: county,
+    supabase,
+    vilbliHtml,
+  });
+  const readinessStatus = String(readiness.status ?? "unknown");
+
+  const eligibility = assessContourBOperationalEligibility({
+    countyCode: county,
+    professionSlug: profession,
+    readinessStatus,
+  });
+
+  if (!eligibility.eligible) {
+    return {
+      ok: true,
+      action: "skipped",
+      reason: eligibility.reason,
+      readiness: readinessStatus,
+    };
+  }
+
+  await runContourBOperationalIngest({
+    professionSlug: profession,
+    countyCode: county,
+    dryRun: Boolean(dryRun),
+    supabase,
+    vilbliHtml,
+  });
+
+  return {
+    ok: true,
+    action: dryRun ? "dry_run_ok" : "ingested",
+    reason: eligibility.reason,
+    readiness: readinessStatus,
+  };
+}
+
+export async function runContourBOperationalSchedulerBundled({
+  dryRun = false,
+  profession,
+  county,
+} = {}) {
+  if (process.env.VERCEL === "1") {
+    return {
+      exitCode: 1,
+      summary: {
+        scheduler: "contour_b_operational",
+        error: "vilbli_direct_fetch_blocked_on_vercel",
+        hint: "Run: node scripts/relay-contour-b-vilbli-to-production.mjs [--dry-run] (from Mac/home IP). See src/server/vgs/VGS_OPERATIONAL_RUNNERS.md",
+        pairCount: 0,
+        processed: 0,
+      },
+      results: [],
+    };
+  }
+
+  const supabase = createSupabaseAdmin();
 
   const isDryRun = Boolean(dryRun);
   const maxConsecutiveFailures = Number(
