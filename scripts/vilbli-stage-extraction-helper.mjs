@@ -33,19 +33,58 @@ function parseVilbliJsArrayLiteral(literal) {
   }
 }
 
+function extractBracketedArrayLiteral(html, openBracketIndex) {
+  let depth = 0;
+  let inSingle = false;
+  let inDouble = false;
+  let escape = false;
+
+  for (let i = openBracketIndex; i < html.length; i += 1) {
+    const ch = html[i];
+    if (escape) {
+      escape = false;
+      continue;
+    }
+    if (ch === "\\") {
+      escape = true;
+      continue;
+    }
+    if (!inDouble && ch === "'") {
+      inSingle = !inSingle;
+      continue;
+    }
+    if (!inSingle && ch === '"') {
+      inDouble = !inDouble;
+      continue;
+    }
+    if (inSingle || inDouble) continue;
+    if (ch === "[") depth += 1;
+    if (ch === "]") {
+      depth -= 1;
+      if (depth === 0) {
+        return html.slice(openBracketIndex, i + 1);
+      }
+    }
+  }
+  return null;
+}
+
 function parseStageArraysFromHtml(html) {
   const stageMap = {};
-  const regex = /(?:window\.)?(vb_map_data_[A-Za-z0-9_]+)\s*=\s*(\[[\s\S]*?\]);/g;
-  let match = regex.exec(html);
+  const assignRegex = /(?:window\.)?(vb_map_data_[A-Za-z0-9_]+)\s*=\s*\[/gi;
+  let match = assignRegex.exec(html);
   while (match) {
-    const parsed = parseVilbliJsArrayLiteral(match[2]);
+    const varName = match[1];
+    const openIndex = match.index + match[0].length - 1;
+    const literal = extractBracketedArrayLiteral(html, openIndex);
+    const parsed = literal ? parseVilbliJsArrayLiteral(literal) : null;
     if (parsed) {
-      const suffix = match[1].replace(/^vb_map_data_/i, "");
+      const suffix = varName.replace(/^vb_map_data_/i, "");
       const stageMatch = suffix.match(/vg\d/i);
       const stage = (stageMatch ? stageMatch[0] : suffix).toUpperCase();
       stageMap[stage] = parsed;
     }
-    match = regex.exec(html);
+    match = assignRegex.exec(html);
   }
   return stageMap;
 }

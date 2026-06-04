@@ -1,5 +1,7 @@
 import "server-only";
 
+import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { NextRequest, NextResponse } from "next/server";
 import { runContourBOperationalScheduler } from "@/server/vgs/run-contour-b-operational-scheduler";
 import { verifyInternalSchedulerRequest } from "@/server/vgs/verify-internal-scheduler-request";
@@ -34,6 +36,20 @@ async function handle(request: NextRequest) {
   }
 
   const url = new URL(request.url);
+  const vilbliProbeCounty = url.searchParams.get("vilbliProbe")?.trim();
+  if (vilbliProbeCounty) {
+    const bundlePath = path.join(
+      process.cwd(),
+      "src/server/vgs/generated/contour-b-scheduler.bundle.mjs"
+    );
+    const bundle = await import(pathToFileURL(bundlePath).href);
+    const probe = await bundle.probeVilbliCounty({
+      professionSlug: url.searchParams.get("profession") ?? "electrician",
+      countyCode: vilbliProbeCounty,
+    });
+    return NextResponse.json({ ok: true, probe });
+  }
+
   const profession = url.searchParams.get("profession") ?? undefined;
   const county = url.searchParams.get("county") ?? undefined;
   const dryRun = parseDryRun(request);

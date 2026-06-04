@@ -10,6 +10,9 @@ import {
   SUPPORTED_VGS_PROFESSION_SLUGS,
   VGS_PIPELINE_COUNTY_CODES,
 } from "../lib/contour-b-operational-eligibility.mjs";
+import { probeVilbliCounty } from "../lib/vilbli-probe.mjs";
+
+export { probeVilbliCounty };
 
 function buildPairList({ profession, county }) {
   const professionFilter = String(profession ?? "").trim();
@@ -71,6 +74,16 @@ export async function runContourBOperationalSchedulerBundled({
       });
       const readinessStatus = String(readiness.status ?? "unknown");
       entry.readiness = readinessStatus;
+
+      if (readinessStatus === "source_extraction_failed") {
+        const probe = await probeVilbliCounty({ professionSlug, countyCode });
+        entry.action = "failed";
+        entry.reason = `vilbli_unavailable: status=${probe.httpStatus} htmlLen=${probe.htmlLength} vb_map=${probe.hasVbMapData} VG1=${probe.stageCounts?.VG1 ?? 0}`;
+        failed += 1;
+        consecutiveFailures += 1;
+        results.push(entry);
+        continue;
+      }
 
       const eligibility = assessContourBOperationalEligibility({
         countyCode,

@@ -122,6 +122,16 @@ async function runViaDynamicScripts(
       const readinessStatus = String(readiness.status ?? "unknown");
       entry.readiness = readinessStatus;
 
+      if (readinessStatus === "source_extraction_failed") {
+        entry.action = "failed";
+        entry.reason =
+          "vilbli_source_extraction_failed (run ?vilbliProbe=<county> on this API for httpStatus/htmlLen)";
+        failed += 1;
+        consecutiveFailures += 1;
+        results.push(entry);
+        continue;
+      }
+
       const eligibility = assessContourBOperationalEligibility({
         countyCode,
         professionSlug,
