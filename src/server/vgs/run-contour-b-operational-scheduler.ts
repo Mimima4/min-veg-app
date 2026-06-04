@@ -1,8 +1,5 @@
 import "server-only";
 
-import { existsSync } from "node:fs";
-import path from "node:path";
-import { pathToFileURL } from "node:url";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   assessContourBOperationalEligibility,
@@ -54,27 +51,17 @@ type IngestModule = {
   }) => Promise<void>;
 };
 
-const VERCEL_BUNDLE_RELATIVE = "scripts/.vercel-bundle/scheduler.mjs";
-
 function useVercelSchedulerBundle(): boolean {
-  return (
-    process.env.VERCEL === "1" ||
-    existsSync(path.join(process.cwd(), VERCEL_BUNDLE_RELATIVE))
-  );
+  return process.env.VERCEL === "1";
 }
 
 async function runViaVercelBundle(
   options: RunContourBSchedulerOptions
 ): Promise<RunContourBSchedulerOutput> {
-  const bundlePath = path.join(process.cwd(), VERCEL_BUNDLE_RELATIVE);
-  if (!existsSync(bundlePath)) {
-    throw new Error(
-      "Scheduler bundle missing. Production build must run scripts/vercel-bundle/build.mjs first."
-    );
-  }
-  const mod = await import(
-    pathToFileURL(bundlePath).href
-  ) as BundledSchedulerModule;
+  // Literal path so Next output file tracing includes the esbuild output.
+  const mod = (await import(
+    "./generated/contour-b-scheduler.bundle.mjs"
+  )) as BundledSchedulerModule;
   return mod.runContourBOperationalSchedulerBundled(options);
 }
 

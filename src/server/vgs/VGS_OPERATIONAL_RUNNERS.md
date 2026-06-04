@@ -17,7 +17,7 @@ Batch verify/ingest for eligible `(profession, county)` pairs. **Not** invoked o
    `GET /api/internal/vgs/run-contour-b-operational-scheduler`  
    (configured in `vercel.json`).
 
-On **Vercel**, `npm run build` runs `scripts/vercel-bundle/build.mjs` (esbuild, devDependency only) and produces `scripts/.vercel-bundle/scheduler.mjs` — one self-contained file with classify/ingest/pipeline. The API **imports that bundle**; no child `node` processes and no manual installs on your Mac.
+On **Vercel**, `npm run build` runs `scripts/vercel-bundle/build.mjs` (esbuild, devDependency only) and writes `src/server/vgs/generated/contour-b-scheduler.bundle.mjs` (gitignored, created at build). The API imports that file via a **static path** so it is included in the serverless bundle.
 
 Optional: reuse `BILLING_SYNC_SECRET` as the bearer value instead of a separate `CRON_SECRET` (same header patterns as billing internal routes).
 
