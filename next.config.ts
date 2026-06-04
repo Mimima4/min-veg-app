@@ -30,7 +30,9 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: path.join(process.cwd()),
   // Vercel serverless: dynamic-import VGS scripts (no child-process node_modules).
   outputFileTracingIncludes: {
-    "/api/internal/vgs/run-contour-b-operational-scheduler": ["./scripts/**/*"],
+    "/api/internal/vgs/run-contour-b-operational-scheduler": [
+      "./scripts/.vercel-bundle/**/*",
+    ],
   },
   // React Compiler left untouched — enable explicitly when ready
 };

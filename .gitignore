@@ -19,6 +19,7 @@
 
 # production
 /build
+scripts/.vercel-bundle/
 
 # owner-held (charters, SQL bundles, session logs — never commit)
 /owner-held/

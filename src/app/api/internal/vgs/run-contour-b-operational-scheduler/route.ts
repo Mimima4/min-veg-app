@@ -64,9 +64,19 @@ async function handle(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  return handle(request);
+  try {
+    return await handle(request);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ ok: false, error: message }, { status: 500 });
+  }
 }
 
 export async function POST(request: NextRequest) {
-  return handle(request);
+  try {
+    return await handle(request);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ ok: false, error: message }, { status: 500 });
+  }
 }

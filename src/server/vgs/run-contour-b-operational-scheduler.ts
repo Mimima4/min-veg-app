@@ -1,5 +1,8 @@
 import "server-only";
 
+import { existsSync } from "node:fs";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   assessContourBOperationalEligibility,
@@ -28,6 +31,12 @@ export type RunContourBSchedulerOutput = {
   results: SchedulerPairResult[];
 };
 
+type BundledSchedulerModule = {
+  runContourBOperationalSchedulerBundled: (
+    options: RunContourBSchedulerOptions
+  ) => Promise<RunContourBSchedulerOutput>;
+};
+
 type ClassifyModule = {
   classifyReadiness: (args: {
     professionSlug: string;
@@ -45,6 +54,30 @@ type IngestModule = {
   }) => Promise<void>;
 };
 
+const VERCEL_BUNDLE_RELATIVE = "scripts/.vercel-bundle/scheduler.mjs";
+
+function useVercelSchedulerBundle(): boolean {
+  return (
+    process.env.VERCEL === "1" ||
+    existsSync(path.join(process.cwd(), VERCEL_BUNDLE_RELATIVE))
+  );
+}
+
+async function runViaVercelBundle(
+  options: RunContourBSchedulerOptions
+): Promise<RunContourBSchedulerOutput> {
+  const bundlePath = path.join(process.cwd(), VERCEL_BUNDLE_RELATIVE);
+  if (!existsSync(bundlePath)) {
+    throw new Error(
+      "Scheduler bundle missing. Production build must run scripts/vercel-bundle/build.mjs first."
+    );
+  }
+  const mod = await import(
+    pathToFileURL(bundlePath).href
+  ) as BundledSchedulerModule;
+  return mod.runContourBOperationalSchedulerBundled(options);
+}
+
 function buildPairList(options: RunContourBSchedulerOptions) {
   const professionFilter = options.profession?.trim() ?? "";
   const countyFilter = options.county?.trim() ?? "";
@@ -61,12 +94,8 @@ function buildPairList(options: RunContourBSchedulerOptions) {
   return pairs;
 }
 
-/**
- * Contour B batch scheduler (classify → eligibility → ingest).
- * Uses createAdminClient (already on Vercel) — no child-process @supabase resolution.
- */
-export async function runContourBOperationalScheduler(
-  options: RunContourBSchedulerOptions = {}
+async function runViaDynamicScripts(
+  options: RunContourBSchedulerOptions
 ): Promise<RunContourBSchedulerOutput> {
   const isDryRun = Boolean(options.dryRun);
   const maxConsecutiveFailures = Number(
@@ -164,6 +193,17 @@ export async function runContourBOperationalScheduler(
   };
 
   const exitCode = failed > 0 && !isDryRun ? 1 : 0;
-
   return { exitCode, summary, results };
+}
+
+/**
+ * Contour B batch scheduler. On Vercel uses prebuilt esbuild bundle from `npm run build`.
+ */
+export async function runContourBOperationalScheduler(
+  options: RunContourBSchedulerOptions = {}
+): Promise<RunContourBSchedulerOutput> {
+  if (useVercelSchedulerBundle()) {
+    return runViaVercelBundle(options);
+  }
+  return runViaDynamicScripts(options);
 }
