@@ -63,13 +63,13 @@
 
 ## Block C — MAIN write + product proof
 
-**Block status:** `OPEN` — next active block
+**Block status:** `OPEN` — next active block (production relay **done** 2026-06-04 for 11 Contour B counties; E2E + refresh proof remaining)
 
 **Purpose:** Production PSA populated; route shows verified schools in normal steps.
 
 | Done when |
 |-----------|
-| First production **write** completed for pilot counties (minimum: **`56`**, **`15`**, **`18`**, **`55`** for `electrician`); charter in owner-held. |
+| First production **write** completed for pilot counties (minimum: **`56`**, **`15`**, **`18`**, **`55`** for `electrician`); charter in owner-held. **Relay ingest completed** for all eligible Contour B pairs (see terminal batch `ingested` / `contour_b_partial`). |
 | E2E verified: child planning in fylke → electrician route → `programme_selection` **options** from PSA where verified rows exist. |
 | Second job run shows refresh behaviour (`updated_at` or documented stale policy). |
 | Green counties **`03` / `11` / `46` / `50`**: options still Contour **A** only; B job did not corrupt them. |

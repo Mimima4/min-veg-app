@@ -139,3 +139,37 @@ Uses direct Vilbli fetch from your machine + local Supabase env.
 ## Build
 
 `npm run build` runs `scripts/vercel-bundle/build.mjs` → `src/server/vgs/generated/contour-b-scheduler.bundle.mjs` (gitignored, created at build).
+
+## Block C — product proof (after production relay)
+
+**P06-CLOSURE Block C** (`docs/architecture/phase-0-6-contour-b-operational-closure-checklist.md`).
+
+### 1. DB snapshot (read-only)
+
+```bash
+set -a && source .env.local && set +a
+node scripts/verify-contour-b-psa-snapshot.mjs
+node scripts/verify-contour-b-psa-snapshot.mjs --county 56
+```
+
+Expect `pilotAllHaveTruth: true` for pilot counties **56, 15, 18, 55** after relay. Contour B counties should appear under `contourBCountiesWithTruth`.
+
+### 2. E2E in the app (manual)
+
+1. Child with **home fylke** in a pilot county (e.g. Finnmark `56` or Møre `15`).
+2. Profession **electrician** → open study route.
+3. On `programme_selection` steps: options must come from **availability truth** (PSA), not empty and not legacy-only catalog for that contour.
+4. Repeat for one **Contour A** green county (**03** or **50**): options still work; relay did not remove Contour A data.
+
+### 3. Refresh proof (second relay)
+
+```bash
+node scripts/relay-contour-b-vilbli-to-production.mjs --county 56
+node scripts/verify-contour-b-psa-snapshot.mjs --county 56
+```
+
+`latestUpdatedAt` on active rows should be recent after the second run.
+
+### 4. Owner-held charter
+
+Record pass/fail and screenshots in `owner-held/` (not committed). Close Block C in the closure checklist when E2E + refresh are done.
