@@ -661,6 +661,7 @@ async function run() {
   const professionSlug = String(args.profession ?? "").trim();
   const countyCode = String(args.county ?? "").trim();
   const isDryRun = String(args["dry-run"] ?? "").toLowerCase() === "true";
+  const isContourBPartial = String(args["contour-b-partial"] ?? "").toLowerCase() === "true";
 
   // Write boundaries guarded by assertCanWrite in this pipeline:
   // - materialize child script
@@ -899,7 +900,27 @@ async function run() {
   const ambiguousMatchCount = ambiguousMatches.length;
 
   if (unmatchedSchoolCount > 0 || ambiguousMatchCount > 0) {
-    if (isDryRun) {
+    if (isContourBPartial) {
+      const ambiguousCodes = new Set(ambiguousMatches.map((entry) => entry.schoolCode));
+      for (const code of ambiguousCodes) {
+        matchedBySchoolCode.delete(code);
+      }
+      for (const school of uniqueExtractedSchools) {
+        if (!matchedBySchoolCode.has(school.schoolCode)) continue;
+        const semantics = classifyIdentitySemantics(school.schoolName, {
+          countyCode,
+          professionSlug,
+          schoolCode: school.schoolCode,
+        });
+        if (semantics.isLosa) {
+          matchedBySchoolCode.delete(school.schoolCode);
+        }
+      }
+      console.error(
+        `[contour-b-partial] Continuing with ${matchedBySchoolCode.size} verified non-LOSA matches; ` +
+          `skipped unmatched=${unmatchedSchoolCount}, ambiguous=${ambiguousMatchCount}`
+      );
+    } else if (isDryRun) {
       const diag = buildIdentitySemanticsDiagnosticsFromUniqueSchools(uniqueExtractedSchools);
       const abortReason = `School matching not clean. unmatched=${unmatchedSchoolCount}, ambiguous=${ambiguousMatchCount}`;
       const ambiguityDiagnosticsPayload =
@@ -944,10 +965,14 @@ async function run() {
         safety: { dbWritesExecuted: false },
       };
       console.log(JSON.stringify(structuredAbortDiagnostics, null, 2));
+      throw new Error(
+        `ABORT: School matching not clean. unmatched=${unmatchedSchoolCount}, ambiguous=${ambiguousMatchCount}`
+      );
+    } else if (!isContourBPartial) {
+      throw new Error(
+        `ABORT: School matching not clean. unmatched=${unmatchedSchoolCount}, ambiguous=${ambiguousMatchCount}`
+      );
     }
-    throw new Error(
-      `ABORT: School matching not clean. unmatched=${unmatchedSchoolCount}, ambiguous=${ambiguousMatchCount}`
-    );
   }
 
   let identitySemanticsSummary;
@@ -1141,8 +1166,15 @@ async function run() {
     countyCode,
   ]);
 
-  if (!GREEN_READINESS_STATUSES.has(readiness.status)) {
+  const useContourBPlannerFallback =
+    isContourBPartial && !GREEN_READINESS_STATUSES.has(readiness.status);
+  if (!GREEN_READINESS_STATUSES.has(readiness.status) && !isContourBPartial) {
     throw new Error(`ABORT: Readiness not green after materialization. status=${readiness.status}`);
+  }
+  if (useContourBPlannerFallback) {
+    console.error(
+      `[contour-b-partial] readiness=${readiness.status}; planner-backed programmes for verified writes only`
+    );
   }
 
   // 3b) Materialize expanded included school-based programme nodes.
@@ -1195,26 +1227,64 @@ async function run() {
     });
   }
 
-  // 5) If readiness green -> write programme_school_availability.
-  const readinessProgrammes = readiness.details?.linkedProgrammes ?? [];
+  // 5) Write programme_school_availability (green readiness or Contour B partial fallback).
   const requiredProgrammesByStage = new Map();
   const countySlugSuffix = `-${countyMeta.slug}`;
   const countyToken = countyProgramCodeToken(countyMeta);
-  for (const node of requiredProgrammeNodes) {
-    const candidates = readinessProgrammes.filter((programme) => programme.nodeKey === node.nodeKey);
-    if (candidates.length === 0) {
-      throw new Error(`ABORT: Missing programme candidate for required node ${node.nodeKey}`);
-    }
-    const countyCanonical = candidates.find((candidate) => {
-      const slug = String(candidate.slug ?? "").toLowerCase();
-      const programCode = String(candidate.programCode ?? "").toUpperCase();
-      return slug.endsWith(countySlugSuffix) || programCode.endsWith(countyToken);
+
+  if (useContourBPlannerFallback) {
+    const plannerResult = buildRequiredProgrammeSpecs({
+      professionSlug,
+      countyCode,
+      countyMeta,
+      requiredNodes: requiredProgrammeNodes,
+      extractedStages,
     });
-    const preferredBroad = candidates.find(
-      (candidate) =>
-        candidate.programCode && candidate.programCode.startsWith(`EL-${node.stage.replace("VG", "VG")}-`)
-    );
-    requiredProgrammesByStage.set(node.stage, countyCanonical ?? preferredBroad ?? candidates[0]);
+    for (const node of requiredProgrammeNodes) {
+      const spec = plannerResult.programmeSpecsByNodeKey?.[node.nodeKey];
+      if (!spec?.slug) {
+        throw new Error(`ABORT: Contour B partial missing planner spec for ${node.nodeKey}`);
+      }
+      let programmeId = null;
+      if (!isDryRun) {
+        assertCanWrite("upsertEducationProgrammeByIdentity(contour-b-partial)");
+        const programmeResult = await upsertEducationProgrammeByIdentity(supabase, {
+          slug: spec.slug,
+          programCode: spec.programCode,
+          title: spec.title ?? node.expectedLabel,
+        });
+        programmeId = programmeResult.id;
+        assertCanWrite("ensureProfessionProgrammeLink(contour-b-partial)");
+        await ensureProfessionProgrammeLink(supabase, professionSlug, spec.slug);
+      }
+      requiredProgrammesByStage.set(node.stage, {
+        id: programmeId,
+        slug: spec.slug,
+        programCode: spec.programCode,
+        nodeKey: node.nodeKey,
+      });
+    }
+  } else {
+    const readinessProgrammes = readiness.details?.linkedProgrammes ?? [];
+    for (const node of requiredProgrammeNodes) {
+      const candidates = readinessProgrammes.filter(
+        (programme) => programme.nodeKey === node.nodeKey
+      );
+      if (candidates.length === 0) {
+        throw new Error(`ABORT: Missing programme candidate for required node ${node.nodeKey}`);
+      }
+      const countyCanonical = candidates.find((candidate) => {
+        const slug = String(candidate.slug ?? "").toLowerCase();
+        const programCode = String(candidate.programCode ?? "").toUpperCase();
+        return slug.endsWith(countySlugSuffix) || programCode.endsWith(countyToken);
+      });
+      const preferredBroad = candidates.find(
+        (candidate) =>
+          candidate.programCode &&
+          candidate.programCode.startsWith(`EL-${node.stage.replace("VG", "VG")}-`)
+      );
+      requiredProgrammesByStage.set(node.stage, countyCanonical ?? preferredBroad ?? candidates[0]);
+    }
   }
 
   const snapshotLabel = `vilbli-${countyMeta.slug}-${professionSlug}-pipeline-${new Date()
@@ -1228,6 +1298,7 @@ async function run() {
     for (const school of schools) {
       const matched = matchedBySchoolCode.get(school.schoolCode);
       if (!matched) {
+        if (isContourBPartial) continue;
         throw new Error(`ABORT: Missing matched NSR institution for schoolCode=${school.schoolCode}`);
       }
       const payload = {
@@ -1282,6 +1353,7 @@ async function run() {
       for (const school of programme.schools) {
         const matched = matchedBySchoolCode.get(school.schoolCode);
         if (!matched) {
+          if (isContourBPartial) continue;
           throw new Error(`ABORT: Missing matched NSR institution for schoolCode=${school.schoolCode}`);
         }
         const payload = {

@@ -4,6 +4,7 @@ import type {
   RouteProgramLink,
 } from "./select-programme-for-route";
 import { isValidUuid, toUniqueValidUuids } from "./route-id-guards";
+import { usesContourBOperationalRouteReadPath } from "@/lib/vgs/contour-b-operational-eligibility";
 
 const TEMP_HIGHER_ED_LEVELS = new Set(["bachelor", "professional_degree", "master"]);
 // Production truth-ready allowlist (Norwegian county codes): electrician PSA coverage
@@ -50,9 +51,21 @@ export function applyRouteSelectionBoundary(params: {
     const isHigherEd = TEMP_HIGHER_ED_LEVELS.has(educationLevel);
     const isLegacyInstitution = institution.source === "legacy";
     const candidateCountyCode = (institution.county_code ?? "").trim();
+    const homeInContourBCounty = Array.from(homeCountyCodes).some((code) =>
+      usesContourBOperationalRouteReadPath({
+        countyCode: code,
+        professionSlug: params.professionSlug,
+      })
+    );
+    const candidateUsesContourB = usesContourBOperationalRouteReadPath({
+      countyCode: candidateCountyCode,
+      professionSlug: params.professionSlug,
+    });
     const isTruthReadyCountyForElectrician =
       TRUTH_READY_ELECTRICIAN_COUNTIES.has(candidateCountyCode) ||
-      homeInTruthReadyElectricianCounty;
+      candidateUsesContourB ||
+      homeInTruthReadyElectricianCounty ||
+      homeInContourBCounty;
 
     // Selective production boundary: for electrician in TRUTH_READY_ELECTRICIAN_COUNTIES,
     // cut legacy upper-secondary/VGS contour from legacy selector candidates.

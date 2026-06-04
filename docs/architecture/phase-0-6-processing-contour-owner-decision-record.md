@@ -212,3 +212,22 @@ Phase 0–6 is **not** a fourth permission; it is **machinery inside #1→#2** f
 ## 11. Operational CLI note (Contour **A**)
 
 For pipeline dry-run under verification or truth charters, use **`--dry-run`** only. Do **not** pass `--dry-run=true` (parser key mismatch → real writes risk). See Z-OV Section and incident log `MAIN-OP-VERIFY-2026-05-29-01`.
+
+---
+
+## 12. Product operational amendment (2026-06-04) — **supersedes §5.2 / P06-5 for allowlist counties**
+
+**Owner intent:** Contour **B** is **not** an owner-only diary when Contour **A** ABORTs. It is the **operational path** that lands **verified** Vilbli rows into the **same** `programme_school_availability` → **same** route `programme_selection.options` as Contour **A**. No separate UI block. Unverified Vilbli rows **do not appear** in the route (not labeled “unverified”).
+
+| Field | Rule |
+|-------|------|
+| **Trigger** | Pipeline **ABORT** or readiness **not** green — **any** `VGS_PATH_DEFINITIONS` profession + pipeline county; **not** when that profession/county pair is Contour **A** green (per `CONTOUR_A_OPERATIONAL_BY_PROFESSION`) |
+| **CLI** | `node scripts/run-contour-b-operational-ingest.mjs --profession <slug> --county <code>` — eligibility via `classify` + `contour-b-operational-eligibility.mjs` |
+| **Mechanism** | `run-vgs-truth-pipeline --contour-b-partial` — writes **only** NSR-matched, **non-LOSA** schools; planner fallback when `missing_programme_rows` |
+| **UI** | Route reads PSA via existing `getAvailabilityTruth` / `build-steps-from-availability-truth` — **no** new panels |
+| **LOSA** | Not written as ordinary school until §4 + publication gate — expands options as gates close |
+| **Owner packets** | Optional audit trail only — **not** the product deliverable |
+
+**Supersedes for allowlist:** P06-1 request-only as **sole** gate (operational ingest replaces “packet-only” outcome); P06-2 no UI participation; P06-5 non-product-only response. Green counties (**03**, **11**, **46**, **50**, …) **unchanged** — Contour **A** only.
+
+**§3.2 Finnmark:** Contour **B** operational ingest is the **product** next step after ABORT, not “more planning docs”.
