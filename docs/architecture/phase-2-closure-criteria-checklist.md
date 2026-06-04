@@ -162,6 +162,7 @@ These are **documentation / boundary / criteria** artifacts only. They are **not
 - `docs/architecture/phase-0-6-contour-b-finnmark-56-update-2-execution-review-summary.md` — **P06-CONTOUR-B-UPDATE-2-post**; **2/22/0** unchanged; **15** snapshots + evidence aggregates linked
 - `docs/architecture/phase-0-6-contour-b-finnmark-56-update-3-execution-gate-owner-decision-record.md` — **P06-CONTOUR-B-UPDATE-3** (audit after Pilot 3e)
 - `docs/architecture/phase-0-6-contour-b-finnmark-56-update-3-execution-review-summary.md` — **P06-CONTOUR-B-UPDATE-3-post**; **2/22/0** stable; **18** snapshots
+- `docs/architecture/phase-4-losa-finnmark-planning-sufficiency-owner-decision-record.md` — **P4-LOSA-FM-PLANNING-SUFFICIENT**; owner: planning evidence **sufficient**; operational publishability **not** closed
 - `docs/architecture/phase-4-losa-claim-extraction-pilot-execution-gate-owner-decision-record.md` — **LOSA claim extraction pilot** gate (**P4-LOSA-CLAIM-EXTRACT**); owner-held snapshots only; **no** `CONFIRMED` in pilot
 - `docs/architecture/phase-4-losa-claim-extraction-pilot-execution-review-summary.md` — **safe summary** (**P4-LOSA-CLAIM-EXTRACT-post**); `LOSA_CLAIM_EXTRACTION_PILOT_PASS`; **10** sources; **17** candidate signals; **0** confirmed
 - `docs/architecture/phase-4-losa-evidence-refresh-pilot-3-tier1-deep-urls-owner-decision-record.md` — **Pilot 3** deep Tier 1 URLs (**P4-LOSA-REFRESH-PILOT-3**)
@@ -1773,7 +1774,7 @@ Owner-adopted **A.3** read-only Contour **A** baseline gate per `phase-2-contour
 
 ---
 
-**Current recommended next gate from this checklist snapshot:** **pause** LOSA curls/evidence tranche (**STOP** planning sufficient; **P06-CONTOUR-B-UPDATE-3-post** audit complete). Product work via **separate** gates only (**not** #2/`56`, **not** #3). **NOT_READY_FOR_APPLY** unchanged.
+**Current recommended next gate from this checklist snapshot:** **P4-LOSA-FM-PLANNING-SUFFICIENT** — owner affirms LOSA Finnmark **planning evidence closed**; operational §4 / matcher **unchanged**; **no** further LOSA curls. Next work only **non-LOSA-56** or **publication/automation** explicit gates. **NOT_READY_FOR_APPLY** unchanged.
 
 **Alternate tracks (separate owner selection — not auto-progression from Z-OV):** Z-AP* apply governance continuation; permission stack **#2** / **#3** only after explicit separate gates; Phase 3 operational execution remains separately gated from P3 planning POSTs (`7ed7014` → `f412bea` → `87ddeb0` → `d552832`).
 
