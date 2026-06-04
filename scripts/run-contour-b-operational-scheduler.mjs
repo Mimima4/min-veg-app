@@ -1,7 +1,7 @@
 /**
  * Contour B operational scheduler (P06-CLOSURE Block B).
  * Iterates all VGS profession × pipeline county pairs; runs ingest only when eligible.
- * Does NOT run on route load — use cron, GitHub Actions, or owner-held shell wrapper.
+ * Does NOT run on route load — production: Vercel Cron → internal API (see VGS_OPERATIONAL_RUNNERS.md).
  *
  * Usage:
  *   node scripts/run-contour-b-operational-scheduler.mjs [--dry-run]

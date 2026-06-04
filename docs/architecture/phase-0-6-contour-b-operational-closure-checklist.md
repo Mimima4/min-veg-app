@@ -51,9 +51,10 @@
 | Artifact | Role |
 |----------|------|
 | `scripts/run-contour-b-operational-scheduler.mjs` | Batch loop over profession × county |
-| `owner-held/phase-0-6/run-contour-b-operational-scheduler.sh` | Local/cron entry (loads `.env.local`) |
-| `.github/workflows/contour-b-operational-scheduler.yml` | Weekly **Mon 04:00 UTC** + `workflow_dispatch` |
-| Cadence | Documented here and in workflow cron; production write proof remains **Block C** |
+| `src/app/api/internal/vgs/run-contour-b-operational-scheduler/route.ts` | Deployed runner (spawns script; keys from **Vercel env**, not GitHub) |
+| `vercel.json` | **Every 6 months:** 1 Jan + 1 Jul 00:00 UTC |
+| `src/server/vgs/VGS_OPERATIONAL_RUNNERS.md` | Auth + env setup (`CRON_SECRET` trigger only) |
+| Cadence | 6 months; production write proof remains **Block C** |
 
 **Explicitly not in this block:** full Vilbli parity (Block D), E2E UI proof (Block C), production MAIN write smoke (Block C).
 
