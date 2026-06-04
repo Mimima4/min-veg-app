@@ -5,6 +5,7 @@ import { runContourBOperationalScheduler } from "@/server/vgs/run-contour-b-oper
 import { verifyInternalSchedulerRequest } from "@/server/vgs/verify-internal-scheduler-request";
 
 /** Vercel Cron uses GET; allow POST for operator tools. */
+export const runtime = "nodejs";
 export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 

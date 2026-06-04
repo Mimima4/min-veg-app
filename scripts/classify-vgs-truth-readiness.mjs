@@ -1,4 +1,4 @@
-import fetch from "./lib/http-fetch.mjs";
+import { vilbliFetch } from "./lib/vilbli-fetch.mjs";
 import { isMainModule } from "./lib/is-main-module.mjs";
 import { getVgsPathDefinition, mapProgrammeToPathNode } from "./vgs-path-definitions.mjs";
 import { extractVilbliStagesFromHtml } from "./vilbli-stage-extraction-helper.mjs";
@@ -376,12 +376,7 @@ export async function classifyReadiness({ professionSlug, countyCode, supabase }
   } else {
     sourceUrl = pathDefinition.sourceModel.buildVilbliUrl(countyMeta.slug);
     try {
-      const response = await fetch(sourceUrl, {
-        headers: {
-          "user-agent":
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-        },
-      });
+      const response = await vilbliFetch(sourceUrl);
       const html = await response.text();
       if (!response.ok) {
         sourceExtractionFailed = true;

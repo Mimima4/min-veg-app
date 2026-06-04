@@ -1,4 +1,4 @@
-import fetch from "./lib/http-fetch.mjs";
+import { vilbliFetch } from "./lib/vilbli-fetch.mjs";
 import { isMainModule } from "./lib/is-main-module.mjs";
 import { classifyReadiness } from "./classify-vgs-truth-readiness.mjs";
 import { spawnSync } from "node:child_process";
@@ -721,12 +721,7 @@ export async function runVgsTruthPipeline({
   };
 
   // 1) Load/extract Vilbli structure + availability.
-  const response = await fetch(sourceUrl, {
-    headers: {
-      "user-agent":
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-    },
-  });
+  const response = await vilbliFetch(sourceUrl);
   if (!response.ok) {
     throw new Error(`ABORT: Vilbli extraction failed with status ${response.status}`);
   }
@@ -777,12 +772,7 @@ export async function runVgsTruthPipeline({
   const expandedStageEntries = [];
   const skippedNoSchoolAvailability = [];
   for (const link of includedProgrammeLinks) {
-    const responseProgramme = await fetch(link.href, {
-      headers: {
-        "user-agent":
-          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-      },
-    });
+    const responseProgramme = await vilbliFetch(link.href);
     if (!responseProgramme.ok) {
       throw new Error(`ABORT: Failed to fetch programme page ${link.href} (${responseProgramme.status})`);
     }

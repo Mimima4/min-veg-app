@@ -12,21 +12,38 @@ function slugToken(value) {
   return normalizeBasic(value).replace(/\s+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
 }
 
+/**
+ * Parse Vilbli `vb_map_data_* = [...];` without `new Function` (blocked on Vercel serverless).
+ */
+function parseVilbliJsArrayLiteral(literal) {
+  const trimmed = String(literal ?? "").trim();
+  if (!trimmed.startsWith("[")) return null;
+
+  const sanitized = trimmed.replace(/,\s*]/g, "]").replace(/,\s*}/g, "}");
+  try {
+    const parsed = JSON.parse(sanitized);
+    return Array.isArray(parsed) ? parsed : null;
+  } catch {
+    try {
+      const parsed = new Function(`return (${trimmed});`)();
+      return Array.isArray(parsed) ? parsed : null;
+    } catch {
+      return null;
+    }
+  }
+}
+
 function parseStageArraysFromHtml(html) {
   const stageMap = {};
   const regex = /(?:window\.)?(vb_map_data_[A-Za-z0-9_]+)\s*=\s*(\[[\s\S]*?\]);/g;
   let match = regex.exec(html);
   while (match) {
-    try {
-      const parsed = new Function(`return (${match[2]});`)();
-      if (Array.isArray(parsed)) {
-        const suffix = match[1].replace(/^vb_map_data_/i, "");
-        const stageMatch = suffix.match(/vg\d/i);
-        const stage = (stageMatch ? stageMatch[0] : suffix).toUpperCase();
-        stageMap[stage] = parsed;
-      }
-    } catch {
-      // Ignore malformed script blocks.
+    const parsed = parseVilbliJsArrayLiteral(match[2]);
+    if (parsed) {
+      const suffix = match[1].replace(/^vb_map_data_/i, "");
+      const stageMatch = suffix.match(/vg\d/i);
+      const stage = (stageMatch ? stageMatch[0] : suffix).toUpperCase();
+      stageMap[stage] = parsed;
     }
     match = regex.exec(html);
   }
