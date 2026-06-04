@@ -159,17 +159,19 @@ Phase 0–6 is **not** a fourth permission; it is **machinery inside #1→#2** f
 
 ## 9. Owner/security decisions (P06-0–P06-8)
 
+**Superseded for product operational path (2026-06-04):** **P06-1**, **P06-2**, **P06-4**, **P06-5** — replaced by **§12** and **P06-CLOSURE** (`phase-0-6-contour-b-operational-closure-checklist.md`). Historical text retained for traceability.
+
 ### P06-0 — Scope
 
 **Decision:** **Yes.** Adopt Phase 0–6 processing contour policy at docs level only.
 
 ### P06-1 — Request-only activation
 
-**Decision:** **Yes.** Contour **B** runs **only** on explicit request with §5.1 fields.
+**Decision:** **Yes** *(superseded for product by §12 — evidence requests optional; operational ingest is the product path).* Contour **B** runs **only** on explicit request with §5.1 fields.
 
 ### P06-2 — No silent product participation
 
-**Decision:** **Yes.** Contour **B** must **not** auto-participate in route construction, UI display, or verification-default workflows.
+**Decision:** **Yes** *(superseded for product by §12 — B participates via PSA → route options; scheduled job per P06-CLOSURE Block **B**; not per page load).* Contour **B** must **not** auto-participate in route construction, UI display, or verification-default workflows.
 
 ### P06-3 — Green-county default
 
@@ -177,11 +179,11 @@ Phase 0–6 is **not** a fourth permission; it is **machinery inside #1→#2** f
 
 ### P06-4 — Non-green / abort stop rule
 
-**Decision:** **Yes.** Pipeline **ABORT** or non-green readiness **stops** Contour **A** writes; Contour **B** requires a **new** request — no auto-continue.
+**Decision:** **Yes** *(superseded for product by §12 — Contour **B** continues partial verified write via `--contour-b-partial`; full Contour **A** still stops on dirty match).* Pipeline **ABORT** or non-green readiness **stops** Contour **A** writes; Contour **B** requires a **new** request — no auto-continue.
 
 ### P06-5 — Output boundary
 
-**Decision:** **Yes.** Contour **B** returns processed non-product artifacts; **not** UI truth; **not** PSA/Route publication without **#2** / **#3** gates.
+**Decision:** **Yes** *(superseded for product by §12 — verified rows are PSA/route truth; unverified rows omitted from options).* Contour **B** returns processed non-product artifacts; **not** UI truth; **not** PSA/Route publication without **#2** / **#3** gates.
 
 ### P06-6 — Verification session boundary
 
@@ -231,3 +233,13 @@ For pipeline dry-run under verification or truth charters, use **`--dry-run`** o
 **Supersedes for allowlist:** P06-1 request-only as **sole** gate (operational ingest replaces “packet-only” outcome); P06-2 no UI participation; P06-5 non-product-only response. Green counties (**03**, **11**, **46**, **50**, …) **unchanged** — Contour **A** only.
 
 **§3.2 Finnmark:** Contour **B** operational ingest is the **product** next step after ABORT, not “more planning docs”.
+
+---
+
+## 13. Non-return rule (P06-CLOSURE)
+
+After **P06-CLOSURE** all blocks are **CLOSED** (`phase-0-6-contour-b-operational-closure-checklist.md`):
+
+- Do **not** reopen Phase 0–6 as a new contour design.
+- New counties or professions extend `CONTOUR_A_OPERATIONAL_BY_PROFESSION` and `vgs-path-definitions.mjs` only.
+- Operations = scheduled Contour **B** job + optional evidence packets — **not** a return to manual-only CLI or separate Vilbli-mirror UI panels.
