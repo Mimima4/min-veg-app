@@ -1,6 +1,7 @@
 import "server-only";
 
 import { NextRequest, NextResponse } from "next/server";
+import { loadContourBSchedulerBundle } from "@/server/vgs/load-contour-b-scheduler-bundle";
 import { runContourBOperationalScheduler } from "@/server/vgs/run-contour-b-operational-scheduler";
 import { verifyInternalSchedulerRequest } from "@/server/vgs/verify-internal-scheduler-request";
 
@@ -36,9 +37,7 @@ async function handle(request: NextRequest) {
   const url = new URL(request.url);
   const vilbliProbeCounty = url.searchParams.get("vilbliProbe")?.trim();
   if (vilbliProbeCounty) {
-    const bundle = await import(
-      "@/server/vgs/generated/contour-b-scheduler.bundle.mjs"
-    );
+    const bundle = await loadContourBSchedulerBundle();
     const probe = await bundle.probeVilbliCounty({
       professionSlug: url.searchParams.get("profession") ?? "electrician",
       countyCode: vilbliProbeCounty,

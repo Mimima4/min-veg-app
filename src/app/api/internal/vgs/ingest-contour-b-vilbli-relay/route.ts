@@ -1,6 +1,7 @@
 import "server-only";
 
 import { NextRequest, NextResponse } from "next/server";
+import { loadContourBSchedulerBundle } from "@/server/vgs/load-contour-b-scheduler-bundle";
 import { verifyInternalSchedulerRequest } from "@/server/vgs/verify-internal-scheduler-request";
 
 export const runtime = "nodejs";
@@ -34,9 +35,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const bundle = await import(
-      "@/server/vgs/generated/contour-b-scheduler.bundle.mjs"
-    );
+    const bundle = await loadContourBSchedulerBundle();
     const result = await bundle.runContourBCountyRelay({
       professionSlug,
       countyCode,
@@ -44,7 +43,7 @@ export async function POST(request: NextRequest) {
       vilbliHtml,
     });
 
-    return NextResponse.json({ ok: true, ...result });
+    return NextResponse.json(result);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     return NextResponse.json({ ok: false, error: message }, { status: 500 });

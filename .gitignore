@@ -19,7 +19,8 @@
 
 # production
 /build
-src/server/vgs/generated/
+# Do not gitignore src/server/vgs/generated/ — Vercel NFT excludes ignored paths from lambdas.
+# contour-b-scheduler.bundle.mjs is created by `npm run build` and must ship with API routes.
 
 # owner-held (charters, SQL bundles, session logs — never commit)
 /owner-held/

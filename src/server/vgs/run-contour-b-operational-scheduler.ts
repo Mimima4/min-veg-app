@@ -6,6 +6,7 @@ import {
   SUPPORTED_VGS_PROFESSION_SLUGS,
   VGS_PIPELINE_COUNTY_CODES,
 } from "@/lib/vgs/contour-b-operational-eligibility";
+import { loadContourBSchedulerBundle } from "@/server/vgs/load-contour-b-scheduler-bundle";
 import { loadVgsScriptModule } from "@/server/vgs/load-vgs-script-module";
 
 export type RunContourBSchedulerOptions = {
@@ -26,12 +27,6 @@ export type RunContourBSchedulerOutput = {
   exitCode: number;
   summary: Record<string, unknown>;
   results: SchedulerPairResult[];
-};
-
-type BundledSchedulerModule = {
-  runContourBOperationalSchedulerBundled: (
-    options: RunContourBSchedulerOptions
-  ) => Promise<RunContourBSchedulerOutput>;
 };
 
 type ClassifyModule = {
@@ -58,10 +53,7 @@ function useVercelSchedulerBundle(): boolean {
 async function runViaVercelBundle(
   options: RunContourBSchedulerOptions
 ): Promise<RunContourBSchedulerOutput> {
-  // Literal path so Next output file tracing includes the esbuild output.
-  const mod = (await import(
-    "./generated/contour-b-scheduler.bundle.mjs"
-  )) as BundledSchedulerModule;
+  const mod = await loadContourBSchedulerBundle();
   return mod.runContourBOperationalSchedulerBundled(options);
 }
 

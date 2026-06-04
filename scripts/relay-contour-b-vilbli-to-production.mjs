@@ -88,7 +88,16 @@ async function main() {
           }),
         });
 
-        const body = await response.json();
+        const raw = await response.text();
+        let body;
+        try {
+          body = JSON.parse(raw);
+        } catch {
+          const preview = raw.replace(/\s+/g, " ").slice(0, 160);
+          throw new Error(
+            `relay HTTP ${response.status}: expected JSON, got HTML/text (${preview})`
+          );
+        }
         if (!response.ok || !body.ok) {
           throw new Error(body.error ?? `relay HTTP ${response.status}`);
         }
