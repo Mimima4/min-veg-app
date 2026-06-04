@@ -8,6 +8,11 @@ import RouteStepsPanel from "../route-steps-panel";
 import RouteSignalsPanel from "../route-signals-panel";
 import RouteAvailableProfessionsPanel from "../route-available-professions-panel";
 import AlternativeRoutesCollapsible from "../alternative-routes-collapsible";
+import VilbliFaithfulAvailabilityPanel from "./vilbli-faithful-availability-panel";
+import { normalizeFylkeCodesFromMunicipalityCodes } from "@/lib/planning/norway-geo-code-normalization";
+import { getVilbliFaithfulAvailability } from "@/server/children/routes/get-vilbli-faithful-availability";
+import { getChildPlanningState } from "@/server/children/planning/get-child-planning-state";
+import type { ChildPlanningSourceRow } from "@/server/children/planning/get-child-planning-state";
 
 export default async function StudyRouteDetailPage({
   params,
@@ -40,6 +45,33 @@ export default async function StudyRouteDetailPage({
   });
 
   const competitionLevel = route.header.competitionLevel;
+
+  const { data: childPlanningRow } = await supabase
+    .from("child_profiles")
+    .select("interests, observed_traits, desired_income_band, preferred_work_style, preferred_education_level, preferred_municipality_codes")
+    .eq("id", childId)
+    .maybeSingle();
+  const planningState = getChildPlanningState(
+    (childPlanningRow ?? {
+      interests: [],
+      observed_traits: [],
+      desired_income_band: null,
+      preferred_work_style: null,
+      preferred_education_level: null,
+      preferred_municipality_codes: [],
+    }) as ChildPlanningSourceRow
+  );
+  const planningFylkeCodes = normalizeFylkeCodesFromMunicipalityCodes(
+    planningState.preferredMunicipalityCodes
+  );
+  const showVilbliFaithfulPanel =
+    planningFylkeCodes.includes("56") && route.identity.targetProfessionSlug === "electrician";
+  const vilbliFaithful = showVilbliFaithfulPanel
+    ? await getVilbliFaithfulAvailability({
+        countyCode: "56",
+        professionSlug: "electrician",
+      })
+    : { enabled: false, payload: null };
 
   const strategies = getRouteStrategies(route.identity.targetProfessionSlug);
   const showStrategyBlock =
@@ -121,6 +153,10 @@ export default async function StudyRouteDetailPage({
               ))}
             </dl>
           </div>
+
+          {vilbliFaithful.payload ? (
+            <VilbliFaithfulAvailabilityPanel payload={vilbliFaithful.payload} />
+          ) : null}
 
           <RouteStepsPanel
             childId={childId}
