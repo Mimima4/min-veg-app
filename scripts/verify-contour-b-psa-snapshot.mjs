@@ -3,7 +3,7 @@
  * per pipeline county (after relay). No writes.
  *
  *   set -a && source .env.local && set +a
- *   node scripts/verify-contour-b-psa-snapshot.mjs [--county 56]
+ *   node scripts/verify-contour-b-psa-snapshot.mjs [--county 56] [--list-institutions]
  */
 import { createClient } from "@supabase/supabase-js";
 import {
@@ -56,7 +56,7 @@ async function loadElectricianProgramIds(supabase) {
   return { slugs, programIds };
 }
 
-async function snapshotCounty(supabase, programIds, countyCode) {
+async function snapshotCounty(supabase, programIds, countyCode, listInstitutions) {
   if (programIds.length === 0) {
     return {
       countyCode,
@@ -65,12 +65,17 @@ async function snapshotCounty(supabase, programIds, countyCode) {
       byStage: {},
       byVerification: {},
       latestUpdatedAt: null,
+      institutionsByStage: null,
     };
   }
 
+  const selectFields = listInstitutions
+    ? "stage, verification_status, updated_at, is_active, institution_id, education_program_id"
+    : "stage, verification_status, updated_at, is_active";
+
   const { data: rows, error } = await supabase
     .from("programme_school_availability")
-    .select("stage, verification_status, updated_at, is_active")
+    .select(selectFields)
     .in("education_program_id", programIds)
     .eq("county_code", countyCode)
     .eq("is_active", true)
@@ -78,6 +83,49 @@ async function snapshotCounty(supabase, programIds, countyCode) {
   if (error) throw error;
 
   const typed = rows ?? [];
+  let institutionsByStage = null;
+
+  if (listInstitutions && typed.length > 0) {
+    const institutionIds = [
+      ...new Set(typed.map((row) => row.institution_id).filter(Boolean)),
+    ];
+    const programIdsUsed = [
+      ...new Set(typed.map((row) => row.education_program_id).filter(Boolean)),
+    ];
+
+    const [{ data: institutions }, { data: programs }] = await Promise.all([
+      supabase
+        .from("education_institutions")
+        .select("id, name, municipality_name, municipality_code")
+        .in("id", institutionIds),
+      supabase.from("education_programs").select("id, slug, title").in("id", programIdsUsed),
+    ]);
+
+    const institutionById = new Map((institutions ?? []).map((i) => [i.id, i]));
+    const programById = new Map((programs ?? []).map((p) => [p.id, p]));
+
+    institutionsByStage = {};
+    for (const row of typed) {
+      const stage = String(row.stage ?? "unknown");
+      const inst = institutionById.get(row.institution_id);
+      const prog = programById.get(row.education_program_id);
+      if (!institutionsByStage[stage]) {
+        institutionsByStage[stage] = [];
+      }
+      institutionsByStage[stage].push({
+        institutionName: inst?.name ?? null,
+        municipality: inst?.municipality_name ?? null,
+        municipalityCode: inst?.municipality_code ?? null,
+        programSlug: prog?.slug ?? null,
+        verificationStatus: row.verification_status,
+      });
+    }
+    for (const stage of Object.keys(institutionsByStage)) {
+      institutionsByStage[stage].sort((a, b) =>
+        String(a.institutionName ?? "").localeCompare(String(b.institutionName ?? ""), "nb")
+      );
+    }
+  }
   const byStage = {};
   const byVerification = {};
   let latestUpdatedAt = null;
@@ -100,12 +148,14 @@ async function snapshotCounty(supabase, programIds, countyCode) {
     byStage,
     byVerification,
     latestUpdatedAt,
+    institutionsByStage,
   };
 }
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const countyFilter = String(args.county ?? "").trim();
+  const listInstitutions = String(args["list-institutions"] ?? "").toLowerCase() === "true";
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -126,7 +176,7 @@ async function main() {
 
   const snapshots = [];
   for (const countyCode of counties.sort()) {
-    snapshots.push(await snapshotCounty(supabase, programIds, countyCode));
+    snapshots.push(await snapshotCounty(supabase, programIds, countyCode, listInstitutions));
   }
 
   const pilot = snapshots.filter((s) => PILOT_COUNTIES.includes(s.countyCode));

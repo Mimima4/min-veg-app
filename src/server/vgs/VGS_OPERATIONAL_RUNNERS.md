@@ -150,6 +150,7 @@ Uses direct Vilbli fetch from your machine + local Supabase env.
 set -a && source .env.local && set +a
 node scripts/verify-contour-b-psa-snapshot.mjs
 node scripts/verify-contour-b-psa-snapshot.mjs --county 56
+node scripts/verify-contour-b-psa-snapshot.mjs --county 18 --list-institutions
 ```
 
 Expect `pilotAllHaveTruth: true` for pilot counties **56, 15, 18, 55** after relay. Contour B counties should appear under `contourBCountiesWithTruth`.
