@@ -1,4 +1,4 @@
-import fetch from "node-fetch";
+import fetch from "./lib/http-fetch.mjs";
 import { createClient } from "@supabase/supabase-js";
 import { getVgsPathDefinition } from "./vgs-path-definitions.mjs";
 import {

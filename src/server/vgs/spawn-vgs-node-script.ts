@@ -15,9 +15,13 @@ export function spawnVgsNodeScript(
     );
   }
 
+  const nodePath = path.join(process.cwd(), "node_modules");
   const result = spawnSync("node", [scriptPath, ...scriptArgs], {
     cwd: process.cwd(),
-    env: process.env,
+    env: {
+      ...process.env,
+      NODE_PATH: [process.env.NODE_PATH, nodePath].filter(Boolean).join(path.delimiter),
+    },
     encoding: "utf-8",
     maxBuffer: 20 * 1024 * 1024,
   });
