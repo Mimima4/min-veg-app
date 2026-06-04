@@ -2,7 +2,7 @@ import { loadVilbliCountyHtml } from "./lib/load-vilbli-county-html.mjs";
 import { vilbliFetch } from "./lib/vilbli-fetch.mjs";
 import { isMainModule } from "./lib/is-main-module.mjs";
 import { classifyReadiness } from "./classify-vgs-truth-readiness.mjs";
-import { spawnSync } from "node:child_process";
+import { materializeVgsProgrammesFromVilbli } from "./materialize-vgs-programmes-from-vilbli.mjs";
 import { getVgsPathDefinition } from "./vgs-path-definitions.mjs";
 import {
   extractVilbliStagesFromHtml,
@@ -94,21 +94,6 @@ function classifyInstitutionMatch(vilbliName, institutionName) {
   }
 
   return { matchType: "none", score: 0 };
-}
-
-function runNodeScript(scriptPath, args) {
-  const result = spawnSync("node", [scriptPath, ...args], {
-    cwd: process.cwd(),
-    env: process.env,
-    encoding: "utf-8",
-  });
-  if (result.status !== 0) {
-    throw new Error(
-      `Script failed: node ${scriptPath} ${args.join(" ")}\n${result.stderr || result.stdout}`
-    );
-  }
-  const output = result.stdout.trim();
-  return JSON.parse(output);
 }
 
 async function upsertAvailabilityRow(supabase, payload) {
@@ -664,7 +649,7 @@ export async function runVgsTruthPipeline({
   }
 
   // Write boundaries guarded by assertCanWrite in this pipeline:
-  // - materialize child script
+  // - materializeVgsProgrammesFromVilbli
   // - upsertEducationProgrammeByIdentity
   // - ensureProfessionProgrammeLink
   // - upsertAvailabilityRow
@@ -1133,16 +1118,17 @@ export async function runVgsTruthPipeline({
   const materializeResult = isDryRun
     ? {
         skippedInDryRun: true,
-        reason: "write_capable_child_script_blocked",
+        reason: "materialize_blocked_in_dry_run",
       }
-    : (() => {
-        assertCanWrite('runNodeScript("scripts/materialize-vgs-programmes-from-vilbli.mjs", ...)');
-        return runNodeScript("scripts/materialize-vgs-programmes-from-vilbli.mjs", [
-          "--profession",
+    : await (async () => {
+        assertCanWrite("materializeVgsProgrammesFromVilbli(...)");
+        return materializeVgsProgrammesFromVilbli({
           professionSlug,
-          "--county",
           countyCode,
-        ]);
+          supabase,
+          extractedStages,
+          sourceUrl,
+        });
       })();
   if (isDryRun) {
     dryRunLimitations.push("materialization_simulated_read_only_not_write_parity_proof");

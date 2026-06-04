@@ -86,6 +86,7 @@ async function main() {
             dryRun,
             vilbliHtml,
           }),
+          signal: AbortSignal.timeout(280_000),
         });
 
         const raw = await response.text();

@@ -1,8 +1,11 @@
 import fetch from "./lib/http-fetch.mjs";
 import { createClient } from "@supabase/supabase-js";
+import { isMainModule } from "./lib/is-main-module.mjs";
 import { getVgsPathDefinition } from "./vgs-path-definitions.mjs";
+import { extractVilbliStagesFromHtml } from "./vilbli-stage-extraction-helper.mjs";
 import {
   buildRequiredProgrammeSpecs,
+  ELECTRICIAN_MATERIALIZATION_NODE_KEYS,
   stagePresentInCounty,
 } from "./vgs-programme-materialization-planner.mjs";
 
@@ -24,6 +27,8 @@ const COUNTY_CODE_TO_VILBLI = {
   "18": { slug: "nordland", label: "Nordland" },
 };
 
+const REQUIRED_NODE_KEY_SET = new Set(ELECTRICIAN_MATERIALIZATION_NODE_KEYS);
+
 function parseArgs(argv) {
   const args = {};
   for (let i = 0; i < argv.length; i += 1) {
@@ -39,27 +44,6 @@ function parseArgs(argv) {
     i += 1;
   }
   return args;
-}
-
-function parseStageArraysFromHtml(html) {
-  const stageMap = {};
-  const regex = /(?:window\.)?(vb_map_data_[A-Za-z0-9_]+)\s*=\s*(\[[\s\S]*?\]);/g;
-  let match = regex.exec(html);
-  while (match) {
-    try {
-      const parsed = new Function(`return (${match[2]});`)();
-      if (Array.isArray(parsed)) {
-        const suffix = match[1].replace(/^vb_map_data_/i, "");
-        const stageMatch = suffix.match(/vg\d/i);
-        const stage = (stageMatch ? stageMatch[0] : suffix).toUpperCase();
-        stageMap[stage] = parsed;
-      }
-    } catch {
-      // Ignore malformed script blocks.
-    }
-    match = regex.exec(html);
-  }
-  return stageMap;
 }
 
 async function upsertProgrammeBySlugOrCode(supabase, spec) {
@@ -124,7 +108,109 @@ async function ensureProfessionLink(supabase, professionSlug, programSlug) {
   return "inserted";
 }
 
-async function run() {
+function resolveSupportedRequiredNodes(pathDefinition) {
+  const requiredNodes = pathDefinition.stageNodes.filter(
+    (node) => node.requiredForWrite && node.stageType === "school_programme"
+  );
+  const supportedRequiredNodes = requiredNodes.filter((node) =>
+    REQUIRED_NODE_KEY_SET.has(node.nodeKey)
+  );
+  if (supportedRequiredNodes.length !== REQUIRED_NODE_KEY_SET.size) {
+    throw new Error(
+      "Required electrician nodes not fully present in path definition (VG1_ELEKTRO, VG2_EL_BRANCH)."
+    );
+  }
+  return supportedRequiredNodes;
+}
+
+/**
+ * In-process materialization (Vercel-safe — no child `node scripts/...` spawn).
+ */
+export async function materializeVgsProgrammesFromVilbli({
+  professionSlug,
+  countyCode,
+  supabase,
+  extractedStages,
+  sourceUrl = null,
+}) {
+  if (!supabase) {
+    throw new Error("materializeVgsProgrammesFromVilbli requires a supabase client");
+  }
+
+  const profession = String(professionSlug ?? "").trim();
+  const county = String(countyCode ?? "").trim();
+  if (!profession || !county) {
+    throw new Error("professionSlug and countyCode are required");
+  }
+  if (!extractedStages || typeof extractedStages !== "object") {
+    throw new Error("extractedStages is required");
+  }
+
+  const countyMeta = COUNTY_CODE_TO_VILBLI[county] ?? null;
+  if (!countyMeta) {
+    throw new Error(`Unsupported county code: ${county}`);
+  }
+
+  const pathDefinition = getVgsPathDefinition(profession);
+  if (!pathDefinition) {
+    throw new Error(`No VGS path definition found for profession: ${profession}`);
+  }
+
+  const supportedRequiredNodes = resolveSupportedRequiredNodes(pathDefinition);
+  const resolvedSourceUrl =
+    sourceUrl ?? pathDefinition.sourceModel.buildVilbliUrl(countyMeta.slug);
+
+  const missingStages = supportedRequiredNodes
+    .filter((node) => !stagePresentInCounty(extractedStages[node.stage] ?? [], countyMeta))
+    .map((node) => node.stage);
+  if (missingStages.length > 0) {
+    throw new Error(
+      `ABORT: required Vilbli stage(s) not found in extracted data for county ${county}: ${missingStages.join(", ")}`
+    );
+  }
+
+  const plan = buildRequiredProgrammeSpecs({
+    professionSlug: profession,
+    countyCode: county,
+    countyMeta,
+    requiredNodes: supportedRequiredNodes,
+    extractedStages,
+  });
+  const programmeSpecsByNodeKey = plan.programmeSpecsByNodeKey;
+
+  const materialized = [];
+  for (const node of supportedRequiredNodes) {
+    const row = programmeSpecsByNodeKey[node.nodeKey];
+    if (!row) {
+      throw new Error(`No deterministic programme spec defined for ${node.nodeKey}`);
+    }
+    const spec = {
+      slug: row.slug,
+      programCode: row.programCode,
+      title: row.title,
+    };
+    const programmeResult = await upsertProgrammeBySlugOrCode(supabase, spec);
+    const linkAction = await ensureProfessionLink(supabase, profession, spec.slug);
+    materialized.push({
+      nodeKey: node.nodeKey,
+      stage: node.stage,
+      slug: spec.slug,
+      programCode: spec.programCode,
+      programmeAction: programmeResult.action,
+      linkAction,
+    });
+  }
+
+  return {
+    professionSlug: profession,
+    countyCode: county,
+    sourceUrl: resolvedSourceUrl,
+    requiredNodes: supportedRequiredNodes.map((node) => node.nodeKey),
+    materialized,
+  };
+}
+
+async function runCli() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
     throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL");
   }
@@ -152,18 +238,6 @@ async function run() {
     throw new Error(`No VGS path definition found for profession: ${professionSlug}`);
   }
 
-  const requiredNodes = pathDefinition.stageNodes.filter(
-    (node) => node.requiredForWrite && node.stageType === "school_programme"
-  );
-  const requiredNodeKeys = new Set(["VG1_ELEKTRO", "VG2_EL_BRANCH"]);
-  const supportedRequiredNodes = requiredNodes.filter((node) => requiredNodeKeys.has(node.nodeKey));
-
-  if (supportedRequiredNodes.length !== requiredNodeKeys.size) {
-    throw new Error(
-      "Required electrician nodes not fully present in path definition (VG1_ELEKTRO, VG2_EL_BRANCH)."
-    );
-  }
-
   const sourceUrl = pathDefinition.sourceModel.buildVilbliUrl(countyMeta.slug);
   const response = await fetch(sourceUrl, {
     headers: {
@@ -176,73 +250,31 @@ async function run() {
   }
 
   const html = await response.text();
-  const stageMap = parseStageArraysFromHtml(html);
-  const extractedByStage = Object.fromEntries(
-    Object.entries(stageMap).map(([stage, rows]) => [stage, Array.isArray(rows) ? rows : []])
-  );
-
-  const missingStages = supportedRequiredNodes
-    .filter((node) => !stagePresentInCounty(extractedByStage[node.stage] ?? [], countyMeta))
-    .map((node) => node.stage);
-  if (missingStages.length > 0) {
-    throw new Error(
-      `ABORT: required Vilbli stage(s) not found in extracted data for county ${countyCode}: ${missingStages.join(", ")}`
-    );
-  }
-
-  const plan = buildRequiredProgrammeSpecs({
-    professionSlug,
-    countyCode,
-    countyMeta,
-    requiredNodes: supportedRequiredNodes,
-    extractedStages: extractedByStage,
+  const extracted = extractVilbliStagesFromHtml({
+    html,
+    countySlug: countyMeta.slug,
+    countyLabel: countyMeta.label,
   });
-  const programmeSpecsByNodeKey = plan.programmeSpecsByNodeKey;
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
   );
 
-  const materialized = [];
-  for (const node of supportedRequiredNodes) {
-    const row = programmeSpecsByNodeKey[node.nodeKey];
-    if (!row) {
-      throw new Error(`No deterministic programme spec defined for ${node.nodeKey}`);
-    }
-    const spec = {
-      slug: row.slug,
-      programCode: row.programCode,
-      title: row.title,
-    };
-    const programmeResult = await upsertProgrammeBySlugOrCode(supabase, spec);
-    const linkAction = await ensureProfessionLink(supabase, professionSlug, spec.slug);
-    materialized.push({
-      nodeKey: node.nodeKey,
-      stage: node.stage,
-      slug: spec.slug,
-      programCode: spec.programCode,
-      programmeAction: programmeResult.action,
-      linkAction,
-    });
-  }
+  const result = await materializeVgsProgrammesFromVilbli({
+    professionSlug,
+    countyCode,
+    supabase,
+    extractedStages: extracted.extractedStages,
+    sourceUrl,
+  });
 
-  console.log(
-    JSON.stringify(
-      {
-        professionSlug,
-        countyCode,
-        sourceUrl,
-        requiredNodes: supportedRequiredNodes.map((node) => node.nodeKey),
-        materialized,
-      },
-      null,
-      2
-    )
-  );
+  console.log(JSON.stringify(result, null, 2));
 }
 
-run().catch((error) => {
-  console.error(`Materialization failed: ${error.message}`);
-  process.exit(1);
-});
+if (isMainModule(import.meta.url)) {
+  runCli().catch((error) => {
+    console.error(`Materialization failed: ${error.message}`);
+    process.exit(1);
+  });
+}
