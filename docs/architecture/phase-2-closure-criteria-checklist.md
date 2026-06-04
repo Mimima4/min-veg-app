@@ -1775,7 +1775,7 @@ Owner-adopted **A.3** read-only Contour **A** baseline gate per `phase-2-contour
 
 ---
 
-**Current recommended next gate from this checklist snapshot:** **P06-CLOSURE Block B** — scheduler/job automation per `phase-0-6-contour-b-operational-closure-checklist.md` (Block **A** **CLOSED** 2026-06-04). **NOT_READY_FOR_APPLY** unchanged.
+**Current recommended next gate from this checklist snapshot:** **P06-CLOSURE Block C** — MAIN write + route `programme_selection` proof per `phase-0-6-contour-b-operational-closure-checklist.md` (Blocks **A** and **B** **CLOSED** 2026-05-29). **NOT_READY_FOR_APPLY** unchanged.
 
 **Alternate tracks (separate owner selection — not auto-progression from Z-OV):** Z-AP* apply governance continuation; permission stack **#2** / **#3** only after explicit separate gates; Phase 3 operational execution remains separately gated from P3 planning POSTs (`7ed7014` → `f412bea` → `87ddeb0` → `d552832`).
 

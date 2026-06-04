@@ -33,7 +33,7 @@
 
 ## Block B — Automation (scheduler / job)
 
-**Block status:** `IN_PROGRESS` — next active block
+**Block status:** `CLOSED` (2026-05-29)
 
 **Purpose:** Contour **B** runs **without manual CLI** for all eligible `(profession, county)` pairs.
 
@@ -46,13 +46,22 @@
 | Failure handling: repeated job failure or zero-write streak logged (owner-held or CI artifact). |
 | Smoke: green-county Contour **A** PSA rows unchanged after B job run. |
 
-**Explicitly not in this block:** full Vilbli parity (Block D), E2E UI proof (Block C).
+**Artifacts:**
+
+| Artifact | Role |
+|----------|------|
+| `scripts/run-contour-b-operational-scheduler.mjs` | Batch loop over profession × county |
+| `owner-held/phase-0-6/run-contour-b-operational-scheduler.sh` | Local/cron entry (loads `.env.local`) |
+| `.github/workflows/contour-b-operational-scheduler.yml` | Weekly **Mon 04:00 UTC** + `workflow_dispatch` |
+| Cadence | Documented here and in workflow cron; production write proof remains **Block C** |
+
+**Explicitly not in this block:** full Vilbli parity (Block D), E2E UI proof (Block C), production MAIN write smoke (Block C).
 
 ---
 
 ## Block C — MAIN write + product proof
 
-**Block status:** `OPEN`
+**Block status:** `OPEN` — next active block
 
 **Purpose:** Production PSA populated; route shows verified schools in normal steps.
 
