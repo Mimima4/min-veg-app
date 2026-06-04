@@ -28,6 +28,10 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   outputFileTracingRoot: path.join(process.cwd()),
+  // Vercel serverless: scheduler spawns `scripts/*.mjs` (not static-imported by Next).
+  outputFileTracingIncludes: {
+    "/api/internal/vgs/run-contour-b-operational-scheduler": ["./scripts/**/*"],
+  },
   // React Compiler left untouched — enable explicitly when ready
 };
 
