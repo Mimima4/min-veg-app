@@ -1,11 +1,12 @@
 import "server-only";
 
+import { createAdminClient } from "@/lib/supabase/admin";
 import {
   assessContourBOperationalEligibility,
   SUPPORTED_VGS_PROFESSION_SLUGS,
   VGS_PIPELINE_COUNTY_CODES,
 } from "@/lib/vgs/contour-b-operational-eligibility";
-import { spawnVgsNodeScript } from "@/server/vgs/spawn-vgs-node-script";
+import { loadVgsScriptModule } from "@/server/vgs/load-vgs-script-module";
 
 export type RunContourBSchedulerOptions = {
   dryRun?: boolean;
@@ -27,6 +28,23 @@ export type RunContourBSchedulerOutput = {
   results: SchedulerPairResult[];
 };
 
+type ClassifyModule = {
+  classifyReadiness: (args: {
+    professionSlug: string;
+    countyCode: string;
+    supabase: ReturnType<typeof createAdminClient>;
+  }) => Promise<{ status: string }>;
+};
+
+type IngestModule = {
+  runContourBOperationalIngest: (args: {
+    professionSlug: string;
+    countyCode: string;
+    dryRun: boolean;
+    supabase: ReturnType<typeof createAdminClient>;
+  }) => Promise<void>;
+};
+
 function buildPairList(options: RunContourBSchedulerOptions) {
   const professionFilter = options.profession?.trim() ?? "";
   const countyFilter = options.county?.trim() ?? "";
@@ -45,11 +63,11 @@ function buildPairList(options: RunContourBSchedulerOptions) {
 
 /**
  * Contour B batch scheduler (classify → eligibility → ingest).
- * Loop runs in TypeScript; only classify/ingest spawn Node scripts (Vercel-traced).
+ * Uses createAdminClient (already on Vercel) — no child-process @supabase resolution.
  */
-export function runContourBOperationalScheduler(
+export async function runContourBOperationalScheduler(
   options: RunContourBSchedulerOptions = {}
-): RunContourBSchedulerOutput {
+): Promise<RunContourBSchedulerOutput> {
   const isDryRun = Boolean(options.dryRun);
   const maxConsecutiveFailures = Number(
     process.env.CONTOUR_B_SCHEDULER_MAX_CONSECUTIVE_FAILURES ?? "5"
@@ -62,6 +80,14 @@ export function runContourBOperationalScheduler(
   let skipped = 0;
   let failed = 0;
 
+  const supabase = createAdminClient();
+  const classifyModule = await loadVgsScriptModule<ClassifyModule>(
+    "scripts/classify-vgs-truth-readiness.mjs"
+  );
+  const ingestModule = await loadVgsScriptModule<IngestModule>(
+    "scripts/run-contour-b-operational-ingest.mjs"
+  );
+
   for (const { professionSlug, countyCode } of pairs) {
     const entry: SchedulerPairResult = {
       professionSlug,
@@ -72,19 +98,12 @@ export function runContourBOperationalScheduler(
     };
 
     try {
-      const classify = spawnVgsNodeScript("scripts/classify-vgs-truth-readiness.mjs", [
-        "--profession",
+      const readiness = await classifyModule.classifyReadiness({
         professionSlug,
-        "--county",
         countyCode,
-      ]);
-      if (classify.status !== 0) {
-        throw new Error(
-          classify.stderr || classify.stdout || `classify exit ${classify.status}`
-        );
-      }
-
-      const readinessStatus = String(classify.parsed?.status ?? "unknown");
+        supabase,
+      });
+      const readinessStatus = String(readiness.status ?? "unknown");
       entry.readiness = readinessStatus;
 
       const eligibility = assessContourBOperationalEligibility({
@@ -102,18 +121,12 @@ export function runContourBOperationalScheduler(
         continue;
       }
 
-      const ingestArgs = ["--profession", professionSlug, "--county", countyCode];
-      if (isDryRun) {
-        ingestArgs.push("--dry-run");
-      }
-
-      const ingest = spawnVgsNodeScript(
-        "scripts/run-contour-b-operational-ingest.mjs",
-        ingestArgs
-      );
-      if (ingest.status !== 0) {
-        throw new Error(ingest.stderr || ingest.stdout || `ingest exit ${ingest.status}`);
-      }
+      await ingestModule.runContourBOperationalIngest({
+        professionSlug,
+        countyCode,
+        dryRun: isDryRun,
+        supabase,
+      });
 
       entry.action = isDryRun ? "dry_run_ok" : "ingested";
       entry.reason = eligibility.reason;
@@ -153,21 +166,4 @@ export function runContourBOperationalScheduler(
   const exitCode = failed > 0 && !isDryRun ? 1 : 0;
 
   return { exitCode, summary, results };
-}
-
-/** @deprecated CLI wrapper only — API uses `runContourBOperationalScheduler`. */
-export function runContourBOperationalSchedulerScript(
-  options: RunContourBSchedulerOptions = {}
-): { exitCode: number; stdout: string; stderr: string } {
-  const output = runContourBOperationalScheduler(options);
-  const stdout = JSON.stringify(
-    { summary: output.summary, results: output.results },
-    null,
-    2
-  );
-  return {
-    exitCode: output.exitCode,
-    stdout,
-    stderr: "",
-  };
 }

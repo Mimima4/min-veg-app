@@ -1,5 +1,5 @@
 import fetch from "./lib/http-fetch.mjs";
-import { createClient } from "@supabase/supabase-js";
+import { isMainModule } from "./lib/is-main-module.mjs";
 import { getVgsPathDefinition, mapProgrammeToPathNode } from "./vgs-path-definitions.mjs";
 import { extractVilbliStagesFromHtml } from "./vilbli-stage-extraction-helper.mjs";
 import { classifyIdentitySemantics } from "./school-identity-semantics.mjs";
@@ -276,14 +276,13 @@ function withIdentitySemanticsDiagnostics(result) {
   };
 }
 
-async function classifyReadiness({ professionSlug, countyCode }) {
+export async function classifyReadiness({ professionSlug, countyCode, supabase }) {
+  if (!supabase) {
+    throw new Error("classifyReadiness requires a supabase client");
+  }
+
   const countyMeta = COUNTY_CODE_TO_VILBLI[countyCode] ?? null;
   const pathDefinition = getVgsPathDefinition(professionSlug);
-
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  );
 
   const { data: links, error: linksError } = await supabase
     .from("profession_program_links")
@@ -628,7 +627,8 @@ async function classifyReadiness({ professionSlug, countyCode }) {
   return withIdentitySemanticsDiagnostics(baseResult);
 }
 
-async function run() {
+async function runCli() {
+  const { createClient } = await import("@supabase/supabase-js");
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
     throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL");
   }
@@ -646,11 +646,17 @@ async function run() {
     );
   }
 
-  const result = await classifyReadiness({ professionSlug, countyCode });
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+  const result = await classifyReadiness({ professionSlug, countyCode, supabase });
   console.log(JSON.stringify(result, null, 2));
 }
 
-run().catch((error) => {
-  console.error("Readiness classification failed:", error.message);
-  process.exit(1);
-});
+if (isMainModule(import.meta.url)) {
+  runCli().catch((error) => {
+    console.error("Readiness classification failed:", error.message);
+    process.exit(1);
+  });
+}

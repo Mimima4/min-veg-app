@@ -1,5 +1,6 @@
 import fetch from "./lib/http-fetch.mjs";
-import { createClient } from "@supabase/supabase-js";
+import { isMainModule } from "./lib/is-main-module.mjs";
+import { classifyReadiness } from "./classify-vgs-truth-readiness.mjs";
 import { spawnSync } from "node:child_process";
 import { getVgsPathDefinition } from "./vgs-path-definitions.mjs";
 import {
@@ -649,19 +650,16 @@ function buildMatchingUnmatchedAbortPayload(unmatchedSchools, nsrInstitutions) {
   };
 }
 
-async function run() {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-    throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL");
+export async function runVgsTruthPipeline({
+  professionSlug,
+  countyCode,
+  isDryRun = false,
+  isContourBPartial = false,
+  supabase,
+}) {
+  if (!supabase) {
+    throw new Error("runVgsTruthPipeline requires a supabase client");
   }
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY");
-  }
-
-  const args = parseArgs(process.argv.slice(2));
-  const professionSlug = String(args.profession ?? "").trim();
-  const countyCode = String(args.county ?? "").trim();
-  const isDryRun = String(args["dry-run"] ?? "").toLowerCase() === "true";
-  const isContourBPartial = String(args["contour-b-partial"] ?? "").toLowerCase() === "true";
 
   // Write boundaries guarded by assertCanWrite in this pipeline:
   // - materialize child script
@@ -838,10 +836,6 @@ async function run() {
   }
 
   // 2) Match Vilbli schools to NSR.
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  );
   const { data: nsrInstitutions, error: nsrError } = await supabase
     .from("education_institutions")
     .select("id, name, county_code, municipality_code, source")
@@ -1159,12 +1153,7 @@ async function run() {
   }
 
   // 4) Run readiness gate.
-  const readiness = runNodeScript("scripts/classify-vgs-truth-readiness.mjs", [
-    "--profession",
-    professionSlug,
-    "--county",
-    countyCode,
-  ]);
+  const readiness = await classifyReadiness({ professionSlug, countyCode, supabase });
 
   const useContourBPlannerFallback =
     isContourBPartial && !GREEN_READINESS_STATUSES.has(readiness.status);
@@ -1568,7 +1557,38 @@ async function run() {
   console.log(JSON.stringify(dryRunSummary, null, 2));
 }
 
-run().catch((error) => {
-  console.error(`VGS truth pipeline failed: ${error.message}`);
-  process.exit(1);
-});
+async function runCli() {
+  const { createClient } = await import("@supabase/supabase-js");
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL");
+  }
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY");
+  }
+
+  const args = parseArgs(process.argv.slice(2));
+  const professionSlug = String(args.profession ?? "").trim();
+  const countyCode = String(args.county ?? "").trim();
+  const isDryRun = String(args["dry-run"] ?? "").toLowerCase() === "true";
+  const isContourBPartial = String(args["contour-b-partial"] ?? "").toLowerCase() === "true";
+
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+
+  await runVgsTruthPipeline({
+    professionSlug,
+    countyCode,
+    isDryRun,
+    isContourBPartial,
+    supabase,
+  });
+}
+
+if (isMainModule(import.meta.url)) {
+  runCli().catch((error) => {
+    console.error(`VGS truth pipeline failed: ${error.message}`);
+    process.exit(1);
+  });
+}

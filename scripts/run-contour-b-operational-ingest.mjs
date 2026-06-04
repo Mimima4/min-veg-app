@@ -1,13 +1,11 @@
 /**
  * Contour B operational ingest: when Contour A would ABORT or readiness is not green,
  * write only NSR-verified, non-LOSA Vilbli rows into programme_school_availability.
- *
- * Usage:
- *   node scripts/run-contour-b-operational-ingest.mjs --profession <slug> --county <code> [--dry-run]
- *   (any profession in `vgs-path-definitions.mjs`, e.g. electrician)
  */
-import { spawnSync } from "node:child_process";
 import { assessContourBOperationalEligibility } from "./lib/contour-b-operational-eligibility.mjs";
+import { isMainModule } from "./lib/is-main-module.mjs";
+import { classifyReadiness } from "./classify-vgs-truth-readiness.mjs";
+import { runVgsTruthPipeline } from "./run-vgs-truth-pipeline.mjs";
 
 function parseArgs(argv) {
   const args = {};
@@ -26,43 +24,27 @@ function parseArgs(argv) {
   return args;
 }
 
-function runNodeScript(scriptPath, scriptArgs) {
-  const result = spawnSync("node", [scriptPath, ...scriptArgs], {
-    cwd: process.cwd(),
-    env: process.env,
-    encoding: "utf-8",
-  });
-  if (result.status !== 0) {
-    throw new Error(
-      `Script failed: node ${scriptPath} ${scriptArgs.join(" ")}\n${result.stderr || result.stdout}`
-    );
+export async function runContourBOperationalIngest({
+  professionSlug,
+  countyCode,
+  dryRun = false,
+  supabase,
+}) {
+  if (!supabase) {
+    throw new Error("runContourBOperationalIngest requires a supabase client");
   }
-  const output = result.stdout.trim();
-  const jsonStart = output.indexOf("{");
-  if (jsonStart < 0) {
-    throw new Error(`Expected JSON from ${scriptPath}`);
-  }
-  return JSON.parse(output.slice(jsonStart));
-}
 
-function run() {
-  const args = parseArgs(process.argv.slice(2));
-  const profession = String(args.profession ?? "").trim();
-  const county = String(args.county ?? "").trim();
-  const isDryRun = String(args["dry-run"] ?? "").toLowerCase() === "true";
-
+  const profession = String(professionSlug ?? "").trim();
+  const county = String(countyCode ?? "").trim();
   if (!profession || !county) {
-    throw new Error(
-      "Usage: node scripts/run-contour-b-operational-ingest.mjs --profession <slug> --county <code> [--dry-run]"
-    );
+    throw new Error("profession and county are required");
   }
 
-  const readiness = runNodeScript("scripts/classify-vgs-truth-readiness.mjs", [
-    "--profession",
-    profession,
-    "--county",
-    county,
-  ]);
+  const readiness = await classifyReadiness({
+    professionSlug: profession,
+    countyCode: county,
+    supabase,
+  });
 
   const eligibility = assessContourBOperationalEligibility({
     countyCode: county,
@@ -81,31 +63,44 @@ function run() {
     `[contour-b-operational] county=${county} profession=${profession} readiness=${readiness.status}`
   );
 
-  const pipelineArgs = [
-    "scripts/run-vgs-truth-pipeline.mjs",
-    "--profession",
-    profession,
-    "--county",
-    county,
-    "--contour-b-partial",
-  ];
-  if (isDryRun) {
-    pipelineArgs.push("--dry-run");
-  }
-
-  const result = spawnSync("node", pipelineArgs, {
-    cwd: process.cwd(),
-    env: process.env,
-    encoding: "utf-8",
-    stdio: ["ignore", "pipe", "pipe"],
+  await runVgsTruthPipeline({
+    professionSlug: profession,
+    countyCode: county,
+    isDryRun: dryRun,
+    isContourBPartial: true,
+    supabase,
   });
-
-  if (result.stdout) process.stdout.write(result.stdout);
-  if (result.stderr) process.stderr.write(result.stderr);
-
-  if (result.status !== 0) {
-    process.exit(result.status ?? 1);
-  }
 }
 
-run();
+async function runCli() {
+  const { createClient } = await import("@supabase/supabase-js");
+  const args = parseArgs(process.argv.slice(2));
+  const profession = String(args.profession ?? "").trim();
+  const county = String(args.county ?? "").trim();
+  const isDryRun = String(args["dry-run"] ?? "").toLowerCase() === "true";
+
+  if (!profession || !county) {
+    throw new Error(
+      "Usage: node scripts/run-contour-b-operational-ingest.mjs --profession <slug> --county <code> [--dry-run]"
+    );
+  }
+
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+
+  await runContourBOperationalIngest({
+    professionSlug: profession,
+    countyCode: county,
+    dryRun: isDryRun,
+    supabase,
+  });
+}
+
+if (isMainModule(import.meta.url)) {
+  runCli().catch((error) => {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exit(1);
+  });
+}

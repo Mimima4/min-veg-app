@@ -37,7 +37,7 @@ async function handle(request: NextRequest) {
   const county = url.searchParams.get("county") ?? undefined;
   const dryRun = parseDryRun(request);
 
-  const result = runContourBOperationalScheduler({
+  const result = await runContourBOperationalScheduler({
     dryRun,
     profession,
     county,

@@ -17,6 +17,8 @@ Batch verify/ingest for eligible `(profession, county)` pairs. **Not** invoked o
    `GET /api/internal/vgs/run-contour-b-operational-scheduler`  
    (configured in `vercel.json`).
 
+The API route uses **`createAdminClient()`** (already in the Next bundle) and **dynamic-imports** VGS scripts — it does **not** spawn child `node` processes that resolve `@supabase/supabase-js` from `/var/task/node_modules`.
+
 Optional: reuse `BILLING_SYNC_SECRET` as the bearer value instead of a separate `CRON_SECRET` (same header patterns as billing internal routes).
 
 ## Do not use
