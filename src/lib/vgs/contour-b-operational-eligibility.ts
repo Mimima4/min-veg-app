@@ -1,5 +1,8 @@
 /**
  * Keep in sync with `scripts/lib/contour-b-operational-eligibility.mjs`.
+ *
+ * When adding professions or counties to the product, follow mandatory ops rules:
+ * `src/server/vgs/VGS_OPERATIONAL_RUNNERS.md` § "Mandatory rules when updating application information".
  */
 
 export const VGS_PIPELINE_COUNTY_CODES = new Set([

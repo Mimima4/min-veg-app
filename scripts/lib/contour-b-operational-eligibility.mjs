@@ -1,5 +1,11 @@
 import { getVgsPathDefinition, VGS_PATH_DEFINITIONS } from "../vgs-path-definitions.mjs";
 
+/**
+ * Eligibility for Contour B batch + relay.
+ * Mandatory expansion/ops rules when adding professions or counties to the product:
+ * `src/server/vgs/VGS_OPERATIONAL_RUNNERS.md` § "Mandatory rules when updating application information".
+ */
+
 /** Professions with a VGS Vilbli path (extend when adding to `vgs-path-definitions.mjs`). */
 export const SUPPORTED_VGS_PROFESSION_SLUGS = new Set(Object.keys(VGS_PATH_DEFINITIONS));
 

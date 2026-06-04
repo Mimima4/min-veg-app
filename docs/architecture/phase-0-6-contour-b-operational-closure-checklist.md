@@ -52,9 +52,10 @@
 |----------|------|
 | `scripts/run-contour-b-operational-scheduler.mjs` | Batch loop over profession × county |
 | `src/app/api/internal/vgs/run-contour-b-operational-scheduler/route.ts` | Deployed runner (spawns script; keys from **Vercel env**, not GitHub) |
-| `vercel.json` | **Every 6 months:** 1 Jan + 1 Jul 00:00 UTC |
-| `src/server/vgs/VGS_OPERATIONAL_RUNNERS.md` | Auth + env setup (`CRON_SECRET` trigger only) |
-| Cadence | 6 months; production write proof remains **Block C** |
+| `scripts/relay-contour-b-vilbli-to-production.mjs` | **Production path:** home-IP Vilbli fetch → `POST …/ingest-contour-b-vilbli-relay` |
+| `vercel.json` | Empty (no Vilbli cron on Vercel) |
+| `src/server/vgs/VGS_OPERATIONAL_RUNNERS.md` | Auth, relay commands, **mandatory rules when updating app professions/counties** |
+| Cadence | 6 months via **launchd + relay** (Mac); production write proof remains **Block C** |
 
 **Explicitly not in this block:** full Vilbli parity (Block D), E2E UI proof (Block C), production MAIN write smoke (Block C).
 
@@ -101,9 +102,11 @@
 
 **Purpose:** Not Finnmark-only; all ABORT-class counties in plan are in scope or explicitly out of scope.
 
+**Mandatory when product information changes:** complete the **Expansion gate** in `src/server/vgs/VGS_OPERATIONAL_RUNNERS.md` (code sync + relay dry-run + production relay + Block C E2E). Product/UI updates alone do **not** refresh Vilbli PSA.
+
 | Done when |
 |-----------|
-| New VGS profession = `vgs-path-definitions.mjs` + optional `CONTOUR_A_OPERATIONAL_BY_PROFESSION`; job picks up via `SUPPORTED_VGS_PROFESSION_SLUGS`. |
+| New VGS profession = `vgs-path-definitions.mjs` + optional `CONTOUR_A_OPERATIONAL_BY_PROFESSION`; job picks up via `SUPPORTED_VGS_PROFESSION_SLUGS`; **TS** `src/lib/vgs/contour-b-operational-eligibility.ts` updated for route read path. |
 | Møre **`15`** (`ambiguous=1`): identity case closed or explicit handling — not permanent silent ABORT. |
 | Every ABORT county in `norway-school-identity-matching-execution-plan.md` is either in job scope or on **OUT_OF_SCOPE** list with reason. |
 
