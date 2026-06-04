@@ -1,7 +1,7 @@
 import "server-only";
 
 import { NextRequest, NextResponse } from "next/server";
-import { runContourBOperationalSchedulerScript } from "@/server/vgs/run-contour-b-operational-scheduler";
+import { runContourBOperationalScheduler } from "@/server/vgs/run-contour-b-operational-scheduler";
 import { verifyInternalSchedulerRequest } from "@/server/vgs/verify-internal-scheduler-request";
 
 /** Vercel Cron uses GET; allow POST for operator tools. */
@@ -37,30 +37,19 @@ async function handle(request: NextRequest) {
   const county = url.searchParams.get("county") ?? undefined;
   const dryRun = parseDryRun(request);
 
-  const result = runContourBOperationalSchedulerScript({
+  const result = runContourBOperationalScheduler({
     dryRun,
     profession,
     county,
   });
-
-  let summary: unknown = null;
-  const stdout = result.stdout.trim();
-  const jsonStart = stdout.indexOf("{");
-  if (jsonStart >= 0) {
-    try {
-      summary = JSON.parse(stdout.slice(jsonStart));
-    } catch {
-      summary = null;
-    }
-  }
 
   if (result.exitCode !== 0) {
     return NextResponse.json(
       {
         ok: false,
         exitCode: result.exitCode,
-        summary,
-        stderr: result.stderr.slice(-8000),
+        summary: result.summary,
+        results: result.results,
       },
       { status: 500 }
     );
@@ -69,7 +58,8 @@ async function handle(request: NextRequest) {
   return NextResponse.json({
     ok: true,
     dryRun,
-    summary,
+    summary: result.summary,
+    results: result.results,
   });
 }
 
