@@ -7,7 +7,7 @@ import {
 } from "./vilbli-stage-extraction-helper.mjs";
 import { spawnSync } from "node:child_process";
 import {
-  classifyInstitutionMatch,
+  classifyInstitutionMatchForVilbliSchool,
   pickInstitutionMatchesForVilbliSchool,
   pickInstitutionsForPsaEmission,
 } from "./lib/vilbli-nsr-institution-match.mjs";
@@ -335,7 +335,7 @@ async function buildExpectedTruthSet({ supabase, professionSlug, countyCode }) {
     const ranked = (nsrInstitutions ?? [])
       .map((institution) => ({
         institution,
-        ...classifyInstitutionMatch(school.schoolName, institution.name),
+        ...classifyInstitutionMatchForVilbliSchool(school.schoolName, institution.name),
       }))
       .filter((candidate) => candidate.matchType !== "none")
       .sort((a, b) => b.score - a.score || a.institution.name.localeCompare(b.institution.name));

@@ -11,7 +11,7 @@ import {
 import { buildRequiredProgrammeSpecs } from "./vgs-programme-materialization-planner.mjs";
 import { classifyIdentitySemantics } from "./school-identity-semantics.mjs";
 import {
-  classifyInstitutionMatch,
+  classifyInstitutionMatchForVilbliSchool,
   pickInstitutionMatchesForVilbliSchool,
   pickInstitutionsForPsaEmission,
 } from "./lib/vilbli-nsr-institution-match.mjs";
@@ -823,7 +823,7 @@ export async function runVgsTruthPipeline({
     const ranked = (nsrInstitutions ?? [])
       .map((institution) => ({
         institution,
-        ...classifyInstitutionMatch(school.schoolName, institution.name),
+        ...classifyInstitutionMatchForVilbliSchool(school.schoolName, institution.name),
       }))
       .filter((candidate) => candidate.matchType !== "none")
       .sort((a, b) => b.score - a.score || a.institution.name.localeCompare(b.institution.name));

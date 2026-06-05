@@ -103,8 +103,8 @@ Rules:
 - `stage`: VGS programme/stage availability context; exact stage-level packet not yet structured in this backlog
 - `source_snapshot_label`: `evidence not yet structured in current docs/scripts`
 - `source_labels`: `Nord-Troms videregående skole`, `Stangnes Rå videregående skole`
-- `issue_types`: multi-location/avdeling (CASE 2); per-campus programme evidence gap for future Phase 3
-- `current_status`: **Contour B production** — `multi_avd_identity` matcher resolves CASE 2; PSA/route **1:1** Vilbli school-brand (`db67b40`, Troms **55** verified VG1=5 / VG2=4). Phase 2 packet states below remain for **future** per-campus expansion gate.
+- `issue_types`: **LOSA (18)** CASE 4 auditable exclude; **slash-alias (5)** CASE 3 matcher; per-campus programme evidence for future Phase 3
+- `current_status`: **Contour B production** — Troms **55** CASE 2 1:1 (`db67b40`); Finnmark **56** — 18 LOSA rows **excluded** per publishability contract; 6 ordinary schools matched (5 slash + Nordkapp) via `classifyInstitutionMatchForVilbliSchool` (CASE 3). Phase 2 packet states below apply to **per-campus LOSA publication** only.
 - `candidate_classification`: `phase2_resolvable` + `needs_review` (for per-campus programme claims only)
 - `conceptual_decision_state_candidates`: `needs_review` until Tier 2+ per-campus programme evidence; not `ambiguous_candidates` for clean `multi_avd_identity` ties
 - `required_evidence` (for **per-campus** programme publication only):

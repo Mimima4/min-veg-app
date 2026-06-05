@@ -17231,6 +17231,30 @@ function classifyInstitutionMatch(vilbliName, institutionName) {
   }
   return { matchType: "none", score: 0 };
 }
+function pickBestAliasInstitutionMatch(aliasLabels, institutionName) {
+  let best = { matchType: "none", score: 0 };
+  for (const alias of aliasLabels) {
+    const candidate = classifyInstitutionMatch(alias, institutionName);
+    if (candidate.score > best.score) {
+      best = candidate;
+    }
+  }
+  return best;
+}
+function classifyInstitutionMatchForVilbliSchool(vilbliSchoolName, institutionName) {
+  const semantics = classifyIdentitySemantics(vilbliSchoolName);
+  if (semantics.isLosa) {
+    return { matchType: "none", score: 0 };
+  }
+  if (semantics.hasSlashAliases && semantics.aliasLabels.length > 0) {
+    const best = pickBestAliasInstitutionMatch(semantics.aliasLabels, institutionName);
+    if (best.score > 0) {
+      return { ...best, resolvedVia: "slash_alias_segment" };
+    }
+    return best;
+  }
+  return classifyInstitutionMatch(vilbliSchoolName, institutionName);
+}
 function scoreCandidatesAgainstAliases(tiedCandidates, aliasLabels) {
   let best = null;
   let bestScore = -1;
@@ -17634,7 +17658,7 @@ async function classifyReadiness({
   for (const school of uniqueExtractedSchools) {
     const ranked = (nsrInstitutions ?? []).map((institution) => ({
       institution,
-      ...classifyInstitutionMatch(school.schoolName, institution.name)
+      ...classifyInstitutionMatchForVilbliSchool(school.schoolName, institution.name)
     })).filter((candidate) => candidate.matchType !== "none").sort((a, b) => b.score - a.score || a.institution.name.localeCompare(b.institution.name));
     const picked = pickInstitutionMatchesForVilbliSchool({
       vilbliSchoolName: school.schoolName,
@@ -19001,7 +19025,7 @@ async function runVgsTruthPipeline({
   for (const school of uniqueExtractedSchools) {
     const ranked = (nsrInstitutions ?? []).map((institution) => ({
       institution,
-      ...classifyInstitutionMatch(school.schoolName, institution.name)
+      ...classifyInstitutionMatchForVilbliSchool(school.schoolName, institution.name)
     })).filter((candidate) => candidate.matchType !== "none").sort((a, b) => b.score - a.score || a.institution.name.localeCompare(b.institution.name));
     const picked = pickInstitutionMatchesForVilbliSchool({
       vilbliSchoolName: school.schoolName,

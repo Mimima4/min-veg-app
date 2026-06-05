@@ -90,7 +90,7 @@
 
 ## Block D — Vilbli parity (identity + programme + LOSA in PSA)
 
-**Block status:** `IN_PROGRESS` — **CASE 2** matcher **1:N** linkage + **1:1** Vilbli school-brand PSA/display (owner-approved 2026-06-05, commit `db67b40`); normalization fixes **18**/**15** done; **56** LOSA tail open
+**Block status:** `IN_PROGRESS` — **CASE 2** matcher **1:N** linkage + **1:1** Vilbli school-brand PSA/display (`db67b40`); **CASE 3** Finnmark slash-alias matcher (`classifyInstitutionMatchForVilbliSchool`); **56** LOSA tail **auditable exclude** (below)
 
 **Purpose:** Route options converge toward Vilbli list for all rows that pass verification gates.
 
@@ -103,6 +103,12 @@
 | Closure metrics in job or post: `vilbli_extract` / `psa_active` / `verified` counts (safe summary, no secrets). |
 
 **Note:** Until Block D closes, automation (B) runs but options remain a **verified subset** of Vilbli — honest, not a P0–6 defect.
+
+### Finnmark `56` — LOSA auditable exclude list (2026-06-05)
+
+**18** Vilbli rows `Nordkapp videregående skole – LOSA {kommune}` are **explicitly excluded** from ordinary PSA / route options until Phase 4 LOSA **implementation gate** (publishability contract `ACCEPTED WITH NOTES`; `publishability_posture=STILL_BLOCKED_ALL_SECTION_4`). Matcher CASE 4; Contour B partial skips `isLosa` rows. **Not** a matcher defect; **not** publishable as on-campus VGS schools without Tier 1+2 evidence per `phase-4-losa-finnmark-publishability-contract-draft.md`.
+
+**5** slash-alias ordinary schools (Alta, Hammerfest, Kirkenes, Lakselv, Vadsø) are **in scope** for CASE 3 matching — separate from LOSA exclude.
 
 ---
 

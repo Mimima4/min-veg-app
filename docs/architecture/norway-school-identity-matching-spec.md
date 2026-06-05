@@ -102,7 +102,7 @@ LOSA rows are unsupported for now.
 
 ### 1. Alta videregående skole / Àlttà joatkkaskuvla
 
-**Expected:** one school identity, aliases, likely one NSR institution.
+**Expected:** one school identity, aliases, one NSR institution — match via slash **alias segment** (`classifyInstitutionMatchForVilbliSchool`), not the raw combined Vilbli string.
 
 ### 2. Nuortta-Sálto joarkkaskåvllå / Nord-Salten videregående skole
 

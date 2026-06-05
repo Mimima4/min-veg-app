@@ -75,6 +75,38 @@ export function classifyInstitutionMatch(vilbliName, institutionName) {
   return { matchType: "none", score: 0 };
 }
 
+function pickBestAliasInstitutionMatch(aliasLabels, institutionName) {
+  let best = { matchType: "none", score: 0 };
+  for (const alias of aliasLabels) {
+    const candidate = classifyInstitutionMatch(alias, institutionName);
+    if (candidate.score > best.score) {
+      best = candidate;
+    }
+  }
+  return best;
+}
+
+/**
+ * CASE 3: slash-separated Vilbli labels match NSR via alias segments, not the raw combined string.
+ * CASE 4: LOSA rows never match ordinary NSR institutions here.
+ */
+export function classifyInstitutionMatchForVilbliSchool(vilbliSchoolName, institutionName) {
+  const semantics = classifyIdentitySemantics(vilbliSchoolName);
+  if (semantics.isLosa) {
+    return { matchType: "none", score: 0 };
+  }
+
+  if (semantics.hasSlashAliases && semantics.aliasLabels.length > 0) {
+    const best = pickBestAliasInstitutionMatch(semantics.aliasLabels, institutionName);
+    if (best.score > 0) {
+      return { ...best, resolvedVia: "slash_alias_segment" };
+    }
+    return best;
+  }
+
+  return classifyInstitutionMatch(vilbliSchoolName, institutionName);
+}
+
 function scoreCandidatesAgainstAliases(tiedCandidates, aliasLabels) {
   let best = null;
   let bestScore = -1;

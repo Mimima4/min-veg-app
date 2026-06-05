@@ -4,7 +4,7 @@ import { getVgsPathDefinition, mapProgrammeToPathNode } from "./vgs-path-definit
 import { extractVilbliStagesFromHtml } from "./vilbli-stage-extraction-helper.mjs";
 import { classifyIdentitySemantics } from "./school-identity-semantics.mjs";
 import {
-  classifyInstitutionMatch,
+  classifyInstitutionMatchForVilbliSchool,
   pickInstitutionMatchesForVilbliSchool,
 } from "./lib/vilbli-nsr-institution-match.mjs";
 
@@ -394,7 +394,7 @@ export async function classifyReadiness({
     const ranked = (nsrInstitutions ?? [])
       .map((institution) => ({
         institution,
-        ...classifyInstitutionMatch(school.schoolName, institution.name),
+        ...classifyInstitutionMatchForVilbliSchool(school.schoolName, institution.name),
       }))
       .filter((candidate) => candidate.matchType !== "none")
       .sort((a, b) => b.score - a.score || a.institution.name.localeCompare(b.institution.name));
