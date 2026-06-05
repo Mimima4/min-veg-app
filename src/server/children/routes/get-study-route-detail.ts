@@ -13,6 +13,8 @@ type Params = {
   routeId: string;
   locale?: string;
   forceNewRouteAvailable?: boolean;
+  /** Avoid re-entering auto-recompute when a recompute turn already yielded. */
+  skipAutoRecompute?: boolean;
   supabase?: SupabaseClient;
 };
 
@@ -402,7 +404,7 @@ export async function getStudyRouteDetail(
   // - OPEN_DECISION: exact material-shift thresholds remain out of scope here.
   const isWorkingRoute = route.status === "draft";
 
-  if (isStale && route.current_variant_id) {
+  if (isStale && route.current_variant_id && !params.skipAutoRecompute) {
     if (isWorkingRoute) {
       const { triggerStudyRouteRecompute } = await import(
         "./trigger-study-route-recompute"

@@ -498,6 +498,7 @@ export async function triggerStudyRouteRecompute(params: Params) {
         childId: route.child_id,
         routeId: route.id,
         locale,
+        skipAutoRecompute: true,
         supabase,
       });
     }
