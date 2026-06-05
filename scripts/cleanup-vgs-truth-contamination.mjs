@@ -9,6 +9,7 @@ import { spawnSync } from "node:child_process";
 import {
   classifyInstitutionMatch,
   pickInstitutionMatchesForVilbliSchool,
+  pickInstitutionsForPsaEmission,
 } from "./lib/vilbli-nsr-institution-match.mjs";
 
 const COUNTY_CODE_TO_VILBLI = {
@@ -357,7 +358,9 @@ async function buildExpectedTruthSet({ supabase, professionSlug, countyCode }) {
     matchedBySchoolCode.set(school.schoolCode, {
       institutions: picked.matches.map((match) => ({
         institutionId: match.institution.id,
+        institutionName: match.institution.name ?? null,
         municipalityCode: match.institution.municipality_code ?? null,
+        resolvedVia: match.resolvedVia ?? null,
       })),
     });
   }
@@ -406,7 +409,7 @@ async function buildExpectedTruthSet({ supabase, professionSlug, countyCode }) {
       if (!matched) {
         throw new Error(`ABORT: Missing matched NSR institution for schoolCode=${school.schoolCode}`);
       }
-      for (const institutionMatch of matched.institutions) {
+      for (const institutionMatch of pickInstitutionsForPsaEmission(matched.institutions)) {
         expectedRows.push({
           slug: programme.slug,
           stage,
@@ -428,7 +431,7 @@ async function buildExpectedTruthSet({ supabase, professionSlug, countyCode }) {
       if (!matched) {
         throw new Error(`ABORT: Missing matched NSR institution for schoolCode=${school.schoolCode}`);
       }
-      for (const institutionMatch of matched.institutions) {
+      for (const institutionMatch of pickInstitutionsForPsaEmission(matched.institutions)) {
         expectedRows.push({
           slug: identity.slug,
           stage: entry.stage,

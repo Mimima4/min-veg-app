@@ -192,3 +192,41 @@ export function pickInstitutionMatchForVilbliSchool(params) {
   }
   return { match: result.matches[0], ambiguous: false, unmatched: false };
 }
+
+function isMultiAvdIdentityEmission(institutionMatches) {
+  return (
+    institutionMatches.length > 1 &&
+    institutionMatches.every((match) => match.resolvedVia === "multi_avd_identity")
+  );
+}
+
+/**
+ * CASE 2 matcher may resolve multiple NSR avd rows for one Vilbli school identity.
+ * PSA emission stays 1:1 with Vilbli / VIGO school-brand until a campus has
+ * programme×stage evidence (Tier 2+).
+ *
+ * @param {Array<{
+ *   institutionId: string;
+ *   institutionMunicipalityCode?: string | null;
+ *   institutionName?: string | null;
+ *   resolvedVia?: string | null;
+ * }>} institutionMatches
+ */
+export function pickInstitutionsForPsaEmission(institutionMatches) {
+  if (institutionMatches.length <= 1) {
+    return institutionMatches;
+  }
+  if (!isMultiAvdIdentityEmission(institutionMatches)) {
+    return institutionMatches;
+  }
+
+  const sorted = [...institutionMatches].sort((a, b) => {
+    const nameA = a.institutionName ?? a.institutionId ?? "";
+    const nameB = b.institutionName ?? b.institutionId ?? "";
+    const byName = String(nameA).localeCompare(String(nameB), "nb");
+    if (byName !== 0) return byName;
+    return String(a.institutionId ?? "").localeCompare(String(b.institutionId ?? ""));
+  });
+
+  return [sorted[0]];
+}

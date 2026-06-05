@@ -67,7 +67,7 @@ One Vilbli row resolves to one school identity and one NSR institution/location.
 
 **CASE 2:**  
 One Vilbli row resolves to one identity but multiple valid NSR locations (`avd` / campus) and Vilbli does not specify exact campus/location.  
-→ **Emit all tied NSR locations** (controlled **1:N** PSA / route options). **Do not** pick one at random or by sort order. Applies uniformly — not per county or school.
+→ **Matcher links all tied NSR `avd` rows** (`multi_avd_identity`). **PSA emission and route options stay 1:1 with Vilbli / VIGO school-brand** until Tier 2+ evidence confirms programme×stage on a specific campus. **Do not** publish per-`avd` programme availability as verified truth without that evidence.
 
 **CASE 3:**  
 Slash-separated names are aliases of the same school identity.  
@@ -107,11 +107,11 @@ LOSA rows are unsupported for now.
 
 ### 3. Nord-Troms videregående skole
 
-**Expected:** one school identity with multiple locations: Nordreisa and Skjervøy. **1:N** — both NSR `avd` rows enter PSA / route options.
+**Expected:** one school identity with multiple NSR locations (Nordreisa, Skjervøy). Matcher **1:N** linkage; **one** Vilbli-aligned PSA / route option until per-campus programme proof exists.
 
 ### 4. Stangnes Rå videregående skole
 
-**Expected:** one school identity with multiple locations: Rå and Stangnes. **1:N** — both NSR `avd` rows enter PSA / route options.
+**Expected:** one school identity with multiple NSR locations (Rå, Stangnes). Matcher **1:N** linkage; **one** Vilbli-aligned PSA / route option until per-campus programme proof exists.
 
 ### 5. Nordkapp videregående skole – LOSA Vadsø
 
@@ -121,10 +121,10 @@ LOSA rows are unsupported for now.
 
 - Add alias awareness.  
 - Detect LOSA and abort.  
-- **CASE 2:** controlled **1:N** PSA emission for same-identity multi-`avd` ties (`multi_avd_identity` in matcher).  
+- **CASE 2:** **1:N** matcher linkage for same-identity multi-`avd` ties (`multi_avd_identity`); **1:1** Vilbli school-brand PSA emission and route options (`pickInstitutionsForPsaEmission`).  
 - Weak fuzzy ties across **different** school identities remain ambiguous (abort).  
-- PSA schema unchanged (one row per institution × programme × stage).  
-- Route `programme_selection.options` consumes all active PSA rows.
+- PSA schema unchanged (one row per emitted institution × programme × stage).  
+- Route `programme_selection.options` dedupes by school brand; display strips unverified `avd` suffix.
 
 ## Phase 2 future
 

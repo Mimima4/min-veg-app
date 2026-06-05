@@ -13,6 +13,7 @@ import { classifyIdentitySemantics } from "./school-identity-semantics.mjs";
 import {
   classifyInstitutionMatch,
   pickInstitutionMatchesForVilbliSchool,
+  pickInstitutionsForPsaEmission,
 } from "./lib/vilbli-nsr-institution-match.mjs";
 
 const COUNTY_CODE_TO_VILBLI = {
@@ -855,6 +856,7 @@ export async function runVgsTruthPipeline({
     matchedBySchoolCode.set(school.schoolCode, {
       institutions: picked.matches.map((match) => ({
         institutionId: match.institution.id,
+        institutionName: match.institution.name ?? null,
         institutionMunicipalityCode: match.institution.municipality_code ?? null,
         resolvedVia: match.resolvedVia ?? null,
       })),
@@ -1262,7 +1264,7 @@ export async function runVgsTruthPipeline({
         if (isContourBPartial) continue;
         throw new Error(`ABORT: Missing matched NSR institution for schoolCode=${school.schoolCode}`);
       }
-      for (const institutionMatch of matched.institutions) {
+      for (const institutionMatch of pickInstitutionsForPsaEmission(matched.institutions)) {
       const payload = {
         education_program_id: programme.id,
         institution_id: institutionMatch.institutionId,
@@ -1319,7 +1321,7 @@ export async function runVgsTruthPipeline({
           if (isContourBPartial) continue;
           throw new Error(`ABORT: Missing matched NSR institution for schoolCode=${school.schoolCode}`);
         }
-        for (const institutionMatch of matched.institutions) {
+        for (const institutionMatch of pickInstitutionsForPsaEmission(matched.institutions)) {
         const payload = {
           education_program_id: programme.id,
           institution_id: institutionMatch.institutionId,

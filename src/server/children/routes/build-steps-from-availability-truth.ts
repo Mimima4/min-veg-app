@@ -83,15 +83,38 @@ function stageRowsSortedWithAnchor(params: {
   });
 }
 
-function dedupeRowsByInstitution(rows: AvailabilityTruthRow[]): AvailabilityTruthRow[] {
+function schoolBrandKey(name: string | null | undefined): string {
+  return String(name ?? "")
+    .replace(/\s+avd\b.*$/i, "")
+    .trim()
+    .toLowerCase();
+}
+
+function displayInstitutionNameAsSchoolBrand(name: string | null | undefined): string | null {
+  const trimmed = String(name ?? "").trim();
+  if (!trimmed) return null;
+  const brand = trimmed.replace(/\s+avd\b.*$/i, "").trim();
+  return brand || trimmed;
+}
+
+function withSchoolBrandDisplay(row: AvailabilityTruthRow): AvailabilityTruthRow {
+  const institutionName = displayInstitutionNameAsSchoolBrand(row.institutionName);
+  if (institutionName === row.institutionName) {
+    return row;
+  }
+  return { ...row, institutionName };
+}
+
+/** Vilbli/VIGO school-brand options: collapse multi-avd PSA leftovers to one row per brand. */
+function dedupeRowsBySchoolBrand(rows: AvailabilityTruthRow[]): AvailabilityTruthRow[] {
   const seen = new Set<string>();
   const deduped: AvailabilityTruthRow[] = [];
   for (const row of rows) {
-    const key = String(row.institutionId ?? "").trim();
+    const key = schoolBrandKey(row.institutionName);
     if (!key) continue;
     if (seen.has(key)) continue;
     seen.add(key);
-    deduped.push(row);
+    deduped.push(withSchoolBrandDisplay(row));
   }
   return deduped;
 }
@@ -322,7 +345,7 @@ export function buildStepsFromAvailabilityTruth(params: {
     let selectedVg2RowForGate: AvailabilityTruthRow | null = null;
     for (const node of selectedVariant.nodes) {
       if (node.type === "programme_selection") {
-        const stageRows = dedupeRowsByInstitution(
+        const stageRows = dedupeRowsBySchoolBrand(
           stageRowsSortedWithAnchor({
             rows: params.rows,
             stage: node.stage,
