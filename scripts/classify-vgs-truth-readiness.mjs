@@ -3,6 +3,10 @@ import { isMainModule } from "./lib/is-main-module.mjs";
 import { getVgsPathDefinition, mapProgrammeToPathNode } from "./vgs-path-definitions.mjs";
 import { extractVilbliStagesFromHtml } from "./vilbli-stage-extraction-helper.mjs";
 import { classifyIdentitySemantics } from "./school-identity-semantics.mjs";
+import {
+  classifyInstitutionMatch,
+  pickInstitutionMatchForVilbliSchool,
+} from "./lib/vilbli-nsr-institution-match.mjs";
 
 const READYNESS_STATUSES = {
   READY_FOR_WRITE: "ready_for_write",
@@ -86,41 +90,6 @@ function toUniqueValidUuids(values) {
     ids: Array.from(unique),
     droppedInvalidCount,
   };
-}
-
-function normalizeSchoolName(value) {
-  return normalizeBasic(value)
-    .replace(/\bvideregaende skole\b/g, " ")
-    .replace(/\bvideregande skule\b/g, " ")
-    .replace(/\bvidaregaande skule\b/g, " ")
-    .replace(/\bvgs\b/g, " ")
-    .replace(/\bas\b/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function classifyInstitutionMatch(vilbliName, institutionName) {
-  const vilbliNorm = normalizeSchoolName(vilbliName);
-  const nsrNorm = normalizeSchoolName(institutionName);
-
-  if (vilbliNorm && nsrNorm && vilbliNorm === nsrNorm) {
-    return { matchType: "exact_normalized", score: 1 };
-  }
-
-  const vilbliCore = vilbliNorm.replace(/\bavd\b.*$/, "").trim();
-  const nsrCore = nsrNorm.replace(/\bavd\b.*$/, "").trim();
-  if (vilbliCore && nsrCore && vilbliCore === nsrCore) {
-    return { matchType: "core_name_match", score: 0.9 };
-  }
-
-  const vt = vilbliNorm.split(" ").filter(Boolean);
-  const nt = nsrNorm.split(" ").filter(Boolean);
-  const sharedTokens = vt.filter((token) => token.length >= 4 && nt.includes(token)).length;
-  if (sharedTokens >= 2) {
-    return { matchType: "fallback_fuzzy", score: 0.6 };
-  }
-
-  return { matchType: "none", score: 0 };
 }
 
 function summarizeByVerification(rows) {
@@ -430,14 +399,19 @@ export async function classifyReadiness({
       .filter((candidate) => candidate.matchType !== "none")
       .sort((a, b) => b.score - a.score || a.institution.name.localeCompare(b.institution.name));
 
-    if (ranked.length === 0) {
+    const picked = pickInstitutionMatchForVilbliSchool({
+      vilbliSchoolName: school.schoolName,
+      ranked,
+    });
+
+    if (picked.unmatched) {
       unmatchedSchools.push(school);
       continue;
     }
 
-    const best = ranked[0];
-    const ties = ranked.filter((candidate) => candidate.score === best.score);
-    if (ties.length > 1) {
+    if (picked.ambiguous) {
+      const best = ranked[0];
+      const ties = ranked.filter((candidate) => candidate.score === best.score);
       ambiguousMatches.push({
         school,
         candidates: ties.slice(0, 3).map((tie) => ({
@@ -447,15 +421,18 @@ export async function classifyReadiness({
           score: tie.score,
         })),
       });
+      continue;
     }
 
+    const match = picked.match;
     matchedSchools.push({
       schoolCode: school.schoolCode,
       schoolName: school.schoolName,
-      institutionId: best.institution.id,
-      institutionName: best.institution.name,
-      matchType: best.matchType,
-      score: best.score,
+      institutionId: match.institution.id,
+      institutionName: match.institution.name,
+      matchType: match.matchType,
+      score: match.score,
+      resolvedVia: match.resolvedVia ?? null,
     });
   }
 
