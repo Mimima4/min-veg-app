@@ -121,7 +121,7 @@
 
 ## Block E — Professions and regions coverage
 
-**Block status:** `OPEN`
+**Block status:** `CLOSED` (2026-06-05)
 
 **Purpose:** Not Finnmark-only; all ABORT-class counties in plan are in scope or explicitly out of scope.
 
@@ -132,6 +132,37 @@
 | New VGS profession = `vgs-path-definitions.mjs` + optional `CONTOUR_A_OPERATIONAL_BY_PROFESSION`; job picks up via `SUPPORTED_VGS_PROFESSION_SLUGS`; **TS** `src/lib/vgs/contour-b-operational-eligibility.ts` updated for route read path. |
 | Møre **`15`** (`ambiguous=1`): identity case closed or explicit handling — not permanent silent ABORT. |
 | Every ABORT county in `norway-school-identity-matching-execution-plan.md` is either in job scope or on **OUT_OF_SCOPE** list with reason. |
+
+**Closure evidence (2026-06-05):**
+
+| Criterion | Proof |
+|-----------|--------|
+| Expansion gate | Documented in `VGS_OPERATIONAL_RUNNERS.md` § Expansion gate (steps 1–10) |
+| Møre **15** | `verification_ready_after_write`; dry-run **10/0/0** (Surnadal weak-tie resolved; `vidaregåande` normalization) |
+| Akershus **32** | Dry-run **12/0/0** after matcher fix: trailing NSR legal suffix ` AS` only — not municipality **Ås** |
+| ABORT-class inventory | See **County coverage** below |
+
+### County coverage (`electrician`, `VGS_PIPELINE_COUNTY_CODES`)
+
+| Code | Fylke | Contour path | Readiness (2026-06-05) | Full dry-run | Notes |
+|------|-------|--------------|------------------------|--------------|-------|
+| **03** | Oslo | **A** (green) | `verification_ready_after_write` | 5/0/0 OK | Relay skips (`use_contour_a`) |
+| **11** | Rogaland | **A** | `verification_ready_after_write` | 13/0/0 OK | Relay skips |
+| **15** | Møre og Romsdal | **B** | `verification_ready_after_write` | 10/0/0 OK | Was `ambiguous=1`; closed |
+| **18** | Nordland | **B** | `verification_ready_after_write` | 13/0/0 OK | Contour B ingest active |
+| **31** | Østfold | **B** | `verification_ready_after_write` | — | Job scope |
+| **32** | Akershus | **B** | `verification_ready_after_write` | 12/0/0 OK | Ås + ` AS` suffix fix |
+| **33** | Buskerud | **B** | `verification_ready_after_write` | — | Job scope |
+| **34** | Innlandet | **B** | `verification_ready_after_write` | — | Job scope |
+| **39** | Vestfold | **B** | `verification_ready_after_write` | — | Job scope |
+| **40** | Telemark | **B** | `verification_ready_after_write` | — | Job scope |
+| **42** | Agder | **B** | `verification_ready_after_write` | — | Job scope |
+| **46** | Vestland | **A** | `verification_ready_after_write` | 22/0/0 OK | Relay skips |
+| **50** | Trøndelag | **A** | `verification_ready_after_write` | 15/0/0 OK | Relay skips |
+| **55** | Troms | **B** | `verification_ready_after_write` | 5/0/0 OK | CASE 2 1:1 emission |
+| **56** | Finnmark | **B** partial | `canonical_matching_review` | 6/18/0 ABORT | **OUT_OF_SCOPE** full Contour A: **18 LOSA** rows (Block D); Contour B partial OK |
+
+**OUT_OF_SCOPE (full Contour A / ordinary PSA):** Finnmark **56** — 18 Vilbli LOSA municipality rows until Phase 4 publication gate (see Block D exclude list). All other pipeline counties are **IN_SCOPE** for Contour B batch/relay when eligibility passes.
 
 ---
 

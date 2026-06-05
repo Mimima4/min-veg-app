@@ -17186,7 +17186,7 @@ function classifyIdentitySemantics(value, context = {}) {
 
 // scripts/lib/vilbli-nsr-institution-match.mjs
 function normalizeSchoolNameForMatch(value) {
-  return String(value ?? "").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\bvideregaende skole\b/g, " ").replace(/\bvideregande skule\b/g, " ").replace(/\bvidaregaande skole\b/g, " ").replace(/\bvidaregaande skule\b/g, " ").replace(/\bvgs\b/g, " ").replace(/\bas\b/g, " ").replace(/\s+/g, " ").trim();
+  return String(value ?? "").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\bvideregaende skole\b/g, " ").replace(/\bvideregande skule\b/g, " ").replace(/\bvidaregaande skole\b/g, " ").replace(/\bvidaregaande skule\b/g, " ").replace(/\bvgs\b/g, " ").replace(/\s+as$/g, " ").replace(/\s+/g, " ").trim();
 }
 function extractIdentityCore(name) {
   return normalizeSchoolNameForMatch(name).replace(/\bavd\b.*$/, "").trim();

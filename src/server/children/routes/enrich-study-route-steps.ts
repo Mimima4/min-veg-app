@@ -1,5 +1,6 @@
 import { resolveInstitutionDisplayName } from "@/lib/i18n/institution-display-name";
 import { createClient } from "@/lib/supabase/server";
+import { selectEducationInstitutions } from "@/server/education/query-education-institutions";
 import type { StudyRouteSnapshotStep } from "@/lib/routes/route-types";
 import { isValidUuid, toUniqueValidUuids } from "./route-id-guards";
 
@@ -193,19 +194,15 @@ export async function enrichStudyRouteSteps(
 
   let institutionById = new Map<string, EducationInstitutionRow>();
   if (institutionIds.length > 0) {
-    const { data: institutions, error: institutionsError } = await supabase
-      .from("education_institutions")
-      .select("id, name, name_i18n, municipality_name, website_url")
-      .in("id", institutionIds);
-
-    if (institutionsError) {
-      throw new Error(
-        `Failed to load education institutions for route step enrichment: ${institutionsError.message}`
-      );
-    }
+    const institutions = await selectEducationInstitutions(supabase, {
+      ids: institutionIds,
+      selectWithNameI18n: "id, name, name_i18n, municipality_name, website_url",
+      selectWithoutNameI18n: "id, name, municipality_name, website_url",
+      errorLabel: "Failed to load education institutions for route step enrichment",
+    });
 
     institutionById = new Map(
-      ((institutions ?? []) as EducationInstitutionRow[]).map((institution) => [
+      (institutions as EducationInstitutionRow[]).map((institution) => [
         institution.id,
         institution,
       ])

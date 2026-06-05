@@ -758,8 +758,8 @@ Reserved / future only (not required in first implementation):
 
 #### Dry-run matrix snapshot (electrician) — dirty counties (still abort)
 
-- `15` — still aborts — `matchingAmbiguitySummary`: `ambiguousSchoolsCount=1`, `topScoreTieCount=1`, `weakSignalTieCount=1` — example: Surnadal (`candidateCount=4`), `explanationCode=weak_signal_tie`.
-- `18` — still aborts — `matchingAmbiguitySummary`: `ambiguous=1`, `topScoreTie=1`, `weakSignal=1` — example: Nuortta-Sálto (`candidateCount=2`), `explanationCode=weak_signal_tie`.
+- `15` — **superseded (2026-06-05):** was `ambiguous=1` (Surnadal weak-tie); now **`verification_ready_after_write`** — dry-run **10/0/0** (`vidaregåande` normalization + weak-tie resolution).
+- `18` — **superseded (2026-06-05):** now **`verification_ready_after_write`** — dry-run **13/0/0** (Nord-Salten matcher fix).
 - `55` — **historical (pre-`62e8aae`):** aborted with `ambiguous=2` (Nord-Troms, Stangnes Rå). **Superseded:** `multi_avd_identity` matcher + 1:1 emission (`db67b40`); Contour B ingest succeeds (VG1=5, VG2=4).
 - `56` — still aborts — `matchingAmbiguitySummary` all zero — `matchingAmbiguityDiagnostics=[]` because the county is **unmatched-heavy**, not ambiguity-heavy.
 

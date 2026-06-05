@@ -1,5 +1,6 @@
 import { resolveInstitutionDisplayName } from "@/lib/i18n/institution-display-name";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { selectEducationInstitutions } from "@/server/education/query-education-institutions";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type AvailabilityTruthRow = {
@@ -139,22 +140,18 @@ export async function getAvailabilityTruth({
     new Set(typedAvailabilityRows.map((row) => row.institution_id).filter(Boolean))
   );
 
-  const { data: institutions, error: institutionsError } = await supabase
-    .from("education_institutions")
-    .select(
-      "id, name, name_i18n, municipality_name, municipality_code, website_url, is_private_school"
-    )
-    .in("id", institutionIds)
-    .eq("is_active", true);
-
-  if (institutionsError) {
-    throw new Error(
-      `Failed to load institutions for availability truth: ${institutionsError.message}`
-    );
-  }
+  const institutions = await selectEducationInstitutions(supabase, {
+    ids: institutionIds,
+    selectWithNameI18n:
+      "id, name, name_i18n, municipality_name, municipality_code, website_url, is_private_school",
+    selectWithoutNameI18n:
+      "id, name, municipality_name, municipality_code, website_url, is_private_school",
+    errorLabel: "Failed to load institutions for availability truth",
+    onlyActive: true,
+  });
 
   const institutionById = new Map(
-    ((institutions ?? []) as Array<{
+    (institutions as Array<{
       id: string;
       name: string | null;
       name_i18n: Record<string, string> | null;

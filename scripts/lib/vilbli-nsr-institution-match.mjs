@@ -11,7 +11,8 @@ export function normalizeSchoolNameForMatch(value) {
     .replace(/\bvidaregaande skole\b/g, " ")
     .replace(/\bvidaregaande skule\b/g, " ")
     .replace(/\bvgs\b/g, " ")
-    .replace(/\bas\b/g, " ")
+    // NSR legal suffix only (e.g. "… skole AS"); not municipality names like "Ås".
+    .replace(/\s+as$/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
