@@ -90,13 +90,13 @@
 
 ## Block D — Vilbli parity (identity + programme + LOSA in PSA)
 
-**Block status:** `IN_PROGRESS` — next active block (**CASE 2 → 1:N** adopted 2026-06-05; normalization fixes **18**/**15** done; **56** LOSA tail open)
+**Block status:** `IN_PROGRESS` — **CASE 2** matcher **1:N** linkage + **1:1** Vilbli school-brand PSA/display (owner-approved 2026-06-05, commit `db67b40`); normalization fixes **18**/**15** done; **56** LOSA tail open
 
 **Purpose:** Route options converge toward Vilbli list for all rows that pass verification gates.
 
 | Done when |
 |-----------|
-| **Identity tail:** unmatched → **0** or auditable exclude list per pilot county; dry-run matcher clean or excludes documented. **CASE 2 multi-`avd`:** 1 Vilbli → all NSR campus rows in PSA (no per-school hacks). |
+| **Identity tail:** unmatched → **0** or auditable exclude list per pilot county; dry-run matcher clean or excludes documented. **CASE 2 multi-`avd`:** matcher links all tied NSR `avd` rows (`multi_avd_identity`); PSA + route options **1:1** Vilbli school-brand (`pickInstitutionsForPsaEmission`) — no per-`avd` programme publish without Tier 2+ proof. |
 | **Programme rows:** `missing_programme_rows` resolved → classify green for electrician on pilot counties before relying on write. |
 | **LOSA:** §4 + publication decision → LOSA rows enter PSA via **published** path (same `programme_selection` model, not ordinary campus). |
 | Pipeline/ingest rule for **published LOSA** implemented and proven on at least one county. |

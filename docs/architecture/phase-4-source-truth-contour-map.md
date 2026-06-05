@@ -101,7 +101,7 @@ Supporting context (not restated here): `phase-2-runtime-write-closure.md`, `pha
 - Matcher solves **identity/location**, **not** programme availability itself.
 - Matcher **does not assign** `verification_status`.
 - **CASE 1:** one Vilbli row → one identity + one NSR location — **clean** allowed path.
-- **CASE 2:** multi-location ambiguity — **do not** choose random campus; abort / explicit problem state.
+- **CASE 2:** multi-`avd` same identity — matcher links all tied NSR rows (`multi_avd_identity`); PSA emission + route options **1:1** Vilbli school-brand until Tier 2+ per-campus programme evidence; **do not** publish per-`avd` programme truth without that evidence.
 - **CASE 3:** slash/Sámi–Norwegian aliases — **one** identity; no false split into multiple schools.
 - **CASE 4:** LOSA — **unsupported** until explicit Phase 4 LOSA model; abort / `unsupported_losa`.
 - Unresolved matcher outcome **may block publishability**; it **must not** become manual owner matching workload.

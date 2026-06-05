@@ -3,13 +3,13 @@
 ## Snapshot / status
 
 - **Status:** Documentation-only transition gate criteria
-- **Scope:** Preconditions before Phase 3 / controlled 1:N PSA can be considered
+- **Scope:** Preconditions before Phase 3 / **per-campus** PSA emission (with Tier 2+ evidence) can be considered
 - **Repository checkpoint:** `c0d077a Add Phase 2 runtime write boundary`
 - **Created at (UTC):** 2026-05-13
 - **Gate criteria only; gate not passed**
 - **No execution authority**
 - **Not** Phase 3 approval
-- **Not** controlled 1:N PSA approval
+- **Not** per-campus PSA expansion approval (Phase 3)
 - **Not** runtime/write approval
 - **Not** DB write approval
 - **Not** PSA publication approval
@@ -23,6 +23,7 @@
 ## Purpose
 
 - Defines the **transition gate** in documentation **after** the Phase 2 operational boundary documents; **Phase 3 may be considered later under a separate owner-approved implementation gate**.
+- **Production note (2026-06-05):** CASE 2 already ships **1:1** Vilbli school-brand PSA emission (`pickInstitutionsForPsaEmission`). Phase 3 here means **additional per-campus rows** when programme×stage evidence exists — not reverting matcher linkage.
 - States that **Phase 3 cannot start automatically** from documentation or schema artifacts alone.
 - Prevents Phase 3 from inheriting **hidden truth** from docs-only, diagnostics-only, schema-only, review-only, or boundary-only artifacts.
 - **Aggregates** gate criteria from `docs/architecture/phase-2-closure-criteria-checklist.md` and `docs/architecture/norway-school-identity-matching-execution-plan.md` but **does not replace** them as the control sources.
@@ -31,7 +32,7 @@
 ## Relationship to existing docs
 
 - This document **does not amend** committed Phase 2 operational docs, `docs/architecture/norway-school-identity-matching-execution-plan.md`, or other canonical sources (pointers only).
-- This document **does not approve** Phase 3, controlled 1:N PSA emission, runtime/write, DB writes, PSA materialization, PSA publication, or Route Engine consumption.
+- This document **does not approve** Phase 3, per-campus PSA emission (Phase 3), runtime/write, DB writes, PSA materialization, PSA publication, or Route Engine consumption.
 - This document **does not satisfy** Phase 3 implementation and **does not** mean the Phase 2 → Phase 3 **gate has passed**.
 - **Filename and title mean gate criteria only**, not a passed gate or permission to start Phase 3.
 
@@ -61,8 +62,8 @@
 | IN | OUT |
 | --- | --- |
 | Transition gate criteria | Phase 3 implementation |
-| Required Phase 2 prerequisites before Phase 3 consideration | Controlled 1:N PSA implementation |
-| Controlled 1:N PSA prerequisites at gate level | PSA materialization |
+| Required Phase 2 prerequisites before Phase 3 consideration | Per-campus PSA (Phase 3) implementation |
+| Per-campus PSA (Phase 3) prerequisites at gate level | PSA materialization |
 | Hard invariants that must survive transition | PSA publication |
 | What remains blocked | DB writes |
 | | SQL/schema/migrations |
@@ -86,7 +87,7 @@ These are **documentation/governance prerequisites only**. They **do not** creat
 
 ## Required prerequisites before Phase 3 can be considered
 
-Gate assessments below are **plain prose for this document only**. They are **not** `packet_status`, backlog codes, checklist classification tags, or runtime enums, and **must not** be copied into code or databases. Default stance: **owner gate required before Phase 3 implementation or controlled 1:N PSA emission may be considered**, except where the checklist clearly allows a narrower docs-only statement.
+Gate assessments below are **plain prose for this document only**. They are **not** `packet_status`, backlog codes, checklist classification tags, or runtime enums, and **must not** be copied into code or databases. Default stance: **owner gate required before Phase 3 implementation or per-campus PSA emission (Phase 3) may be considered**, except where the checklist clearly allows a narrower docs-only statement.
 
 | Prerequisite | Required condition | Gate assessment (plain prose only) | Blocks Phase 3 until owner-resolved? | Source basis |
 | --- | --- | --- | --- | --- |
@@ -97,7 +98,7 @@ Gate assessments below are **plain prose for this document only**. They are **no
 | Identity decision workflow | Owner-gated identity resolution with auditable decisions | Conceptual model and rules live in Phase 2 and matching specs; execution workflow and populated decisions remain owner-gated | Yes — for identity-dependent Phase 3 work | `docs/architecture/school-identity-location-resolution-phase-2-spec.md` — Decision ownership / audit; `docs/architecture/phase-2-closure-criteria-checklist.md` — Hard gates before Phase 3 implementation |
 | Location decision workflow | Multi-location honesty; campus signals; no silent collapse | Conceptual model and CASE 2 rules are documented; populated location resolution and publishability remain owner-gated alongside identity | Yes — for location-dependent Phase 3 work | `docs/architecture/norway-school-identity-matching-spec.md` — Mandatory matching behavior — CASE 2; `docs/architecture/school-identity-location-resolution-phase-2-spec.md` — Proposed conceptual domain model — school_locations / campuses |
 | Publication decision workflow | Publication decisions separate from identity resolution | Publishability contract documented; operational publication decisions and PSA changes remain owner-gated per checklist | Yes — for PSA-facing Phase 3 emission | `docs/architecture/school-identity-location-resolution-phase-2-spec.md` — Publishability contract; `docs/architecture/phase-2-closure-criteria-checklist.md` — Phase 2 checklist — Publishability contract |
-| Controlled 1:N PSA emission rules | Phase 3 goal and rules treated as design input only | Execution plan states Phase 3 rules; emission remains blocked until separate implementation approval | Yes — for controlled 1:N PSA emission | `docs/architecture/norway-school-identity-matching-execution-plan.md` — Phase linkage / Phase 3 sections as applicable; `docs/architecture/phase-2-closure-criteria-checklist.md` — Hard gates before Phase 3 implementation |
+| Per-campus PSA (Phase 3) emission rules | Phase 3 goal and rules treated as design input only | Execution plan states Phase 3 rules; emission remains blocked until separate implementation approval | Yes — for per-campus PSA emission (Phase 3) | `docs/architecture/norway-school-identity-matching-execution-plan.md` — Phase linkage / Phase 3 sections as applicable; `docs/architecture/phase-2-closure-criteria-checklist.md` — Hard gates before Phase 3 implementation |
 | PSA materialization gate | Materialization separate from publication decision | Checklist and production-truth boundary treat materialization as owner-gated and not approved here | Yes — for PSA materialization work | `docs/architecture/phase-2-production-truth-closure.md` — PSA / Route boundary; `docs/architecture/phase-2-closure-criteria-checklist.md` — Hard gates before Phase 3 implementation |
 | Route Engine consumption gate | Route consumes published internal truth only | Route and Phase 2 specs state boundary; consumption remains blocked until separate gate | Yes — for Route consumption of new truth | `docs/architecture/route-engine-master-spec.md` — School/Programme availability truth contract; `docs/architecture/school-identity-location-resolution-phase-2-spec.md` — Route Engine boundary |
 | Audit trail policy | Append-only discipline; actor and basis on decision-bearing records | Rules documented in Phase 2 spec; enforcement remains implementation-gated | Yes — for audited Phase 3 paths | `docs/architecture/school-identity-location-resolution-phase-2-spec.md` — Decision ownership / audit; `docs/architecture/phase-2-closure-criteria-checklist.md` — Hard gates before Phase 3 implementation |
@@ -117,7 +118,7 @@ This checklist is **not** itself approval. LOSA / Phase 4 language below points 
 - Runtime/write **execution path** is separately owner-approved.
 - Identity and location decisions are **auditable** per Phase 2 spec and checklist hard gates.
 - Publication decisions are **auditable** and **separate** from identity resolution.
-- Controlled 1:N PSA **emission rules** are explicitly owner-approved for implementation.
+- Per-campus PSA (Phase 3) **emission rules** are explicitly owner-approved for implementation.
 - Unresolved and ambiguous cases **remain blocked** from publication.
 - LOSA and external-delivery cases **remain outside** ordinary-school availability **unless** a **separate Phase 4 model owner gate** approves otherwise, as scoped in `docs/architecture/school-identity-location-resolution-phase-2-spec.md` — Relationship to Phase 4 and the Phase 4 LOSA reference docs above.
 - No weak fuzzy, random campus, or first-candidate behavior is **introduced** in implementation.
@@ -128,7 +129,7 @@ This checklist is **not** itself approval. LOSA / Phase 4 language below points 
 ## Must remain blocked
 
 - Phase 3 implementation
-- Controlled 1:N PSA implementation
+- Per-campus PSA (Phase 3) implementation
 - PSA materialization
 - PSA publication
 - Route Engine consumption
@@ -149,7 +150,7 @@ Forbidden **examples** only; **not** allowed behavior:
 - Production truth boundary exists → production truth executed
 - Runtime/write boundary exists → write path approved
 - Gate criteria exists → Phase 3 start
-- Gate criteria exists → controlled 1:N PSA emission
+- Gate criteria exists → per-campus PSA emission (Phase 3)
 - Publishable → PSA publication
 - Multi-location → publishable
 - First candidate wins
@@ -164,7 +165,7 @@ This document **approves none** of the following:
 
 - Production truth execution design
 - Runtime/write execution design
-- Controlled 1:N PSA design
+- Per-campus PSA (Phase 3) design
 - PSA materialization design
 - PSA publication gate
 - Route Engine consumption gate
@@ -176,7 +177,7 @@ This document **approves none** of the following:
 ## Open owner decisions carried forward
 
 - **OPEN:** When Phase 2 production truth execution may start
-- **OPEN:** How controlled 1:N PSA emission is scoped
+- **OPEN:** How per-campus PSA emission (Phase 3) is scoped
 - **OPEN:** How multi-location identity and location sets become eligible
 - **OPEN:** How PSA materialization consumes publication decisions
 - **OPEN:** How Route Engine consumes only published internal truth
@@ -186,7 +187,7 @@ This document **approves none** of the following:
 
 ## Final boundary statement
 
-Phase 2 to Phase 3 gate criteria are documentation-defined here, but Phase 3 implementation, controlled 1:N PSA emission, runtime/write integration, PSA materialization, PSA publication, Route Engine consumption, and DB writes remain blocked until separate owner-approved gates.
+Phase 2 to Phase 3 gate criteria are documentation-defined here, but Phase 3 implementation, per-campus PSA emission (Phase 3), runtime/write integration, PSA materialization, PSA publication, Route Engine consumption, and DB writes remain blocked until separate owner-approved gates.
 
 **Owner policy (2026-05-18):** RLS apply **preconditions** policy in `docs/architecture/phase-2-rls-apply-preconditions-owner-decision-record.md` — **not** Phase 3 approval; **NOT_READY_FOR_APPLY** unchanged.
 

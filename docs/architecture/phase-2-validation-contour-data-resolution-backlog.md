@@ -103,16 +103,15 @@ Rules:
 - `stage`: VGS programme/stage availability context; exact stage-level packet not yet structured in this backlog
 - `source_snapshot_label`: `evidence not yet structured in current docs/scripts`
 - `source_labels`: `Nord-Troms videregående skole`, `Stangnes Rå videregående skole`
-- `issue_types`: multi-location/avdeling ambiguity; ordinary matching ambiguity
-- `current_status`: non-green with ambiguity abort behavior
-- `candidate_classification`: `phase2_resolvable` + `needs_review`
-- `conceptual_decision_state_candidates`: `ambiguous_candidates`, `location_unresolved`, `needs_review`
-- `required_evidence`:
-  - location-level disambiguation evidence per school identity
-  - candidate tie-resolution evidence grounded in source semantics
+- `issue_types`: multi-location/avdeling (CASE 2); per-campus programme evidence gap for future Phase 3
+- `current_status`: **Contour B production** — `multi_avd_identity` matcher resolves CASE 2; PSA/route **1:1** Vilbli school-brand (`db67b40`, Troms **55** verified VG1=5 / VG2=4). Phase 2 packet states below remain for **future** per-campus expansion gate.
+- `candidate_classification`: `phase2_resolvable` + `needs_review` (for per-campus programme claims only)
+- `conceptual_decision_state_candidates`: `needs_review` until Tier 2+ per-campus programme evidence; not `ambiguous_candidates` for clean `multi_avd_identity` ties
+- `required_evidence` (for **per-campus** programme publication only):
+  - Tier 2+ programme×stage evidence per NSR `avd` (VIGO inntak / fylke / school ops — not identity linkage alone)
   - auditable decision basis and reason coding
-- `blocked_actions`: publication activation; Route Engine/runtime changes; helper integration beyond approved boundary
-- `forbidden_inferences`: picking first candidate; county-specific exception logic
+- `blocked_actions`: **per-campus** publication activation without evidence; Route Engine/runtime changes; helper integration beyond approved boundary
+- `forbidden_inferences`: per-`avd` programme publish from NSR identity alone; county-specific exception logic
 - `related_docs_refs`:
   - `docs/architecture/norway-school-identity-matching-spec.md` (Nord-Troms/Stangnes cases)
   - `docs/architecture/norway-school-identity-matching-execution-plan.md` (ambiguity diagnostics snapshots)

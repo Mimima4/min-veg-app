@@ -104,11 +104,13 @@ Strict **CASE 1** may be considered **sufficiently evidenced** only for **future
 
 ## Decision 2 — Multi-location without campus signal
 
-**Owner decision:** **Yes** — **block**.
+**Owner decision:** **Yes** — **block** per-campus programme publication without evidence.
 
-When one school identity has multiple locations / avdelinger and the source does **not** specify which campus is required, the system **must block** (matching spec CASE 2). The system **must not** choose a campus by heuristic.
+When one school identity has multiple locations / avdelinger and the source does **not** specify which campus offers the programme, the system **must not** publish **per-`avd` programme availability** or choose a campus by heuristic as programme truth.
 
-**Exceptions** require a **separate explicit owner gate** with logged decision.
+**Amendment (2026-06-05, production Contour B):** Matching spec **CASE 2** allows `multi_avd_identity` matcher linkage (1:N NSR `avd` rows) with **1:1** Vilbli / VIGO school-brand PSA emission and route display (`pickInstitutionsForPsaEmission`, commit `db67b40`). This is **not** a per-campus programme claim; emission anchor is deterministic and documented in `norway-school-identity-matching-spec.md`.
+
+**Exceptions** to per-campus publication still require a **separate explicit owner gate** with logged decision and Tier 2+ evidence.
 
 ---
 

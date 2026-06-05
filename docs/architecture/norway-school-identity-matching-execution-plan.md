@@ -6,7 +6,7 @@ Temporary planning artifact. **Delete after completion.**
 
 **Canonical spec:** `docs/architecture/norway-school-identity-matching-spec.md`
 
-Reader note: this file contains historical phase records; earlier helper/pipeline/readiness references are timeline context unless explicitly re-confirmed.
+Reader note: this file contains historical phase records; earlier helper/pipeline/readiness references are timeline context unless explicitly re-confirmed. **Current CASE 2 production policy (2026-06-05, `db67b40`):** matcher 1:N `multi_avd_identity` linkage; PSA/route **1:1** Vilbli school-brand — see `norway-school-identity-matching-spec.md`.
 Current helper boundary is governed by the Phase 2 helper ADR/contract, with standalone diagnostics as the approved consumer; readiness/pipeline/runtime/helper expansion remains separately gated and is not approved by this file.
 
 ## Purpose
@@ -34,8 +34,8 @@ Plan implementation phases for Vilbli → NSR → PSA matching without hacks, ma
 - No manual internet-derived lookup tables.  
 - No region-specific hacks.  
 - No weakening fuzzy matching.  
-- No random campus selection.  
-- No PSA truth when identity/location is unresolved.  
+- No random campus selection for **programme availability** (school-brand emission anchor per matching spec is allowed).  
+- No PSA truth when identity/location is unresolved; no per-`avd` programme publish without Tier 2+ evidence.  
 - Abort is safer than false education availability.  
 - All changes must follow `norway-school-identity-matching-spec.md`.
 
@@ -760,7 +760,7 @@ Reserved / future only (not required in first implementation):
 
 - `15` — still aborts — `matchingAmbiguitySummary`: `ambiguousSchoolsCount=1`, `topScoreTieCount=1`, `weakSignalTieCount=1` — example: Surnadal (`candidateCount=4`), `explanationCode=weak_signal_tie`.
 - `18` — still aborts — `matchingAmbiguitySummary`: `ambiguous=1`, `topScoreTie=1`, `weakSignal=1` — example: Nuortta-Sálto (`candidateCount=2`), `explanationCode=weak_signal_tie`.
-- `55` — still aborts — `matchingAmbiguitySummary`: `ambiguous=2`, `topScoreTie=2`, `weakSignal=0` — example: Nord-Troms, `explanationCode=multiple_nsr_candidates_same_tier`.
+- `55` — **historical (pre-`62e8aae`):** aborted with `ambiguous=2` (Nord-Troms, Stangnes Rå). **Superseded:** `multi_avd_identity` matcher + 1:1 emission (`db67b40`); Contour B ingest succeeds (VG1=5, VG2=4).
 - `56` — still aborts — `matchingAmbiguitySummary` all zero — `matchingAmbiguityDiagnostics=[]` because the county is **unmatched-heavy**, not ambiguity-heavy.
 
 #### Dry-run matrix snapshot (electrician) — green counties (still succeed)
@@ -774,7 +774,7 @@ Reserved / future only (not required in first implementation):
 
 1. Phase **1A.2g** — **implementation result** as implemented in `scripts/run-vgs-truth-pipeline.mjs`: ambiguity payload is **dry-run structured abort only**.
 2. Ambiguity diagnostics are **operator-facing** tooling; they **do not** resolve ambiguity or select an NSR institution.
-3. Counties **`15` / `18` / `55`** now expose **why** matching is ambiguous (capped tie set + reason codes) but remain **non-green** until policy/product work—not diagnostic output alone.
+3. Counties **`15` / `18`** expose **why** matching is ambiguous (capped tie set + reason codes) but remain **non-green** until policy/product work—not diagnostic output alone. **`55`** CASE 2 multi-`avd` ties are **resolved** in production (`multi_avd_identity`; see reader note above).
 4. County **`56`** remains dominated by **unmatched** Vilbli schools (and LOSA-heavy identity signals from earlier phases); the next useful layer is **unmatched diagnostics** and **LOSA handling**, not more ambiguity-only payload.
 5. Successful dry-run JSON does **not** include `matchingAmbiguitySummary` / `matchingAmbiguityDiagnostics` (abort path only); normal success summary paths are unchanged.
 6. Contract for unmatched-heavy diagnostics is **Phase 1A.2h.1** below (implemented in `scripts/run-vgs-truth-pipeline.mjs`; readiness unchanged).
@@ -1258,18 +1258,23 @@ Related control checklist: [`docs/architecture/phase-2-closure-criteria-checklis
 
 ---
 
-## Phase 3 — Controlled 1:N PSA emission
+## Phase 3 — Per-campus PSA emission (future, evidence-gated)
 
 ### Goal
 
-Allow one Vilbli school identity row to produce **multiple** PSA rows when official data supports multiple valid locations.
+Allow one Vilbli school identity to produce **multiple per-campus PSA / route options** only when **Tier 2+ evidence** confirms programme×stage on each NSR `avd` (VIGO / fylke / school operational sources — not NSR identity alone).
 
-### Rules
+### Current production (pre–Phase 3)
 
-- Only when identity and location set are **officially** supported.  
-- Never infer from weak fuzzy.  
-- No single random institution selected.  
-- UI must clearly show location/campus options.
+- **CASE 2** `multi_avd_identity`: matcher **1:N** linkage; emission + route display **1:1** Vilbli school-brand (`pickInstitutionsForPsaEmission`).  
+- Owner-approved in matching spec + `db67b40`; proven on Troms **55** (VG1=5, VG2=4 vs Vilbli).
+
+### Phase 3 rules (not opened)
+
+- Only when programme×stage per campus is **officially evidenced** — not from weak fuzzy or NSR `avd` rows alone.  
+- Never infer campus programme availability from identity linkage.  
+- UI must clearly label campus-specific options vs school-brand options.  
+- No duplicate / noisy PSA rows.
 
 ### Potential files
 
@@ -1281,9 +1286,9 @@ Allow one Vilbli school identity row to produce **multiple** PSA rows when offic
 
 ### Success criteria
 
-- Multi-location schools produce **complete and honest** options.  
+- Per-campus options are **evidence-backed**, not identity-inferred.  
 - Saved route and compare still work.  
-- No duplicate / noisy PSA rows.
+- School-brand fallback remains when campus evidence is absent.
 
 ---
 

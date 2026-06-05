@@ -79,20 +79,23 @@ LOSA rows are unsupported for now.
 
 ## Forbidden
 
-- No random campus selection.  
-- No choosing first candidate by sort order.  
+- No random campus selection for **matching** or for claiming **programme×stage availability on a specific campus**.  
+- No choosing first candidate by sort order to **resolve ambiguous ties across different school identities** or to assert **which campus offers the programme**.  
 - No manual internet-derived lookup tables.  
 - No region-specific hacks.  
 - No weakening fuzzy matching.  
 - No treating Sámi/Norwegian aliases as separate schools.  
-- No publishing PSA truth if identity/location is unresolved.
+- No publishing PSA truth if identity/location is unresolved.  
+- No publishing **per-`avd` programme options** without Tier 2+ campus+programme+stage evidence.
 
 ## Allowed
 
 - Alias-aware matching.  
 - Conservative matching.  
-- Abort on ambiguity.  
-- Future 1:N PSA emission after explicit product/domain approval.  
+- Abort on ambiguity (weak fuzzy ties across **different** identities).  
+- **CASE 2:** `multi_avd_identity` matcher linkage (1:N NSR `avd` rows) with **1:1** Vilbli / VIGO school-brand PSA emission (`pickInstitutionsForPsaEmission`) and route display.  
+- Deterministic **emission anchor** institution for school-brand PSA only — not a campus programme-truth claim.  
+- Future **per-campus** PSA rows after explicit product approval **and** Tier 2+ programme×stage evidence per campus.  
 - Future LOSA model after explicit contract.
 
 ## Test cases
@@ -103,7 +106,7 @@ LOSA rows are unsupported for now.
 
 ### 2. Nuortta-Sálto joarkkaskåvllå / Nord-Salten videregående skole
 
-**Expected:** one school identity with multiple locations/campuses. Without explicit campus signal, do not choose one randomly.
+**Expected:** one school identity with multiple locations/campuses. Slash-alias campus hints may resolve to one NSR `avd` (`resolveSlashAliasNsrTie`). Otherwise **CASE 2:** matcher may link multiple `avd` rows; PSA / route options stay **1:1** school-brand until per-campus programme proof exists.
 
 ### 3. Nord-Troms videregående skole
 
