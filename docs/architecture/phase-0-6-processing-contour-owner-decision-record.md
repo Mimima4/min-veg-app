@@ -225,7 +225,7 @@ For pipeline dry-run under verification or truth charters, use **`--dry-run`** o
 |-------|------|
 | **Trigger** | Pipeline **ABORT** or readiness **not** green — **any** `VGS_PATH_DEFINITIONS` profession + pipeline county; **not** when that profession/county pair is Contour **A** green (per `CONTOUR_A_OPERATIONAL_BY_PROFESSION`) |
 | **CLI** | `node scripts/run-contour-b-operational-ingest.mjs --profession <slug> --county <code>` — eligibility via `classify` + `contour-b-operational-eligibility.mjs` |
-| **Mechanism** | `run-vgs-truth-pipeline --contour-b-partial` — writes **only** NSR-matched, **non-LOSA** schools; planner fallback when `missing_programme_rows` |
+| **Mechanism** | `run-contour-b-operational-ingest.mjs` → `runVgsTruthPipeline({ isContourBPartial: true })` — writes **only** NSR-matched, **non-LOSA** schools; planner fallback when `missing_programme_rows`. CLI `--contour-b-partial` on pipeline **rejected** (Block F). |
 | **UI** | Route reads PSA via existing `getAvailabilityTruth` / `build-steps-from-availability-truth` — **no** new panels |
 | **LOSA** | Not written as ordinary school until §4 + publication gate — expands options as gates close |
 | **Owner packets** | Optional audit trail only — **not** the product deliverable |

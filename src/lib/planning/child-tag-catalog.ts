@@ -1,6 +1,6 @@
-import type { SupportedLocale } from "@/lib/i18n/site-copy";
-
-type LocalizedLabel = Record<SupportedLocale, string>;
+import { getLocalizedValue } from "@/lib/i18n/get-localized-value";
+import type { ContentLocale } from "@/lib/i18n/locales";
+import type { LocalizedLabel } from "@/lib/i18n/localized-label";
 
 type TagDefinition = {
   id: string;
@@ -296,10 +296,11 @@ const DERIVED_STRENGTH_RULES: StrengthRule[] = [
 function getTagLabelFromList(
   list: TagDefinition[],
   id: string,
-  locale: SupportedLocale
+  locale: ContentLocale
 ): string {
   const tag = list.find((item) => item.id === id);
-  return tag?.label_i18n[locale] ?? id;
+  if (!tag) return id;
+  return getLocalizedValue(tag.label_i18n, locale) || id;
 }
 
 function coerceIdsFromList(list: TagDefinition[], values: string[]): string[] {
@@ -327,20 +328,20 @@ export function coerceObservedTraitIds(values: string[]): string[] {
   return coerceIdsFromList(OBSERVED_TRAIT_TAGS, values);
 }
 
-export function getInterestLabel(id: string, locale: SupportedLocale): string {
+export function getInterestLabel(id: string, locale: ContentLocale): string {
   return getTagLabelFromList(INTEREST_TAGS, id, locale);
 }
 
 export function getObservedTraitLabel(
   id: string,
-  locale: SupportedLocale
+  locale: ContentLocale
 ): string {
   return getTagLabelFromList(OBSERVED_TRAIT_TAGS, id, locale);
 }
 
 export function getDerivedStrengthLabel(
   id: string,
-  locale: SupportedLocale
+  locale: ContentLocale
 ): string {
   return getTagLabelFromList(DERIVED_STRENGTH_TAGS, id, locale);
 }

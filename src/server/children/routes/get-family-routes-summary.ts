@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
-import type { SupportedLocale } from "@/lib/i18n/site-copy";
 import { getLocalizedValue } from "@/lib/i18n/get-localized-value";
+import type { LocalizedLabel } from "@/lib/i18n/localized-label";
+import { resolveContentLocale, type ContentLocale } from "@/lib/i18n/locales";
 import { resolveStudyRouteState } from "./resolve-study-route-state";
 
 type ChildRow = {
@@ -46,13 +47,13 @@ export type FamilyRouteChildSummary = {
 
 function getSchoolStageLabel(
   schoolStage: string | null | undefined,
-  locale: SupportedLocale
+  locale: ContentLocale
 ): string {
   if (!schoolStage) {
     return "—";
   }
 
-  const labels: Record<string, Record<SupportedLocale, string>> = {
+  const labels: Record<string, LocalizedLabel> = {
     barneskole: {
       nb: "Barneskole",
       nn: "Barneskule",
@@ -80,7 +81,8 @@ function getSchoolStageLabel(
     },
   };
 
-  return labels[schoolStage]?.[locale] ?? schoolStage;
+  const label = labels[schoolStage];
+  return label ? getLocalizedValue(label, locale) || schoolStage : schoolStage;
 }
 
 export async function getFamilyRoutesSummary({
@@ -91,7 +93,7 @@ export async function getFamilyRoutesSummary({
   familyAccountId: string;
 }): Promise<FamilyRouteChildSummary[]> {
   const supabase = await createClient();
-  const supportedLocale = locale as SupportedLocale;
+  const supportedLocale = resolveContentLocale(locale);
 
   const { data: children, error: childrenError } = await supabase
     .from("child_profiles")

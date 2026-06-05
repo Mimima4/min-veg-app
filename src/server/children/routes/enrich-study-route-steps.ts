@@ -1,3 +1,4 @@
+import { resolveInstitutionDisplayName } from "@/lib/i18n/institution-display-name";
 import { createClient } from "@/lib/supabase/server";
 import type { StudyRouteSnapshotStep } from "@/lib/routes/route-types";
 import { isValidUuid, toUniqueValidUuids } from "./route-id-guards";
@@ -13,6 +14,7 @@ type EducationProgramRow = {
 type EducationInstitutionRow = {
   id: string;
   name: string | null;
+  name_i18n: Record<string, string> | null;
   municipality_name: string | null;
   website_url: string | null;
 };
@@ -129,9 +131,26 @@ function getStepDuration(
   return null;
 }
 
+function resolveInstitutionNameFromRow(
+  institution: EducationInstitutionRow | null | undefined,
+  fallbackName: string | null | undefined,
+  locale?: string
+): string | null {
+  if (!institution && !fallbackName) {
+    return null;
+  }
+  return resolveInstitutionDisplayName({
+    locale: locale ?? "nb",
+    institutionName: institution?.name ?? fallbackName ?? null,
+    nameI18n: institution?.name_i18n ?? null,
+  });
+}
+
 export async function enrichStudyRouteSteps(
-  steps: StudyRouteSnapshotStep[]
+  steps: StudyRouteSnapshotStep[],
+  options?: { locale?: string }
 ): Promise<StudyRouteSnapshotStep[]> {
+  const locale = options?.locale;
   const supabase = await createClient();
 
   const programSlugs = Array.from(
@@ -162,15 +181,21 @@ export async function enrichStudyRouteSteps(
     typedPrograms.map((program) => [program.slug, program])
   );
 
-  const institutionIds = toUniqueValidUuids(
-    typedPrograms.map((program) => program.institution_id)
-  );
+  const institutionIds = toUniqueValidUuids([
+    ...typedPrograms.map((program) => program.institution_id),
+    ...steps.flatMap((step) => {
+      if (step.source !== "availability_truth" || step.type !== "programme_selection") {
+        return [];
+      }
+      return (step.options ?? []).map((option) => option.institution_id);
+    }),
+  ]);
 
   let institutionById = new Map<string, EducationInstitutionRow>();
   if (institutionIds.length > 0) {
     const { data: institutions, error: institutionsError } = await supabase
       .from("education_institutions")
-      .select("id, name, municipality_name, website_url")
+      .select("id, name, name_i18n, municipality_name, website_url")
       .in("id", institutionIds);
 
     if (institutionsError) {
@@ -285,17 +310,28 @@ export async function enrichStudyRouteSteps(
         };
       }
 
-      const fallbackInstitutionName =
-        step.institution_name ?? lastTruthInstitution?.name ?? null;
-      const fallbackMunicipalityName =
-        step.institution_city ??
-        step.institution_municipality ??
-        lastTruthInstitution?.municipality ??
-        null;
-      const fallbackInstitutionWebsite =
-        step.institution_website ?? lastTruthInstitution?.website ?? null;
-
       if (step.type === "programme_selection") {
+        const anchorOptionInstitutionId = (step.options ?? [])
+          .map((option) =>
+            typeof option.institution_id === "string" ? option.institution_id.trim() : ""
+          )
+          .find((id) => isValidUuid(id));
+        const anchorInstitution =
+          anchorOptionInstitutionId
+            ? institutionById.get(anchorOptionInstitutionId) ?? null
+            : null;
+        const fallbackInstitutionName = resolveInstitutionNameFromRow(
+          anchorInstitution,
+          step.institution_name ?? lastTruthInstitution?.name ?? null,
+          locale
+        );
+        const fallbackMunicipalityName =
+          step.institution_city ??
+          step.institution_municipality ??
+          lastTruthInstitution?.municipality ??
+          null;
+        const fallbackInstitutionWebsite =
+          step.institution_website ?? lastTruthInstitution?.website ?? null;
         if (fallbackInstitutionName || fallbackMunicipalityName || fallbackInstitutionWebsite) {
           lastTruthInstitution = {
             name: fallbackInstitutionName,
@@ -361,6 +397,15 @@ export async function enrichStudyRouteSteps(
 
               const institutionId =
                 typeof option.institution_id === "string" ? option.institution_id.trim() : "";
+              const optionInstitution =
+                institutionId && isValidUuid(institutionId)
+                  ? institutionById.get(institutionId) ?? null
+                  : null;
+              const resolvedOptionInstitutionName = resolveInstitutionNameFromRow(
+                optionInstitution,
+                option.institution_name ?? fallbackInstitutionName,
+                locale
+              );
               const hydratedPrivate =
                 option.institution_is_private_school !== undefined &&
                 option.institution_is_private_school !== null
@@ -371,6 +416,7 @@ export async function enrichStudyRouteSteps(
 
               return {
                 ...option,
+                institution_name: resolvedOptionInstitutionName,
                 institution_city: optionMunicipality,
                 institution_municipality:
                   option.institution_municipality ??
@@ -400,7 +446,11 @@ export async function enrichStudyRouteSteps(
       ? institutionById.get(program.institution_id) ?? null
       : null;
 
-    const institutionName = institution?.name ?? step.institution_name ?? null;
+    const institutionName = resolveInstitutionNameFromRow(
+      institution,
+      step.institution_name ?? null,
+      locale
+    );
     const municipalityName =
       institution?.municipality_name ??
       step.institution_city ??

@@ -360,6 +360,7 @@ export async function createInitialStudyRoute(
       ? await shouldUseAvailabilityTruth({
           countyCodes: truthLookupInputs.countyCodes,
           programmeSlugsOrCodes: truthLookupInputs.programmeSlugsOrCodes,
+          locale,
         })
       : { useTruth: false, truth: { hasTruth: false, rows: [] } };
 

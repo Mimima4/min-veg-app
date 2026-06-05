@@ -18409,6 +18409,76 @@ if (isMainModule(import.meta.url)) {
   });
 }
 
+// scripts/lib/institution-name-i18n.mjs
+function normalizeWhitespace2(value) {
+  return String(value ?? "").replace(/\s+/g, " ").trim();
+}
+function normalizeForMatch(value) {
+  return normalizeWhitespace2(value).toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
+}
+function looksLikeSami(text) {
+  return /[áčđŋšŧžÁČĐŊŠŦŽ]/.test(text) || /\bjoatkkaskuvla\b/i.test(text);
+}
+function scoreAliasAgainstNsr(alias, nsrName) {
+  const aliasNorm = normalizeForMatch(alias);
+  const nsrNorm = normalizeForMatch(nsrName);
+  if (!aliasNorm || !nsrNorm) return 0;
+  if (aliasNorm === nsrNorm) return 1;
+  if (nsrNorm.includes(aliasNorm) || aliasNorm.includes(nsrNorm)) return 0.8;
+  return 0;
+}
+function buildInstitutionNameI18nFromVilbliLabel({ vilbliLabel, nsrName }) {
+  const { hasSlashAliases, aliasLabels } = detectSlashAliases(vilbliLabel);
+  if (!hasSlashAliases || aliasLabels.length < 2) {
+    return null;
+  }
+  const nsr = normalizeWhitespace2(nsrName ?? "");
+  const scored = aliasLabels.map((alias) => ({
+    alias,
+    score: nsr ? scoreAliasAgainstNsr(alias, nsr) : 0
+  }));
+  scored.sort((a, b) => b.score - a.score);
+  const nbAlias = nsr || scored[0]?.alias || aliasLabels[0];
+  const remaining = aliasLabels.filter(
+    (alias) => alias !== nbAlias && normalizeForMatch(alias) !== normalizeForMatch(nbAlias)
+  );
+  const seCandidate = remaining.find(looksLikeSami) ?? remaining[0];
+  if (!seCandidate || normalizeForMatch(seCandidate) === normalizeForMatch(nbAlias)) {
+    return null;
+  }
+  return {
+    nb: nbAlias,
+    se: seCandidate
+  };
+}
+async function syncInstitutionNameI18nFromVilbliMatches({
+  supabase,
+  matchedBySchoolCode,
+  schools
+}) {
+  const schoolByCode = new Map(schools.map((school) => [school.schoolCode, school]));
+  let updated = 0;
+  for (const [schoolCode, match] of matchedBySchoolCode.entries()) {
+    const school = schoolByCode.get(schoolCode);
+    if (!school) continue;
+    for (const institution of match.institutions ?? []) {
+      const nameI18n = buildInstitutionNameI18nFromVilbliLabel({
+        vilbliLabel: school.schoolName,
+        nsrName: institution.institutionName
+      });
+      if (!nameI18n) continue;
+      const { error } = await supabase.from("education_institutions").update({ name_i18n: nameI18n }).eq("id", institution.institutionId);
+      if (error) {
+        throw new Error(
+          `Failed to sync institution name_i18n for ${institution.institutionId}: ${error.message}`
+        );
+      }
+      updated += 1;
+    }
+  }
+  return { updated };
+}
+
 // scripts/run-vgs-truth-pipeline.mjs
 var COUNTY_CODE_TO_VILBLI3 = {
   "03": { slug: "oslo", label: "Oslo" },
@@ -19058,6 +19128,16 @@ async function runVgsTruthPipeline({
       }))
     });
   }
+  if (!isDryRun) {
+    const nameI18nSync = await syncInstitutionNameI18nFromVilbliMatches({
+      supabase,
+      matchedBySchoolCode,
+      schools: uniqueExtractedSchools
+    });
+    if (nameI18nSync.updated > 0) {
+      console.error(`[name-i18n] synced ${nameI18nSync.updated} institution locale names`);
+    }
+  }
   const unmatchedSchoolCount = unmatchedSchools.length;
   const ambiguousMatchCount = ambiguousMatches.length;
   if (unmatchedSchoolCount > 0 || ambiguousMatchCount > 0) {
@@ -19626,7 +19706,12 @@ async function runCli3() {
   const professionSlug = String(args.profession ?? "").trim();
   const countyCode = String(args.county ?? "").trim();
   const isDryRun = String(args["dry-run"] ?? "").toLowerCase() === "true";
-  const isContourBPartial = String(args["contour-b-partial"] ?? "").toLowerCase() === "true";
+  const cliContourBPartial = String(args["contour-b-partial"] ?? "").toLowerCase() === "true";
+  if (cliContourBPartial) {
+    throw new Error(
+      "CLI --contour-b-partial is not allowed (Contour A path). Use: node scripts/run-contour-b-operational-ingest.mjs --profession <slug> --county <code>"
+    );
+  }
   const supabase = createClient2(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -19635,7 +19720,7 @@ async function runCli3() {
     professionSlug,
     countyCode,
     isDryRun,
-    isContourBPartial,
+    isContourBPartial: false,
     supabase
   });
 }

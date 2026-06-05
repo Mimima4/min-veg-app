@@ -1,12 +1,17 @@
-import type { SupportedLocale } from "@/lib/i18n/site-copy";
+import type { ContentLocale } from "@/lib/i18n/locales";
+import type { LocalizedLabel } from "@/lib/i18n/localized-label";
 
-type LocalizedValue = Record<string, string> | null | undefined;
+type LocalizedValue = LocalizedLabel | Record<string, string> | null | undefined;
 
 export function getLocalizedValue(
   value: LocalizedValue,
-  locale: SupportedLocale
+  locale: ContentLocale
 ): string {
   if (!value) return "";
+
+  if (locale === "se" && value.se) {
+    return value.se;
+  }
 
   return (
     value[locale] ??

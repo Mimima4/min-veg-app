@@ -602,6 +602,7 @@ export async function triggerStudyRouteRecompute(params: Params) {
         ? await shouldUseAvailabilityTruth({
             countyCodes: truthLookupInputs.countyCodes,
             programmeSlugsOrCodes: truthLookupInputs.programmeSlugsOrCodes,
+            locale,
           })
         : { useTruth: false, truth: { hasTruth: false, rows: [] } };
 

@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import type { SupportedLocale } from "@/lib/i18n/site-copy";
+import { getLocalizedValue } from "@/lib/i18n/get-localized-value";
+import type { LocalizedLabel } from "@/lib/i18n/localized-label";
+import { resolveContentLocale } from "@/lib/i18n/locales";
 
 type Props = {
   locale: string;
@@ -19,10 +21,7 @@ type SchoolStage =
 
 type RelocationWillingness = "no" | "maybe" | "yes";
 
-const SCHOOL_STAGE_LABELS: Record<
-  SchoolStage,
-  Record<SupportedLocale, string>
-> = {
+const SCHOOL_STAGE_LABELS: Record<SchoolStage, LocalizedLabel> = {
   barneskole: {
     nb: "Barneskole",
     nn: "Barneskule",
@@ -50,10 +49,7 @@ const SCHOOL_STAGE_LABELS: Record<
   },
 };
 
-const RELOCATION_LABELS: Record<
-  RelocationWillingness,
-  Record<SupportedLocale, string>
-> = {
+const RELOCATION_LABELS: Record<RelocationWillingness, LocalizedLabel> = {
   no: {
     nb: "Nei",
     nn: "Nei",
@@ -72,11 +68,11 @@ const RELOCATION_LABELS: Record<
 };
 
 function getLocalizedLabel<T extends string>(
-  labels: Record<T, Record<SupportedLocale, string>>,
+  labels: Record<T, LocalizedLabel>,
   value: T,
-  locale: SupportedLocale
+  locale: string
 ): string {
-  return labels[value][locale];
+  return getLocalizedValue(labels[value], resolveContentLocale(locale));
 }
 
 export default function CreateChildForm({
@@ -85,7 +81,7 @@ export default function CreateChildForm({
 }: Props) {
   const supabase = createClient();
   const router = useRouter();
-  const supportedLocale = locale as SupportedLocale;
+  const supportedLocale = resolveContentLocale(locale);
 
   const currentYear = new Date().getFullYear();
 

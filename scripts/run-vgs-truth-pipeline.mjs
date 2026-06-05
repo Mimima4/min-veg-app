@@ -15,6 +15,7 @@ import {
   pickInstitutionMatchesForVilbliSchool,
   pickInstitutionsForPsaEmission,
 } from "./lib/vilbli-nsr-institution-match.mjs";
+import { syncInstitutionNameI18nFromVilbliMatches } from "./lib/institution-name-i18n.mjs";
 
 const COUNTY_CODE_TO_VILBLI = {
   "03": { slug: "oslo", label: "Oslo" },
@@ -863,6 +864,17 @@ export async function runVgsTruthPipeline({
     });
   }
 
+  if (!isDryRun) {
+    const nameI18nSync = await syncInstitutionNameI18nFromVilbliMatches({
+      supabase,
+      matchedBySchoolCode,
+      schools: uniqueExtractedSchools,
+    });
+    if (nameI18nSync.updated > 0) {
+      console.error(`[name-i18n] synced ${nameI18nSync.updated} institution locale names`);
+    }
+  }
+
   const unmatchedSchoolCount = unmatchedSchools.length;
   const ambiguousMatchCount = ambiguousMatches.length;
 
@@ -1548,7 +1560,13 @@ async function runCli() {
   const professionSlug = String(args.profession ?? "").trim();
   const countyCode = String(args.county ?? "").trim();
   const isDryRun = String(args["dry-run"] ?? "").toLowerCase() === "true";
-  const isContourBPartial = String(args["contour-b-partial"] ?? "").toLowerCase() === "true";
+  const cliContourBPartial = String(args["contour-b-partial"] ?? "").toLowerCase() === "true";
+  if (cliContourBPartial) {
+    throw new Error(
+      "CLI --contour-b-partial is not allowed (Contour A path). " +
+        "Use: node scripts/run-contour-b-operational-ingest.mjs --profession <slug> --county <code>"
+    );
+  }
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -1559,7 +1577,7 @@ async function runCli() {
     professionSlug,
     countyCode,
     isDryRun,
-    isContourBPartial,
+    isContourBPartial: false,
     supabase,
   });
 }

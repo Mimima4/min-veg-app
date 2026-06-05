@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getLocalizedValue } from "@/lib/i18n/get-localized-value";
-import type { SupportedLocale } from "@/lib/i18n/site-copy";
+import type { LocalizedLabel } from "@/lib/i18n/localized-label";
+import { resolveContentLocale, type ContentLocale } from "@/lib/i18n/locales";
 import {
   getDerivedStrengthLabel,
   getInterestLabel,
@@ -88,7 +89,7 @@ export type SavedStudyRouteCard = {
 
 export type ChildProfilePageData = {
   locale: string;
-  supportedLocale: SupportedLocale;
+  supportedLocale: ContentLocale;
   child: ChildRow;
   municipalityOptions: Awaited<ReturnType<typeof getNorwayCountyMunicipalityOptions>>;
   initialPreferredMunicipalityCodes: string[];
@@ -112,7 +113,7 @@ export type ChildProfilePageResult =
 
 const INCOME_BAND_LABELS: Record<
   DesiredIncomeBand,
-  Record<SupportedLocale, string>
+  LocalizedLabel
 > = {
   open: { nb: "Åpen", nn: "Open", en: "Open" },
   up_to_600k: {
@@ -134,7 +135,7 @@ const INCOME_BAND_LABELS: Record<
 
 const WORK_STYLE_LABELS: Record<
   PreferredWorkStyle,
-  Record<SupportedLocale, string>
+  LocalizedLabel
 > = {
   open: { nb: "Åpen", nn: "Open", en: "Open" },
   onsite: { nb: "På stedet", nn: "På staden", en: "On-site" },
@@ -145,7 +146,7 @@ const WORK_STYLE_LABELS: Record<
 
 const EDUCATION_LEVEL_LABELS: Record<
   PreferredEducationLevel,
-  Record<SupportedLocale, string>
+  LocalizedLabel
 > = {
   open: { nb: "Åpen", nn: "Open", en: "Open" },
   upper_secondary: {
@@ -176,11 +177,11 @@ const EDUCATION_LEVEL_LABELS: Record<
 };
 
 function getLocalizedLabel<T extends string>(
-  labels: Record<T, Record<SupportedLocale, string>>,
+  labels: Record<T, LocalizedLabel>,
   value: T,
-  locale: SupportedLocale
+  locale: ContentLocale
 ): string {
-  return labels[value][locale];
+  return getLocalizedValue(labels[value], locale);
 }
 
 function buildActivePreferenceLabels({
@@ -192,7 +193,7 @@ function buildActivePreferenceLabels({
   desiredIncomeBand: DesiredIncomeBand;
   preferredWorkStyle: PreferredWorkStyle;
   preferredEducationLevel: PreferredEducationLevel;
-  locale: SupportedLocale;
+  locale: ContentLocale;
 }): string[] {
   const labels: string[] = [];
 
@@ -236,7 +237,7 @@ export async function getChildProfilePageData({
   locale: string;
   childId: string;
 }): Promise<ChildProfilePageResult> {
-  const supportedLocale = locale as SupportedLocale;
+  const supportedLocale = resolveContentLocale(locale);
   const supabase = await createClient();
 
   const {

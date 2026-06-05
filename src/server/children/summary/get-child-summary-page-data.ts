@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getLocalizedValue } from "@/lib/i18n/get-localized-value";
-import type { SupportedLocale } from "@/lib/i18n/site-copy";
+import type { LocalizedLabel } from "@/lib/i18n/localized-label";
+import { resolveContentLocale, type ContentLocale } from "@/lib/i18n/locales";
 import {
   getDerivedStrengthLabel,
   getInterestLabel,
@@ -81,7 +82,7 @@ export type SummaryProfessionCard = {
 
 export type ChildSummaryPageData = {
   locale: string;
-  supportedLocale: SupportedLocale;
+  supportedLocale: ContentLocale;
   child: {
     id: string;
     displayName: string;
@@ -115,7 +116,7 @@ export type ChildSummaryPageResult =
 
 const SCHOOL_STAGE_LABELS: Record<
   SchoolStage,
-  Record<SupportedLocale, string>
+  LocalizedLabel
 > = {
   barneskole: {
     nb: "Barneskole",
@@ -146,7 +147,7 @@ const SCHOOL_STAGE_LABELS: Record<
 
 const RELOCATION_LABELS: Record<
   RelocationWillingness,
-  Record<SupportedLocale, string>
+  LocalizedLabel
 > = {
   no: {
     nb: "Nei",
@@ -167,7 +168,7 @@ const RELOCATION_LABELS: Record<
 
 const INCOME_BAND_LABELS: Record<
   DesiredIncomeBand,
-  Record<SupportedLocale, string>
+  LocalizedLabel
 > = {
   open: {
     nb: "Åpen",
@@ -193,7 +194,7 @@ const INCOME_BAND_LABELS: Record<
 
 const WORK_STYLE_LABELS: Record<
   PreferredWorkStyle,
-  Record<SupportedLocale, string>
+  LocalizedLabel
 > = {
   open: {
     nb: "Åpen",
@@ -224,7 +225,7 @@ const WORK_STYLE_LABELS: Record<
 
 const EDUCATION_LEVEL_LABELS: Record<
   PreferredEducationLevel,
-  Record<SupportedLocale, string>
+  LocalizedLabel
 > = {
   open: {
     nb: "Åpen",
@@ -279,11 +280,11 @@ const EDUCATION_LEVEL_LABELS: Record<
 };
 
 function getLocalizedLabel<T extends string>(
-  labels: Record<T, Record<SupportedLocale, string>>,
+  labels: Record<T, LocalizedLabel>,
   value: T,
-  locale: SupportedLocale
+  locale: ContentLocale
 ): string {
-  return labels[value][locale];
+  return getLocalizedValue(labels[value], locale);
 }
 
 function formatDirectionLabel(term: string): string {
@@ -295,7 +296,7 @@ function formatDirectionLabel(term: string): string {
 
 function getSchoolStageLabel(
   value: SchoolStage | null,
-  locale: SupportedLocale
+  locale: ContentLocale
 ): string {
   if (!value) {
     return "Not set";
@@ -306,7 +307,7 @@ function getSchoolStageLabel(
 
 function getRelocationLabel(
   value: RelocationWillingness | null,
-  locale: SupportedLocale
+  locale: ContentLocale
 ): string {
   if (!value) {
     return "Not set";
@@ -324,7 +325,7 @@ function buildPlanningDirectionLabels({
   desiredIncomeBand: DesiredIncomeBand;
   preferredWorkStyle: PreferredWorkStyle;
   preferredEducationLevel: PreferredEducationLevel;
-  locale: SupportedLocale;
+  locale: ContentLocale;
 }): string[] {
   const labels: string[] = [];
 
@@ -368,7 +369,7 @@ export async function getChildSummaryPageData({
   locale: string;
   childId: string;
 }): Promise<ChildSummaryPageResult> {
-  const supportedLocale = locale as SupportedLocale;
+  const supportedLocale = resolveContentLocale(locale);
   const supabase = await createClient();
 
   const {

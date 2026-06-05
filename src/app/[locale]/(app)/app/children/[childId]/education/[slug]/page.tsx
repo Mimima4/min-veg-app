@@ -10,7 +10,9 @@ import {
   type EducationProgramLocationState,
   type EducationProgramPreferenceState,
 } from "@/lib/planning/get-education-program-fit";
-import type { SupportedLocale } from "@/lib/i18n/site-copy";
+import { getLocalizedValue } from "@/lib/i18n/get-localized-value";
+import type { LocalizedLabel } from "@/lib/i18n/localized-label";
+import { resolveContentLocale, type ContentLocale } from "@/lib/i18n/locales";
 import type { PreferredEducationLevel } from "@/lib/planning/profession-fit-utils";
 import SaveStudyRouteButton from "../../save-study-route-button";
 import {
@@ -19,15 +21,15 @@ import {
 } from "@/server/professions/study-options/get-profession-study-options";
 import { requireAppAccess } from "@/server/billing/require-app-access";
 
-function getStudyModeLabel(value: string, locale: SupportedLocale) {
-  const labels = {
-    full_time: { nb: "Heltid", nn: "Heiltid", en: "Full-time" },
-    part_time: { nb: "Deltid", nn: "Deltid", en: "Part-time" },
-    flexible: { nb: "Fleksibel", nn: "Fleksibel", en: "Flexible" },
-  } as const;
+function getStudyModeLabel(value: string, locale: ContentLocale) {
+  const labels: Record<string, LocalizedLabel> = {
+    full_time: { nb: "Heltid", nn: "Heiltid", en: "Full-time", se: "Olles" },
+    part_time: { nb: "Deltid", nn: "Deltid", en: "Part-time", se: "Oanehis" },
+    flexible: { nb: "Fleksibel", nn: "Fleksibel", en: "Flexible", se: "Jođánit" },
+  };
 
   if (value in labels) {
-    return labels[value as keyof typeof labels][locale];
+    return getLocalizedValue(labels[value], locale);
   }
 
   return value;
@@ -35,7 +37,7 @@ function getStudyModeLabel(value: string, locale: SupportedLocale) {
 
 function getDurationLabel(
   value: number | null,
-  locale: SupportedLocale
+  locale: ContentLocale
 ): string | null {
   if (!value) {
     return null;
@@ -43,6 +45,10 @@ function getDurationLabel(
 
   if (locale === "en") {
     return value === 1 ? "1 year" : `${value} years`;
+  }
+
+  if (locale === "se") {
+    return value === 1 ? "1 jahki" : `${value} jahkki`;
   }
 
   return value === 1 ? "1 år" : `${value} år`;
@@ -69,7 +75,7 @@ function getEducationPreferenceBadgeLabel({
 }: {
   preferenceState: EducationProgramPreferenceState;
   preferredEducationLevel: PreferredEducationLevel;
-  locale: SupportedLocale;
+  locale: ContentLocale;
 }): string {
   switch (preferenceState) {
     case "aligned":
@@ -126,7 +132,7 @@ function getEducationPreferenceExplanation({
 }: {
   preferenceState: EducationProgramPreferenceState;
   preferredEducationLevel: PreferredEducationLevel;
-  locale: SupportedLocale;
+  locale: ContentLocale;
 }) {
   switch (preferenceState) {
     case "aligned":
@@ -218,7 +224,7 @@ function ProgramCard({
   preferredEducationLevel: PreferredEducationLevel;
   isSavedRoute: boolean;
 }) {
-  const supportedLocale = locale as SupportedLocale;
+  const supportedLocale = resolveContentLocale(locale);
   const durationLabel = getDurationLabel(
     row.program.duration_years,
     supportedLocale

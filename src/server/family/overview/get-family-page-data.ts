@@ -1,4 +1,6 @@
-import type { SupportedLocale } from "@/lib/i18n/site-copy";
+import { getLocalizedValue } from "@/lib/i18n/get-localized-value";
+import type { LocalizedLabel } from "@/lib/i18n/localized-label";
+import { resolveContentLocale, type ContentLocale } from "@/lib/i18n/locales";
 import { getChildSummary } from "@/lib/planning/get-child-summary";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -79,13 +81,13 @@ export type FamilyPageResult =
 
 function getSchoolStageLabel(
   schoolStage: string | null | undefined,
-  locale: SupportedLocale
+  locale: ContentLocale
 ): string {
   if (!schoolStage) {
     return "—";
   }
 
-  const labels: Record<string, Record<SupportedLocale, string>> = {
+  const labels: Record<string, LocalizedLabel> = {
     barneskole: {
       nb: "Barneskole",
       nn: "Barneskule",
@@ -113,7 +115,8 @@ function getSchoolStageLabel(
     },
   };
 
-  return labels[schoolStage]?.[locale] ?? schoolStage;
+  const label = labels[schoolStage];
+  return label ? getLocalizedValue(label, locale) || schoolStage : schoolStage;
 }
 
 export async function getFamilyPageData({
@@ -121,7 +124,7 @@ export async function getFamilyPageData({
 }: {
   locale: string;
 }): Promise<FamilyPageResult> {
-  const supportedLocale = locale as SupportedLocale;
+  const supportedLocale = resolveContentLocale(locale);
   const supabase = await createClient();
 
   const entitlementsResult = await getAccountEntitlements({

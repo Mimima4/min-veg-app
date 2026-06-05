@@ -140,6 +140,7 @@ export async function getStudyRouteAvailableProfessions(
     const { useTruth, truth } = await shouldUseAvailabilityTruth({
       countyCodes: truthLookupInputs.countyCodes,
       programmeSlugsOrCodes: truthLookupInputs.programmeSlugsOrCodes,
+      locale: params.locale,
     });
 
     if (!useTruth) {

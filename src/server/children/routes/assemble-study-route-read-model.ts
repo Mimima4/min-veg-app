@@ -114,7 +114,8 @@ export async function assembleStudyRouteReadModel(
     ? params.currentSnapshot.selected_steps_payload
     : [];
   const enrichedSteps = await enrichStudyRouteSteps(
-    snapshotSteps as StudyRouteSnapshotStep[]
+    snapshotSteps as StudyRouteSnapshotStep[],
+    { locale: params.locale }
   );
   const truthApprenticeshipStep = enrichedSteps.find(
     (step): step is Extract<StudyRouteSnapshotStep, { type: "apprenticeship_step" }> =>

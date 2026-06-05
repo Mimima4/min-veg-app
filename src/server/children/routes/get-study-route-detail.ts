@@ -356,6 +356,7 @@ export async function getStudyRouteDetail(
   const { useTruth } = await shouldUseAvailabilityTruth({
     countyCodes: truthLookupInputs.countyCodes,
     programmeSlugsOrCodes: truthLookupInputs.programmeSlugsOrCodes,
+    locale: params.locale,
   });
 
   const truthVersion =

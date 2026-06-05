@@ -1,3 +1,4 @@
+import { resolveInstitutionDisplayName } from "@/lib/i18n/institution-display-name";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -83,9 +84,11 @@ async function resolveProgramsBySlugsOrCodes(
 export async function getAvailabilityTruth({
   countyCode,
   programmeSlugsOrCodes,
+  locale,
 }: {
   countyCode: string;
   programmeSlugsOrCodes: string[];
+  locale?: string;
 }) {
   const supabase = createAdminClient();
   const normalizedCountyCode = countyCode.trim();
@@ -138,7 +141,9 @@ export async function getAvailabilityTruth({
 
   const { data: institutions, error: institutionsError } = await supabase
     .from("education_institutions")
-    .select("id, name, municipality_name, municipality_code, website_url, is_private_school")
+    .select(
+      "id, name, name_i18n, municipality_name, municipality_code, website_url, is_private_school"
+    )
     .in("id", institutionIds)
     .eq("is_active", true);
 
@@ -152,6 +157,7 @@ export async function getAvailabilityTruth({
     ((institutions ?? []) as Array<{
       id: string;
       name: string | null;
+      name_i18n: Record<string, string> | null;
       municipality_name: string | null;
       municipality_code: string | null;
       website_url: string | null;
@@ -181,7 +187,11 @@ export async function getAvailabilityTruth({
         programCode: program.programCode,
         programTitle: program.title,
         institutionId: row.institution_id,
-        institutionName: institution?.name ?? null,
+        institutionName: resolveInstitutionDisplayName({
+          locale: locale ?? "nb",
+          institutionName: institution?.name ?? null,
+          nameI18n: institution?.name_i18n ?? null,
+        }),
         institutionMunicipality: institution?.municipality_name ?? null,
         municipalityCode: row.municipality_code ?? institution?.municipality_code ?? null,
         institutionWebsite: institution?.website_url ?? null,

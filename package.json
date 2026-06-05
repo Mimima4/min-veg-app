@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "node scripts/vercel-bundle/build.mjs && next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "smoke:contour-b": "node scripts/smoke-contour-b-regression.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.9.0",

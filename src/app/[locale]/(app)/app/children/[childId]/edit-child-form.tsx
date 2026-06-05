@@ -3,7 +3,9 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import type { SupportedLocale } from "@/lib/i18n/site-copy";
+import { getLocalizedValue } from "@/lib/i18n/get-localized-value";
+import type { LocalizedLabel } from "@/lib/i18n/localized-label";
+import { resolveContentLocale } from "@/lib/i18n/locales";
 import type { CountyMunicipalityGroup } from "@/lib/planning/norway-admin";
 import {
   INTEREST_TAGS,
@@ -67,7 +69,7 @@ type Props = {
 
 const SCHOOL_STAGE_LABELS: Record<
   SchoolStage,
-  Record<SupportedLocale, string>
+  LocalizedLabel
 > = {
   barneskole: {
     nb: "Barneskole",
@@ -98,7 +100,7 @@ const SCHOOL_STAGE_LABELS: Record<
 
 const RELOCATION_LABELS: Record<
   RelocationWillingness,
-  Record<SupportedLocale, string>
+  LocalizedLabel
 > = {
   no: {
     nb: "Nei",
@@ -119,7 +121,7 @@ const RELOCATION_LABELS: Record<
 
 const INCOME_BAND_LABELS: Record<
   DesiredIncomeBand,
-  Record<SupportedLocale, string>
+  LocalizedLabel
 > = {
   open: {
     nb: "Åpen",
@@ -145,7 +147,7 @@ const INCOME_BAND_LABELS: Record<
 
 const WORK_STYLE_LABELS: Record<
   PreferredWorkStyle,
-  Record<SupportedLocale, string>
+  LocalizedLabel
 > = {
   open: {
     nb: "Åpen",
@@ -176,7 +178,7 @@ const WORK_STYLE_LABELS: Record<
 
 const EDUCATION_LEVEL_LABELS: Record<
   PreferredEducationLevel,
-  Record<SupportedLocale, string>
+  LocalizedLabel
 > = {
   open: {
     nb: "Åpen",
@@ -233,11 +235,11 @@ const EDUCATION_LEVEL_LABELS: Record<
 const COUNTRY_OPTIONS = [{ code: "NO", label: "Norway" }] as const;
 
 function getLocalizedLabel<T extends string>(
-  labels: Record<T, Record<SupportedLocale, string>>,
+  labels: Record<T, LocalizedLabel>,
   value: T,
-  locale: SupportedLocale
+  locale: string
 ): string {
-  return labels[value][locale];
+  return getLocalizedValue(labels[value], resolveContentLocale(locale));
 }
 
 function normalizeStringArray(values: string[]): string[] {
@@ -325,7 +327,7 @@ export default function EditChildForm({
 }: Props) {
   const supabase = createClient();
   const router = useRouter();
-  const supportedLocale = locale as SupportedLocale;
+  const supportedLocale = resolveContentLocale(locale);
 
   const currentYear = new Date().getFullYear();
 

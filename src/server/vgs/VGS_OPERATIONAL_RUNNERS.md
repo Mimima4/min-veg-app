@@ -174,3 +174,14 @@ node scripts/verify-contour-b-psa-snapshot.mjs --county 56
 ### 4. Owner-held charter
 
 Record pass/fail and screenshots in `owner-held/` (not committed). Close Block C in the closure checklist when E2E + refresh are done.
+
+## Regression smoke (Block F)
+
+After pipeline or ingest changes:
+
+```bash
+set -a && source .env.local && set +a
+npm run smoke:contour-b
+```
+
+Checks: CLI rejects `--contour-b-partial` on `run-vgs-truth-pipeline.mjs`; Contour B ingest dry-run for **56** exits 0.

@@ -84,6 +84,13 @@
 | E2E UI | Owner verified route `programme_selection` options match PSA: **18** (13 VG1 incl. Nord-Salten), **15** (post matcher fix), **55** (3 VG1 / 2 VG2 honest partial), **56** (Nordkapp only — expected partial) |
 | Green counties | **03/11/46/50** `hasTruth: true`; `latestUpdatedAt` unchanged by B batch (May 2026); row counts stable |
 
+**Evidence supplement (2026-06-05, post CASE 2/3 — Block C remains CLOSED):**
+
+| County | Updated E2E / PSA proof |
+|--------|-------------------------|
+| **55** Troms | CASE 2 1:1 school-brand (`db67b40`): **VG1=5 / VG2=4** (was 3/2); multi-`avd` collapsed to Vilbli brand |
+| **56** Finnmark | CASE 3 slash-alias (`82c77f3`): **6 VG1** ordinary schools (Alta, Hammerfest, Kirkenes, Lakselv, Nordkapp, Vadsø); **12** active PSA; **18** LOSA rows still excluded (Block D tail) |
+
 **Explicitly not in this block:** LOSA publication rows (Block D), identity resolution (Block D), full Vilbli parity (Block D).
 
 ---
@@ -130,7 +137,7 @@
 
 ## Block F — Code guards and regression
 
-**Block status:** `OPEN`
+**Block status:** `CLOSED` (2026-06-05)
 
 **Purpose:** Contour **A** and reverted UI patterns do not regress.
 
@@ -139,6 +146,15 @@
 | `--contour-b-partial` only invoked from ingest / scheduled job (not accidental default on Contour A). |
 | CI smoke: `run-contour-b-operational-ingest --profession electrician --county 56 --dry-run` exits 0. |
 | Vilbli-mirror separate UI panel remains **out of scope** (documented in P06-CLOSED). |
+
+**Closure evidence (2026-06-05):**
+
+| Guard / smoke | Proof |
+|---------------|--------|
+| CLI `--contour-b-partial` rejected | `run-vgs-truth-pipeline.mjs` CLI throws — use `run-contour-b-operational-ingest.mjs` only |
+| Programmatic partial path | `runContourBOperationalIngest` → `runVgsTruthPipeline({ isContourBPartial: true })`; scheduler uses ingest script |
+| Regression smoke | `npm run smoke:contour-b` (`scripts/smoke-contour-b-regression.mjs`) — guard + ingest dry-run **56** exit 0 |
+| Vilbli-mirror UI | Out of scope per P06 §12 / `b2fd244` — unchanged |
 
 ---
 

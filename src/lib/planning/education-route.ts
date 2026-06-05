@@ -1,4 +1,6 @@
-import type { SupportedLocale } from "@/lib/i18n/site-copy";
+import { getLocalizedValue } from "@/lib/i18n/get-localized-value";
+import type { LocalizedLabel } from "@/lib/i18n/localized-label";
+import { resolveContentLocale } from "@/lib/i18n/locales";
 
 export type EducationLevel =
   | "open"
@@ -8,46 +10,49 @@ export type EducationLevel =
   | "master"
   | "flexible";
 
-const EDUCATION_LEVEL_LABELS: Record<
-  EducationLevel,
-  Record<SupportedLocale, string>
-> = {
+const EDUCATION_LEVEL_LABELS: Record<EducationLevel, LocalizedLabel> = {
   open: {
     nb: "Åpen",
     nn: "Open",
     en: "Open",
+    se: "Rávvái",
   },
   certificate: {
     nb: "Sertifikat",
     nn: "Sertifikat",
     en: "Certificate",
+    se: "Sertifikahta",
   },
   vocational: {
     nb: "Yrkesfaglig",
     nn: "Yrkesfagleg",
     en: "Vocational",
+    se: "Bargofága",
   },
   bachelor: {
     nb: "Bachelor",
     nn: "Bachelor",
     en: "Bachelor",
+    se: "Bachelor",
   },
   master: {
     nb: "Master",
     nn: "Master",
     en: "Master",
+    se: "Master",
   },
   flexible: {
     nb: "Fleksibel",
     nn: "Fleksibel",
     en: "Flexible",
+    se: "Jođánit",
   },
 };
 
 const EDUCATION_ROUTE_COPY: Record<
   EducationLevel,
   Record<
-    SupportedLocale,
+    "nb" | "nn" | "en" | "se",
     {
       routeTitle: string;
       routeDescription: string;
@@ -70,6 +75,11 @@ const EDUCATION_ROUTE_COPY: Record<
       routeDescription:
         "No single study level is locked in yet. The strongest signals still point more toward exploration than one fixed education path.",
     },
+    se: {
+      routeTitle: "Rávvái studerema",
+      routeDescription:
+        "Ii leat vel čiekŋahan ovtta čielga oahppanásahkii. Strongest signalat čujuhit vel eambbo iskkanii go ovtta fásta oahppanbálggis.",
+    },
   },
   certificate: {
     nb: {
@@ -86,6 +96,11 @@ const EDUCATION_ROUTE_COPY: Record<
       routeTitle: "Short course or certificate path",
       routeDescription:
         "This direction often fits shorter programmes, certifications, or practical training routes that provide a faster and more concrete start.",
+    },
+    se: {
+      routeTitle: "Oanehis kursa- dahje sertifikahtabálggis",
+      routeDescription:
+        "Dát guvlui heiveha dávjá oanehis prográmmaide, sertifikahtaide dahje praktihkalaš oahppanbálggiide mat addet jođánit ja konkrehta álggu.",
     },
   },
   vocational: {
@@ -104,6 +119,11 @@ const EDUCATION_ROUTE_COPY: Record<
       routeDescription:
         "This direction often points toward a more practical education route with a clearer connection between school, hands-on skill building, and later work.",
     },
+    se: {
+      routeTitle: "Bargofágabálggis",
+      routeDescription:
+        "Dát guvlui čujuhit dávjá eambbo praktihkalaš oahppanbálggái mas lea čielga čatnastupmi skuvli, duodje dásiide ja maŋŋel buvttá bargguide.",
+    },
   },
   bachelor: {
     nb: {
@@ -120,6 +140,11 @@ const EDUCATION_ROUTE_COPY: Record<
       routeTitle: "Bachelor path",
       routeDescription:
         "The strongest matches often lean toward a more academic route where upper secondary education is followed by a bachelor degree or equivalent higher study.",
+    },
+    se: {
+      routeTitle: "Bachelorbálggis",
+      routeDescription:
+        "Strongest heivehusat čujuhit dávjá eambbo akademihkalaš bálggái gos joatkkaskuvla čuovvola bachelorgrádat dahje seammalágan bistevaš oahppan.",
     },
   },
   master: {
@@ -138,6 +163,11 @@ const EDUCATION_ROUTE_COPY: Record<
       routeDescription:
         "This direction often points toward a longer academic route where bachelor study may be a midpoint before more advanced education.",
     },
+    se: {
+      routeTitle: "Jođánit akademihkalaš bálggis",
+      routeDescription:
+        "Dát guvlui čujuhit dávjá guhkit akademihkalaš bálggái gos bachelor sáhttá leat gaskaoassi ovdal jođánit oahppan.",
+    },
   },
   flexible: {
     nb: {
@@ -154,6 +184,11 @@ const EDUCATION_ROUTE_COPY: Record<
       routeTitle: "Flexible study path",
       routeDescription:
         "This direction can fit more than one type of education route. The key is to keep multiple doors open while the child continues to explore.",
+    },
+    se: {
+      routeTitle: "Jođánit studeremabálggis",
+      routeDescription:
+        "Dát guvlui sáhttá heivehit eambbo go ovtta oahppanbálggái. Deháleamos lea doallat máŋga uksa rabas go mánná jođiha iskkanii.",
     },
   },
 };
@@ -178,12 +213,8 @@ function isEducationLevel(value: string): value is EducationLevel {
   );
 }
 
-function resolveEducationLocale(locale: string): SupportedLocale {
-  if (locale === "nb" || locale === "nn" || locale === "en") {
-    return locale;
-  }
-
-  return "en";
+function resolveEducationLocale(locale: string): "nb" | "nn" | "en" | "se" {
+  return resolveContentLocale(locale);
 }
 
 export function getEducationLevelLabel(
@@ -194,7 +225,7 @@ export function getEducationLevelLabel(
     return value;
   }
 
-  return EDUCATION_LEVEL_LABELS[value][resolveEducationLocale(locale)];
+  return getLocalizedValue(EDUCATION_LEVEL_LABELS[value], resolveEducationLocale(locale));
 }
 
 export function getEducationRouteCopy(

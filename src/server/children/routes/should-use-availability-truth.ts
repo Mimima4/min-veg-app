@@ -6,9 +6,11 @@ import {
 export async function shouldUseAvailabilityTruth({
   countyCodes,
   programmeSlugsOrCodes,
+  locale,
 }: {
   countyCodes: string[];
   programmeSlugsOrCodes: string[];
+  locale?: string;
 }): Promise<{
   useTruth: boolean;
   countyCode: string | null;
@@ -28,6 +30,7 @@ export async function shouldUseAvailabilityTruth({
     const truth = await getAvailabilityTruth({
       countyCode,
       programmeSlugsOrCodes,
+      locale,
     });
     if (truth.hasTruth) {
       return {

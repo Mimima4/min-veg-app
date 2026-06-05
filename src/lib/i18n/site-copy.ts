@@ -1,4 +1,6 @@
-export type SupportedLocale = "nb" | "nn" | "en";
+import type { ContentLocale } from "@/lib/i18n/locales";
+
+export type SupportedLocale = ContentLocale;
 
 type SiteCopy = {
   heroTitle: string;
@@ -115,6 +117,38 @@ const SITE_COPY: Record<SupportedLocale, SiteCopy> = {
     footerNote:
       "Nordic trust-first. Calm, minimal, and easy to explore.",
     loginPrompt: "Already have an account? Go to Login.",
+  },
+  se: {
+    heroTitle: "Min Veg",
+    heroSubtitle: "Rolá álggeamáš forældriide ja skuvlliide.",
+    shortExplanation:
+      "Plánen jođiheaddji ovttas — odne, oahppama várás.",
+    ctas: {
+      tryDemo: "Geahččal demo",
+      viewPricing: "Geahččal áhkkásiid",
+      createAccount: "Ráhkat konto",
+      openPreview: "Raba oaidnohámi",
+    },
+    features: [
+      {
+        title: "Forældriide",
+        description:
+          "Oaččo čielggas, doalahit jođu ja leat sihkkar boahtteáiggis.",
+      },
+      {
+        title: "Skuvlliide",
+        description:
+          "Koordinere veahkehi ja čuovvut ovdáneami ovtta geahččastagas.",
+      },
+      {
+        title: "Boahtteáiggeplánen",
+        description:
+          "Raba ulbmáid álkes plánan maid sáhtát máhccat goas beare.",
+      },
+    ],
+    footerNote:
+      "Nordic trust-first. Rolá, álkes ja álki geahččat.",
+    loginPrompt: "Lea juo konto? Mana Loginii.",
   },
 };
 

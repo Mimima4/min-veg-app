@@ -1,4 +1,6 @@
-import type { SupportedLocale } from "@/lib/i18n/site-copy";
+import { getLocalizedValue } from "@/lib/i18n/get-localized-value";
+import type { ContentLocale } from "@/lib/i18n/locales";
+import type { LocalizedLabel } from "@/lib/i18n/localized-label";
 import {
   getDerivedStrengthLabel,
   getInterestLabel,
@@ -56,10 +58,7 @@ export type EducationProgramDecisionSupport = {
   hasSignals: boolean;
 };
 
-const ROUTE_TYPE_LABELS: Record<
-  EducationRouteType,
-  Record<SupportedLocale, string>
-> = {
+const ROUTE_TYPE_LABELS: Record<EducationRouteType, LocalizedLabel> = {
   academic_first: {
     nb: "Akademisk først",
     nn: "Akademisk først",
@@ -77,10 +76,7 @@ const ROUTE_TYPE_LABELS: Record<
   },
 };
 
-const DECISION_ROLE_LABELS: Record<
-  EducationDecisionRole,
-  Record<SupportedLocale, string>
-> = {
+const DECISION_ROLE_LABELS: Record<EducationDecisionRole, LocalizedLabel> = {
   local_priority: {
     nb: "Lokal hovedrute",
     nn: "Lokal hovudrute",
@@ -183,16 +179,16 @@ function getDecisionRole({
 
 export function getEducationRouteTypeLabel(
   value: EducationRouteType,
-  locale: SupportedLocale
+  locale: ContentLocale
 ): string {
-  return ROUTE_TYPE_LABELS[value][locale];
+  return getLocalizedValue(ROUTE_TYPE_LABELS[value], locale);
 }
 
 export function getEducationDecisionRoleLabel(
   value: EducationDecisionRole,
-  locale: SupportedLocale
+  locale: ContentLocale
 ): string {
-  return DECISION_ROLE_LABELS[value][locale];
+  return getLocalizedValue(DECISION_ROLE_LABELS[value], locale);
 }
 
 export function getEducationProgramDecisionSupport({
@@ -208,7 +204,7 @@ export function getEducationProgramDecisionSupport({
   preferredEducationLevel,
   profession,
 }: {
-  locale: SupportedLocale;
+  locale: ContentLocale;
   fitBand?: "strong" | "broader";
   programEducationLevel: string;
   institutionMunicipalityCode: string;
