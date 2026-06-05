@@ -16,6 +16,41 @@ export function normalizeSchoolNameForMatch(value) {
     .trim();
 }
 
+function extractIdentityCore(name) {
+  return normalizeSchoolNameForMatch(name).replace(/\bavd\b.*$/, "").trim();
+}
+
+const MULTI_AVD_ALLOWED_MATCH_TYPES = new Set(["exact_normalized", "core_name_match"]);
+
+/**
+ * CASE 2 (1:N): Vilbli school identity maps to multiple NSR avd rows at the same tier.
+ * Requires core identity match — never expands weak fuzzy ties across different schools.
+ */
+export function isMultiAvdIdentityTie({ vilbliSchoolName, tiedCandidates }) {
+  if (tiedCandidates.length < 2) {
+    return false;
+  }
+
+  if (!tiedCandidates.every((candidate) => MULTI_AVD_ALLOWED_MATCH_TYPES.has(candidate.matchType))) {
+    return false;
+  }
+
+  const vilbliCore = extractIdentityCore(vilbliSchoolName);
+  if (!vilbliCore) {
+    return false;
+  }
+
+  const institutionIds = new Set();
+  for (const candidate of tiedCandidates) {
+    if (extractIdentityCore(candidate.institution.name) !== vilbliCore) {
+      return false;
+    }
+    institutionIds.add(candidate.institution.id);
+  }
+
+  return institutionIds.size === tiedCandidates.length;
+}
+
 export function classifyInstitutionMatch(vilbliName, institutionName) {
   const vilbliNorm = normalizeSchoolNameForMatch(vilbliName);
   const nsrNorm = normalizeSchoolNameForMatch(institutionName);
@@ -108,23 +143,52 @@ export function resolveSlashAliasNsrTie({ vilbliSchoolName, tiedCandidates }) {
 }
 
 /**
- * @returns {{ match: object, ambiguous: boolean } | { match: null, ambiguous: false, unmatched: true }}
+ * @returns {{
+ *   matches: Array<object>;
+ *   unmatched: boolean;
+ *   ambiguous: boolean;
+ * }}
  */
-export function pickInstitutionMatchForVilbliSchool({ vilbliSchoolName, ranked }) {
+export function pickInstitutionMatchesForVilbliSchool({ vilbliSchoolName, ranked }) {
   if (ranked.length === 0) {
-    return { match: null, ambiguous: false, unmatched: true };
+    return { matches: [], unmatched: true, ambiguous: false };
   }
 
   const best = ranked[0];
   const ties = ranked.filter((candidate) => candidate.score === best.score);
   if (ties.length === 1) {
-    return { match: best, ambiguous: false, unmatched: false };
+    return { matches: [best], unmatched: false, ambiguous: false };
   }
 
-  const resolved = resolveSlashAliasNsrTie({ vilbliSchoolName, tiedCandidates: ties });
-  if (resolved) {
-    return { match: resolved, ambiguous: false, unmatched: false };
+  const slashResolved = resolveSlashAliasNsrTie({ vilbliSchoolName, tiedCandidates: ties });
+  if (slashResolved) {
+    return { matches: [slashResolved], unmatched: false, ambiguous: false };
   }
 
-  return { match: null, ambiguous: true, unmatched: false };
+  if (isMultiAvdIdentityTie({ vilbliSchoolName, tiedCandidates: ties })) {
+    return {
+      matches: ties.map((candidate) => ({
+        ...candidate,
+        resolvedVia: "multi_avd_identity",
+      })),
+      unmatched: false,
+      ambiguous: false,
+    };
+  }
+
+  return { matches: [], unmatched: false, ambiguous: true };
+}
+
+/**
+ * @returns {{ match: object, ambiguous: boolean } | { match: null, ambiguous: false, unmatched: true }}
+ */
+export function pickInstitutionMatchForVilbliSchool(params) {
+  const result = pickInstitutionMatchesForVilbliSchool(params);
+  if (result.unmatched) {
+    return { match: null, ambiguous: false, unmatched: true };
+  }
+  if (result.ambiguous) {
+    return { match: null, ambiguous: true, unmatched: false };
+  }
+  return { match: result.matches[0], ambiguous: false, unmatched: false };
 }

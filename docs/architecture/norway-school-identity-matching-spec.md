@@ -66,8 +66,8 @@ One Vilbli row resolves to one school identity and one NSR institution/location.
 → **Allowed.**
 
 **CASE 2:**  
-One Vilbli row resolves to one identity but multiple valid NSR locations and Vilbli does not specify exact campus/location.  
-→ **Do not choose one.** Abort / mark ambiguous.
+One Vilbli row resolves to one identity but multiple valid NSR locations (`avd` / campus) and Vilbli does not specify exact campus/location.  
+→ **Emit all tied NSR locations** (controlled **1:N** PSA / route options). **Do not** pick one at random or by sort order. Applies uniformly — not per county or school.
 
 **CASE 3:**  
 Slash-separated names are aliases of the same school identity.  
@@ -107,32 +107,31 @@ LOSA rows are unsupported for now.
 
 ### 3. Nord-Troms videregående skole
 
-**Expected:** one school identity with multiple locations: Nordreisa and Skjervøy. Without explicit location, abort under current 1:1 model.
+**Expected:** one school identity with multiple locations: Nordreisa and Skjervøy. **1:N** — both NSR `avd` rows enter PSA / route options.
 
 ### 4. Stangnes Rå videregående skole
 
-**Expected:** one school identity with multiple locations: Rå and Stangnes. Without explicit location, abort under current 1:1 model.
+**Expected:** one school identity with multiple locations: Rå and Stangnes. **1:N** — both NSR `avd` rows enter PSA / route options.
 
 ### 5. Nordkapp videregående skole – LOSA Vadsø
 
 **Expected:** LOSA/special delivery model. Do not match as ordinary school until LOSA is designed.
 
-## Phase 1 policy
+## Phase 1 policy (current)
 
 - Add alias awareness.  
 - Detect LOSA and abort.  
-- Preserve abort for multi-location identities without explicit location.  
-- Do not change PSA schema.  
-- Do not emit multiple institutions yet.  
-- Do not modify app runtime.
+- **CASE 2:** controlled **1:N** PSA emission for same-identity multi-`avd` ties (`multi_avd_identity` in matcher).  
+- Weak fuzzy ties across **different** school identities remain ambiguous (abort).  
+- PSA schema unchanged (one row per institution × programme × stage).  
+- Route `programme_selection.options` consumes all active PSA rows.
 
 ## Phase 2 future
 
-- school identity layer  
+- school identity layer (parent/department grouping in UI)  
 - NSR parent/department import if official data supports it  
-- controlled 1:N PSA emission  
-- LOSA availability model  
-- UI representation for school identity vs location  
+- LOSA availability model (separate from CASE 2)  
+- UI representation for school identity vs location label  
 
 ## Implementation boundary
 

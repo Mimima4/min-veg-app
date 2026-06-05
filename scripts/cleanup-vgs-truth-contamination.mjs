@@ -6,6 +6,10 @@ import {
   resolveStageFromVilbliKurs,
 } from "./vilbli-stage-extraction-helper.mjs";
 import { spawnSync } from "node:child_process";
+import {
+  classifyInstitutionMatch,
+  pickInstitutionMatchesForVilbliSchool,
+} from "./lib/vilbli-nsr-institution-match.mjs";
 
 const COUNTY_CODE_TO_VILBLI = {
   "03": { slug: "oslo", label: "Oslo" },
@@ -63,29 +67,6 @@ function normalizeSchoolName(value) {
     .trim();
 }
 
-function classifyInstitutionMatch(vilbliName, institutionName) {
-  const vilbliNorm = normalizeSchoolName(vilbliName);
-  const nsrNorm = normalizeSchoolName(institutionName);
-
-  if (vilbliNorm && nsrNorm && vilbliNorm === nsrNorm) {
-    return { matchType: "exact_normalized", score: 1 };
-  }
-
-  const vilbliCore = vilbliNorm.replace(/\bavd\b.*$/, "").trim();
-  const nsrCore = nsrNorm.replace(/\bavd\b.*$/, "").trim();
-  if (vilbliCore && nsrCore && vilbliCore === nsrCore) {
-    return { matchType: "core_name_match", score: 0.9 };
-  }
-
-  const vt = vilbliNorm.split(" ").filter(Boolean);
-  const nt = nsrNorm.split(" ").filter(Boolean);
-  const sharedTokens = vt.filter((token) => token.length >= 4 && nt.includes(token)).length;
-  if (sharedTokens >= 2) {
-    return { matchType: "fallback_fuzzy", score: 0.6 };
-  }
-
-  return { matchType: "none", score: 0 };
-}
 
 function parseCourseTokensFromHref(href) {
   try {
@@ -358,21 +339,26 @@ async function buildExpectedTruthSet({ supabase, professionSlug, countyCode }) {
       .filter((candidate) => candidate.matchType !== "none")
       .sort((a, b) => b.score - a.score || a.institution.name.localeCompare(b.institution.name));
 
-    if (ranked.length === 0) {
+    const picked = pickInstitutionMatchesForVilbliSchool({
+      vilbliSchoolName: school.schoolName,
+      ranked,
+    });
+
+    if (picked.unmatched) {
       unmatchedSchools.push(school);
       continue;
     }
 
-    const best = ranked[0];
-    const ties = ranked.filter((candidate) => candidate.score === best.score);
-    if (ties.length > 1) {
+    if (picked.ambiguous) {
       ambiguousMatches.push({ schoolCode: school.schoolCode, schoolName: school.schoolName });
       continue;
     }
 
     matchedBySchoolCode.set(school.schoolCode, {
-      institutionId: best.institution.id,
-      municipalityCode: best.institution.municipality_code ?? null,
+      institutions: picked.matches.map((match) => ({
+        institutionId: match.institution.id,
+        municipalityCode: match.institution.municipality_code ?? null,
+      })),
     });
   }
 
@@ -420,11 +406,13 @@ async function buildExpectedTruthSet({ supabase, professionSlug, countyCode }) {
       if (!matched) {
         throw new Error(`ABORT: Missing matched NSR institution for schoolCode=${school.schoolCode}`);
       }
-      expectedRows.push({
-        slug: programme.slug,
-        stage,
-        institutionId: matched.institutionId,
-      });
+      for (const institutionMatch of matched.institutions) {
+        expectedRows.push({
+          slug: programme.slug,
+          stage,
+          institutionId: institutionMatch.institutionId,
+        });
+      }
     }
   }
 
@@ -440,11 +428,13 @@ async function buildExpectedTruthSet({ supabase, professionSlug, countyCode }) {
       if (!matched) {
         throw new Error(`ABORT: Missing matched NSR institution for schoolCode=${school.schoolCode}`);
       }
-      expectedRows.push({
-        slug: identity.slug,
-        stage: entry.stage,
-        institutionId: matched.institutionId,
-      });
+      for (const institutionMatch of matched.institutions) {
+        expectedRows.push({
+          slug: identity.slug,
+          stage: entry.stage,
+          institutionId: institutionMatch.institutionId,
+        });
+      }
     }
   }
 

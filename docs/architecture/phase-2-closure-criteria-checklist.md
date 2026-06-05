@@ -1775,7 +1775,9 @@ Owner-adopted **A.3** read-only Contour **A** baseline gate per `phase-2-contour
 
 ---
 
-**Current recommended next gate from this checklist snapshot:** **P06-CLOSURE Block C** — MAIN write + route `programme_selection` proof per `phase-0-6-contour-b-operational-closure-checklist.md` (Blocks **A** and **B** **CLOSED** 2026-05-29). **NOT_READY_FOR_APPLY** unchanged.
+**Current recommended next gate from this checklist snapshot:** **P06-CLOSURE Block D** — Vilbli parity (identity tail + LOSA) per `phase-0-6-contour-b-operational-closure-checklist.md` (Blocks **A**, **B**, and **C** **CLOSED**; **C** closed 2026-06-05). **NOT_READY_FOR_APPLY** unchanged.
+
+**Checklist reference note (2026-06-05):** **P06-CLOSURE Block C** closed — production relay write + `pilotAllHaveTruth` for pilot counties **56/15/18/55**; E2E route options match PSA (owner-verified **18**, **15**, **55**, **56**); refresh proven on **18**/**15** re-relay; green Contour A counties **03/11/46/50** unchanged.
 
 **Alternate tracks (separate owner selection — not auto-progression from Z-OV):** Z-AP* apply governance continuation; permission stack **#2** / **#3** only after explicit separate gates; Phase 3 operational execution remains separately gated from P3 planning POSTs (`7ed7014` → `f412bea` → `87ddeb0` → `d552832`).
 

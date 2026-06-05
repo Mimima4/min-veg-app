@@ -12,7 +12,7 @@ import { buildRequiredProgrammeSpecs } from "./vgs-programme-materialization-pla
 import { classifyIdentitySemantics } from "./school-identity-semantics.mjs";
 import {
   classifyInstitutionMatch,
-  pickInstitutionMatchForVilbliSchool,
+  pickInstitutionMatchesForVilbliSchool,
 } from "./lib/vilbli-nsr-institution-match.mjs";
 
 const COUNTY_CODE_TO_VILBLI = {
@@ -827,7 +827,7 @@ export async function runVgsTruthPipeline({
       .filter((candidate) => candidate.matchType !== "none")
       .sort((a, b) => b.score - a.score || a.institution.name.localeCompare(b.institution.name));
 
-    const picked = pickInstitutionMatchForVilbliSchool({
+    const picked = pickInstitutionMatchesForVilbliSchool({
       vilbliSchoolName: school.schoolName,
       ranked,
     });
@@ -852,10 +852,12 @@ export async function runVgsTruthPipeline({
       continue;
     }
 
-    const match = picked.match;
     matchedBySchoolCode.set(school.schoolCode, {
-      institutionId: match.institution.id,
-      institutionMunicipalityCode: match.institution.municipality_code ?? null,
+      institutions: picked.matches.map((match) => ({
+        institutionId: match.institution.id,
+        institutionMunicipalityCode: match.institution.municipality_code ?? null,
+        resolvedVia: match.resolvedVia ?? null,
+      })),
     });
   }
 
@@ -1260,12 +1262,13 @@ export async function runVgsTruthPipeline({
         if (isContourBPartial) continue;
         throw new Error(`ABORT: Missing matched NSR institution for schoolCode=${school.schoolCode}`);
       }
+      for (const institutionMatch of matched.institutions) {
       const payload = {
         education_program_id: programme.id,
-        institution_id: matched.institutionId,
+        institution_id: institutionMatch.institutionId,
         country_code: "NO",
         county_code: countyCode,
-        municipality_code: matched.institutionMunicipalityCode,
+        municipality_code: institutionMatch.institutionMunicipalityCode,
         availability_scope: AVAILABILITY_SCOPE,
         stage,
         source: SOURCE,
@@ -1299,10 +1302,11 @@ export async function runVgsTruthPipeline({
       writeRows.push({
         stage,
         schoolCode: school.schoolCode,
-        institutionId: matched.institutionId,
+        institutionId: institutionMatch.institutionId,
         programSlug: programme.slug,
         action,
       });
+      }
     }
   }
 
@@ -1315,12 +1319,13 @@ export async function runVgsTruthPipeline({
           if (isContourBPartial) continue;
           throw new Error(`ABORT: Missing matched NSR institution for schoolCode=${school.schoolCode}`);
         }
+        for (const institutionMatch of matched.institutions) {
         const payload = {
           education_program_id: programme.id,
-          institution_id: matched.institutionId,
+          institution_id: institutionMatch.institutionId,
           country_code: "NO",
           county_code: countyCode,
-          municipality_code: matched.institutionMunicipalityCode,
+          municipality_code: institutionMatch.institutionMunicipalityCode,
           availability_scope: AVAILABILITY_SCOPE,
           stage,
           source: SOURCE,
@@ -1354,10 +1359,11 @@ export async function runVgsTruthPipeline({
         writeRows.push({
           stage,
           schoolCode: school.schoolCode,
-          institutionId: matched.institutionId,
+          institutionId: institutionMatch.institutionId,
           programSlug: programme.slug,
           action,
         });
+        }
       }
     }
   }

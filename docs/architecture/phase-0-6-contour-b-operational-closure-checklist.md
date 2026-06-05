@@ -63,7 +63,7 @@
 
 ## Block C — MAIN write + product proof
 
-**Block status:** `OPEN` — next active block (production relay **done** 2026-06-04 for 11 Contour B counties; E2E + refresh proof remaining)
+**Block status:** `CLOSED` (2026-06-05)
 
 **Purpose:** Production PSA populated; route shows verified schools in normal steps.
 
@@ -74,19 +74,29 @@
 | Second job run shows refresh behaviour (`updated_at` or documented stale policy). |
 | Green counties **`03` / `11` / `46` / `50`**: options still Contour **A** only; B job did not corrupt them. |
 
-**Explicitly not in this block:** LOSA publication rows (Block D), identity resolution (Block D).
+**Closure evidence (2026-06-05):**
+
+| Criterion | Proof |
+|-----------|--------|
+| Pilot PSA write | `node scripts/verify-contour-b-psa-snapshot.mjs` → `pilotAllHaveTruth: true` for **56, 15, 18, 55** |
+| Relay batch | Home-IP relay ingested 11 Contour B counties (`contour_b_partial`); Contour A **03/11/46/50** skipped |
+| Refresh | Re-relay **18** (Nord-Salten) and **15** (Surnadal) advanced `latestUpdatedAt` to **2026-06-05** |
+| E2E UI | Owner verified route `programme_selection` options match PSA: **18** (13 VG1 incl. Nord-Salten), **15** (post matcher fix), **55** (3 VG1 / 2 VG2 honest partial), **56** (Nordkapp only — expected partial) |
+| Green counties | **03/11/46/50** `hasTruth: true`; `latestUpdatedAt` unchanged by B batch (May 2026); row counts stable |
+
+**Explicitly not in this block:** LOSA publication rows (Block D), identity resolution (Block D), full Vilbli parity (Block D).
 
 ---
 
 ## Block D — Vilbli parity (identity + programme + LOSA in PSA)
 
-**Block status:** `OPEN`
+**Block status:** `IN_PROGRESS` — next active block (**CASE 2 → 1:N** adopted 2026-06-05; normalization fixes **18**/**15** done; **56** LOSA tail open)
 
 **Purpose:** Route options converge toward Vilbli list for all rows that pass verification gates.
 
 | Done when |
 |-----------|
-| **Identity tail:** unmatched → **0** or auditable exclude list per pilot county; dry-run matcher clean or excludes documented. |
+| **Identity tail:** unmatched → **0** or auditable exclude list per pilot county; dry-run matcher clean or excludes documented. **CASE 2 multi-`avd`:** 1 Vilbli → all NSR campus rows in PSA (no per-school hacks). |
 | **Programme rows:** `missing_programme_rows` resolved → classify green for electrician on pilot counties before relying on write. |
 | **LOSA:** §4 + publication decision → LOSA rows enter PSA via **published** path (same `programme_selection` model, not ordinary campus). |
 | Pipeline/ingest rule for **published LOSA** implemented and proven on at least one county. |

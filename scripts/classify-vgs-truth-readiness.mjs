@@ -5,7 +5,7 @@ import { extractVilbliStagesFromHtml } from "./vilbli-stage-extraction-helper.mj
 import { classifyIdentitySemantics } from "./school-identity-semantics.mjs";
 import {
   classifyInstitutionMatch,
-  pickInstitutionMatchForVilbliSchool,
+  pickInstitutionMatchesForVilbliSchool,
 } from "./lib/vilbli-nsr-institution-match.mjs";
 
 const READYNESS_STATUSES = {
@@ -399,7 +399,7 @@ export async function classifyReadiness({
       .filter((candidate) => candidate.matchType !== "none")
       .sort((a, b) => b.score - a.score || a.institution.name.localeCompare(b.institution.name));
 
-    const picked = pickInstitutionMatchForVilbliSchool({
+    const picked = pickInstitutionMatchesForVilbliSchool({
       vilbliSchoolName: school.schoolName,
       ranked,
     });
@@ -424,16 +424,17 @@ export async function classifyReadiness({
       continue;
     }
 
-    const match = picked.match;
-    matchedSchools.push({
-      schoolCode: school.schoolCode,
-      schoolName: school.schoolName,
-      institutionId: match.institution.id,
-      institutionName: match.institution.name,
-      matchType: match.matchType,
-      score: match.score,
-      resolvedVia: match.resolvedVia ?? null,
-    });
+    for (const match of picked.matches) {
+      matchedSchools.push({
+        schoolCode: school.schoolCode,
+        schoolName: school.schoolName,
+        institutionId: match.institution.id,
+        institutionName: match.institution.name,
+        matchType: match.matchType,
+        score: match.score,
+        resolvedVia: match.resolvedVia ?? null,
+      });
+    }
   }
 
   const linkedProgrammeIds = (linkedProgrammesForCounty ?? []).map((program) => program.id);
