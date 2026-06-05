@@ -8,6 +8,7 @@ export function normalizeSchoolNameForMatch(value) {
     .replace(/[^\p{L}\p{N}\s]/gu, " ")
     .replace(/\bvideregaende skole\b/g, " ")
     .replace(/\bvideregande skule\b/g, " ")
+    .replace(/\bvidaregaande skole\b/g, " ")
     .replace(/\bvidaregaande skule\b/g, " ")
     .replace(/\bvgs\b/g, " ")
     .replace(/\bas\b/g, " ")

@@ -69,6 +69,7 @@ function normalizeSchoolName(value) {
   return normalizeBasic(value)
     .replace(/\bvideregaende skole\b/g, " ")
     .replace(/\bvideregande skule\b/g, " ")
+    .replace(/\bvidaregaande skole\b/g, " ")
     .replace(/\bvidaregaande skule\b/g, " ")
     .replace(/\bvgs\b/g, " ")
     .replace(/\bas\b/g, " ")
