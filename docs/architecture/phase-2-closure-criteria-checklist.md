@@ -155,7 +155,8 @@ These are **documentation / boundary / criteria** artifacts only. They are **not
 - `docs/architecture/phase-3-route-engine-consumption-execution-charter-template.md` — **template** for owner-held Phase 3 Route execution session charter (not execution authority alone)
 - `docs/architecture/phase-3-route-engine-consumption-execution-review-summary.md` — **safe summary** of completed bounded P3-ROUTE planning session (**P3-ROUTE-POST**); charter `P3-ROUTE-EXEC-2026-05-29-01`; checkpoint `d552832`; operational Route consumption/activation **not** approved; **X-post** **NO_TOUCH**
 - `docs/architecture/phase-0-6-processing-contour-owner-decision-record.md` — **Phase 0–6 processing contour** policy (P06-0–P06-8); §12 product amendment (B → PSA → route); §9 P06-1…P06-5 superseded by §12 for product path
-- `docs/architecture/phase-0-6-contour-b-operational-closure-checklist.md` — **P06-CLOSURE** operational closure checklist (blocks **A–G**); owner accepted 2026-06-04; **OPEN** until all blocks **CLOSED**
+- `docs/architecture/phase-0-6-contour-b-operational-closure-checklist.md` — **P06-CLOSURE** operational closure checklist (blocks **A–G**); **CLOSED (PARTIAL D)** 2026-06-05
+- `docs/architecture/phase-0-6-p06-operational-closed-safe-summary.md` — **P06-OPERATIONAL-CLOSED-post** safe summary; automation + pilot PSA + partial D metrics
 - `docs/architecture/phase-0-6-contour-b-finnmark-processing-review-summary.md` — **Contour B** Finnmark `56` processing safe summary (**P06-CONTOUR-B-post**); `CONTOUR_B_PROCESSING_PASS_PACKET_READY_FOR_REVIEW`; **22** unmatched / **17** LOSA hints; main matcher retry **not** approved; owner next = Phase 4 LOSA slice
 - `docs/architecture/phase-0-6-contour-b-finnmark-56-update-execution-gate-owner-decision-record.md` — **Contour B Finnmark update** gate (**P06-CONTOUR-B-UPDATE**); read-only MAIN refresh + LOSA pilot manifest; **not** #2/#3/PSA write
 - `docs/architecture/phase-0-6-contour-b-finnmark-56-update-execution-review-summary.md` — **safe summary** (**P06-CONTOUR-B-UPDATE-post**); `CONTOUR_B_UPDATE_PASS_LOSA_EVIDENCE_LINKED`; **2/22/0** + **17** LOSA hints consistent with P06/A3; **10** pilot snapshots linked
@@ -1775,9 +1776,9 @@ Owner-adopted **A.3** read-only Contour **A** baseline gate per `phase-2-contour
 
 ---
 
-**Current recommended next gate from this checklist snapshot:** **P06-CLOSURE Block D** (LOSA Phase 4 tail) then **Block G** sign-off per `phase-0-6-contour-b-operational-closure-checklist.md` (Blocks **A**, **B**, **C**, **E**, **F** **CLOSED**). **NOT_READY_FOR_APPLY** unchanged.
+**Current recommended next gate from this checklist snapshot:** **Phase 4 LOSA Finnmark implementation gate** (18 rows publication model) — **not** P06 rework. **P06-OPERATIONAL-CLOSED** (`phase-0-6-p06-operational-closed-safe-summary.md`). **NOT_READY_FOR_APPLY** unchanged.
 
-**Checklist reference note (2026-06-05):** **Block E** closed — Møre **15** `10/0/0`; county coverage matrix + Finnmark LOSA **OUT_OF_SCOPE**; Akershus **32** Ås/` AS` matcher fix. **Block F** — `npm run smoke:contour-b`. **Block C** supplement: **55** VG1=5/VG2=4, **56** 6 VG1 + 18 LOSA excluded.
+**Checklist reference note (2026-06-05):** **P06-CLOSED (PARTIAL D)** — Blocks **A–G** closed; Contour B automation + pilot PSA operational; Block D partial (LOSA → Phase 4). Commits through `834b2e0`. Non-return rule §13 active.
 
 **Alternate tracks (separate owner selection — not auto-progression from Z-OV):** Z-AP* apply governance continuation; permission stack **#2** / **#3** only after explicit separate gates; Phase 3 operational execution remains separately gated from P3 planning POSTs (`7ed7014` → `f412bea` → `87ddeb0` → `d552832`).
 

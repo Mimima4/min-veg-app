@@ -3,7 +3,7 @@
 | Field | Value |
 |--------|--------|
 | **Section** | **P06-CLOSURE** |
-| **Status** | **OPEN** — owner accepted all blocks (2026-06-04) |
+| **Status** | **CLOSED (PARTIAL D)** — operational contour closed 2026-06-05; LOSA tail → Phase 4 |
 | **Goal** | Working **automatic** Contour **B** → PSA → route `programme_selection.options`; **no return** to P0–6 rework after closure |
 | **Prerequisite code** | `616ce82` — `--contour-b-partial`, `run-contour-b-operational-ingest.mjs`, `contour-b-operational-eligibility.mjs`, P06 §12 |
 | **NOT_READY_FOR_APPLY** | **unchanged** unless a separate gate says otherwise |
@@ -97,7 +97,7 @@
 
 ## Block D — Vilbli parity (identity + programme + LOSA in PSA)
 
-**Block status:** `IN_PROGRESS` — **CASE 2** matcher **1:N** linkage + **1:1** Vilbli school-brand PSA/display (`db67b40`); **CASE 3** Finnmark slash-alias matcher (`classifyInstitutionMatchForVilbliSchool`); **56** LOSA tail **auditable exclude** (below)
+**Block status:** `CLOSED (PARTIAL)` (2026-06-05) — ordinary VGS parity on pilots; **18 LOSA** rows deferred to **Phase 4** (below)
 
 **Purpose:** Route options converge toward Vilbli list for all rows that pass verification gates.
 
@@ -109,7 +109,19 @@
 | Pipeline/ingest rule for **published LOSA** implemented and proven on at least one county. |
 | Closure metrics in job or post: `vilbli_extract` / `psa_active` / `verified` counts (safe summary, no secrets). |
 
-**Note:** Until Block D closes, automation (B) runs but options remain a **verified subset** of Vilbli — honest, not a P0–6 defect.
+**Partial closure note:** Ordinary school identity + programme parity is **closed** for Contour B pilots. Remaining Vilbli rows are **LOSA-only** and **OUT_OF_SCOPE** for P06 — not a P0–6 defect.
+
+**Closure evidence (ordinary VGS — 2026-06-05):**
+
+| Criterion | Proof |
+|-----------|--------|
+| CASE 2 multi-`avd` | `db67b40` — Troms **55** VG1=5/VG2=4; 1:1 school-brand emission |
+| CASE 3 slash-alias | `82c77f3` — Finnmark **56** 6 ordinary VG1 schools |
+| Identity tail (pilots) | **15/18/55** dry-run clean; **56** 6/18/0 with documented LOSA exclude |
+| Programme rows | Pilot counties `verification_ready_after_write` or Contour B partial planner |
+| Metrics | Safe summary `phase-0-6-p06-operational-closed-safe-summary.md` §4 |
+
+**Deferred (not P06):** LOSA publication path + pipeline rule — Phase 4 implementation gate.
 
 ### Finnmark `56` — LOSA auditable exclude list (2026-06-05)
 
@@ -191,16 +203,25 @@
 
 ## Block G — Final closure (stop returning to P0–6)
 
-**Block status:** `OPEN`
+**Block status:** `CLOSED` (2026-06-05)
 
 **Purpose:** Formal stop line for the contour.
 
 | Done when |
 |-----------|
 | Git post **P06-OPERATIONAL-CLOSED** (safe summary): schedule, pilot counties, Block C E2E, Block D metrics, automation health. |
-| This checklist: all blocks **CLOSED**. |
+| This checklist: all blocks **CLOSED** (Block D **PARTIAL** per closure rule). |
 | `phase-2-closure-criteria-checklist.md`: **P06-CLOSED**; operational next steps **exclude** P0–6 rework. |
 | Owner statement: **no further P0–6 contour work** — only job ops, new professions, or new problem classes (not re-opening B design). |
+
+**Closure evidence (2026-06-05):**
+
+| Criterion | Proof |
+|-----------|--------|
+| Safe summary | `phase-0-6-p06-operational-closed-safe-summary.md` — **P06-OPERATIONAL-CLOSED-post** |
+| Git reference | `834b2e0` (Block E + route `name_i18n` fallback); prior pilot commits `db67b40`…`82c77f3` |
+| Checklist | Blocks **A–G** closed; **D** partial (LOSA → Phase 4) |
+| Non-return | §13 in `phase-0-6-processing-contour-owner-decision-record.md`; safe summary §5 |
 
 ---
 
@@ -217,9 +238,9 @@
 
 ## Closure rule (binding)
 
-**P06-CLOSURE complete** only when blocks **A through G** are **CLOSED**.
+**P06-CLOSURE complete** when blocks **A through G** are **CLOSED** (Block **D** may be **PARTIAL** — LOSA tail → Phase 4).
 
-**Partial closure allowed for reporting only:**
+**Partial closure (2026-06-05 — binding for ops):**
 
 | Blocks closed | Meaning |
 |---------------|---------|

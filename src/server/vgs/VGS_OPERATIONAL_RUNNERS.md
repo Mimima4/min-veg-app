@@ -58,7 +58,7 @@ If step 3–6 are missing, relay **will not** process the new pair even if the p
 | `dry_run_ok` | Safe to run production for that pair |
 | `failed` | Fix before treating product data as updated |
 
-Readiness values such as `missing_programme_rows` or `canonical_matching_review` after **`ingested`** are **expected** for Contour B partial counties until Block D parity work closes.
+Readiness values such as `missing_programme_rows` or `canonical_matching_review` after **`ingested`** are **expected** for Contour B partial counties (e.g. Finnmark **56** LOSA tail). **P06-OPERATIONAL-CLOSED** (2026-06-05); remaining LOSA rows → Phase 4, not P06 rework.
 
 ### Authority
 

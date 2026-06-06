@@ -238,7 +238,7 @@ For pipeline dry-run under verification or truth charters, use **`--dry-run`** o
 
 ## 13. Non-return rule (P06-CLOSURE)
 
-After **P06-CLOSURE** all blocks are **CLOSED** (`phase-0-6-contour-b-operational-closure-checklist.md`):
+After **P06-OPERATIONAL-CLOSED** (2026-06-05; Block D **PARTIAL** — LOSA → Phase 4; see `phase-0-6-p06-operational-closed-safe-summary.md`):
 
 - Do **not** reopen Phase 0–6 as a new contour design.
 - New counties or professions extend `CONTOUR_A_OPERATIONAL_BY_PROFESSION` and `vgs-path-definitions.mjs` only.
