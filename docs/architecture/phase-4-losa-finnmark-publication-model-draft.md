@@ -76,7 +76,8 @@ One **publishable unit** = one Vilbli LOSA row (unique `vilbliSchoolCode`) × pr
 | Manifest rows | **18** |
 | Row-level emission allowed | **0** (`STILL_BLOCKED_SECTION_4`) |
 | Proposed scope on all plans | `losa_fjern_delivery_municipality` |
-| Schema ready | **no** — scope enum migration pending **P4-LOSA-PSA** |
+| Schema ready (repo) | **yes** — migration `20260605120000_programme_school_availability_losa_scope.sql` (**P4-LOSA-PSA**) |
+| Schema applied (DB) | **owner session** — not implied by repo commit |
 | CLI proof | `npm run losa:finnmark-publication-plan` |
 
 ---
