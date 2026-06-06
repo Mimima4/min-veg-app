@@ -41,6 +41,14 @@ export const LOSA_FINNMARK_CONFIRMED_INDEX = [
     scope: "county_reference",
     ownerPost: "P4-LOSA-CONFIRMED-LOVDATA-14-4-post",
   },
+  {
+    sourceId: "T2_SCHOOL_NORDKAPP_VGS",
+    claimClass: "provider_school",
+    tier: "T2",
+    scope: "provider_nordkapp",
+    ownerPost: "P4-LOSA-CONFIRMED-NORDKAPP-PROVIDER-post",
+    note: "Nordkapp official landing — provider for all Finnmark ref LOSA rows",
+  },
 ];
 
 /** SNIPPET_CAPTURED rows — not CONFIRMED (P4-LOSA-SNIPPET-SESSION-post). */

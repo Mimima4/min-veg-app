@@ -61,6 +61,21 @@ export function assessClaimClassEvidenceLink(manifestRow, claimClass) {
     }
     case "provider_school": {
       if (isNordkappProviderLabel(provider)) {
+        const confirmed = LOSA_FINNMARK_CONFIRMED_INDEX.filter(
+          (entry) =>
+            entry.claimClass === "provider_school" &&
+            entry.scope === "provider_nordkapp"
+        );
+        if (confirmed.length > 0) {
+          return {
+            claimClass,
+            status: "row_confirmed",
+            sourceIds: confirmed.map((s) => s.sourceId),
+            publishable: true,
+            rationale:
+              "Nordkapp provider CONFIRMED at provider scope (P4-LOSA-CONFIRMED-NORDKAPP-PROVIDER-post)",
+          };
+        }
         const snippets = snippetsForClaim(
           "provider_school",
           (entry) => entry.scope === "provider_nordkapp"
