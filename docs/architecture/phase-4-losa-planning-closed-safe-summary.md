@@ -4,10 +4,10 @@
 |--------|--------|
 | **Document type** | Repo-safe summary — **P4-LOSA-PLANNING-CLOSED** |
 | **Section** | **P4-LOSA-PLANNING-CLOSED-post** |
-| **Status code** | `P4_LOSA_PLANNING_CLOSED_OPERATIONAL_TAIL_OPEN` |
-| **Date (UTC)** | 2026-06-05 |
+| **Status code** | `P4_LOSA_PLANNING_CLOSED_SCHEMA_APPLIED_TAIL_OPEN` |
+| **Date (UTC)** | 2026-06-05 (planning); schema main apply **2026-05-29** |
 | **Reference county** | `56` (Finnmark) — **not** a production exception rule |
-| **Head commit (reference)** | `92e3e4d` |
+| **Head commit (reference)** | `1f2f443` (pre-apply); apply record in `phase-4-losa-psa-schema-main-apply-checklist.md` |
 
 **Forbidden in this summary:** secrets, owner-held JSON, snippet text, per-school PII.
 
@@ -16,7 +16,7 @@
 ## This document is
 
 - Formal **planning / scaffold closure** for Phase 4 LOSA (manifest → Route plan).
-- **Operational tail** remains open: DB migration apply, §4 row closure, PSA write session, **#3** wiring.
+- **Operational tail** partially complete: **DB migration apply done**; §4 row closure, PSA write session, **#3** wiring remain open.
 
 ## This document is not
 
@@ -33,7 +33,7 @@
 | **P4-LOSA-IMPL** | **CLOSED** | `npm run losa:finnmark-manifest` |
 | **P4-LOSA-EVIDENCE-LINK** | **CLOSED** | `npm run losa:finnmark-evidence-link` |
 | **P4-LOSA-PUBLICATION-MODEL** | **CLOSED** | `npm run losa:finnmark-publication-plan` |
-| **P4-LOSA-PSA** (schema) | **CLOSED** (repo) | `npm run losa:validate-psa-schema` |
+| **P4-LOSA-PSA** (schema) | **CLOSED** (repo + **main applied**) | `npm run losa:validate-psa-schema` |
 | **P4-LOSA-PSA-WRITE** (framework) | **CLOSED** | `npm run losa:preview-psa-write` → **0** candidates |
 | **P4-LOSA-ROUTE** (plan) | **CLOSED** | `npm run losa:plan-route-consumption` → **0** eligible |
 | **Kommune resolve** (ref) | **CLOSED** | `npm run losa:resolve-municipality-codes` → **18/18** |
@@ -65,7 +65,7 @@
 
 | # | Step | Gate / action |
 |---|------|----------------|
-| 1 | Apply `20260605120000_programme_school_availability_losa_scope.sql` | Owner DB session |
+| 1 | Apply `20260605120000_programme_school_availability_losa_scope.sql` (+ co-applied `name_i18n`) | **DONE** — `phase-4-losa-psa-schema-main-apply-checklist.md` |
 | 2 | Close §4 on ≥1 row (evidence + publication decision) | Owner evidence / CONFIRMED promotion |
 | 3 | Owner-held **P4-LOSA-PSA-WRITE** charter → bounded insert | Max **1** pilot row |
 | 4 | Permission **#3** → wire `get-availability-truth` + scope filter | **P4-LOSA-ROUTE** wiring gate |

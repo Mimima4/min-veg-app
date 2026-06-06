@@ -32,13 +32,13 @@ Defines bounded **#2-class** LOSA PSA write path (separate from Contour B ordina
 
 | # | Precondition |
 |---|--------------|
-| 1 | **P4-LOSA-PSA** migration **applied** to target DB |
+| 1 | **P4-LOSA-PSA** migration **applied** to target DB — **satisfied** on main (`2026-05-29`; see `phase-4-losa-psa-schema-main-apply-checklist.md`) |
 | 2 | Row-level §4 **`ROW_SECTION_4_SATISFIED`** + publication decision recorded |
 | 3 | Filled owner-held charter (`phase-4-losa-psa-write-execution-charter-template.md`) |
 | 4 | Pre-session dry-run: `npm run losa:preview-psa-write` — chartered row count matches |
 | 5 | **Not** Contour B `pickInstitutionsForPsaEmission` path |
 
-**Current posture (2026-06-05):** **0/18** rows satisfy §4 — **no execution session** may run.
+**Current posture (post schema apply 2026-05-29):** schema precondition **met**; **0/18** rows satisfy §4 — **no execution session** may run.
 
 ---
 

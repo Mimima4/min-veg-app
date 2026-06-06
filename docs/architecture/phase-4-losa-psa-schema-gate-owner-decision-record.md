@@ -3,9 +3,9 @@
 | Field | Value |
 |--------|--------|
 | **Section** | **P4-LOSA-PSA** (schema tranche) |
-| **Status** | Owner **LOSA PSA schema** adopted at **repo level** — **no row writes** |
-| **Closure label** | `PHASE_4_LOSA_PSA_SCHEMA_GATE_ADOPTED_NO_WRITE` |
-| **Date (UTC)** | 2026-06-05 |
+| **Status** | Owner **LOSA PSA schema** adopted — **main apply completed** — **no row writes** |
+| **Closure label** | `PHASE_4_LOSA_PSA_SCHEMA_GATE_ADOPTED_MAIN_APPLIED_NO_WRITE` |
+| **Date (UTC)** | 2026-06-05 (gate); main apply **2026-05-29** |
 | **Prerequisite** | **P4-LOSA-PUBLICATION-MODEL** (`a212c2b`) |
 | **Control reference** | `phase-2-closure-criteria-checklist.md` — Section **P4-LOSA-PSA** |
 
@@ -46,19 +46,28 @@ Adopts SQL migration for nationwide `availability_scope` **`losa_fjern_delivery_
 
 ---
 
-## 3. Explicit non-scope
+## 3. Main apply (factual)
 
-- not production Supabase apply (unless owner runs migration separately)
+- **Status:** **MAIN APPLY COMPLETED** — see `phase-4-losa-psa-schema-main-apply-checklist.md`.
+- **Target:** `project_ref=bgmtxyfchtqjuvzuuoon`.
+- **Applied:** `20260529120000_education_institutions_name_i18n.sql` (co-applied) + `20260605120000_programme_school_availability_losa_scope.sql`.
+- **Post-apply:** constraints and partial indexes verified; **0** LOSA PSA rows; `losa:preview-psa-write` → **0** candidates.
+
+---
+
+## 4. Explicit non-scope
+
 - not first LOSA PSA row insert
 - not `get-availability-truth` Route filter change
 - not Phase 2 observation DML
 
 ---
 
-## 4. Artifacts
+## 5. Artifacts
 
 | Artifact | Role |
 |----------|------|
+| `phase-4-losa-psa-schema-main-apply-checklist.md` | Main apply + post-apply verification record |
 | `supabase/migrations/20260605120000_programme_school_availability_losa_scope.sql` | Schema migration |
 | `scripts/lib/losa-psa-schema.mjs` | Scope constants + file/DB readiness |
 | `scripts/validate-losa-psa-schema-readiness.mjs` | CLI proof |

@@ -38,6 +38,9 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# supabase CLI link state (transient)
+supabase/.temp/
+
 # vercel
 .vercel
 
