@@ -35,8 +35,9 @@ This gate authorizes **read-only LOSA entity modelling and Vilbli manifest extra
 |---------|-------------|------|
 | **1** (this gate) | `scripts/lib/losa-finnmark-entity.mjs` + `scripts/extract-losa-finnmark-manifest.mjs`; `src/lib/losa/boundary.ts` | **P4-LOSA-IMPL** |
 | **2** | Evidence linkage per row (claim class map) | **P4-LOSA-EVIDENCE-LINK** (2026-06-05) |
-| **3** | Phase 2 observation writes (if approved) | separate |
-| **4** | LOSA PSA publication model + pipeline rule | separate |
+| **3** (model) | LOSA PSA publication model + pipeline rule (read-only plan) | **P4-LOSA-PUBLICATION-MODEL** (2026-06-05) |
+| **3b** | Phase 2 observation writes (if approved) | separate |
+| **4** | PSA schema migration + bounded write | **P4-LOSA-PSA** (separate) |
 | **5** | Route `programme_selection` consumption | separate (#3) |
 
 ---

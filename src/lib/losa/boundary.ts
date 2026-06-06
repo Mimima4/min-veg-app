@@ -34,4 +34,8 @@ export const PHASE4_LOSA_GATE_ORDER = [
 /** Tranche 2 closed at docs level (read-only linkage; no PSA). */
 export const PHASE4_LOSA_EVIDENCE_LINK_TRANCHE = 2 as const;
 
+/** Proposed PSA scope — DB migration requires P4-LOSA-PSA gate. */
+export const PHASE4_LOSA_PROPOSED_AVAILABILITY_SCOPE =
+  "losa_fjern_delivery_municipality" as const;
+
 export type Phase4LosaGateId = (typeof PHASE4_LOSA_GATE_ORDER)[number];

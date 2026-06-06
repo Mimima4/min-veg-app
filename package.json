@@ -9,7 +9,8 @@
     "lint": "next lint",
     "smoke:contour-b": "node scripts/smoke-contour-b-regression.mjs",
     "losa:finnmark-manifest": "node scripts/extract-losa-finnmark-manifest.mjs",
-    "losa:finnmark-evidence-link": "node scripts/link-losa-finnmark-evidence.mjs"
+    "losa:finnmark-evidence-link": "node scripts/link-losa-finnmark-evidence.mjs",
+    "losa:finnmark-publication-plan": "node scripts/plan-losa-finnmark-publication.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.9.0",

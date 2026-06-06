@@ -167,6 +167,8 @@ These are **documentation / boundary / criteria** artifacts only. They are **not
 - `docs/architecture/phase-4-losa-finnmark-planning-sufficiency-owner-decision-record.md` — **P4-LOSA-FM-PLANNING-SUFFICIENT**; owner: planning evidence **sufficient**; operational publishability **not** closed
 - `docs/architecture/phase-4-losa-finnmark-implementation-gate-owner-decision-record.md` — **P4-LOSA-IMPL** Tranche 1; read-only LOSA manifest + entity parse; PSA/Route **not** authorized
 - `docs/architecture/phase-4-losa-finnmark-evidence-link-gate-owner-decision-record.md` — **P4-LOSA-EVIDENCE-LINK** Tranche 2; CONFIRMED/SNIPPET → claim classes per row; §4 **still blocked**
+- `docs/architecture/phase-4-losa-finnmark-publication-model-draft.md` — **LOSA PSA publication model** draft (`losa_fjern_delivery_municipality` scope)
+- `docs/architecture/phase-4-losa-finnmark-publication-model-gate-owner-decision-record.md` — **P4-LOSA-PUBLICATION-MODEL**; read-only emission plan; schema migration → **P4-LOSA-PSA**
 - `docs/architecture/phase-4-losa-claim-extraction-pilot-execution-gate-owner-decision-record.md` — **LOSA claim extraction pilot** gate (**P4-LOSA-CLAIM-EXTRACT**); owner-held snapshots only; **no** `CONFIRMED` in pilot
 - `docs/architecture/phase-4-losa-claim-extraction-pilot-execution-review-summary.md` — **safe summary** (**P4-LOSA-CLAIM-EXTRACT-post**); `LOSA_CLAIM_EXTRACTION_PILOT_PASS`; **10** sources; **17** candidate signals; **0** confirmed
 - `docs/architecture/phase-4-losa-evidence-refresh-pilot-3-tier1-deep-urls-owner-decision-record.md` — **Pilot 3** deep Tier 1 URLs (**P4-LOSA-REFRESH-PILOT-3**)
@@ -1778,9 +1780,9 @@ Owner-adopted **A.3** read-only Contour **A** baseline gate per `phase-2-contour
 
 ---
 
-**Current recommended next gate from this checklist snapshot:** **P4-LOSA-PUBLICATION-MODEL** charter (LOSA PSA shape) — after **P4-LOSA-EVIDENCE-LINK** Tranche 2. **P06-OPERATIONAL-CLOSED** unchanged. **NOT_READY_FOR_APPLY** unchanged.
+**Current recommended next gate from this checklist snapshot:** **P4-LOSA-PSA** — `availability_scope` migration + bounded write charter (no Route/#3). **P4-LOSA-PUBLICATION-MODEL** draft adopted. **NOT_READY_FOR_APPLY** unchanged.
 
-**Checklist reference note (2026-06-05):** **P4-LOSA-EVIDENCE-LINK** — `npm run losa:finnmark-evidence-link`; **18/18** rows `STILL_BLOCKED_SECTION_4`; Alta partial programme link only; aggregate `STILL_BLOCKED_ALL_SECTION_4`.
+**Checklist reference note (2026-06-05):** **P4-LOSA-PUBLICATION-MODEL** — `npm run losa:finnmark-publication-plan`; proposed scope `losa_fjern_delivery_municipality`; **0/18** emission allowed; schema gate next.
 
 **Alternate tracks (separate owner selection — not auto-progression from Z-OV):** Z-AP* apply governance continuation; permission stack **#2** / **#3** only after explicit separate gates; Phase 3 operational execution remains separately gated from P3 planning POSTs (`7ed7014` → `f412bea` → `87ddeb0` → `d552832`).
 
