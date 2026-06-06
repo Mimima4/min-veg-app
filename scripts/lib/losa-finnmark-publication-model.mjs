@@ -48,7 +48,7 @@ export function planLosaFinnmarkPsaEmission(linkedRow, context = {}) {
     }
   }
   blockedReasons.push("psa_schema_migration_apply_session_required");
-  blockedReasons.push("psa_write_charter_not_passed");
+  blockedReasons.push("p4_losa_psa_write_no_execution_session");
   blockedReasons.push("publication_decision_gate_not_passed");
 
   return {

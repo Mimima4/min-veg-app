@@ -38,4 +38,7 @@ export const PHASE4_LOSA_EVIDENCE_LINK_TRANCHE = 2 as const;
 export const PHASE4_LOSA_PROPOSED_AVAILABILITY_SCOPE =
   "losa_fjern_delivery_municipality" as const;
 
+/** Write gate adopted; execution session still separately chartered. */
+export const PHASE4_LOSA_PSA_WRITE_GATE_ID = "P4-LOSA-PSA-WRITE" as const;
+
 export type Phase4LosaGateId = (typeof PHASE4_LOSA_GATE_ORDER)[number];
