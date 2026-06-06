@@ -103,7 +103,7 @@ Remote history now includes:
 | Row §4 satisfied | **0** / 18 |
 | Route LOSA options | **0** |
 | Contour B `isLosa` skip | unchanged |
-| Next gate | §4 row closure → **P4-LOSA-PSA-WRITE** bounded charter (max **1** pilot row) |
+| Next gate | §4 Alta pilot row closure → **P4-LOSA-PSA-WRITE** bounded charter (max **1** pilot row) |
 
 ---
 

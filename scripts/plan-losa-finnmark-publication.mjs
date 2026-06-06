@@ -111,7 +111,9 @@ async function main() {
         `P4-LOSA publication-plan (${COUNTY_CODE} / ${args.profession})`,
         `rows: ${summary.rowCount} | emission allowed: ${summary.emissionAllowedCount}`,
         `proposed scope: ${LOSA_PROPOSED_AVAILABILITY_SCOPE}`,
-        `schema migration: required → gate ${summary.nextGate}`,
+        summary.schemaMigrationApplied
+          ? `schema migration: applied (main) | next gate §4 row closure`
+          : `schema migration: required → gate ${summary.nextGate}`,
         "",
         "Sample plans:",
         ...report.plans.slice(0, 2).map((plan) => {

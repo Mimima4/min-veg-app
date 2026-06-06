@@ -47,7 +47,6 @@ export function planLosaFinnmarkPsaEmission(linkedRow, context = {}) {
       blockedReasons.push("delivery_municipality_blocked");
     }
   }
-  blockedReasons.push("psa_schema_migration_apply_session_required");
   blockedReasons.push("p4_losa_psa_write_no_execution_session");
   blockedReasons.push("publication_decision_gate_not_passed");
 
@@ -96,7 +95,8 @@ export function planLosaFinnmarkPublication(linkedRows, context = {}) {
     rowCount: plans.length,
     emissionAllowedCount: plans.filter((p) => p.emissionAllowed).length,
     proposedScope: LOSA_PROPOSED_AVAILABILITY_SCOPE,
-    schemaMigrationRequired: true,
+    schemaMigrationRequired: false,
+    schemaMigrationApplied: true,
     psaWriteGate: "P4-LOSA-PSA",
     plans,
   };
@@ -109,6 +109,7 @@ export function summarizePublicationPlan(report) {
     allEmissionBlocked: report.emissionAllowedCount === 0,
     proposedScope: report.proposedScope,
     schemaMigrationRequired: report.schemaMigrationRequired,
+    schemaMigrationApplied: report.schemaMigrationApplied ?? false,
     nextGate: report.psaWriteGate,
   };
 }

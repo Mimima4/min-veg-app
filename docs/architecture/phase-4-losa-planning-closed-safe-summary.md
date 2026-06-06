@@ -66,7 +66,7 @@
 | # | Step | Gate / action |
 |---|------|----------------|
 | 1 | Apply `20260605120000_programme_school_availability_losa_scope.sql` (+ co-applied `name_i18n`) | **DONE** — `phase-4-losa-psa-schema-main-apply-checklist.md` |
-| 2 | Close §4 on ≥1 row (evidence + publication decision) | Owner evidence / CONFIRMED promotion |
+| 2 | Close §4 on ≥1 row (evidence + publication decision) | **Alta pilot** — `phase-4-losa-section-4-alta-pilot-row-closure-gate-owner-decision-record.md` (owner-held CONFIRMED + publication decision) |
 | 3 | Owner-held **P4-LOSA-PSA-WRITE** charter → bounded insert | Max **1** pilot row |
 | 4 | Permission **#3** → wire `get-availability-truth` + scope filter | **P4-LOSA-ROUTE** wiring gate |
 
