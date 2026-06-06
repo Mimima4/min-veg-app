@@ -3,8 +3,8 @@
 | Field | Value |
 |--------|--------|
 | **Section** | **P4-LOSA-SECTION-4-ALTA-PILOT** |
-| **Status** | **IN PROGRESS** — Alta **evidence §4 satisfied**; sub-gates **6–7** (publication decision + emission) open |
-| **Closure label** | `PHASE_4_LOSA_SECTION_4_ALTA_EVIDENCE_SATISFIED` |
+| **Status** | **CHARTER-READY** — publication decision recorded; PSA **write execution** open |
+| **Closure label** | `PHASE_4_LOSA_ALTA_PUBLICATION_DECISION_ADOPTED` |
 | **Date (UTC)** | 2026-05-29 |
 | **Prerequisite** | **P4-LOSA-PSA** main apply (`phase-4-losa-psa-schema-main-apply-checklist.md`) |
 | **Reference row** | Vilbli LOSA **Alta** delivery (`Nordkapp videregående skole – LOSA Alta`) |
@@ -55,8 +55,8 @@ Per `phase-4-losa-finnmark-publishability-contract-draft.md` §4:
 | 3 | Alta programme **partial → full** row closure | **DONE** — `phase-4-losa-alta-programme-full-row-closure-gate-owner-decision-record.md` | **0** new CONFIRMED rows |
 | 4 | `publication_supporting_evidence` combined packet | **DONE** — `phase-4-losa-alta-supporting-evidence-gate-owner-decision-record.md` | **1** packet row |
 | 5 | County Tier 1 → row-publishable rule | **DONE** — `phase-4-losa-county-tier1-row-publishable-rule-gate-owner-decision-record.md` | Policy only |
-| 6 | Auditable **publication decision** object | Owner-held charter / Phase 2 decision record | **1** Alta row |
-| 7 | Repo index sync | Update `LOSA_FINNMARK_CONFIRMED_INDEX` after owner posts | Docs + `losa-finnmark-evidence-index.mjs` |
+| 6 | Auditable **publication decision** object | **DONE** — `phase-4-losa-alta-publication-decision-gate-owner-decision-record.md` | **1** Alta row |
+| 7 | **P4-LOSA-PSA-WRITE** charter → bounded insert | Owner-held `MAIN-LOSA-PSA-WRITE-*` | Max **1** pilot row |
 
 **Paused by owner tranche (2026-06-03):** sub-gates **1–2** were explicitly **SNIPPET_ONLY** — reopening requires **new** owner gate, not automatic promotion.
 
@@ -69,12 +69,12 @@ Per `phase-4-losa-finnmark-publishability-contract-draft.md` §4:
 | P4LS4A0 | Adopt Alta as **first** §4 pilot row (reference `56`)? | **Yes** |
 | P4LS4A1 | County Tier 1 CONFIRMED satisfies `legal_status` + `fjernundervisning_rules` at row level? | **Yes** |
 | P4LS4A2 | Re-open SNIPPET_ONLY provider/delivery for bounded CONFIRMED promotion? | **Yes** |
-| P4LS4A3 | Max **1** row §4 closure in this gate (Alta only)? | _pending_ |
-| P4LS4A4 | Publication decision recorded **before** PSA write charter? | _pending_ |
-| P4LS4A5 | **No** PSA write in this gate? | _pending_ |
-| P4LS4A6 | **No** Route **#3** in this gate? | _pending_ |
+| P4LS4A3 | Max **1** row §4 closure in this gate (Alta only)? | **Yes** |
+| P4LS4A4 | Publication decision recorded **before** PSA write charter? | **Yes** |
+| P4LS4A5 | **No** PSA write **execution** in publication-decision gate? | **Yes** |
+| P4LS4A6 | **No** Route **#3** in this gate? | **Yes** |
 | P4LS4A7 | CLI re-proof: `losa:finnmark-evidence-link` shows Alta `ROW_SECTION_4_SATISFIED` | **Yes** |
-| P4LS4A8 | Next after closure: **P4-LOSA-PSA-WRITE** charter (max **1** row) | _pending_ |
+| P4LS4A8 | Next after closure: **P4-LOSA-PSA-WRITE** charter (max **1** row) | **Yes** (open) |
 
 ---
 
@@ -90,4 +90,4 @@ npm run losa:preview-psa-write         # 1 candidate; execution still unauthoriz
 
 ## Final statement
 
-Schema on main is **ready**. Alta row **evidence §4 is satisfied** (`ROW_SECTION_4_SATISFIED`). PSA emission remains **owner-held** until publication decision (sub-gate 6) and **P4-LOSA-PSA-WRITE** charter.
+Schema on main is **ready**. Alta row **evidence §4 satisfied** and **publication decision recorded**. First LOSA PSA insert requires owner-held **P4-LOSA-PSA-WRITE** charter + NSR `institution_id` resolve at session.

@@ -32,6 +32,8 @@
 | Vilbli school code(s) | owner-listed |
 | Delivery municipality | must match manifest + §4 closure |
 
+**Alta pilot reference (2026-05-29):** delivery **Alta**; `ROW_SECTION_4_SATISFIED`; `institution_id` = NSR resolve at session (not in git).
+
 ---
 
 ## 3. Pre-session dry-run

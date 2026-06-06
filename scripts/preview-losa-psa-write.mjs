@@ -16,7 +16,7 @@ import { assessLosaPsaSchemaReadiness } from "./lib/losa-psa-schema.mjs";
 
 const DEFAULT_COUNTY = "56";
 const DEFAULT_PROFESSION = "electrician";
-const DEFAULT_EXPECT_WRITE_COUNT = 0;
+const DEFAULT_EXPECT_WRITE_COUNT = 1;
 
 function parseArgs(argv) {
   const args = {
@@ -127,8 +127,8 @@ async function main() {
         `schema migration file: ${schemaReadiness.migrationFile.ok ? "OK" : "FAIL"}`,
         "",
         preview.writeCandidateCount === 0
-          ? "No writable rows — §4 blocked (expected)."
-          : "Writable rows present — requires owner-held charter session.",
+          ? "No writable rows — check §4 / publication decision."
+          : "Writable rows present — NSR institution_id at write session; charter required for insert.",
       ].join("\n")
     );
   }

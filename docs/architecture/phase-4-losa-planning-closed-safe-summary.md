@@ -66,8 +66,8 @@
 | # | Step | Gate / action |
 |---|------|----------------|
 | 1 | Apply `20260605120000_programme_school_availability_losa_scope.sql` (+ co-applied `name_i18n`) | **DONE** — `phase-4-losa-psa-schema-main-apply-checklist.md` |
-| 2 | Close §4 on ≥1 row (evidence + publication decision) | **Alta evidence §4 satisfied** (`1/18`); publication decision + PSA write charter remain (sub-gates **6–7**) |
-| 3 | Owner-held **P4-LOSA-PSA-WRITE** charter → bounded insert | Max **1** pilot row |
+| 2 | Close §4 on ≥1 row (evidence + publication decision) | **DONE** — Alta `ROW_SECTION_4_SATISFIED` + publication decision (`P4-LOSA-ALTA-PUBLICATION-DECISION-post`) |
+| 3 | Owner-held **P4-LOSA-PSA-WRITE** charter → bounded insert | **OPEN** — preview **1** candidate; execution unauthorized |
 | 4 | Permission **#3** → wire `get-availability-truth` + scope filter | **P4-LOSA-ROUTE** wiring gate |
 
 ---

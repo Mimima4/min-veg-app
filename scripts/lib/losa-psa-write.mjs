@@ -23,7 +23,12 @@ export function buildLosaPsaWriteCandidate(plan, context = {}) {
     };
   }
 
-  const providerInstitutionId = plan.bindings?.providerInstitutionId;
+  const providerInstitutionId = plan.bindings?.providerInstitutionId ?? null;
+  const providerBinding = plan.bindings?.providerInstitutionIdBinding;
+  const providerReady =
+    providerBinding === "row_confirmed_resolve_at_write_session" ||
+    Boolean(providerInstitutionId);
+
   const municipalityResolution = resolveMunicipalityCodeForDeliveryLabel(
     plan.entity?.deliverySiteLabel ?? plan.bindings?.deliverySiteLabel,
     { countyCode: plan.countyCode }
@@ -32,14 +37,14 @@ export function buildLosaPsaWriteCandidate(plan, context = {}) {
     plan.bindings?.deliveryMunicipalityCode ??
     municipalityResolution.municipalityCode;
 
-  if (!providerInstitutionId) {
-    blockedReasons.push("provider_institution_id_missing");
+  if (!providerReady) {
+    blockedReasons.push("provider_school_binding_blocked");
   }
   if (!municipalityCode) {
     blockedReasons.push("delivery_municipality_code_missing");
   }
 
-  if (!providerInstitutionId || !municipalityCode) {
+  if (!providerReady || !municipalityCode) {
     return {
       section: "P4-LOSA-PSA-WRITE-CANDIDATE",
       writeAllowed: false,
@@ -50,12 +55,18 @@ export function buildLosaPsaWriteCandidate(plan, context = {}) {
     };
   }
 
+  const resolveAtWriteSession = providerInstitutionId
+    ? []
+    : ["provider_institution_id"];
+
   return {
     section: "P4-LOSA-PSA-WRITE-CANDIDATE",
     writeAllowed: true,
     vilbliSchoolCode: plan.vilbliSchoolCode,
     deliverySiteLabel: plan.entity?.deliverySiteLabel ?? null,
     blockedReasons: [],
+    payloadComplete: resolveAtWriteSession.length === 0,
+    resolveAtWriteSession,
     payload: {
       education_program_id: context.educationProgramId ?? null,
       institution_id: providerInstitutionId,

@@ -19,6 +19,7 @@ import {
 const COUNTY_CODE = "56";
 const DEFAULT_PROFESSION = "electrician";
 const EXPECTED_LOSA_ROW_COUNT = 18;
+const EXPECTED_EMISSION_ALLOWED_COUNT = 1;
 
 function parseArgs(argv) {
   const args = {
@@ -112,7 +113,7 @@ async function main() {
         `rows: ${summary.rowCount} | emission allowed: ${summary.emissionAllowedCount}`,
         `proposed scope: ${LOSA_PROPOSED_AVAILABILITY_SCOPE}`,
         summary.schemaMigrationApplied
-          ? `schema migration: applied (main) | next gate §4 row closure`
+          ? `schema migration: applied (main) | emission allowed: ${summary.emissionAllowedCount}`
           : `schema migration: required → gate ${summary.nextGate}`,
         "",
         "Sample plans:",
@@ -126,8 +127,10 @@ async function main() {
     );
   }
 
-  if (!summary.allEmissionBlocked) {
-    console.error("\nABORT: expected zero emission-allowed rows");
+  if (summary.emissionAllowedCount !== EXPECTED_EMISSION_ALLOWED_COUNT) {
+    console.error(
+      `\nABORT: expected ${EXPECTED_EMISSION_ALLOWED_COUNT} emission-allowed row(s), got ${summary.emissionAllowedCount}`
+    );
     process.exit(1);
   }
 

@@ -31,7 +31,7 @@ Evidence §4 **satisfied** on Alta reference row only. **No** PSA write, **no** 
 
 ## Recommended next
 
-Sub-gate **6:** auditable publication decision object for Alta row → then **P4-LOSA-PSA-WRITE** charter (max **1** pilot row).
+Sub-gate **6:** **completed** (`P4-LOSA-ALTA-PUBLICATION-DECISION-post`). Next: **P4-LOSA-PSA-WRITE** execution charter.
 
 ---
 
