@@ -101,6 +101,21 @@ export function assessClaimClassEvidenceLink(manifestRow, claimClass) {
     }
     case "delivery_municipality": {
       if (isAltaDeliverySite(delivery)) {
+        const confirmed = LOSA_FINNMARK_CONFIRMED_INDEX.filter(
+          (entry) =>
+            entry.claimClass === "delivery_municipality" &&
+            entry.scope === "delivery_site_alta"
+        );
+        if (confirmed.length > 0) {
+          return {
+            claimClass,
+            status: "row_confirmed",
+            sourceIds: confirmed.map((s) => s.sourceId),
+            publishable: true,
+            rationale:
+              "Alta delivery municipality CONFIRMED (P4-LOSA-CONFIRMED-ALTA-DELIVERY-post)",
+          };
+        }
         const snippets = snippetsForClaim(
           "delivery_municipality",
           (entry) => entry.scope === "delivery_site_alta"

@@ -53,7 +53,7 @@ Does **not** clear §4 on Alta (delivery, programme full, supporting evidence, p
 
 ## Recommended next
 
-Sub-gate **2:** bounded CONFIRMED promotion — Alta `delivery_municipality` (`T2_KOMMUNE_ALTA_REF`).
+Sub-gate **2:** bounded CONFIRMED promotion — Alta `delivery_municipality` — **completed** (`P4-LOSA-CONFIRMED-ALTA-DELIVERY-post`).
 
 ---
 

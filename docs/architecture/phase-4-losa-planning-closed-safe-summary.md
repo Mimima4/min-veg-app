@@ -66,7 +66,7 @@
 | # | Step | Gate / action |
 |---|------|----------------|
 | 1 | Apply `20260605120000_programme_school_availability_losa_scope.sql` (+ co-applied `name_i18n`) | **DONE** — `phase-4-losa-psa-schema-main-apply-checklist.md` |
-| 2 | Close §4 on ≥1 row (evidence + publication decision) | **Alta pilot** — sub-gate **1** done (Nordkapp provider CONFIRMED); sub-gates **2–7** open |
+| 2 | Close §4 on ≥1 row (evidence + publication decision) | **Alta pilot** — sub-gates **1–2** done; sub-gates **3–7** open |
 | 3 | Owner-held **P4-LOSA-PSA-WRITE** charter → bounded insert | Max **1** pilot row |
 | 4 | Permission **#3** → wire `get-availability-truth` + scope filter | **P4-LOSA-ROUTE** wiring gate |
 

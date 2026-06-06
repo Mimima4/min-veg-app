@@ -4,7 +4,7 @@
 |--------|--------|
 | **Section** | **P4-LOSA-SECTION-4-ALTA-PILOT** |
 | **Status** | **IN PROGRESS** — sub-gate **1** complete; sub-gates **2–7** open |
-| **Closure label** | `PHASE_4_LOSA_SECTION_4_ALTA_PILOT_SUBGATE_1_COMPLETE` |
+| **Closure label** | `PHASE_4_LOSA_SECTION_4_ALTA_PILOT_SUBGATE_2_COMPLETE` |
 | **Date (UTC)** | 2026-05-29 |
 | **Prerequisite** | **P4-LOSA-PSA** main apply (`phase-4-losa-psa-schema-main-apply-checklist.md`) |
 | **Reference row** | Vilbli LOSA **Alta** delivery (`Nordkapp videregående skole – LOSA Alta`) |
@@ -21,7 +21,7 @@
 | Rows with any non-blocked claim linkage | **1** (Alta) |
 | Alta partial CONFIRMED | `programme_stage_availability` (`T2_SCHOOL_ALTA_VGS_PROGRAM_DEEP`) |
 | Alta `provider_school` | **`row_confirmed`** (`P4-LOSA-CONFIRMED-NORDKAPP-PROVIDER-post`) |
-| Alta SNIPPET_ONLY | `delivery_municipality` |
+| Alta `delivery_municipality` | **`row_confirmed`** (`P4-LOSA-CONFIRMED-ALTA-DELIVERY-post`) |
 | County Tier 1 CONFIRMED | `legal_status`, `fjernundervisning_rules` — **county_reference** (not row-publishable alone) |
 | CLI proof today | `npm run losa:finnmark-evidence-link` → Alta partial + snippet; **18/18** `STILL_BLOCKED_SECTION_4` |
 
@@ -38,7 +38,7 @@ Per `phase-4-losa-finnmark-publishability-contract-draft.md` §4:
 | `legal_status` | `county_reference_confirmed` | Row-publishable Tier 1 closure **or** accepted county-reference rule in this gate |
 | `fjernundervisning_rules` | `county_reference_confirmed` | Same |
 | `provider_school` | **`row_confirmed`** (`T2_SCHOOL_NORDKAPP_VGS`) | **Done** (sub-gate 1) |
-| `delivery_municipality` | `snippet_only` (`T2_KOMMUNE_ALTA_REF`) | **CONFIRMED** at **row** scope (Alta kommune) |
+| `delivery_municipality` | **`row_confirmed`** (`T2_KOMMUNE_ALTA_REF`) | **Done** (sub-gate 2) |
 | `programme_stage_availability` | `row_confirmed_partial` | **Full** row CONFIRMED (not partial Alta-school-only) |
 | `publication_supporting_evidence` | `blocked` | Tier 1 + Tier 2 combined packet per registry (never alone) |
 
@@ -51,7 +51,7 @@ Per `phase-4-losa-finnmark-publishability-contract-draft.md` §4:
 | # | Sub-gate | Artifact | Max delta |
 |---|----------|----------|-----------|
 | 1 | Bounded **CONFIRMED** promotion — Nordkapp `provider_school` | **DONE** — `phase-4-losa-confirmed-promotion-nordkapp-provider-gate-owner-decision-record.md` | **1** CONFIRMED row |
-| 2 | Bounded **CONFIRMED** promotion — Alta `delivery_municipality` | New owner gate + owner-held JSON | **1** CONFIRMED row |
+| 2 | Bounded **CONFIRMED** promotion — Alta `delivery_municipality` | **DONE** — `phase-4-losa-confirmed-promotion-alta-delivery-gate-owner-decision-record.md` | **1** CONFIRMED row |
 | 3 | Alta programme **partial → full** row closure | Owner review vs Nordkapp–Alta delivery evidence | **0** new git snippets |
 | 4 | `publication_supporting_evidence` combined packet | Owner-held evidence bundle | Per refresh-design |
 | 5 | County Tier 1 → row-publishable rule | Owner decision in **this** gate (P4LS4A0–P4LS4A2) | Policy only |

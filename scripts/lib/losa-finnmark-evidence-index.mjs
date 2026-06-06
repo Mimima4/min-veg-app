@@ -49,6 +49,14 @@ export const LOSA_FINNMARK_CONFIRMED_INDEX = [
     ownerPost: "P4-LOSA-CONFIRMED-NORDKAPP-PROVIDER-post",
     note: "Nordkapp official landing — provider for all Finnmark ref LOSA rows",
   },
+  {
+    sourceId: "T2_KOMMUNE_ALTA_REF",
+    claimClass: "delivery_municipality",
+    tier: "T2",
+    scope: "delivery_site_alta",
+    ownerPost: "P4-LOSA-CONFIRMED-ALTA-DELIVERY-post",
+    note: "Alta kommune official landing — delivery site for Alta LOSA row only",
+  },
 ];
 
 /** SNIPPET_CAPTURED rows — not CONFIRMED (P4-LOSA-SNIPPET-SESSION-post). */
