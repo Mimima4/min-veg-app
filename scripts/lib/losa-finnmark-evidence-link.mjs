@@ -4,6 +4,7 @@ import {
 import {
   LOSA_FINNMARK_CONFIRMED_INDEX,
   LOSA_FINNMARK_SNIPPET_ONLY_INDEX,
+  deliverySiteScopeForLabel,
   isAltaDeliverySite,
   isNordkappProviderLabel,
 } from "./losa-finnmark-evidence-index.mjs";
@@ -148,25 +149,26 @@ export function assessClaimClassEvidenceLink(manifestRow, claimClass) {
       };
     }
     case "delivery_municipality": {
-      if (isAltaDeliverySite(delivery)) {
+      const deliveryScope = deliverySiteScopeForLabel(delivery);
+      if (deliveryScope) {
         const confirmed = LOSA_FINNMARK_CONFIRMED_INDEX.filter(
           (entry) =>
             entry.claimClass === "delivery_municipality" &&
-            entry.scope === "delivery_site_alta"
+            entry.scope === deliveryScope
         );
         if (confirmed.length > 0) {
+          const siteLabel = delivery ?? "delivery site";
           return {
             claimClass,
             status: "row_confirmed",
             sourceIds: confirmed.map((s) => s.sourceId),
             publishable: true,
-            rationale:
-              "Alta delivery municipality CONFIRMED (P4-LOSA-CONFIRMED-ALTA-DELIVERY-post)",
+            rationale: `${siteLabel} delivery municipality CONFIRMED (${confirmed[0]?.ownerPost ?? "owner post"})`,
           };
         }
         const snippets = snippetsForClaim(
           "delivery_municipality",
-          (entry) => entry.scope === "delivery_site_alta"
+          (entry) => entry.scope === deliveryScope
         );
         if (snippets.length > 0) {
           return {
@@ -174,7 +176,7 @@ export function assessClaimClassEvidenceLink(manifestRow, claimClass) {
             status: "snippet_only",
             sourceIds: snippets.map((s) => s.sourceId),
             publishable: false,
-            rationale: "Alta kommune SNIPPET_ONLY — not CONFIRMED",
+            rationale: `${delivery ?? "delivery"} kommune SNIPPET_ONLY — not CONFIRMED`,
           };
         }
       }

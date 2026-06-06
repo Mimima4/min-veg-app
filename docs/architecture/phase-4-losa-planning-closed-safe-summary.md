@@ -4,10 +4,10 @@
 |--------|--------|
 | **Document type** | Repo-safe summary — **P4-LOSA-PLANNING-CLOSED** |
 | **Section** | **P4-LOSA-PLANNING-CLOSED-post** |
-| **Status code** | `P4_LOSA_PLANNING_CLOSED_SCHEMA_APPLIED_TAIL_OPEN` |
-| **Date (UTC)** | 2026-06-05 (planning); schema main apply **2026-05-29** |
+| **Status code** | `P4_LOSA_REFERENCE_PILOT_TAIL_COMPLETE` |
+| **Date (UTC)** | 2026-06-05 (planning); reference pilot tail closed **2026-05-29** |
 | **Reference county** | `56` (Finnmark) — **not** a production exception rule |
-| **Head commit (reference)** | `1f2f443` (pre-apply); apply record in `phase-4-losa-psa-schema-main-apply-checklist.md` |
+| **Head commit (reference)** | `aff1037`; tail closure `phase-4-losa-operational-tail-closure-execution-review-summary.md` |
 
 **Forbidden in this summary:** secrets, owner-held JSON, snippet text, per-school PII.
 
@@ -16,11 +16,11 @@
 ## This document is
 
 - Formal **planning / scaffold closure** for Phase 4 LOSA (manifest → Route plan).
-- **Operational tail** partially complete: **DB migration apply done**; §4 row closure, PSA write session, **#3** wiring remain open.
+- **Operational tail** **complete** for reference pilot (**1** Alta row): schema → §4 → PSA write → Route **#3**.
 
 ## This document is not
 
-- LOSA rows published in PSA or shown in Route/UI.
+- Full **18**-row LOSA publication or nationwide product apply.
 - `NOT_READY_FOR_APPLY` clearance.
 - Permission to treat Finnmark as special-case production rules.
 
@@ -34,8 +34,9 @@
 | **P4-LOSA-EVIDENCE-LINK** | **CLOSED** | `npm run losa:finnmark-evidence-link` |
 | **P4-LOSA-PUBLICATION-MODEL** | **CLOSED** | `npm run losa:finnmark-publication-plan` |
 | **P4-LOSA-PSA** (schema) | **CLOSED** (repo + **main applied**) | `npm run losa:validate-psa-schema` |
-| **P4-LOSA-PSA-WRITE** (framework) | **CLOSED** | `npm run losa:preview-psa-write` → **0** candidates |
-| **P4-LOSA-ROUTE** (plan) | **CLOSED** | `npm run losa:plan-route-consumption` → **0** eligible |
+| **P4-LOSA-PSA-WRITE** (pilot) | **CLOSED** | `npm run losa:preview-psa-write` → **1** candidate |
+| **P4-LOSA-ROUTE** (plan + wiring) | **CLOSED** | `npm run losa:plan-route-consumption` → **1** eligible |
+| **P4-LOSA-OPERATIONAL-TAIL** | **CLOSED** | Full CLI chain — `phase-4-losa-operational-tail-closure-execution-review-summary.md` |
 | **Kommune resolve** (ref) | **CLOSED** | `npm run losa:resolve-municipality-codes` → **18/18** |
 
 ---
@@ -68,7 +69,19 @@
 | 1 | Apply `20260605120000_programme_school_availability_losa_scope.sql` (+ co-applied `name_i18n`) | **DONE** — `phase-4-losa-psa-schema-main-apply-checklist.md` |
 | 2 | Close §4 on ≥1 row (evidence + publication decision) | **DONE** — Alta `ROW_SECTION_4_SATISFIED` + publication decision (`P4-LOSA-ALTA-PUBLICATION-DECISION-post`) |
 | 3 | Owner-held **P4-LOSA-PSA-WRITE** charter → bounded insert | **DONE** — `phase-4-losa-psa-write-pilot-execution-review-summary.md` |
-| 4 | Permission **#3** → wire `get-availability-truth` + scope filter | **P4-LOSA-ROUTE-WIRING** (**DONE** — Alta pilot) |
+| 4 | Permission **#3** → wire `get-availability-truth` + scope filter | **DONE** — `phase-4-losa-route-wiring-execution-review-summary.md` |
+| 5 | Operational tail closure (reference pilot) | **DONE** — `phase-4-losa-operational-tail-closure-execution-review-summary.md` |
+
+---
+
+## 4b. Open tracks (post-tail)
+
+| Track | Status |
+|-------|--------|
+| Row **2** (Hammerfest) §4 | **IN PROGRESS** — delivery CONFIRMED; programme/supporting/open |
+| Rows **3–18** §4 closure | **OPEN** — per-kommune gates |
+| Bulk PSA write | **OPEN** — charter per row/session |
+| `NOT_READY_FOR_APPLY` | **unchanged** |
 
 ---
 
@@ -82,4 +95,4 @@
 
 ## Final statement
 
-Phase 4 LOSA **planning chain is closed** in repo. **1** Alta pilot PSA row with bounded Route **#3** wiring; remaining **17** LOSA municipalities and `NOT_READY_FOR_APPLY` remain **blocked**.
+Phase 4 LOSA **reference pilot operational tail is complete** (**1** Alta row end-to-end). Remaining **17** kommuner and `NOT_READY_FOR_APPLY` require **new** row-level gates — not automatic scale-out.

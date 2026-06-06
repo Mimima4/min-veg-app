@@ -46,6 +46,10 @@ export const PHASE4_LOSA_ROUTE_GATE_ID = "P4-LOSA-ROUTE" as const;
 
 export const PHASE4_LOSA_ROUTE_WIRING_GATE_ID = "P4-LOSA-ROUTE-WIRING" as const;
 
+/** Reference pilot operational tail closed; row 2+ requires new §4 gates. */
+export const PHASE4_LOSA_OPERATIONAL_TAIL_CLOSURE_GATE_ID =
+  "P4-LOSA-OPERATIONAL-TAIL-CLOSURE" as const;
+
 export const PHASE4_LOSA_ROUTE_OPTION_KIND =
   "losa_fjern_delivery_municipality" as const;
 

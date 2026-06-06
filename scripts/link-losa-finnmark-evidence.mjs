@@ -155,6 +155,12 @@ async function main() {
           linkedRows.find((r) => r.entity.deliverySiteLabel === "Alta")
             ?.evidenceLink.claimLinks ?? []
         ).map((link) => `  ${formatClaimStatus(link)}`),
+        "",
+        "Hammerfest row (row 2 — sub-gate 1):",
+        ...(
+          linkedRows.find((r) => r.entity.deliverySiteLabel === "Hammerfest")
+            ?.evidenceLink.claimLinks ?? []
+        ).map((link) => `  ${formatClaimStatus(link)}`),
       ].join("\n")
     );
   }
@@ -195,6 +201,44 @@ async function main() {
       `\nABORT: Alta row should have no blocked claims, got: ${altaBlocked.join(", ")}`
     );
     process.exit(1);
+  }
+
+  const hammerfestRow = linkedRows.find(
+    (r) => r.entity.deliverySiteLabel === "Hammerfest"
+  );
+  if (!hammerfestRow) {
+    console.error("\nABORT: Hammerfest delivery row missing from manifest");
+    process.exit(1);
+  }
+
+  const hammerfestDeliveryLink = hammerfestRow.evidenceLink.claimLinks.find(
+    (link) => link.claimClass === "delivery_municipality"
+  );
+  if (hammerfestDeliveryLink?.status !== "row_confirmed") {
+    console.error(
+      `\nABORT: Hammerfest delivery_municipality should be row_confirmed, got ${hammerfestDeliveryLink?.status ?? "missing"}`
+    );
+    process.exit(1);
+  }
+
+  if (hammerfestRow.evidenceLink.summary.psaEligible) {
+    console.error("\nABORT: Hammerfest row must not be §4 satisfied yet");
+    process.exit(1);
+  }
+
+  const hammerfestBlocked =
+    hammerfestRow.evidenceLink.summary.blockedClaimClasses ?? [];
+  const expectedHammerfestBlocked = [
+    "programme_stage_availability",
+    "publication_supporting_evidence",
+  ];
+  for (const claim of expectedHammerfestBlocked) {
+    if (!hammerfestBlocked.includes(claim)) {
+      console.error(
+        `\nABORT: Hammerfest row should block ${claim}, blocked=${hammerfestBlocked.join(", ")}`
+      );
+      process.exit(1);
+    }
   }
 }
 

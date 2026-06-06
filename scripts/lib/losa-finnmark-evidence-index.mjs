@@ -58,6 +58,14 @@ export const LOSA_FINNMARK_CONFIRMED_INDEX = [
     note: "Alta kommune official landing — delivery site for Alta LOSA row only",
   },
   {
+    sourceId: "T2_KOMMUNE_HAMMERFEST_REF",
+    claimClass: "delivery_municipality",
+    tier: "T2",
+    scope: "delivery_site_hammerfest",
+    ownerPost: "P4-LOSA-CONFIRMED-HAMMERFEST-DELIVERY-post",
+    note: "Hammerfest kommune official landing — delivery site for Hammerfest LOSA row only",
+  },
+  {
     sourceId: "T1T2_ALTA_LOSA_PUBLICATION_SUPPORT_PACKET",
     claimClass: "publication_supporting_evidence",
     tier: "T1+T2",
@@ -125,6 +133,21 @@ export function isNordkappProviderLabel(providerLabel) {
   return normalized.includes("nordkapp") && normalized.includes("videreg");
 }
 
+/** Normalized delivery label → evidence scope (nationwide pattern per delivery site). */
+export const DELIVERY_SITE_SCOPE_BY_NORMALIZED_LABEL = {
+  alta: "delivery_site_alta",
+  hammerfest: "delivery_site_hammerfest",
+};
+
+export function deliverySiteScopeForLabel(deliverySiteLabel) {
+  const normalized = normalizeDeliverySiteLabel(deliverySiteLabel);
+  return DELIVERY_SITE_SCOPE_BY_NORMALIZED_LABEL[normalized] ?? null;
+}
+
 export function isAltaDeliverySite(deliverySiteLabel) {
   return normalizeDeliverySiteLabel(deliverySiteLabel) === "alta";
+}
+
+export function isHammerfestDeliverySite(deliverySiteLabel) {
+  return normalizeDeliverySiteLabel(deliverySiteLabel) === "hammerfest";
 }
