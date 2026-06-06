@@ -46,7 +46,7 @@
 
 ## Recommended next
 
-**Row 2 (Hammerfest)** — sub-gate **1** delivery CONFIRMED done (`P4-LOSA-CONFIRMED-HAMMERFEST-DELIVERY-post`); programme → supporting evidence → publication → write remain open.
+**Row 2 (Hammerfest)** — sub-gates **1–2** done (delivery + programme CONFIRMED); supporting evidence → publication → write remain open.
 
 ---
 

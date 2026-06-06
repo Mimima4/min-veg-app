@@ -35,38 +35,32 @@ function isNordkappProviderConfirmed() {
   );
 }
 
-function isAltaDeliveryConfirmed() {
+function isDeliverySiteClaimConfirmed(claimClass, deliveryScope) {
   return LOSA_FINNMARK_CONFIRMED_INDEX.some(
-    (entry) =>
-      entry.claimClass === "delivery_municipality" &&
-      entry.scope === "delivery_site_alta"
+    (entry) => entry.claimClass === claimClass && entry.scope === deliveryScope
   );
 }
 
-function isAltaProgrammeConfirmed() {
-  return LOSA_FINNMARK_CONFIRMED_INDEX.some(
-    (entry) =>
-      entry.claimClass === "programme_stage_availability" &&
-      entry.scope === "delivery_site_alta"
-  );
-}
-
-function altaSupportingEvidencePacketEntry() {
+function supportingEvidencePacketForScope(deliveryScope) {
   return LOSA_FINNMARK_CONFIRMED_INDEX.find(
     (entry) =>
       entry.claimClass === "publication_supporting_evidence" &&
-      entry.scope === "delivery_site_alta"
+      entry.scope === deliveryScope
   );
 }
 
 /** Tier 1+2 row prerequisites before supporting-evidence packet may publish (never alone). */
-function altaSupportingEvidencePrerequisitesMet(provider, delivery) {
+function deliverySiteSupportingEvidencePrerequisitesMet(
+  provider,
+  delivery,
+  deliveryScope
+) {
   return (
-    isAltaDeliverySite(delivery) &&
+    deliverySiteScopeForLabel(delivery) === deliveryScope &&
     isNordkappProviderLabel(provider) &&
     isNordkappProviderConfirmed() &&
-    isAltaDeliveryConfirmed() &&
-    isAltaProgrammeConfirmed() &&
+    isDeliverySiteClaimConfirmed("delivery_municipality", deliveryScope) &&
+    isDeliverySiteClaimConfirmed("programme_stage_availability", deliveryScope) &&
     countyTier1RowPublishable("legal_status") !== null &&
     countyTier1RowPublishable("fjernundervisning_rules") !== null
   );
@@ -189,25 +183,35 @@ export function assessClaimClassEvidenceLink(manifestRow, claimClass) {
       };
     }
     case "programme_stage_availability": {
-      if (isAltaDeliverySite(delivery)) {
+      const deliveryScope = deliverySiteScopeForLabel(delivery);
+      if (deliveryScope) {
         const confirmed = LOSA_FINNMARK_CONFIRMED_INDEX.filter(
           (entry) =>
             entry.claimClass === "programme_stage_availability" &&
-            entry.scope === "delivery_site_alta"
+            entry.scope === deliveryScope
         );
         if (confirmed.length > 0) {
           const providerReady =
             isNordkappProviderLabel(provider) && isNordkappProviderConfirmed();
-          const deliveryReady = isAltaDeliveryConfirmed();
+          const deliveryReady = isDeliverySiteClaimConfirmed(
+            "delivery_municipality",
+            deliveryScope
+          );
+          const siteLabel = delivery ?? "delivery site";
 
           if (providerReady && deliveryReady) {
+            const fullClosurePost =
+              deliveryScope === "delivery_site_alta"
+                ? "P4-LOSA-ALTA-PROGRAMME-FULL"
+                : deliveryScope === "delivery_site_hammerfest"
+                  ? "P4-LOSA-HAMMERFEST-PROGRAMME-FULL"
+                  : confirmed[0]?.ownerPost ?? "programme-full-closure";
             return {
               claimClass,
               status: "row_confirmed",
               sourceIds: confirmed.map((s) => s.sourceId),
               publishable: true,
-              rationale:
-                "Alta Nordkapp LOSA programme row closure — provider+delivery prerequisites met (P4-LOSA-ALTA-PROGRAMME-FULL)",
+              rationale: `${siteLabel} Nordkapp LOSA programme row closure — provider+delivery prerequisites met (${fullClosurePost})`,
             };
           }
 
@@ -216,8 +220,7 @@ export function assessClaimClassEvidenceLink(manifestRow, claimClass) {
             status: "row_confirmed_partial",
             sourceIds: confirmed.map((s) => s.sourceId),
             publishable: false,
-            rationale:
-              "Alta programme CONFIRMED — partial until provider+delivery row CONFIRMED",
+            rationale: `${siteLabel} programme CONFIRMED — partial until provider+delivery row CONFIRMED`,
           };
         }
       }
@@ -230,35 +233,48 @@ export function assessClaimClassEvidenceLink(manifestRow, claimClass) {
       };
     }
     case "publication_supporting_evidence": {
-      const packet = altaSupportingEvidencePacketEntry();
-      if (packet && isAltaDeliverySite(delivery)) {
-        if (altaSupportingEvidencePrerequisitesMet(provider, delivery)) {
-          return {
-            claimClass,
-            status: "row_confirmed",
-            sourceIds: [packet.sourceId],
-            componentSourceIds: packet.componentSourceIds ?? [],
-            publishable: true,
-            rationale:
-              "Alta Tier 1+2 combined supporting-evidence packet (P4-LOSA-ALTA-SUPPORTING-EVIDENCE)",
-          };
-        }
+      const deliveryScope = deliverySiteScopeForLabel(delivery);
+      if (!deliveryScope) {
         return {
           claimClass,
           status: "blocked",
-          sourceIds: packet.sourceId ? [packet.sourceId] : [],
+          sourceIds: [],
           publishable: false,
           rationale:
-            "Supporting-evidence packet adopted but Alta row Tier 2 prerequisites incomplete",
+            "Registry rule: publication_supporting_evidence never sufficient alone; no row packet",
         };
       }
+
+      const packet = supportingEvidencePacketForScope(deliveryScope);
+      if (!packet) {
+        return {
+          claimClass,
+          status: "blocked",
+          sourceIds: [],
+          publishable: false,
+          rationale:
+            "Registry rule: publication_supporting_evidence never sufficient alone; no row packet",
+        };
+      }
+
+      if (deliverySiteSupportingEvidencePrerequisitesMet(provider, delivery, deliveryScope)) {
+        const siteLabel = delivery ?? "delivery site";
+        return {
+          claimClass,
+          status: "row_confirmed",
+          sourceIds: [packet.sourceId],
+          componentSourceIds: packet.componentSourceIds ?? [],
+          publishable: true,
+          rationale: `${siteLabel} Tier 1+2 combined supporting-evidence packet (${packet.ownerPost ?? "supporting-evidence"})`,
+        };
+      }
+
       return {
         claimClass,
         status: "blocked",
-        sourceIds: [],
+        sourceIds: packet.sourceId ? [packet.sourceId] : [],
         publishable: false,
-        rationale:
-          "Registry rule: publication_supporting_evidence never sufficient alone; no row packet",
+        rationale: `Supporting-evidence packet adopted but ${delivery ?? "row"} Tier 2 prerequisites incomplete`,
       };
     }
     default:

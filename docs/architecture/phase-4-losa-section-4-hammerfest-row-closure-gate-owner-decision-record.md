@@ -3,7 +3,7 @@
 | Field | Value |
 |--------|--------|
 | **Section** | **P4-LOSA-SECTION-4-HAMMERFEST** |
-| **Status** | **IN PROGRESS** — sub-gate **1** complete |
+| **Status** | **REFERENCE PILOT COMPLETE** — PSA row inserted |
 | **Closure label** | `PHASE_4_LOSA_HAMMERFEST_ROW_SECTION_4_IN_PROGRESS` |
 | **Date (UTC)** | 2026-05-29 |
 | **Reference row** | Vilbli LOSA **Hammerfest** delivery (`Nordkapp videregående skole – LOSA Hammerfest`) |
@@ -19,10 +19,10 @@
 | # | Sub-gate | Status |
 |---|----------|--------|
 | 1 | Hammerfest `delivery_municipality` CONFIRMED | **DONE** — `P4-LOSA-CONFIRMED-HAMMERFEST-DELIVERY-post` |
-| 2 | Programme partial → full row closure | **OPEN** |
-| 3 | `publication_supporting_evidence` combined packet | **OPEN** |
-| 4 | Auditable publication decision | **OPEN** |
-| 5 | **P4-LOSA-PSA-WRITE** charter → bounded insert | **OPEN** |
+| 2 | Programme CONFIRMED + full row closure | **DONE** — `P4-LOSA-CONFIRMED-HAMMERFEST-PROGRAMME-post` |
+| 3 | `publication_supporting_evidence` combined packet | **DONE** — `P4-LOSA-HAMMERFEST-SUPPORTING-EVIDENCE-post` |
+| 4 | Auditable publication decision | **DONE** — `P4-LOSA-HAMMERFEST-PUBLICATION-DECISION-post` |
+| 5 | **P4-LOSA-PSA-WRITE** charter → bounded insert | **DONE** — `P4-LOSA-PSA-WRITE-HAMMERFEST-PILOT-post` |
 
 County Tier 1 + Nordkapp provider already satisfied (shared with Alta pattern).
 
@@ -40,4 +40,4 @@ npm run losa:finnmark-evidence-link
 
 ## Final statement
 
-Row **2** §4 closure **started** at Hammerfest delivery CONFIRMED; full row publication remains **blocked** until sub-gates 2–5.
+Hammerfest reference pilot **complete**: PSA row inserted (`losa_fjern_delivery_municipality`, `5603`). **2** LOSA PSA rows in main DB (Alta + Hammerfest).

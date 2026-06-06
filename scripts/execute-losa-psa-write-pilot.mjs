@@ -1,31 +1,30 @@
 #!/usr/bin/env node
 /**
- * P4-LOSA-PSA-WRITE bounded pilot execution — max 1 Alta row.
+ * P4-LOSA-PSA-WRITE bounded pilot execution — max 1 row per charter session.
  */
 import {
   DEFAULT_ALTA_PILOT_CHARTER_ID,
+  DEFAULT_HAMMERFEST_PILOT_CHARTER_ID,
   buildResolvedWriteCandidate,
   createServiceSupabase,
   insertLosaPsaRow,
   loadLosaWritePreview,
   losaPsaRowExists,
+  resolveCharteredWriteProfile,
   resolveEducationProgramId,
   selectCharteredCandidates,
 } from "./lib/losa-psa-write-session.mjs";
 
 const DEFAULT_COUNTY = "56";
 const DEFAULT_PROFESSION = "electrician";
-const DEFAULT_DELIVERY = "Alta";
-const DEFAULT_VILBLI_CODE = "872137";
 const DEFAULT_MAX_ROWS = 1;
-const SNAPSHOT_LABEL = "losa-alta-pilot-2026-05-29";
 
 function parseArgs(argv) {
   const args = {
     profession: DEFAULT_PROFESSION,
     county: DEFAULT_COUNTY,
-    deliverySite: DEFAULT_DELIVERY,
-    vilbliSchoolCode: DEFAULT_VILBLI_CODE,
+    deliverySite: null,
+    vilbliSchoolCode: null,
     charterId: null,
     htmlFile: null,
     execute: false,
@@ -75,12 +74,16 @@ function parseArgs(argv) {
       console.log(`Usage: node scripts/execute-losa-psa-write-pilot.mjs [options]
 
 Options:
-  --charter-id <id>     Required for --execute (default pilot: ${DEFAULT_ALTA_PILOT_CHARTER_ID})
+  --charter-id <id>     Required for --execute
   --execute             Perform insert (default: dry-run only)
-  --delivery-site Alta  Chartered delivery site (default: Alta)
-  --vilbli-school-code  Chartered Vilbli code (default: ${DEFAULT_VILBLI_CODE})
-  --max-rows 1          Bounded row count
-  --json                JSON output`);
+  --delivery-site       Override chartered delivery site
+  --vilbli-school-code  Override chartered Vilbli code
+  --max-rows 1          Bounded row count (default: 1)
+  --json                JSON output
+
+Known charters:
+  ${DEFAULT_ALTA_PILOT_CHARTER_ID}
+  ${DEFAULT_HAMMERFEST_PILOT_CHARTER_ID}`);
       process.exit(0);
     }
     throw new Error(`Unknown argument: ${token}`);
@@ -89,11 +92,34 @@ Options:
   return args;
 }
 
+function applyCharterProfile(args) {
+  if (!args.charterId) {
+    return {
+      ...args,
+      deliverySite: args.deliverySite ?? "Alta",
+      vilbliSchoolCode: args.vilbliSchoolCode ?? "872137",
+      snapshotLabel: "losa-alta-pilot-2026-05-29",
+    };
+  }
+
+  const profile = resolveCharteredWriteProfile(args.charterId);
+  return {
+    ...args,
+    deliverySite: args.deliverySite ?? profile.deliverySite,
+    vilbliSchoolCode: args.vilbliSchoolCode ?? profile.vilbliSchoolCode,
+    snapshotLabel: profile.snapshotLabel,
+  };
+}
+
 async function main() {
-  const args = parseArgs(process.argv);
+  const args = applyCharterProfile(parseArgs(process.argv));
 
   if (args.execute && !args.charterId) {
     throw new Error("--execute requires --charter-id");
+  }
+
+  if (args.execute) {
+    resolveCharteredWriteProfile(args.charterId);
   }
 
   const { preview, sourceUrl } = await loadLosaWritePreview({
@@ -125,7 +151,7 @@ async function main() {
     candidate: selected[0],
     educationProgramId: programme.educationProgramId,
     sourceUrl,
-    snapshotLabel: SNAPSHOT_LABEL,
+    snapshotLabel: args.snapshotLabel,
   });
 
   const exists = await losaPsaRowExists(supabase, resolved.insertPayload);
@@ -146,9 +172,6 @@ async function main() {
   };
 
   if (args.execute) {
-    if (args.charterId !== DEFAULT_ALTA_PILOT_CHARTER_ID) {
-      throw new Error(`Unexpected charter id: ${args.charterId}`);
-    }
     if (exists) {
       result.skipped = true;
       result.reason = "row_already_exists";

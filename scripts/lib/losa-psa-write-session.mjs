@@ -14,6 +14,31 @@ import { resolveProviderInstitutionId } from "./losa-provider-institution-resolv
 export const DEFAULT_ALTA_PILOT_CHARTER_ID =
   "MAIN-LOSA-PSA-WRITE-2026-05-29-01";
 
+export const DEFAULT_HAMMERFEST_PILOT_CHARTER_ID =
+  "MAIN-LOSA-PSA-WRITE-HAMMERFEST-2026-05-29-01";
+
+/** Bounded write charter profiles — one row per charter session. */
+export const LOSA_PSA_WRITE_CHARTER_PROFILES = {
+  [DEFAULT_ALTA_PILOT_CHARTER_ID]: {
+    deliverySite: "Alta",
+    vilbliSchoolCode: "872137",
+    snapshotLabel: "losa-alta-pilot-2026-05-29",
+  },
+  [DEFAULT_HAMMERFEST_PILOT_CHARTER_ID]: {
+    deliverySite: "Hammerfest",
+    vilbliSchoolCode: "6108473",
+    snapshotLabel: "losa-hammerfest-pilot-2026-05-29",
+  },
+};
+
+export function resolveCharteredWriteProfile(charterId) {
+  const profile = LOSA_PSA_WRITE_CHARTER_PROFILES[charterId];
+  if (!profile) {
+    throw new Error(`Unknown LOSA PSA write charter id: ${charterId}`);
+  }
+  return profile;
+}
+
 export function createServiceSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;

@@ -156,7 +156,7 @@ async function main() {
             ?.evidenceLink.claimLinks ?? []
         ).map((link) => `  ${formatClaimStatus(link)}`),
         "",
-        "Hammerfest row (row 2 — sub-gate 1):",
+        "Hammerfest row (row 2):",
         ...(
           linkedRows.find((r) => r.entity.deliverySiteLabel === "Hammerfest")
             ?.evidenceLink.claimLinks ?? []
@@ -170,16 +170,16 @@ async function main() {
     process.exit(1);
   }
 
-  if (report.rowsSection4Satisfied !== 1) {
+  if (report.rowsSection4Satisfied !== 2) {
     console.error(
-      `\nABORT: expected exactly 1 row §4 satisfied (Alta pilot), got ${report.rowsSection4Satisfied}`
+      `\nABORT: expected exactly 2 rows §4 satisfied (Alta + Hammerfest), got ${report.rowsSection4Satisfied}`
     );
     process.exit(1);
   }
 
-  if (report.rowsStillBlocked !== report.rowCount - 1) {
+  if (report.rowsStillBlocked !== report.rowCount - 2) {
     console.error(
-      `\nABORT: expected ${report.rowCount - 1} rows still blocked, got ${report.rowsStillBlocked}`
+      `\nABORT: expected ${report.rowCount - 2} rows still blocked, got ${report.rowsStillBlocked}`
     );
     process.exit(1);
   }
@@ -221,24 +221,18 @@ async function main() {
     process.exit(1);
   }
 
-  if (hammerfestRow.evidenceLink.summary.psaEligible) {
-    console.error("\nABORT: Hammerfest row must not be §4 satisfied yet");
+  if (!hammerfestRow.evidenceLink.summary.psaEligible) {
+    console.error("\nABORT: Hammerfest row should have ROW_SECTION_4_SATISFIED (psaEligible)");
     process.exit(1);
   }
 
   const hammerfestBlocked =
     hammerfestRow.evidenceLink.summary.blockedClaimClasses ?? [];
-  const expectedHammerfestBlocked = [
-    "programme_stage_availability",
-    "publication_supporting_evidence",
-  ];
-  for (const claim of expectedHammerfestBlocked) {
-    if (!hammerfestBlocked.includes(claim)) {
-      console.error(
-        `\nABORT: Hammerfest row should block ${claim}, blocked=${hammerfestBlocked.join(", ")}`
-      );
-      process.exit(1);
-    }
+  if (hammerfestBlocked.length !== 0) {
+    console.error(
+      `\nABORT: Hammerfest row should have no blocked claims, got: ${hammerfestBlocked.join(", ")}`
+    );
+    process.exit(1);
   }
 }
 

@@ -1,4 +1,4 @@
-import { isAltaDeliverySite } from "./losa-finnmark-evidence-index.mjs";
+import { deliverySiteScopeForLabel } from "./losa-finnmark-evidence-index.mjs";
 
 /**
  * Repo-safe publication decision index (owner charter refs — not secrets).
@@ -14,15 +14,26 @@ export const LOSA_FINNMARK_PUBLICATION_DECISION_INDEX = [
     charterRef: "MAIN-LOSA-PUBLICATION-DECISION-ALTA-2026-05-29-01",
     maxRows: 1,
   },
+  {
+    deliverySiteLabel: "Hammerfest",
+    scope: "delivery_site_hammerfest",
+    countyCode: "56",
+    gate: "P4-LOSA-HAMMERFEST-PUBLICATION-DECISION",
+    ownerPost: "P4-LOSA-HAMMERFEST-PUBLICATION-DECISION-post",
+    charterRef: "MAIN-LOSA-PUBLICATION-DECISION-HAMMERFEST-2026-05-29-01",
+    maxRows: 1,
+  },
 ];
 
 export function hasPublicationDecisionForManifestRow(manifestRow) {
-  const delivery = manifestRow.entity?.deliverySiteLabel ?? null;
-
-  return LOSA_FINNMARK_PUBLICATION_DECISION_INDEX.some((entry) => {
-    if (entry.scope === "delivery_site_alta") {
-      return isAltaDeliverySite(delivery);
-    }
+  const deliveryScope = deliverySiteScopeForLabel(
+    manifestRow.entity?.deliverySiteLabel ?? null
+  );
+  if (!deliveryScope) {
     return false;
-  });
+  }
+
+  return LOSA_FINNMARK_PUBLICATION_DECISION_INDEX.some(
+    (entry) => entry.scope === deliveryScope
+  );
 }
