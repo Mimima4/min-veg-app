@@ -1,0 +1,85 @@
+# Phase 4 LOSA — Planning Closed Safe Summary
+
+| Field | Value |
+|--------|--------|
+| **Document type** | Repo-safe summary — **P4-LOSA-PLANNING-CLOSED** |
+| **Section** | **P4-LOSA-PLANNING-CLOSED-post** |
+| **Status code** | `P4_LOSA_PLANNING_CLOSED_OPERATIONAL_TAIL_OPEN` |
+| **Date (UTC)** | 2026-06-05 |
+| **Reference county** | `56` (Finnmark) — **not** a production exception rule |
+| **Head commit (reference)** | `92e3e4d` |
+
+**Forbidden in this summary:** secrets, owner-held JSON, snippet text, per-school PII.
+
+---
+
+## This document is
+
+- Formal **planning / scaffold closure** for Phase 4 LOSA (manifest → Route plan).
+- **Operational tail** remains open: DB migration apply, §4 row closure, PSA write session, **#3** wiring.
+
+## This document is not
+
+- LOSA rows published in PSA or shown in Route/UI.
+- `NOT_READY_FOR_APPLY` clearance.
+- Permission to treat Finnmark as special-case production rules.
+
+---
+
+## 1. Gate closure matrix (planning)
+
+| Gate | Status | CLI proof |
+|------|--------|-----------|
+| **P4-LOSA-IMPL** | **CLOSED** | `npm run losa:finnmark-manifest` |
+| **P4-LOSA-EVIDENCE-LINK** | **CLOSED** | `npm run losa:finnmark-evidence-link` |
+| **P4-LOSA-PUBLICATION-MODEL** | **CLOSED** | `npm run losa:finnmark-publication-plan` |
+| **P4-LOSA-PSA** (schema) | **CLOSED** (repo) | `npm run losa:validate-psa-schema` |
+| **P4-LOSA-PSA-WRITE** (framework) | **CLOSED** | `npm run losa:preview-psa-write` → **0** candidates |
+| **P4-LOSA-ROUTE** (plan) | **CLOSED** | `npm run losa:plan-route-consumption` → **0** eligible |
+| **Kommune resolve** (ref) | **CLOSED** | `npm run losa:resolve-municipality-codes` → **18/18** |
+
+---
+
+## 2. Current product posture
+
+| Metric | Value |
+|--------|--------|
+| LOSA manifest rows (Finnmark ref) | **18** |
+| Row §4 satisfied | **0** |
+| PSA LOSA writes | **0** |
+| Route LOSA options | **0** |
+| Contour B ordinary Finnmark schools | **6** (unchanged) |
+| P06 operational | **CLOSED (partial D)** |
+
+---
+
+## 3. Nationwide applicability
+
+- `losa_fjern_delivery_municipality` scope and pipeline rules apply to **any** county/profession with LOSA-shaped Vilbli rows.
+- Finnmark `56` / `electrician` is **reference proof** for CLI only.
+- Kommune reference table is **fylke 56** data — other counties require their own reference module at ops time.
+
+---
+
+## 4. Operational tail (ordered)
+
+| # | Step | Gate / action |
+|---|------|----------------|
+| 1 | Apply `20260605120000_programme_school_availability_losa_scope.sql` | Owner DB session |
+| 2 | Close §4 on ≥1 row (evidence + publication decision) | Owner evidence / CONFIRMED promotion |
+| 3 | Owner-held **P4-LOSA-PSA-WRITE** charter → bounded insert | Max **1** pilot row |
+| 4 | Permission **#3** → wire `get-availability-truth` + scope filter | **P4-LOSA-ROUTE** wiring gate |
+
+---
+
+## 5. Non-return rules
+
+- Do **not** publish LOSA as ordinary `programme_in_school` rows.
+- Do **not** use Contour B `pickInstitutionsForPsaEmission` for `isLosa` Vilbli rows.
+- Do **not** add Finnmark-only Route/PSA hacks — extend reference tables and gates instead.
+
+---
+
+## Final statement
+
+Phase 4 LOSA **planning chain is closed** in repo. Product truth for **18** LOSA municipalities remains **blocked** until operational tail completes.

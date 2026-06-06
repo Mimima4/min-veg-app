@@ -1,4 +1,5 @@
 import { LOSA_PROPOSED_AVAILABILITY_SCOPE } from "./losa-finnmark-publication-model.mjs";
+import { resolveMunicipalityCodeForDeliveryLabel } from "./norway-kommune-reference.mjs";
 
 export const LOSA_PSA_WRITE_GATE = "P4-LOSA-PSA-WRITE";
 export const LOSA_PSA_DEFAULT_VERIFICATION_STATUS = "needs_review";
@@ -23,7 +24,13 @@ export function buildLosaPsaWriteCandidate(plan, context = {}) {
   }
 
   const providerInstitutionId = plan.bindings?.providerInstitutionId;
-  const municipalityCode = plan.bindings?.deliveryMunicipalityCode;
+  const municipalityResolution = resolveMunicipalityCodeForDeliveryLabel(
+    plan.entity?.deliverySiteLabel ?? plan.bindings?.deliverySiteLabel,
+    { countyCode: plan.countyCode }
+  );
+  const municipalityCode =
+    plan.bindings?.deliveryMunicipalityCode ??
+    municipalityResolution.municipalityCode;
 
   if (!providerInstitutionId) {
     blockedReasons.push("provider_institution_id_missing");
