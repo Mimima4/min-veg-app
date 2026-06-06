@@ -165,6 +165,7 @@ These are **documentation / boundary / criteria** artifacts only. They are **not
 - `docs/architecture/phase-0-6-contour-b-finnmark-56-update-3-execution-gate-owner-decision-record.md` — **P06-CONTOUR-B-UPDATE-3** (audit after Pilot 3e)
 - `docs/architecture/phase-0-6-contour-b-finnmark-56-update-3-execution-review-summary.md` — **P06-CONTOUR-B-UPDATE-3-post**; **2/22/0** stable; **18** snapshots
 - `docs/architecture/phase-4-losa-finnmark-planning-sufficiency-owner-decision-record.md` — **P4-LOSA-FM-PLANNING-SUFFICIENT**; owner: planning evidence **sufficient**; operational publishability **not** closed
+- `docs/architecture/phase-4-losa-finnmark-implementation-gate-owner-decision-record.md` — **P4-LOSA-IMPL** Tranche 1; read-only LOSA manifest + entity parse; PSA/Route **not** authorized
 - `docs/architecture/phase-4-losa-claim-extraction-pilot-execution-gate-owner-decision-record.md` — **LOSA claim extraction pilot** gate (**P4-LOSA-CLAIM-EXTRACT**); owner-held snapshots only; **no** `CONFIRMED` in pilot
 - `docs/architecture/phase-4-losa-claim-extraction-pilot-execution-review-summary.md` — **safe summary** (**P4-LOSA-CLAIM-EXTRACT-post**); `LOSA_CLAIM_EXTRACTION_PILOT_PASS`; **10** sources; **17** candidate signals; **0** confirmed
 - `docs/architecture/phase-4-losa-evidence-refresh-pilot-3-tier1-deep-urls-owner-decision-record.md` — **Pilot 3** deep Tier 1 URLs (**P4-LOSA-REFRESH-PILOT-3**)
@@ -1776,9 +1777,9 @@ Owner-adopted **A.3** read-only Contour **A** baseline gate per `phase-2-contour
 
 ---
 
-**Current recommended next gate from this checklist snapshot:** **Phase 4 LOSA Finnmark implementation gate** (18 rows publication model) — **not** P06 rework. **P06-OPERATIONAL-CLOSED** (`phase-0-6-p06-operational-closed-safe-summary.md`). **NOT_READY_FOR_APPLY** unchanged.
+**Current recommended next gate from this checklist snapshot:** **P4-LOSA-IMPL Tranche 1** (read-only manifest) → **P4-LOSA-EVIDENCE-LINK** / publication model charter. **P06-OPERATIONAL-CLOSED** unchanged. **NOT_READY_FOR_APPLY** unchanged.
 
-**Checklist reference note (2026-06-05):** **P06-CLOSED (PARTIAL D)** — Blocks **A–G** closed; Contour B automation + pilot PSA operational; Block D partial (LOSA → Phase 4). Commits through `834b2e0`. Non-return rule §13 active.
+**Checklist reference note (2026-06-05):** **P4-LOSA-IMPL** adopted — Tranche 1 read-only LOSA entity + `npm run losa:finnmark-manifest`; **18** rows; §4 still blocked. **P06-CLOSED (PARTIAL D)** — LOSA tail is Phase 4 only.
 
 **Alternate tracks (separate owner selection — not auto-progression from Z-OV):** Z-AP* apply governance continuation; permission stack **#2** / **#3** only after explicit separate gates; Phase 3 operational execution remains separately gated from P3 planning POSTs (`7ed7014` → `f412bea` → `87ddeb0` → `d552832`).
 

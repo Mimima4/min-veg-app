@@ -7,7 +7,8 @@
     "build": "node scripts/vercel-bundle/build.mjs && next build",
     "start": "next start",
     "lint": "next lint",
-    "smoke:contour-b": "node scripts/smoke-contour-b-regression.mjs"
+    "smoke:contour-b": "node scripts/smoke-contour-b-regression.mjs",
+    "losa:finnmark-manifest": "node scripts/extract-losa-finnmark-manifest.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.9.0",
