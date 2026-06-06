@@ -55,9 +55,9 @@ Nationwide: **no** `56`-only branch in Route engine — county/profession from r
 
 | Metric | Value |
 |--------|--------|
-| PSA LOSA rows in DB | **0** (expected) |
-| Route options plan | **0** |
-| `#3` UI integration | **not** approved |
+| PSA LOSA rows in DB | **1** (Alta pilot) |
+| Route options plan | **1** route eligible |
+| `#3` UI integration | **bounded** (Alta pilot wiring) |
 | CLI proof | `npm run losa:plan-route-consumption` |
 
 ---

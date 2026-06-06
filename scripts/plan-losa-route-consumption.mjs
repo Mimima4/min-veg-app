@@ -23,7 +23,7 @@ function parseArgs(argv) {
     county: DEFAULT_COUNTY,
     htmlFile: null,
     json: false,
-    expectRouteEligible: 0,
+    expectRouteEligible: 1,
   };
 
   for (let i = 2; i < argv.length; i += 1) {
@@ -124,8 +124,8 @@ async function main() {
         `losa kind: ${routePlan.losaOptionKind}`,
         "",
         routePlan.routeEligibleCount === 0
-          ? "No route-eligible LOSA options — expected until PSA write + #3."
-          : "Route-eligible plans present — requires #3 wiring gate.",
+          ? "No route-eligible LOSA options — check PSA write + #3 wiring."
+          : "Route-eligible LOSA option plans present (#3 wired).",
       ].join("\n")
     );
   }
@@ -137,8 +137,8 @@ async function main() {
     process.exit(1);
   }
 
-  if (routePlan.uiIntegrationApproved) {
-    console.error("\nABORT: #3 must remain not approved at this gate");
+  if (!routePlan.uiIntegrationApproved) {
+    console.error("\nABORT: #3 wiring gate not approved");
     process.exit(1);
   }
 }

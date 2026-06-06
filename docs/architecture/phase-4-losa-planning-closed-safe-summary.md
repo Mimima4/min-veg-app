@@ -47,7 +47,7 @@
 | LOSA manifest rows (Finnmark ref) | **18** |
 | Row §4 satisfied | **1** (Alta pilot) |
 | PSA LOSA writes | **1** (Alta / `5601` / VG1) |
-| Route LOSA options | **0** (#3 not wired) |
+| Route LOSA options | **1** eligible (Alta pilot; #3 wired) |
 | Contour B ordinary Finnmark schools | **6** (unchanged) |
 | P06 operational | **CLOSED (partial D)** |
 
@@ -68,7 +68,7 @@
 | 1 | Apply `20260605120000_programme_school_availability_losa_scope.sql` (+ co-applied `name_i18n`) | **DONE** — `phase-4-losa-psa-schema-main-apply-checklist.md` |
 | 2 | Close §4 on ≥1 row (evidence + publication decision) | **DONE** — Alta `ROW_SECTION_4_SATISFIED` + publication decision (`P4-LOSA-ALTA-PUBLICATION-DECISION-post`) |
 | 3 | Owner-held **P4-LOSA-PSA-WRITE** charter → bounded insert | **DONE** — `phase-4-losa-psa-write-pilot-execution-review-summary.md` |
-| 4 | Permission **#3** → wire `get-availability-truth` + scope filter | **P4-LOSA-ROUTE** wiring gate (**OPEN**) |
+| 4 | Permission **#3** → wire `get-availability-truth` + scope filter | **P4-LOSA-ROUTE-WIRING** (**DONE** — Alta pilot) |
 
 ---
 
@@ -82,4 +82,4 @@
 
 ## Final statement
 
-Phase 4 LOSA **planning chain is closed** in repo. **1** Alta pilot PSA row exists; remaining **17** LOSA municipalities and Route **#3** remain **blocked**.
+Phase 4 LOSA **planning chain is closed** in repo. **1** Alta pilot PSA row with bounded Route **#3** wiring; remaining **17** LOSA municipalities and `NOT_READY_FOR_APPLY` remain **blocked**.

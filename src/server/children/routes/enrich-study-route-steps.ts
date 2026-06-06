@@ -1,3 +1,7 @@
+import {
+  buildLosaOptionDisplayTitle,
+  isLosaAvailabilityScope,
+} from "@/lib/losa/availability-scope";
 import { resolveInstitutionDisplayName } from "@/lib/i18n/institution-display-name";
 import { createClient } from "@/lib/supabase/server";
 import { selectEducationInstitutions } from "@/server/education/query-education-institutions";
@@ -377,6 +381,30 @@ export async function enrichStudyRouteSteps(
           duration_label: formatDurationLabel(truthDuration),
           options: step.options?.map((option) => ({
             ...(() => {
+              if (isLosaAvailabilityScope(option.option_kind)) {
+                const providerLabel = option.institution_name ?? fallbackInstitutionName;
+                const deliverySiteLabel =
+                  option.delivery_site_label ??
+                  option.institution_municipality ??
+                  option.institution_city ??
+                  null;
+                const losaDisplayTitle =
+                  option.display_title ??
+                  buildLosaOptionDisplayTitle({
+                    providerLabel,
+                    deliverySiteLabel,
+                  });
+
+                return {
+                  ...option,
+                  institution_name: providerLabel,
+                  institution_city: deliverySiteLabel,
+                  institution_municipality: deliverySiteLabel,
+                  display_title: losaDisplayTitle,
+                  program_title: losaDisplayTitle ?? option.program_title ?? displayProgramTitle,
+                };
+              }
+
               const optionMunicipality =
                 option.institution_city ??
                 option.institution_municipality ??

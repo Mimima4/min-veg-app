@@ -1,4 +1,12 @@
 import { resolveInstitutionDisplayName } from "@/lib/i18n/institution-display-name";
+import {
+  availabilityScopesForRouteTruth,
+  buildLosaOptionDisplayTitle,
+  isLosaAvailabilityScope,
+  ORDINARY_AVAILABILITY_SCOPE,
+  parseLosaPsaNotes,
+  type AvailabilityScope,
+} from "@/lib/losa/availability-scope";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { selectEducationInstitutions } from "@/server/education/query-education-institutions";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -19,6 +27,10 @@ export type AvailabilityTruthRow = {
   verificationStatus: "verified" | "needs_review" | string;
   updatedAt: string | null;
   sourceReferenceUrl: string | null;
+  availabilityScope: AvailabilityScope | string;
+  deliverySiteLabel: string | null;
+  providerSchoolLabel: string | null;
+  optionKind: AvailabilityScope | string;
 };
 
 type ProgramLookupRow = {
@@ -86,10 +98,12 @@ export async function getAvailabilityTruth({
   countyCode,
   programmeSlugsOrCodes,
   locale,
+  availabilityScopes = availabilityScopesForRouteTruth(),
 }: {
   countyCode: string;
   programmeSlugsOrCodes: string[];
   locale?: string;
+  availabilityScopes?: AvailabilityScope[];
 }) {
   const supabase = createAdminClient();
   const normalizedCountyCode = countyCode.trim();
@@ -104,14 +118,23 @@ export async function getAvailabilityTruth({
 
   const educationProgramIds = Array.from(programById.keys());
 
+  const normalizedScopes = Array.from(
+    new Set(
+      (availabilityScopes.length > 0 ? availabilityScopes : [ORDINARY_AVAILABILITY_SCOPE]).map(
+        (scope) => scope.trim()
+      )
+    )
+  ).filter(Boolean) as AvailabilityScope[];
+
   const { data: availabilityRows, error: availabilityError } = await supabase
     .from("programme_school_availability")
     .select(
-      "education_program_id, institution_id, county_code, municipality_code, stage, verification_status, updated_at, source_reference_url"
+      "education_program_id, institution_id, county_code, municipality_code, availability_scope, stage, verification_status, updated_at, source_reference_url, notes"
     )
     .in("education_program_id", educationProgramIds)
     .eq("county_code", normalizedCountyCode)
     .eq("is_active", true)
+    .in("availability_scope", normalizedScopes)
     .in("verification_status", ["verified", "needs_review"]);
 
   if (availabilityError) {
@@ -123,10 +146,12 @@ export async function getAvailabilityTruth({
     institution_id: string;
     county_code: string;
     municipality_code: string | null;
+    availability_scope: string;
     stage: string;
     verification_status: string;
     updated_at: string | null;
     source_reference_url: string | null;
+    notes: string | null;
   }>;
 
   if (typedAvailabilityRows.length === 0) {
@@ -169,40 +194,66 @@ export async function getAvailabilityTruth({
     APPRENTICESHIP: 4,
   };
 
-  const rows = typedAvailabilityRows
-    .map((row) => {
-      const program = programById.get(row.education_program_id);
-      const institution = institutionById.get(row.institution_id);
+  const rows: AvailabilityTruthRow[] = [];
+  for (const row of typedAvailabilityRows) {
+    const program = programById.get(row.education_program_id);
+    const institution = institutionById.get(row.institution_id);
 
-      if (!program) {
-        return null;
-      }
+    if (!program) {
+      continue;
+    }
 
-      return {
-        educationProgramId: row.education_program_id,
-        programSlug: program.slug,
-        programCode: program.programCode,
-        programTitle: program.title,
-        institutionId: row.institution_id,
-        institutionName: resolveInstitutionDisplayName({
+    const isLosaRow = isLosaAvailabilityScope(row.availability_scope);
+    const losaNotes = isLosaRow
+      ? parseLosaPsaNotes(row.notes)
+      : { providerSchoolLabel: null, deliverySiteLabel: null };
+    const providerLabel =
+      losaNotes.providerSchoolLabel ??
+      resolveInstitutionDisplayName({
+        locale: locale ?? "nb",
+        institutionName: institution?.name ?? null,
+        nameI18n: institution?.name_i18n ?? null,
+      });
+    const deliverySiteLabel = losaNotes.deliverySiteLabel ?? null;
+    const institutionName = isLosaRow
+      ? buildLosaOptionDisplayTitle({
+          providerLabel,
+          deliverySiteLabel,
+        }) ?? providerLabel
+      : resolveInstitutionDisplayName({
           locale: locale ?? "nb",
           institutionName: institution?.name ?? null,
           nameI18n: institution?.name_i18n ?? null,
-        }),
-        institutionMunicipality: institution?.municipality_name ?? null,
-        municipalityCode: row.municipality_code ?? institution?.municipality_code ?? null,
-        institutionWebsite: institution?.website_url ?? null,
-        institutionIsPrivateSchool:
-          institution != null ? (institution.is_private_school ?? null) : null,
-        countyCode: row.county_code,
-        stage: row.stage,
-        verificationStatus: row.verification_status,
-        updatedAt: row.updated_at,
-        sourceReferenceUrl: row.source_reference_url,
-      } satisfies AvailabilityTruthRow;
-    })
-    .filter((row): row is AvailabilityTruthRow => Boolean(row))
-    .sort((a, b) => {
+        });
+    const institutionMunicipality = isLosaRow
+      ? deliverySiteLabel ?? institution?.municipality_name ?? null
+      : institution?.municipality_name ?? null;
+
+    rows.push({
+      educationProgramId: row.education_program_id,
+      programSlug: program.slug,
+      programCode: program.programCode,
+      programTitle: program.title,
+      institutionId: row.institution_id,
+      institutionName,
+      institutionMunicipality,
+      municipalityCode: row.municipality_code ?? institution?.municipality_code ?? null,
+      institutionWebsite: institution?.website_url ?? null,
+      institutionIsPrivateSchool:
+        institution != null ? (institution.is_private_school ?? null) : null,
+      countyCode: row.county_code,
+      stage: row.stage,
+      verificationStatus: row.verification_status,
+      updatedAt: row.updated_at,
+      sourceReferenceUrl: row.source_reference_url,
+      availabilityScope: row.availability_scope,
+      deliverySiteLabel,
+      providerSchoolLabel: isLosaRow ? losaNotes.providerSchoolLabel ?? providerLabel : null,
+      optionKind: isLosaRow ? row.availability_scope : ORDINARY_AVAILABILITY_SCOPE,
+    });
+  }
+
+  rows.sort((a, b) => {
       const stageDelta = (stagePriority[a.stage] ?? 999) - (stagePriority[b.stage] ?? 999);
       if (stageDelta !== 0) {
         return stageDelta;
@@ -219,9 +270,11 @@ export async function getAvailabilityTruth({
 export async function getAvailabilityTruthVersion({
   countyCode,
   programmeSlugsOrCodes,
+  availabilityScopes = availabilityScopesForRouteTruth(),
 }: {
   countyCode: string;
   programmeSlugsOrCodes: string[];
+  availabilityScopes?: AvailabilityScope[];
 }): Promise<string | null> {
   const supabase = createAdminClient();
   const normalizedCountyCode = countyCode.trim();
@@ -232,12 +285,21 @@ export async function getAvailabilityTruthVersion({
     return null;
   }
 
+  const normalizedScopes = Array.from(
+    new Set(
+      (availabilityScopes.length > 0 ? availabilityScopes : [ORDINARY_AVAILABILITY_SCOPE]).map(
+        (scope) => scope.trim()
+      )
+    )
+  ).filter(Boolean) as AvailabilityScope[];
+
   const { data: latestRows, error } = await supabase
     .from("programme_school_availability")
     .select("updated_at")
     .in("education_program_id", educationProgramIds)
     .eq("county_code", normalizedCountyCode)
     .eq("is_active", true)
+    .in("availability_scope", normalizedScopes)
     .in("verification_status", ["verified", "needs_review"])
     .order("updated_at", { ascending: false })
     .limit(1);

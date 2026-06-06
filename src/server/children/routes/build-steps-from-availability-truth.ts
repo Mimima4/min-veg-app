@@ -1,3 +1,8 @@
+import {
+  buildLosaOptionDisplayTitle,
+  isLosaAvailabilityScope,
+  ORDINARY_AVAILABILITY_SCOPE,
+} from "@/lib/losa/availability-scope";
 import type { StudyRouteSnapshotStep } from "@/lib/routes/route-types";
 import type { AvailabilityTruthRow } from "./get-availability-truth";
 import type { PathVariant, VilbliOutcomeProfession } from "./build-path-variants";
@@ -103,6 +108,89 @@ function withSchoolBrandDisplay(row: AvailabilityTruthRow): AvailabilityTruthRow
     return row;
   }
   return { ...row, institutionName };
+}
+
+function isLosaTruthRow(row: AvailabilityTruthRow): boolean {
+  return isLosaAvailabilityScope(row.availabilityScope);
+}
+
+function splitOrdinaryAndLosaRows(rows: AvailabilityTruthRow[]): {
+  ordinaryRows: AvailabilityTruthRow[];
+  losaRows: AvailabilityTruthRow[];
+} {
+  const ordinaryRows: AvailabilityTruthRow[] = [];
+  const losaRows: AvailabilityTruthRow[] = [];
+  for (const row of rows) {
+    if (isLosaTruthRow(row)) {
+      losaRows.push(row);
+      continue;
+    }
+    ordinaryRows.push(row);
+  }
+  return { ordinaryRows, losaRows };
+}
+
+function mapOrdinaryProgrammeOption(row: AvailabilityTruthRow) {
+  return {
+    institution_id: row.institutionId,
+    institution_name: row.institutionName,
+    institution_city: row.institutionMunicipality,
+    institution_municipality: row.institutionMunicipality,
+    institution_website: row.institutionWebsite,
+    program_title: row.programTitle,
+    stage: row.stage,
+    duration_label: null,
+    display_title: row.programTitle,
+    verification_status: row.verificationStatus,
+    institution_is_private_school:
+      row.institutionIsPrivateSchool === true
+        ? true
+        : row.institutionIsPrivateSchool === false
+          ? false
+          : null,
+    option_kind: ORDINARY_AVAILABILITY_SCOPE,
+    delivery_municipality_code: null,
+    delivery_site_label: null,
+  };
+}
+
+function mapLosaProgrammeOption(row: AvailabilityTruthRow) {
+  const providerLabel = row.providerSchoolLabel ?? row.institutionName;
+  const deliverySiteLabel = row.deliverySiteLabel ?? row.institutionMunicipality ?? null;
+  const displayTitle =
+    buildLosaOptionDisplayTitle({
+      providerLabel,
+      deliverySiteLabel,
+    }) ?? row.institutionName;
+
+  return {
+    institution_id: row.institutionId,
+    institution_name: providerLabel,
+    institution_city: deliverySiteLabel,
+    institution_municipality: deliverySiteLabel,
+    institution_website: row.institutionWebsite,
+    program_title: row.programTitle,
+    stage: row.stage,
+    duration_label: null,
+    display_title: displayTitle,
+    verification_status: row.verificationStatus,
+    institution_is_private_school:
+      row.institutionIsPrivateSchool === true
+        ? true
+        : row.institutionIsPrivateSchool === false
+          ? false
+          : null,
+    option_kind: row.optionKind ?? row.availabilityScope,
+    delivery_municipality_code: row.municipalityCode,
+    delivery_site_label: deliverySiteLabel,
+  };
+}
+
+function buildProgrammeSelectionOptions(rows: AvailabilityTruthRow[]) {
+  const { ordinaryRows, losaRows } = splitOrdinaryAndLosaRows(rows);
+  const ordinaryOptions = dedupeRowsBySchoolBrand(ordinaryRows).map(mapOrdinaryProgrammeOption);
+  const losaOptions = losaRows.map(mapLosaProgrammeOption);
+  return [...ordinaryOptions, ...losaOptions];
 }
 
 /** Vilbli/VIGO school-brand options: collapse multi-avd PSA leftovers to one row per brand. */
@@ -345,13 +433,21 @@ export function buildStepsFromAvailabilityTruth(params: {
     let selectedVg2RowForGate: AvailabilityTruthRow | null = null;
     for (const node of selectedVariant.nodes) {
       if (node.type === "programme_selection") {
-        const stageRows = dedupeRowsBySchoolBrand(
-          stageRowsSortedWithAnchor({
-            rows: params.rows,
+        const { ordinaryRows, losaRows } = splitOrdinaryAndLosaRows(params.rows);
+        const stageRows = [
+          ...dedupeRowsBySchoolBrand(
+            stageRowsSortedWithAnchor({
+              rows: ordinaryRows,
+              stage: node.stage,
+              selectedCandidate: params.selectedCandidate ?? null,
+            })
+          ),
+          ...stageRowsSortedWithAnchor({
+            rows: losaRows,
             stage: node.stage,
             selectedCandidate: params.selectedCandidate ?? null,
-          })
-        );
+          }),
+        ];
         const stageRow = stageRows[0] ?? null;
 
         if (node.stage === "VG3") {
@@ -413,24 +509,7 @@ export function buildStepsFromAvailabilityTruth(params: {
           current_profession_slug: params.professionSlug,
           source: "availability_truth",
           stage: node.stage,
-          options: stageRows.map((row) => ({
-            institution_id: row.institutionId,
-            institution_name: row.institutionName,
-            institution_city: row.institutionMunicipality,
-            institution_municipality: row.institutionMunicipality,
-            institution_website: row.institutionWebsite,
-            program_title: row.programTitle,
-            stage: row.stage,
-            duration_label: null,
-            display_title: row.programTitle,
-            verification_status: row.verificationStatus,
-            institution_is_private_school:
-              row.institutionIsPrivateSchool === true
-                ? true
-                : row.institutionIsPrivateSchool === false
-                  ? false
-                  : null,
-          })),
+          options: buildProgrammeSelectionOptions(stageRows),
         });
         continue;
       }
@@ -467,26 +546,7 @@ export function buildStepsFromAvailabilityTruth(params: {
       current_profession_slug: params.professionSlug,
       source: "availability_truth",
       stage: defaultRow.stage,
-      options: [
-        {
-          institution_id: defaultRow.institutionId,
-          institution_name: defaultRow.institutionName,
-          institution_city: defaultRow.institutionMunicipality,
-          institution_municipality: defaultRow.institutionMunicipality,
-          institution_website: defaultRow.institutionWebsite,
-          program_title: defaultRow.programTitle,
-          stage: defaultRow.stage,
-          duration_label: null,
-          display_title: defaultRow.programTitle,
-          verification_status: defaultRow.verificationStatus,
-          institution_is_private_school:
-            defaultRow.institutionIsPrivateSchool === true
-              ? true
-              : defaultRow.institutionIsPrivateSchool === false
-                ? false
-                : null,
-        },
-      ],
+      options: buildProgrammeSelectionOptions([defaultRow]),
     });
   }
 

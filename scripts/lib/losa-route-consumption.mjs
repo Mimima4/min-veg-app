@@ -5,6 +5,9 @@ export const LOSA_ORDINARY_ROUTE_OPTION_KIND = "programme_in_school";
 export const LOSA_ROUTE_GATE = "P4-LOSA-ROUTE";
 export const LOSA_ROUTE_UI_GATE = "permission_3_not_approved";
 
+/** Bounded Alta pilot — P4-LOSA-ROUTE-WIRING gate (2026-05-29). */
+export const LOSA_ROUTE_UI_INTEGRATION_APPROVED = true;
+
 /**
  * Plan a programme_selection option from a PSA write candidate (read-only).
  */
@@ -37,13 +40,18 @@ export function planLosaRouteOption(writeCandidate) {
   const deliveryLabel =
     notesMeta.delivery_site_label ?? writeCandidate.deliverySiteLabel ?? null;
 
+  const routeEligible =
+    LOSA_ROUTE_UI_INTEGRATION_APPROVED && Boolean(writeCandidate?.writeAllowed);
+
   return {
     section: "P4-LOSA-ROUTE-OPTION-PLAN",
-    routeEligible: false,
+    routeEligible,
     optionKind: LOSA_ROUTE_OPTION_KIND,
     vilbliSchoolCode: writeCandidate.vilbliSchoolCode,
     deliverySiteLabel: deliveryLabel,
-    blockedReasons: [LOSA_ROUTE_UI_GATE, "get_availability_truth_not_wired"],
+    blockedReasons: routeEligible
+      ? []
+      : [LOSA_ROUTE_UI_GATE, "get_availability_truth_not_wired"],
     displayHint: providerLabel && deliveryLabel
       ? `${providerLabel} – LOSA ${deliveryLabel}`
       : null,
@@ -76,7 +84,7 @@ export function planLosaRouteConsumption(writePreview, context = {}) {
     writeCandidateCount: writePreview.writeCandidateCount ?? 0,
     routeOptionPlanCount: optionPlans.length,
     routeEligibleCount: routeEligiblePlans.length,
-    uiIntegrationApproved: false,
+    uiIntegrationApproved: LOSA_ROUTE_UI_INTEGRATION_APPROVED,
     optionPlans,
   };
 }

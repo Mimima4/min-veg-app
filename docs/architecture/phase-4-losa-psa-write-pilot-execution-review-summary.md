@@ -50,17 +50,17 @@
 
 - **Not** bulk 18-row write.
 - **Not** Contour B ordinary ingest.
-- **Not** Route/UI **#3** (`route eligible: 0`).
+- Route/UI **#3** wired in follow-up gate (`P4-LOSA-ROUTE-WIRING-post`).
 - `NOT_READY_FOR_APPLY` unchanged for product apply contour.
 
 ---
 
 ## Recommended next
 
-Permission **#3** → wire `get-availability-truth` + `availability_scope` filter (**P4-LOSA-ROUTE** wiring gate).
+Follow-up: **P4-LOSA-ROUTE-WIRING** bounded #3 wiring (see `phase-4-losa-route-wiring-execution-review-summary.md`).
 
 ---
 
 ## Final statement
 
-First nationwide-pattern LOSA PSA pilot row is in main DB; Route consumption remains blocked until **#3**.
+First nationwide-pattern LOSA PSA pilot row is in main DB; Route **#3** wiring completed in bounded follow-up gate.
