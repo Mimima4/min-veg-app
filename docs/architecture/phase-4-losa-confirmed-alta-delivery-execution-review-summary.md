@@ -54,7 +54,7 @@ Does **not** clear §4 on Alta (legal/fjern row rule, programme full, supporting
 
 ## Recommended next
 
-Sub-gate **3–5:** P4LS4A1 county Tier 1 row rule + programme partial → full + `publication_supporting_evidence` packet.
+Sub-gates **3–5:** **completed** (`P4-LOSA-SECTION-4-ALTA-SUBGATE-3-5-post`). Next: sub-gate **4** supporting evidence packet.
 
 ---
 

@@ -173,12 +173,13 @@ async function main() {
     process.exit(1);
   }
 
-  const altaHasPartialProgramme = altaRow.evidenceLink.summary.partialClaimClasses.includes(
-    "programme_stage_availability"
-  );
-  if (!altaHasPartialProgramme) {
+  const altaBlocked = altaRow.evidenceLink.summary.blockedClaimClasses;
+  if (
+    altaBlocked.length !== 1 ||
+    altaBlocked[0] !== "publication_supporting_evidence"
+  ) {
     console.error(
-      "\nABORT: Alta row should have partial programme_stage_availability link"
+      `\nABORT: Alta row should block only publication_supporting_evidence, got: ${altaBlocked.join(", ") || "(none)"}`
     );
     process.exit(1);
   }

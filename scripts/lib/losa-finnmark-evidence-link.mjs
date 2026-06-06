@@ -26,36 +26,55 @@ function snippetsForClaim(claimClass, predicate) {
   );
 }
 
+function isNordkappProviderConfirmed() {
+  return LOSA_FINNMARK_CONFIRMED_INDEX.some(
+    (entry) =>
+      entry.claimClass === "provider_school" &&
+      entry.scope === "provider_nordkapp"
+  );
+}
+
+function isAltaDeliveryConfirmed() {
+  return LOSA_FINNMARK_CONFIRMED_INDEX.some(
+    (entry) =>
+      entry.claimClass === "delivery_municipality" &&
+      entry.scope === "delivery_site_alta"
+  );
+}
+
+/** P4LS4A1 — county Tier 1 CONFIRMED satisfies row-level legal/fjern claims (ref county). */
+function countyTier1RowPublishable(claimClass) {
+  const sources = confirmedForCountyReference(claimClass);
+  if (sources.length === 0) {
+    return null;
+  }
+
+  return {
+    claimClass,
+    status: "county_reference_confirmed",
+    sourceIds: sources.map((s) => s.sourceId),
+    publishable: true,
+    rationale:
+      "Tier 1 CONFIRMED at county reference satisfies row-level claim (P4-LOSA-COUNTY-TIER1-ROW-RULE)",
+  };
+}
+
 export function assessClaimClassEvidenceLink(manifestRow, claimClass) {
   const delivery = manifestRow.entity?.deliverySiteLabel ?? null;
   const provider = manifestRow.entity?.providerSchoolLabel ?? null;
 
   switch (claimClass) {
     case "legal_status": {
-      const sources = confirmedForCountyReference("legal_status");
-      if (sources.length > 0) {
-        return {
-          claimClass,
-          status: "county_reference_confirmed",
-          sourceIds: sources.map((s) => s.sourceId),
-          publishable: false,
-          rationale:
-            "Tier 1 legal CONFIRMED at county reference — not per-municipality publishable alone",
-        };
+      const countyRule = countyTier1RowPublishable("legal_status");
+      if (countyRule) {
+        return countyRule;
       }
       break;
     }
     case "fjernundervisning_rules": {
-      const sources = confirmedForCountyReference("fjernundervisning_rules");
-      if (sources.length > 0) {
-        return {
-          claimClass,
-          status: "county_reference_confirmed",
-          sourceIds: sources.map((s) => s.sourceId),
-          publishable: false,
-          rationale:
-            "Tier 1 fjernundervisning CONFIRMED at county reference — not per-municipality publishable alone",
-        };
+      const countyRule = countyTier1RowPublishable("fjernundervisning_rules");
+      if (countyRule) {
+        return countyRule;
       }
       break;
     }
@@ -146,13 +165,28 @@ export function assessClaimClassEvidenceLink(manifestRow, claimClass) {
             entry.scope === "delivery_site_alta"
         );
         if (confirmed.length > 0) {
+          const providerReady =
+            isNordkappProviderLabel(provider) && isNordkappProviderConfirmed();
+          const deliveryReady = isAltaDeliveryConfirmed();
+
+          if (providerReady && deliveryReady) {
+            return {
+              claimClass,
+              status: "row_confirmed",
+              sourceIds: confirmed.map((s) => s.sourceId),
+              publishable: true,
+              rationale:
+                "Alta Nordkapp LOSA programme row closure — provider+delivery prerequisites met (P4-LOSA-ALTA-PROGRAMME-FULL)",
+            };
+          }
+
           return {
             claimClass,
             status: "row_confirmed_partial",
             sourceIds: confirmed.map((s) => s.sourceId),
             publishable: false,
             rationale:
-              "Alta programme CONFIRMED — partial only; not full Nordkapp LOSA Alta delivery closure",
+              "Alta programme CONFIRMED — partial until provider+delivery row CONFIRMED",
           };
         }
       }

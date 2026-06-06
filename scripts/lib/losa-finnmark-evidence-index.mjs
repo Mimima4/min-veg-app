@@ -25,7 +25,7 @@ export const LOSA_FINNMARK_CONFIRMED_INDEX = [
     tier: "T2",
     scope: "delivery_site_alta",
     ownerPost: "P4-LOSA-CONFIRMED-ALTA-PROGRAMME-post",
-    note: "Alta VGS programme deep — partial for Nordkapp LOSA Alta row only",
+    note: "Alta VGS programme deep — full row when provider+delivery CONFIRMED (P4-LOSA-ALTA-PROGRAMME-FULL)",
   },
   {
     sourceId: "T1_REGJERINGEN_PROP57_FJERN_DEEP",
