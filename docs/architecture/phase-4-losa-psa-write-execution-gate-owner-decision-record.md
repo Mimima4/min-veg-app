@@ -38,7 +38,7 @@ Defines bounded **#2-class** LOSA PSA write path (separate from Contour B ordina
 | 4 | Pre-session dry-run: `npm run losa:preview-psa-write` — chartered row count matches |
 | 5 | **Not** Contour B `pickInstitutionsForPsaEmission` path |
 
-**Current posture (post Alta publication decision 2026-05-29):** schema **met**; **1/18** rows §4 satisfied + publication decision; dry-run **1** write candidate; **no execution session** until owner-held charter.
+**Current posture (post pilot 2026-05-29):** **1** LOSA PSA row inserted (Alta pilot); idempotent re-run skips; Route **#3** still open; bulk/remaining **17** rows not written.
 
 ---
 

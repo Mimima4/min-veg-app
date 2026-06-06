@@ -33,7 +33,7 @@ npm run losa:preview-psa-write -- --expect-write-count 1
 
 ## Recommended next
 
-Owner-held **P4-LOSA-PSA-WRITE** charter (`MAIN-LOSA-PSA-WRITE-2026-05-29-01`) → bounded **1** row insert session after NSR `institution_id` resolve.
+**P4-LOSA-PSA-WRITE** pilot **completed** — see `phase-4-losa-psa-write-pilot-execution-review-summary.md`.
 
 ---
 

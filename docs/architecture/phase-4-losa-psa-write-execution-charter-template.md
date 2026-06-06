@@ -13,7 +13,7 @@
 
 | Field | Fill before session |
 |-------|---------------------|
-| Charter ID | e.g. `MAIN-LOSA-PSA-WRITE-YYYY-MM-DD-01` |
+| Charter ID | e.g. `MAIN-LOSA-PSA-WRITE-YYYY-MM-DD-01` (Alta pilot executed: `MAIN-LOSA-PSA-WRITE-2026-05-29-01`) |
 | **OWNER** | yes / no |
 | **SECURITY_APPROVER** | yes / no |
 | **TECH_EXECUTOR** | yes / no |

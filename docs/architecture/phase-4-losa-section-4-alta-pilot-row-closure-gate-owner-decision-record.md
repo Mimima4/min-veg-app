@@ -3,8 +3,8 @@
 | Field | Value |
 |--------|--------|
 | **Section** | **P4-LOSA-SECTION-4-ALTA-PILOT** |
-| **Status** | **CHARTER-READY** — publication decision recorded; PSA **write execution** open |
-| **Closure label** | `PHASE_4_LOSA_ALTA_PUBLICATION_DECISION_ADOPTED` |
+| **Status** | **PILOT INSERT COMPLETE** — **1** LOSA PSA row; Route **#3** open |
+| **Closure label** | `PHASE_4_LOSA_ALTA_PSA_WRITE_PILOT_COMPLETE` |
 | **Date (UTC)** | 2026-05-29 |
 | **Prerequisite** | **P4-LOSA-PSA** main apply (`phase-4-losa-psa-schema-main-apply-checklist.md`) |
 | **Reference row** | Vilbli LOSA **Alta** delivery (`Nordkapp videregående skole – LOSA Alta`) |
@@ -56,7 +56,7 @@ Per `phase-4-losa-finnmark-publishability-contract-draft.md` §4:
 | 4 | `publication_supporting_evidence` combined packet | **DONE** — `phase-4-losa-alta-supporting-evidence-gate-owner-decision-record.md` | **1** packet row |
 | 5 | County Tier 1 → row-publishable rule | **DONE** — `phase-4-losa-county-tier1-row-publishable-rule-gate-owner-decision-record.md` | Policy only |
 | 6 | Auditable **publication decision** object | **DONE** — `phase-4-losa-alta-publication-decision-gate-owner-decision-record.md` | **1** Alta row |
-| 7 | **P4-LOSA-PSA-WRITE** charter → bounded insert | Owner-held `MAIN-LOSA-PSA-WRITE-*` | Max **1** pilot row |
+| 7 | **P4-LOSA-PSA-WRITE** charter → bounded insert | **DONE** — `phase-4-losa-psa-write-pilot-execution-review-summary.md` | **1** row inserted |
 
 **Paused by owner tranche (2026-06-03):** sub-gates **1–2** were explicitly **SNIPPET_ONLY** — reopening requires **new** owner gate, not automatic promotion.
 
@@ -90,4 +90,4 @@ npm run losa:preview-psa-write         # 1 candidate; execution still unauthoriz
 
 ## Final statement
 
-Schema on main is **ready**. Alta row **evidence §4 satisfied** and **publication decision recorded**. First LOSA PSA insert requires owner-held **P4-LOSA-PSA-WRITE** charter + NSR `institution_id` resolve at session.
+Schema on main is **ready**. Alta **pilot PSA row inserted** (`losa_fjern_delivery_municipality`, Alta `5601`). Route/UI consumption remains blocked until **#3** wiring gate.
