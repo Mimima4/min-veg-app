@@ -39,7 +39,7 @@ This gate authorizes **read-only LOSA entity modelling and Vilbli manifest extra
 | **3b** | Phase 2 observation writes (if approved) | separate |
 | **4** (schema) | PSA `availability_scope` migration (repo; no write) | **P4-LOSA-PSA** (2026-06-05) |
 | **4b** (write) | Bounded LOSA PSA write framework + dry-run preview | **P4-LOSA-PSA-WRITE** (2026-06-05) |
-| **5** | Route `programme_selection` consumption | separate (#3) |
+| **5** (route plan) | Route `programme_selection` consumption model (no #3 wiring) | **P4-LOSA-ROUTE** (2026-06-05) |
 
 ---
 

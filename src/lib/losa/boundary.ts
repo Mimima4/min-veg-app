@@ -41,4 +41,10 @@ export const PHASE4_LOSA_PROPOSED_AVAILABILITY_SCOPE =
 /** Write gate adopted; execution session still separately chartered. */
 export const PHASE4_LOSA_PSA_WRITE_GATE_ID = "P4-LOSA-PSA-WRITE" as const;
 
+/** Route consumption plan adopted; #3 UI wiring not approved. */
+export const PHASE4_LOSA_ROUTE_GATE_ID = "P4-LOSA-ROUTE" as const;
+
+export const PHASE4_LOSA_ROUTE_OPTION_KIND =
+  "losa_fjern_delivery_municipality" as const;
+
 export type Phase4LosaGateId = (typeof PHASE4_LOSA_GATE_ORDER)[number];

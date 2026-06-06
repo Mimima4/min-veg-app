@@ -12,7 +12,8 @@
     "losa:finnmark-evidence-link": "node scripts/link-losa-finnmark-evidence.mjs",
     "losa:finnmark-publication-plan": "node scripts/plan-losa-finnmark-publication.mjs",
     "losa:validate-psa-schema": "node scripts/validate-losa-psa-schema-readiness.mjs",
-    "losa:preview-psa-write": "node scripts/preview-losa-psa-write.mjs"
+    "losa:preview-psa-write": "node scripts/preview-losa-psa-write.mjs",
+    "losa:plan-route-consumption": "node scripts/plan-losa-route-consumption.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.9.0",

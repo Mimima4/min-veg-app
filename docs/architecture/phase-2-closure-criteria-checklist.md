@@ -172,6 +172,8 @@ These are **documentation / boundary / criteria** artifacts only. They are **not
 - `docs/architecture/phase-4-losa-psa-schema-gate-owner-decision-record.md` — **P4-LOSA-PSA** schema tranche; `losa_fjern_delivery_municipality` migration; **no** PSA row writes
 - `docs/architecture/phase-4-losa-psa-write-execution-gate-owner-decision-record.md` — **P4-LOSA-PSA-WRITE**; charter template + dry-run preview; **0** candidates until §4 row closes
 - `docs/architecture/phase-4-losa-psa-write-execution-charter-template.md` — owner-held LOSA PSA write session charter template
+- `docs/architecture/phase-4-losa-route-consumption-draft.md` — Route consumption model for LOSA PSA rows
+- `docs/architecture/phase-4-losa-route-consumption-gate-owner-decision-record.md` — **P4-LOSA-ROUTE**; plan scaffold only; **#3** not approved
 - `docs/architecture/phase-4-losa-claim-extraction-pilot-execution-gate-owner-decision-record.md` — **LOSA claim extraction pilot** gate (**P4-LOSA-CLAIM-EXTRACT**); owner-held snapshots only; **no** `CONFIRMED` in pilot
 - `docs/architecture/phase-4-losa-claim-extraction-pilot-execution-review-summary.md` — **safe summary** (**P4-LOSA-CLAIM-EXTRACT-post**); `LOSA_CLAIM_EXTRACTION_PILOT_PASS`; **10** sources; **17** candidate signals; **0** confirmed
 - `docs/architecture/phase-4-losa-evidence-refresh-pilot-3-tier1-deep-urls-owner-decision-record.md` — **Pilot 3** deep Tier 1 URLs (**P4-LOSA-REFRESH-PILOT-3**)
@@ -1783,9 +1785,9 @@ Owner-adopted **A.3** read-only Contour **A** baseline gate per `phase-2-contour
 
 ---
 
-**Current recommended next gate from this checklist snapshot:** **P4-LOSA-PSA-WRITE execution session** (owner-held charter + applied schema + first §4-closed row) or **P4-LOSA-ROUTE** — separate. **NOT_READY_FOR_APPLY** unchanged.
+**Current recommended next gate from this checklist snapshot:** **Operational tail** — apply PSA schema migration; **P4-LOSA-PSA-WRITE execution session** when first row §4 closes; **#3** Route/UI wiring when owner approves. **P4-LOSA-ROUTE** plan adopted. **NOT_READY_FOR_APPLY** unchanged.
 
-**Checklist reference note (2026-06-05):** **P4-LOSA-PSA-WRITE** framework — `npm run losa:preview-psa-write`; **0** write candidates; nationwide rules; Contour B unchanged.
+**Checklist reference note (2026-06-05):** **P4-LOSA-ROUTE** — `npm run losa:plan-route-consumption`; **0** route-eligible options; Phase 4 LOSA doc/scaffold chain complete at planning level.
 
 **Alternate tracks (separate owner selection — not auto-progression from Z-OV):** Z-AP* apply governance continuation; permission stack **#2** / **#3** only after explicit separate gates; Phase 3 operational execution remains separately gated from P3 planning POSTs (`7ed7014` → `f412bea` → `87ddeb0` → `d552832`).
 
