@@ -41,7 +41,7 @@ Does **not** clear full §4 or authorize PSA. Matcher **2/22/0** unchanged. **NO
 
 ## Recommended next
 
-Sub-gate **4:** `publication_supporting_evidence` combined Tier 1+2 packet for Alta row.
+Sub-gate **4:** **completed** (`P4-LOSA-ALTA-SUPPORTING-EVIDENCE-post`).
 
 ---
 

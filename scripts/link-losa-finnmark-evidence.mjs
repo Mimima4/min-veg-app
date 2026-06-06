@@ -131,7 +131,7 @@ async function main() {
     console.log(
       [
         `P4-LOSA evidence-link (${COUNTY_CODE} / ${args.profession})`,
-        `rows: ${report.rowCount} | still blocked: ${report.rowsStillBlocked}`,
+        `rows: ${report.rowCount} | §4 satisfied: ${report.rowsSection4Satisfied} | still blocked: ${report.rowsStillBlocked}`,
         `county CONFIRMED index: ${report.countyWideConfirmedCount}`,
         `posture: ${report.publishabilityPosture}`,
         "",
@@ -141,8 +141,12 @@ async function main() {
         "Per-row blocked claims (sample):",
         ...linkedRows.slice(0, 3).map((row) => {
           const delivery = row.entity.deliverySiteLabel;
-          const blocked = row.evidenceLink.summary.blockedClaimClasses.join(", ");
-          return `- ${delivery}: blocked → ${blocked}`;
+          const blocked =
+            row.evidenceLink.summary.blockedClaimClasses.join(", ") || "(none)";
+          const suffix = row.evidenceLink.summary.psaEligible
+            ? "§4 satisfied"
+            : `blocked → ${blocked}`;
+          return `- ${delivery}: ${suffix}`;
         }),
         `… (${linkedRows.length} total)`,
         "",
@@ -160,9 +164,16 @@ async function main() {
     process.exit(1);
   }
 
-  if (report.rowsStillBlocked !== report.rowCount) {
+  if (report.rowsSection4Satisfied !== 1) {
     console.error(
-      `\nABORT: expected all ${report.rowCount} rows blocked, got ${report.rowsStillBlocked}`
+      `\nABORT: expected exactly 1 row §4 satisfied (Alta pilot), got ${report.rowsSection4Satisfied}`
+    );
+    process.exit(1);
+  }
+
+  if (report.rowsStillBlocked !== report.rowCount - 1) {
+    console.error(
+      `\nABORT: expected ${report.rowCount - 1} rows still blocked, got ${report.rowsStillBlocked}`
     );
     process.exit(1);
   }
@@ -173,13 +184,15 @@ async function main() {
     process.exit(1);
   }
 
+  if (!altaRow.evidenceLink.summary.psaEligible) {
+    console.error("\nABORT: Alta row should have ROW_SECTION_4_SATISFIED (psaEligible)");
+    process.exit(1);
+  }
+
   const altaBlocked = altaRow.evidenceLink.summary.blockedClaimClasses;
-  if (
-    altaBlocked.length !== 1 ||
-    altaBlocked[0] !== "publication_supporting_evidence"
-  ) {
+  if (altaBlocked.length !== 0) {
     console.error(
-      `\nABORT: Alta row should block only publication_supporting_evidence, got: ${altaBlocked.join(", ") || "(none)"}`
+      `\nABORT: Alta row should have no blocked claims, got: ${altaBlocked.join(", ")}`
     );
     process.exit(1);
   }

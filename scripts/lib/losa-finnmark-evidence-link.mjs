@@ -42,6 +42,35 @@ function isAltaDeliveryConfirmed() {
   );
 }
 
+function isAltaProgrammeConfirmed() {
+  return LOSA_FINNMARK_CONFIRMED_INDEX.some(
+    (entry) =>
+      entry.claimClass === "programme_stage_availability" &&
+      entry.scope === "delivery_site_alta"
+  );
+}
+
+function altaSupportingEvidencePacketEntry() {
+  return LOSA_FINNMARK_CONFIRMED_INDEX.find(
+    (entry) =>
+      entry.claimClass === "publication_supporting_evidence" &&
+      entry.scope === "delivery_site_alta"
+  );
+}
+
+/** Tier 1+2 row prerequisites before supporting-evidence packet may publish (never alone). */
+function altaSupportingEvidencePrerequisitesMet(provider, delivery) {
+  return (
+    isAltaDeliverySite(delivery) &&
+    isNordkappProviderLabel(provider) &&
+    isNordkappProviderConfirmed() &&
+    isAltaDeliveryConfirmed() &&
+    isAltaProgrammeConfirmed() &&
+    countyTier1RowPublishable("legal_status") !== null &&
+    countyTier1RowPublishable("fjernundervisning_rules") !== null
+  );
+}
+
 /** P4LS4A1 — county Tier 1 CONFIRMED satisfies row-level legal/fjern claims (ref county). */
 function countyTier1RowPublishable(claimClass) {
   const sources = confirmedForCountyReference(claimClass);
@@ -198,15 +227,38 @@ export function assessClaimClassEvidenceLink(manifestRow, claimClass) {
         rationale: `No programme_stage_availability CONFIRMED for ${delivery ?? "unknown"}`,
       };
     }
-    case "publication_supporting_evidence":
+    case "publication_supporting_evidence": {
+      const packet = altaSupportingEvidencePacketEntry();
+      if (packet && isAltaDeliverySite(delivery)) {
+        if (altaSupportingEvidencePrerequisitesMet(provider, delivery)) {
+          return {
+            claimClass,
+            status: "row_confirmed",
+            sourceIds: [packet.sourceId],
+            componentSourceIds: packet.componentSourceIds ?? [],
+            publishable: true,
+            rationale:
+              "Alta Tier 1+2 combined supporting-evidence packet (P4-LOSA-ALTA-SUPPORTING-EVIDENCE)",
+          };
+        }
+        return {
+          claimClass,
+          status: "blocked",
+          sourceIds: packet.sourceId ? [packet.sourceId] : [],
+          publishable: false,
+          rationale:
+            "Supporting-evidence packet adopted but Alta row Tier 2 prerequisites incomplete",
+        };
+      }
       return {
         claimClass,
         status: "blocked",
         sourceIds: [],
         publishable: false,
         rationale:
-          "Registry rule: publication_supporting_evidence never sufficient alone; Tier 2 gaps remain",
+          "Registry rule: publication_supporting_evidence never sufficient alone; no row packet",
       };
+    }
     default:
       return {
         claimClass,
@@ -288,21 +340,28 @@ export function summarizeEvidenceLinkReport(linkedRows) {
   const altaRow = linkedRows.find((row) =>
     isAltaDeliverySite(row.entity?.deliverySiteLabel)
   );
-  const nonAltaBlocked = linkedRows.filter(
-    (row) => !row.evidenceLink?.summary?.psaEligible
+  const rowsSection4Satisfied = linkedRows.filter(
+    (row) => row.evidenceLink?.summary?.psaEligible
   ).length;
+  const rowsStillBlocked = linkedRows.length - rowsSection4Satisfied;
+
+  let publishabilityPosture = "STILL_BLOCKED_ALL_SECTION_4";
+  if (rowsSection4Satisfied > 0 && rowsSection4Satisfied < linkedRows.length) {
+    publishabilityPosture = "REFERENCE_ROW_SECTION_4_SATISFIED_PARTIAL";
+  } else if (rowsSection4Satisfied === linkedRows.length) {
+    publishabilityPosture = "ALL_ROWS_SECTION_4_SATISFIED";
+  }
 
   return {
     section: "P4-LOSA-EVIDENCE-LINK-TRANCHE-2",
     rowCount: linkedRows.length,
-    rowsStillBlocked: nonAltaBlocked,
+    rowsStillBlocked,
+    rowsSection4Satisfied,
     countyWideConfirmedCount: LOSA_FINNMARK_CONFIRMED_INDEX.length,
     altaRowDeliverySite: altaRow?.entity?.deliverySiteLabel ?? null,
     altaPartialClaims: altaRow?.evidenceLink?.summary?.partialClaimClasses ?? [],
     altaSnippetClaims: altaRow?.evidenceLink?.summary?.snippetOnlyClaimClasses ?? [],
-    allRowsPsaEligible: linkedRows.every(
-      (row) => row.evidenceLink?.summary?.psaEligible
-    ),
-    publishabilityPosture: "STILL_BLOCKED_ALL_SECTION_4",
+    allRowsPsaEligible: rowsSection4Satisfied === linkedRows.length,
+    publishabilityPosture,
   };
 }
