@@ -185,6 +185,12 @@ async function main() {
           linkedRows.find((r) => r.entity.deliverySiteLabel === "Kautokeino")
             ?.evidenceLink.claimLinks ?? []
         ).map((link) => `  ${formatClaimStatus(link)}`),
+        "",
+        "Vardø row (row 7):",
+        ...(
+          linkedRows.find((r) => r.entity.deliverySiteLabel === "Vardø")
+            ?.evidenceLink.claimLinks ?? []
+        ).map((link) => `  ${formatClaimStatus(link)}`),
       ].join("\n")
     );
   }
@@ -194,16 +200,16 @@ async function main() {
     process.exit(1);
   }
 
-  if (report.rowsSection4Satisfied !== 6) {
+  if (report.rowsSection4Satisfied !== 7) {
     console.error(
-      `\nABORT: expected exactly 6 rows §4 satisfied (Alta + Hammerfest + Sør-Varanger + Porsanger + Karasjok + Kautokeino), got ${report.rowsSection4Satisfied}`
+      `\nABORT: expected exactly 7 rows §4 satisfied (Alta + Hammerfest + Sør-Varanger + Porsanger + Karasjok + Kautokeino + Vardø), got ${report.rowsSection4Satisfied}`
     );
     process.exit(1);
   }
 
-  if (report.rowsStillBlocked !== report.rowCount - 6) {
+  if (report.rowsStillBlocked !== report.rowCount - 7) {
     console.error(
-      `\nABORT: expected ${report.rowCount - 6} rows still blocked, got ${report.rowsStillBlocked}`
+      `\nABORT: expected ${report.rowCount - 7} rows still blocked, got ${report.rowsStillBlocked}`
     );
     process.exit(1);
   }
@@ -363,6 +369,28 @@ async function main() {
   if (kautokeinoBlocked.length !== 0) {
     console.error(
       `\nABORT: Kautokeino row should have no blocked claims, got: ${kautokeinoBlocked.join(", ")}`
+    );
+    process.exit(1);
+  }
+
+  const vardoRow = linkedRows.find(
+    (r) => r.entity.deliverySiteLabel === "Vardø"
+  );
+  if (!vardoRow) {
+    console.error("\nABORT: Vardø delivery row missing from manifest");
+    process.exit(1);
+  }
+
+  if (!vardoRow.evidenceLink.summary.psaEligible) {
+    console.error("\nABORT: Vardø row should have ROW_SECTION_4_SATISFIED (psaEligible)");
+    process.exit(1);
+  }
+
+  const vardoBlocked =
+    vardoRow.evidenceLink.summary.blockedClaimClasses ?? [];
+  if (vardoBlocked.length !== 0) {
+    console.error(
+      `\nABORT: Vardø row should have no blocked claims, got: ${vardoBlocked.join(", ")}`
     );
     process.exit(1);
   }
