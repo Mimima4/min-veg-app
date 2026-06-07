@@ -32,6 +32,9 @@ export const DEFAULT_KAUTOKEINO_PILOT_CHARTER_ID =
 export const DEFAULT_VARDO_PILOT_CHARTER_ID =
   "MAIN-LOSA-PSA-WRITE-VARDO-2026-05-29-01";
 
+export const DEFAULT_NESSEBY_PILOT_CHARTER_ID =
+  "MAIN-LOSA-PSA-WRITE-NESSEBY-2026-05-29-01";
+
 /** Bounded write charter profiles — one row per charter session. */
 export const LOSA_PSA_WRITE_CHARTER_PROFILES = {
   [DEFAULT_ALTA_PILOT_CHARTER_ID]: {
@@ -68,6 +71,11 @@ export const LOSA_PSA_WRITE_CHARTER_PROFILES = {
     deliverySite: "Vardø",
     vilbliSchoolCode: "6108482",
     snapshotLabel: "losa-vardo-pilot-2026-05-29",
+  },
+  [DEFAULT_NESSEBY_PILOT_CHARTER_ID]: {
+    deliverySite: "Nesseby",
+    vilbliSchoolCode: "6108478",
+    snapshotLabel: "losa-nesseby-pilot-2026-05-29",
   },
 };
 

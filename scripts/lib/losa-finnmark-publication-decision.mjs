@@ -68,6 +68,15 @@ export const LOSA_FINNMARK_PUBLICATION_DECISION_INDEX = [
     charterRef: "MAIN-LOSA-PUBLICATION-DECISION-VARDO-2026-05-29-01",
     maxRows: 1,
   },
+  {
+    deliverySiteLabel: "Nesseby",
+    scope: "delivery_site_nesseby",
+    countyCode: "56",
+    gate: "P4-LOSA-NESSEBY-PUBLICATION-DECISION",
+    ownerPost: "P4-LOSA-NESSEBY-PUBLICATION-DECISION-post",
+    charterRef: "MAIN-LOSA-PUBLICATION-DECISION-NESSEBY-2026-05-29-01",
+    maxRows: 1,
+  },
 ];
 
 export function hasPublicationDecisionForManifestRow(manifestRow) {

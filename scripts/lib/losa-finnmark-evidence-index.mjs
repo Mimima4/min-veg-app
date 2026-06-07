@@ -106,6 +106,14 @@ export const LOSA_FINNMARK_CONFIRMED_INDEX = [
     note: "Vardø kommune official landing — delivery site for Vardø LOSA row only",
   },
   {
+    sourceId: "T2_KOMMUNE_NESSEBY_REF",
+    claimClass: "delivery_municipality",
+    tier: "T2",
+    scope: "delivery_site_nesseby",
+    ownerPost: "P4-LOSA-CONFIRMED-NESSEBY-DELIVERY-post",
+    note: "Nesseby kommune official landing — delivery site for Nesseby LOSA row only",
+  },
+  {
     sourceId: "T2_SCHOOL_NORDKAPP_VGS_PROGRAM_DEEP",
     claimClass: "programme_stage_availability",
     tier: "T2",
@@ -152,6 +160,14 @@ export const LOSA_FINNMARK_CONFIRMED_INDEX = [
     scope: "delivery_site_vardo",
     ownerPost: "P4-LOSA-CONFIRMED-VARDO-PROGRAMME-post",
     note: "Nordkapp VGS utdanningstilbud listing — provider programme for Vardø LOSA delivery row",
+  },
+  {
+    sourceId: "T2_SCHOOL_NORDKAPP_VGS_PROGRAM_DEEP",
+    claimClass: "programme_stage_availability",
+    tier: "T2",
+    scope: "delivery_site_nesseby",
+    ownerPost: "P4-LOSA-CONFIRMED-NESSEBY-PROGRAMME-post",
+    note: "Nordkapp VGS utdanningstilbud listing — provider programme for Nesseby LOSA delivery row",
   },
   {
     sourceId: "T1T2_ALTA_LOSA_PUBLICATION_SUPPORT_PACKET",
@@ -265,6 +281,22 @@ export const LOSA_FINNMARK_CONFIRMED_INDEX = [
       "T2_SCHOOL_NORDKAPP_VGS_PROGRAM_DEEP",
     ],
   },
+  {
+    sourceId: "T1T2_NESSEBY_LOSA_PUBLICATION_SUPPORT_PACKET",
+    claimClass: "publication_supporting_evidence",
+    tier: "T1+T2",
+    scope: "delivery_site_nesseby",
+    ownerPost: "P4-LOSA-NESSEBY-SUPPORTING-EVIDENCE-post",
+    note: "Combined Tier 1+2 packet — never alone; requires Nesseby row Tier 2 closure",
+    componentSourceIds: [
+      "T1_UDIR_FJERNUNDERVISNING_DEEP",
+      "T1_LOVDATA_OPPLARINGSLOVA_14_4_DEEP",
+      "T1_REGJERINGEN_PROP57_FJERN_DEEP",
+      "T2_SCHOOL_NORDKAPP_VGS",
+      "T2_KOMMUNE_NESSEBY_REF",
+      "T2_SCHOOL_NORDKAPP_VGS_PROGRAM_DEEP",
+    ],
+  },
 ];
 
 /** Component refs for Alta combined supporting-evidence packet (sub-gate 4). */
@@ -326,6 +358,7 @@ export const DELIVERY_SITE_SCOPE_BY_NORMALIZED_LABEL = {
   karasjok: "delivery_site_karasjok",
   kautokeino: "delivery_site_kautokeino",
   vardø: "delivery_site_vardo",
+  nesseby: "delivery_site_nesseby",
 };
 
 export function deliverySiteScopeForLabel(deliverySiteLabel) {

@@ -46,9 +46,9 @@
 | Metric | Value |
 |--------|--------|
 | LOSA manifest rows (Finnmark ref) | **18** |
-| Row §4 satisfied | **7** (Alta + Hammerfest + Sør-Varanger + Porsanger + Karasjok + Kautokeino + Vardø evidence) |
-| PSA LOSA writes | **7** (Alta `5601` + Hammerfest `5603` + Sør-Varanger `5636` + Porsanger `5630` + Karasjok `5612` + Kautokeino `5607` + Vardø `5638`) |
-| Route LOSA options | **7** eligible (#3 wired) |
+| Row §4 satisfied | **8** (Alta + Hammerfest + Sør-Varanger + Porsanger + Karasjok + Kautokeino + Vardø + Nesseby evidence) |
+| PSA LOSA writes | **8** (Alta `5601` + Hammerfest `5603` + Sør-Varanger `5636` + Porsanger `5630` + Karasjok `5612` + Kautokeino `5607` + Vardø `5638` + Nesseby `5622`) |
+| Route LOSA options | **8** eligible (#3 wired) |
 | Contour B ordinary Finnmark schools | **6** (unchanged) |
 | P06 operational | **CLOSED (partial D)** |
 
@@ -84,7 +84,8 @@
 | Row **5** (Karasjok) §4 | **COMPLETE** — PSA inserted (`P4-LOSA-PSA-WRITE-KARASJOK-PILOT-post`) |
 | Row **6** (Kautokeino) §4 | **COMPLETE** — PSA inserted (`P4-LOSA-PSA-WRITE-KAUTOKEINO-PILOT-post`) |
 | Row **7** (Vardø) §4 | **COMPLETE** — PSA inserted (`P4-LOSA-PSA-WRITE-VARDO-PILOT-post`) |
-| Rows **8–18** §4 closure | **OPEN** — per-kommune gates |
+| Row **8** (Nesseby) §4 | **COMPLETE** — PSA inserted (`P4-LOSA-PSA-WRITE-NESSEBY-PILOT-post`) |
+| Rows **9–18** §4 closure | **OPEN** — per-kommune gates |
 | Bulk PSA write | **OPEN** — charter per row/session |
 | `NOT_READY_FOR_APPLY` | **unchanged** |
 
