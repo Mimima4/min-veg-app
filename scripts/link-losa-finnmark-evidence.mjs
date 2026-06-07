@@ -209,6 +209,12 @@ async function main() {
           linkedRows.find((r) => r.entity.deliverySiteLabel === "Lebesby")
             ?.evidenceLink.claimLinks ?? []
         ).map((link) => `  ${formatClaimStatus(link)}`),
+        "",
+        "Gamvik row (row 11):",
+        ...(
+          linkedRows.find((r) => r.entity.deliverySiteLabel === "Gamvik")
+            ?.evidenceLink.claimLinks ?? []
+        ).map((link) => `  ${formatClaimStatus(link)}`),
       ].join("\n")
     );
   }
@@ -218,16 +224,16 @@ async function main() {
     process.exit(1);
   }
 
-  if (report.rowsSection4Satisfied !== 10) {
+  if (report.rowsSection4Satisfied !== 11) {
     console.error(
-      `\nABORT: expected exactly 10 rows §4 satisfied (Alta + Hammerfest + Sør-Varanger + Porsanger + Karasjok + Kautokeino + Vardø + Nesseby + Tana + Lebesby), got ${report.rowsSection4Satisfied}`
+      `\nABORT: expected exactly 11 rows §4 satisfied (Alta + Hammerfest + Sør-Varanger + Porsanger + Karasjok + Kautokeino + Vardø + Nesseby + Tana + Lebesby + Gamvik), got ${report.rowsSection4Satisfied}`
     );
     process.exit(1);
   }
 
-  if (report.rowsStillBlocked !== report.rowCount - 10) {
+  if (report.rowsStillBlocked !== report.rowCount - 11) {
     console.error(
-      `\nABORT: expected ${report.rowCount - 10} rows still blocked, got ${report.rowsStillBlocked}`
+      `\nABORT: expected ${report.rowCount - 11} rows still blocked, got ${report.rowsStillBlocked}`
     );
     process.exit(1);
   }
@@ -475,6 +481,28 @@ async function main() {
   if (lebesbyBlocked.length !== 0) {
     console.error(
       `\nABORT: Lebesby row should have no blocked claims, got: ${lebesbyBlocked.join(", ")}`
+    );
+    process.exit(1);
+  }
+
+  const gamvikRow = linkedRows.find(
+    (r) => r.entity.deliverySiteLabel === "Gamvik"
+  );
+  if (!gamvikRow) {
+    console.error("\nABORT: Gamvik delivery row missing from manifest");
+    process.exit(1);
+  }
+
+  if (!gamvikRow.evidenceLink.summary.psaEligible) {
+    console.error("\nABORT: Gamvik row should have ROW_SECTION_4_SATISFIED (psaEligible)");
+    process.exit(1);
+  }
+
+  const gamvikBlocked =
+    gamvikRow.evidenceLink.summary.blockedClaimClasses ?? [];
+  if (gamvikBlocked.length !== 0) {
+    console.error(
+      `\nABORT: Gamvik row should have no blocked claims, got: ${gamvikBlocked.join(", ")}`
     );
     process.exit(1);
   }

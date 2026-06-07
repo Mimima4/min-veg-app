@@ -41,6 +41,9 @@ export const DEFAULT_TANA_PILOT_CHARTER_ID =
 export const DEFAULT_LEBESBY_PILOT_CHARTER_ID =
   "MAIN-LOSA-PSA-WRITE-LEBESBY-2026-05-29-01";
 
+export const DEFAULT_GAMVIK_PILOT_CHARTER_ID =
+  "MAIN-LOSA-PSA-WRITE-GAMVIK-2026-05-29-01";
+
 /** Bounded write charter profiles — one row per charter session. */
 export const LOSA_PSA_WRITE_CHARTER_PROFILES = {
   [DEFAULT_ALTA_PILOT_CHARTER_ID]: {
@@ -92,6 +95,11 @@ export const LOSA_PSA_WRITE_CHARTER_PROFILES = {
     deliverySite: "Lebesby",
     vilbliSchoolCode: "8874",
     snapshotLabel: "losa-lebesby-pilot-2026-05-29",
+  },
+  [DEFAULT_GAMVIK_PILOT_CHARTER_ID]: {
+    deliverySite: "Gamvik",
+    vilbliSchoolCode: "203171",
+    snapshotLabel: "losa-gamvik-pilot-2026-05-29",
   },
 };
 

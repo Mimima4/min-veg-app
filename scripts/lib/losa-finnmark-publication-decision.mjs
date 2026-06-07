@@ -95,6 +95,15 @@ export const LOSA_FINNMARK_PUBLICATION_DECISION_INDEX = [
     charterRef: "MAIN-LOSA-PUBLICATION-DECISION-LEBESBY-2026-05-29-01",
     maxRows: 1,
   },
+  {
+    deliverySiteLabel: "Gamvik",
+    scope: "delivery_site_gamvik",
+    countyCode: "56",
+    gate: "P4-LOSA-GAMVIK-PUBLICATION-DECISION",
+    ownerPost: "P4-LOSA-GAMVIK-PUBLICATION-DECISION-post",
+    charterRef: "MAIN-LOSA-PUBLICATION-DECISION-GAMVIK-2026-05-29-01",
+    maxRows: 1,
+  },
 ];
 
 export function hasPublicationDecisionForManifestRow(manifestRow) {
