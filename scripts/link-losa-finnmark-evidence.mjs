@@ -215,6 +215,12 @@ async function main() {
           linkedRows.find((r) => r.entity.deliverySiteLabel === "Gamvik")
             ?.evidenceLink.claimLinks ?? []
         ).map((link) => `  ${formatClaimStatus(link)}`),
+        "",
+        "Berlevåg row (row 12):",
+        ...(
+          linkedRows.find((r) => r.entity.deliverySiteLabel === "Berlevåg")
+            ?.evidenceLink.claimLinks ?? []
+        ).map((link) => `  ${formatClaimStatus(link)}`),
       ].join("\n")
     );
   }
@@ -224,16 +230,16 @@ async function main() {
     process.exit(1);
   }
 
-  if (report.rowsSection4Satisfied !== 11) {
+  if (report.rowsSection4Satisfied !== 12) {
     console.error(
-      `\nABORT: expected exactly 11 rows §4 satisfied (Alta + Hammerfest + Sør-Varanger + Porsanger + Karasjok + Kautokeino + Vardø + Nesseby + Tana + Lebesby + Gamvik), got ${report.rowsSection4Satisfied}`
+      `\nABORT: expected exactly 12 rows §4 satisfied (Alta + Hammerfest + Sør-Varanger + Porsanger + Karasjok + Kautokeino + Vardø + Nesseby + Tana + Lebesby + Gamvik + Berlevåg), got ${report.rowsSection4Satisfied}`
     );
     process.exit(1);
   }
 
-  if (report.rowsStillBlocked !== report.rowCount - 11) {
+  if (report.rowsStillBlocked !== report.rowCount - 12) {
     console.error(
-      `\nABORT: expected ${report.rowCount - 11} rows still blocked, got ${report.rowsStillBlocked}`
+      `\nABORT: expected ${report.rowCount - 12} rows still blocked, got ${report.rowsStillBlocked}`
     );
     process.exit(1);
   }
@@ -503,6 +509,28 @@ async function main() {
   if (gamvikBlocked.length !== 0) {
     console.error(
       `\nABORT: Gamvik row should have no blocked claims, got: ${gamvikBlocked.join(", ")}`
+    );
+    process.exit(1);
+  }
+
+  const berlevagRow = linkedRows.find(
+    (r) => r.entity.deliverySiteLabel === "Berlevåg"
+  );
+  if (!berlevagRow) {
+    console.error("\nABORT: Berlevåg delivery row missing from manifest");
+    process.exit(1);
+  }
+
+  if (!berlevagRow.evidenceLink.summary.psaEligible) {
+    console.error("\nABORT: Berlevåg row should have ROW_SECTION_4_SATISFIED (psaEligible)");
+    process.exit(1);
+  }
+
+  const berlevagBlocked =
+    berlevagRow.evidenceLink.summary.blockedClaimClasses ?? [];
+  if (berlevagBlocked.length !== 0) {
+    console.error(
+      `\nABORT: Berlevåg row should have no blocked claims, got: ${berlevagBlocked.join(", ")}`
     );
     process.exit(1);
   }

@@ -46,9 +46,9 @@
 | Metric | Value |
 |--------|--------|
 | LOSA manifest rows (Finnmark ref) | **18** |
-| Row §4 satisfied | **11** (Alta + Hammerfest + Sør-Varanger + Porsanger + Karasjok + Kautokeino + Vardø + Nesseby + Tana + Lebesby + Gamvik evidence) |
-| PSA LOSA writes | **11** (Alta `5601` + Hammerfest `5603` + Sør-Varanger `5636` + Porsanger `5630` + Karasjok `5612` + Kautokeino `5607` + Vardø `5638` + Nesseby `5622` + Tana `5605` + Lebesby `5614` + Gamvik `5616`) |
-| Route LOSA options | **11** eligible (#3 wired) |
+| Row §4 satisfied | **12** (Alta + Hammerfest + Sør-Varanger + Porsanger + Karasjok + Kautokeino + Vardø + Nesseby + Tana + Lebesby + Gamvik + Berlevåg evidence) |
+| PSA LOSA writes | **12** (Alta `5601` + Hammerfest `5603` + Sør-Varanger `5636` + Porsanger `5630` + Karasjok `5612` + Kautokeino `5607` + Vardø `5638` + Nesseby `5622` + Tana `5605` + Lebesby `5614` + Gamvik `5616` + Berlevåg `5618`) |
+| Route LOSA options | **12** eligible (#3 wired) |
 | Contour B ordinary Finnmark schools | **6** (unchanged) |
 | P06 operational | **CLOSED (partial D)** |
 
@@ -88,7 +88,8 @@
 | Row **9** (Tana) §4 | **COMPLETE** — PSA inserted (`P4-LOSA-PSA-WRITE-TANA-PILOT-post`) |
 | Row **10** (Lebesby) §4 | **COMPLETE** — PSA inserted (`P4-LOSA-PSA-WRITE-LEBESBY-PILOT-post`) |
 | Row **11** (Gamvik) §4 | **COMPLETE** — PSA inserted (`P4-LOSA-PSA-WRITE-GAMVIK-PILOT-post`) |
-| Rows **12–18** §4 closure | **OPEN** — per-kommune gates |
+| Row **12** (Berlevåg) §4 | **COMPLETE** — PSA inserted (`P4-LOSA-PSA-WRITE-BERLEVAG-PILOT-post`) |
+| Rows **13–18** §4 closure | **OPEN** — per-kommune gates |
 | Bulk PSA write | **OPEN** — charter per row/session |
 | `NOT_READY_FOR_APPLY` | **unchanged** |
 

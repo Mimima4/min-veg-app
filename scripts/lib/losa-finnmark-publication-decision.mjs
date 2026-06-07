@@ -104,6 +104,15 @@ export const LOSA_FINNMARK_PUBLICATION_DECISION_INDEX = [
     charterRef: "MAIN-LOSA-PUBLICATION-DECISION-GAMVIK-2026-05-29-01",
     maxRows: 1,
   },
+  {
+    deliverySiteLabel: "Berlevåg",
+    scope: "delivery_site_berlevag",
+    countyCode: "56",
+    gate: "P4-LOSA-BERLEVAG-PUBLICATION-DECISION",
+    ownerPost: "P4-LOSA-BERLEVAG-PUBLICATION-DECISION-post",
+    charterRef: "MAIN-LOSA-PUBLICATION-DECISION-BERLEVAG-2026-05-29-01",
+    maxRows: 1,
+  },
 ];
 
 export function hasPublicationDecisionForManifestRow(manifestRow) {
