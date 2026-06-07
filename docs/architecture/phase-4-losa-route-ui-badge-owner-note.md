@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **IMPLEMENTED (row 17)** — validate on **Vadsø** row **18** |
+| **Status** | **COMPLETE** — validated on **Vadsø** row **18** (18/18 manifest) |
 | **Date (UTC)** | 2026-05-29 |
 | **Pattern reference** | `Privatskole` badge in `route-steps-panel.tsx` |
 

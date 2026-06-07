@@ -46,7 +46,7 @@
 
 ## Recommended next
 
-**Row 18** — Vadsø §4 closure (final manifest row); **1** row remains.
+**Finnmark ref §4** — **18/18 COMPLETE** (Vadsø row 18 inserted). Bulk PSA / `NOT_READY_FOR_APPLY` tail unchanged.
 
 ---
 

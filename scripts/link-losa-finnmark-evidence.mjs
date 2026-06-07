@@ -251,25 +251,33 @@ async function main() {
           linkedRows.find((r) => r.entity.deliverySiteLabel === "Nordkapp")
             ?.evidenceLink.claimLinks ?? []
         ).map((link) => `  ${formatClaimStatus(link)}`),
+        "",
+        "Vadsø row (row 18):",
+        ...(
+          linkedRows.find((r) => r.entity.deliverySiteLabel === "Vadsø")
+            ?.evidenceLink.claimLinks ?? []
+        ).map((link) => `  ${formatClaimStatus(link)}`),
       ].join("\n")
     );
   }
 
-  if (report.allRowsPsaEligible) {
-    console.error("\nABORT: unexpected — all rows PSA-eligible (§4 should stay blocked)");
-    process.exit(1);
-  }
-
-  if (report.rowsSection4Satisfied !== 17) {
+  if (!report.allRowsPsaEligible) {
     console.error(
-      `\nABORT: expected exactly 17 rows §4 satisfied (Alta + Hammerfest + Sør-Varanger + Porsanger + Karasjok + Kautokeino + Vardø + Nesseby + Tana + Lebesby + Gamvik + Berlevåg + Hasvik + Båtsfjord + Loppa + Måsøy + Nordkapp), got ${report.rowsSection4Satisfied}`
+      `\nABORT: expected all ${report.rowCount} Finnmark ref rows §4 satisfied (psaEligible), got ${report.rowsSection4Satisfied}`
     );
     process.exit(1);
   }
 
-  if (report.rowsStillBlocked !== report.rowCount - 17) {
+  if (report.rowsSection4Satisfied !== 18) {
     console.error(
-      `\nABORT: expected ${report.rowCount - 17} rows still blocked, got ${report.rowsStillBlocked}`
+      `\nABORT: expected exactly 18 rows §4 satisfied (full Finnmark ref manifest), got ${report.rowsSection4Satisfied}`
+    );
+    process.exit(1);
+  }
+
+  if (report.rowsStillBlocked !== 0) {
+    console.error(
+      `\nABORT: expected 0 rows still blocked, got ${report.rowsStillBlocked}`
     );
     process.exit(1);
   }
@@ -671,6 +679,28 @@ async function main() {
   if (nordkappBlocked.length !== 0) {
     console.error(
       `\nABORT: Nordkapp row should have no blocked claims, got: ${nordkappBlocked.join(", ")}`
+    );
+    process.exit(1);
+  }
+
+  const vadsoRow = linkedRows.find(
+    (r) => r.entity.deliverySiteLabel === "Vadsø"
+  );
+  if (!vadsoRow) {
+    console.error("\nABORT: Vadsø delivery row missing from manifest");
+    process.exit(1);
+  }
+
+  if (!vadsoRow.evidenceLink.summary.psaEligible) {
+    console.error("\nABORT: Vadsø row should have ROW_SECTION_4_SATISFIED (psaEligible)");
+    process.exit(1);
+  }
+
+  const vadsoBlocked =
+    vadsoRow.evidenceLink.summary.blockedClaimClasses ?? [];
+  if (vadsoBlocked.length !== 0) {
+    console.error(
+      `\nABORT: Vadsø row should have no blocked claims, got: ${vadsoBlocked.join(", ")}`
     );
     process.exit(1);
   }

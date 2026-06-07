@@ -186,6 +186,14 @@ export const LOSA_FINNMARK_CONFIRMED_INDEX = [
     note: "Nordkapp kommune official landing — delivery site for Nordkapp LOSA row only (distinct from provider_nordkapp scope)",
   },
   {
+    sourceId: "T2_KOMMUNE_VADSO_REF",
+    claimClass: "delivery_municipality",
+    tier: "T2",
+    scope: "delivery_site_vadso",
+    ownerPost: "P4-LOSA-CONFIRMED-VADSO-DELIVERY-post",
+    note: "Vadsø kommune official landing — delivery site for Vadsø LOSA row only (distinct from nordkapp.vgs.no provider host)",
+  },
+  {
     sourceId: "T2_SCHOOL_NORDKAPP_VGS_PROGRAM_DEEP",
     claimClass: "programme_stage_availability",
     tier: "T2",
@@ -312,6 +320,14 @@ export const LOSA_FINNMARK_CONFIRMED_INDEX = [
     scope: "delivery_site_nordkapp",
     ownerPost: "P4-LOSA-CONFIRMED-NORDKAPP-PROGRAMME-post",
     note: "Nordkapp VGS utdanningstilbud listing — provider programme for Nordkapp kommune LOSA delivery row",
+  },
+  {
+    sourceId: "T2_SCHOOL_NORDKAPP_VGS_PROGRAM_DEEP",
+    claimClass: "programme_stage_availability",
+    tier: "T2",
+    scope: "delivery_site_vadso",
+    ownerPost: "P4-LOSA-CONFIRMED-VADSO-PROGRAMME-post",
+    note: "Nordkapp VGS utdanningstilbud listing — provider programme for Vadsø LOSA delivery row",
   },
   {
     sourceId: "T1T2_ALTA_LOSA_PUBLICATION_SUPPORT_PACKET",
@@ -585,6 +601,22 @@ export const LOSA_FINNMARK_CONFIRMED_INDEX = [
       "T2_SCHOOL_NORDKAPP_VGS_PROGRAM_DEEP",
     ],
   },
+  {
+    sourceId: "T1T2_VADSO_LOSA_PUBLICATION_SUPPORT_PACKET",
+    claimClass: "publication_supporting_evidence",
+    tier: "T1+T2",
+    scope: "delivery_site_vadso",
+    ownerPost: "P4-LOSA-VADSO-SUPPORTING-EVIDENCE-post",
+    note: "Combined Tier 1+2 packet — never alone; requires Vadsø row Tier 2 closure",
+    componentSourceIds: [
+      "T1_UDIR_FJERNUNDERVISNING_DEEP",
+      "T1_LOVDATA_OPPLARINGSLOVA_14_4_DEEP",
+      "T1_REGJERINGEN_PROP57_FJERN_DEEP",
+      "T2_SCHOOL_NORDKAPP_VGS",
+      "T2_KOMMUNE_VADSO_REF",
+      "T2_SCHOOL_NORDKAPP_VGS_PROGRAM_DEEP",
+    ],
+  },
 ];
 
 /** Component refs for Alta combined supporting-evidence packet (sub-gate 4). */
@@ -656,6 +688,7 @@ export const DELIVERY_SITE_SCOPE_BY_NORMALIZED_LABEL = {
   loppa: "delivery_site_loppa",
   masøy: "delivery_site_masoy",
   nordkapp: "delivery_site_nordkapp",
+  vadsø: "delivery_site_vadso",
 };
 
 export function deliverySiteScopeForLabel(deliverySiteLabel) {

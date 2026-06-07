@@ -20,6 +20,7 @@ import {
   DEFAULT_LOPPA_PILOT_CHARTER_ID,
   DEFAULT_MASOY_PILOT_CHARTER_ID,
   DEFAULT_NORDKAPP_PILOT_CHARTER_ID,
+  DEFAULT_VADSO_PILOT_CHARTER_ID,
   buildResolvedWriteCandidate,
   createServiceSupabase,
   insertLosaPsaRow,
@@ -113,7 +114,8 @@ Known charters:
   ${DEFAULT_BATSFJORD_PILOT_CHARTER_ID}
   ${DEFAULT_LOPPA_PILOT_CHARTER_ID}
   ${DEFAULT_MASOY_PILOT_CHARTER_ID}
-  ${DEFAULT_NORDKAPP_PILOT_CHARTER_ID}`);
+  ${DEFAULT_NORDKAPP_PILOT_CHARTER_ID}
+  ${DEFAULT_VADSO_PILOT_CHARTER_ID}`);
       process.exit(0);
     }
     throw new Error(`Unknown argument: ${token}`);

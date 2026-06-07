@@ -46,9 +46,9 @@
 | Metric | Value |
 |--------|--------|
 | LOSA manifest rows (Finnmark ref) | **18** |
-| Row §4 satisfied | **17** (+ Nordkapp evidence; 16 prior kommuner) |
-| PSA LOSA writes | **17** (+ Nordkapp `5628`) |
-| Route LOSA options | **17** eligible (#3 wired; LOSA UI badge) |
+| Row §4 satisfied | **18/18** (full Finnmark ref manifest) |
+| PSA LOSA writes | **18** (all ref county delivery municipalities) |
+| Route LOSA options | **18** eligible (#3 wired; LOSA UI badge) |
 | Contour B ordinary Finnmark schools | **6** (unchanged) |
 | P06 operational | **CLOSED (partial D)** |
 
@@ -94,7 +94,7 @@
 | Row **15** (Loppa) §4 | **COMPLETE** — PSA inserted (`P4-LOSA-PSA-WRITE-LOPPA-PILOT-post`) |
 | Row **16** (Måsøy) §4 | **COMPLETE** — PSA inserted (`P4-LOSA-PSA-WRITE-MASOY-PILOT-post`) |
 | Row **17** (Nordkapp) §4 | **COMPLETE** — PSA inserted (`P4-LOSA-PSA-WRITE-NORDKAPP-PILOT-post`) + LOSA route badge |
-| Row **18** (Vadsø) §4 | **OPEN** — per-kommune gate |
+| Row **18** (Vadsø) §4 | **COMPLETE** — PSA inserted (`P4-LOSA-PSA-WRITE-VADSO-PILOT-post`); **18/18** closed |
 | Bulk PSA write | **OPEN** — charter per row/session |
 | `NOT_READY_FOR_APPLY` | **unchanged** |
 

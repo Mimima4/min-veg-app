@@ -62,6 +62,9 @@ export const DEFAULT_MASOY_PILOT_CHARTER_ID =
 export const DEFAULT_NORDKAPP_PILOT_CHARTER_ID =
   "MAIN-LOSA-PSA-WRITE-NORDKAPP-2026-05-29-01";
 
+export const DEFAULT_VADSO_PILOT_CHARTER_ID =
+  "MAIN-LOSA-PSA-WRITE-VADSO-2026-05-29-01";
+
 /** Bounded write charter profiles — one row per charter session. */
 export const LOSA_PSA_WRITE_CHARTER_PROFILES = {
   [DEFAULT_ALTA_PILOT_CHARTER_ID]: {
@@ -148,6 +151,11 @@ export const LOSA_PSA_WRITE_CHARTER_PROFILES = {
     deliverySite: "Nordkapp",
     vilbliSchoolCode: "6108474",
     snapshotLabel: "losa-nordkapp-pilot-2026-05-29",
+  },
+  [DEFAULT_VADSO_PILOT_CHARTER_ID]: {
+    deliverySite: "Vadsø",
+    vilbliSchoolCode: "6108480",
+    snapshotLabel: "losa-vadso-pilot-2026-05-29",
   },
 };
 
