@@ -197,6 +197,12 @@ async function main() {
           linkedRows.find((r) => r.entity.deliverySiteLabel === "Nesseby")
             ?.evidenceLink.claimLinks ?? []
         ).map((link) => `  ${formatClaimStatus(link)}`),
+        "",
+        "Tana row (row 9):",
+        ...(
+          linkedRows.find((r) => r.entity.deliverySiteLabel === "Tana")
+            ?.evidenceLink.claimLinks ?? []
+        ).map((link) => `  ${formatClaimStatus(link)}`),
       ].join("\n")
     );
   }
@@ -206,16 +212,16 @@ async function main() {
     process.exit(1);
   }
 
-  if (report.rowsSection4Satisfied !== 8) {
+  if (report.rowsSection4Satisfied !== 9) {
     console.error(
-      `\nABORT: expected exactly 8 rows §4 satisfied (Alta + Hammerfest + Sør-Varanger + Porsanger + Karasjok + Kautokeino + Vardø + Nesseby), got ${report.rowsSection4Satisfied}`
+      `\nABORT: expected exactly 9 rows §4 satisfied (Alta + Hammerfest + Sør-Varanger + Porsanger + Karasjok + Kautokeino + Vardø + Nesseby + Tana), got ${report.rowsSection4Satisfied}`
     );
     process.exit(1);
   }
 
-  if (report.rowsStillBlocked !== report.rowCount - 8) {
+  if (report.rowsStillBlocked !== report.rowCount - 9) {
     console.error(
-      `\nABORT: expected ${report.rowCount - 8} rows still blocked, got ${report.rowsStillBlocked}`
+      `\nABORT: expected ${report.rowCount - 9} rows still blocked, got ${report.rowsStillBlocked}`
     );
     process.exit(1);
   }
@@ -419,6 +425,28 @@ async function main() {
   if (nessebyBlocked.length !== 0) {
     console.error(
       `\nABORT: Nesseby row should have no blocked claims, got: ${nessebyBlocked.join(", ")}`
+    );
+    process.exit(1);
+  }
+
+  const tanaRow = linkedRows.find(
+    (r) => r.entity.deliverySiteLabel === "Tana"
+  );
+  if (!tanaRow) {
+    console.error("\nABORT: Tana delivery row missing from manifest");
+    process.exit(1);
+  }
+
+  if (!tanaRow.evidenceLink.summary.psaEligible) {
+    console.error("\nABORT: Tana row should have ROW_SECTION_4_SATISFIED (psaEligible)");
+    process.exit(1);
+  }
+
+  const tanaBlocked =
+    tanaRow.evidenceLink.summary.blockedClaimClasses ?? [];
+  if (tanaBlocked.length !== 0) {
+    console.error(
+      `\nABORT: Tana row should have no blocked claims, got: ${tanaBlocked.join(", ")}`
     );
     process.exit(1);
   }

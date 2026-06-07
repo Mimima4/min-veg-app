@@ -11,6 +11,7 @@ import {
   DEFAULT_KAUTOKEINO_PILOT_CHARTER_ID,
   DEFAULT_VARDO_PILOT_CHARTER_ID,
   DEFAULT_NESSEBY_PILOT_CHARTER_ID,
+  DEFAULT_TANA_PILOT_CHARTER_ID,
   buildResolvedWriteCandidate,
   createServiceSupabase,
   insertLosaPsaRow,
@@ -95,7 +96,8 @@ Known charters:
   ${DEFAULT_KARASJOK_PILOT_CHARTER_ID}
   ${DEFAULT_KAUTOKEINO_PILOT_CHARTER_ID}
   ${DEFAULT_VARDO_PILOT_CHARTER_ID}
-  ${DEFAULT_NESSEBY_PILOT_CHARTER_ID}`);
+  ${DEFAULT_NESSEBY_PILOT_CHARTER_ID}
+  ${DEFAULT_TANA_PILOT_CHARTER_ID}`);
       process.exit(0);
     }
     throw new Error(`Unknown argument: ${token}`);

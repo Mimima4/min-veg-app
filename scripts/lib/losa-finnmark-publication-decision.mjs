@@ -77,6 +77,15 @@ export const LOSA_FINNMARK_PUBLICATION_DECISION_INDEX = [
     charterRef: "MAIN-LOSA-PUBLICATION-DECISION-NESSEBY-2026-05-29-01",
     maxRows: 1,
   },
+  {
+    deliverySiteLabel: "Tana",
+    scope: "delivery_site_tana",
+    countyCode: "56",
+    gate: "P4-LOSA-TANA-PUBLICATION-DECISION",
+    ownerPost: "P4-LOSA-TANA-PUBLICATION-DECISION-post",
+    charterRef: "MAIN-LOSA-PUBLICATION-DECISION-TANA-2026-05-29-01",
+    maxRows: 1,
+  },
 ];
 
 export function hasPublicationDecisionForManifestRow(manifestRow) {
