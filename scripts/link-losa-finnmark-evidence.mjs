@@ -167,6 +167,12 @@ async function main() {
           linkedRows.find((r) => r.entity.deliverySiteLabel === "Sør-Varanger")
             ?.evidenceLink.claimLinks ?? []
         ).map((link) => `  ${formatClaimStatus(link)}`),
+        "",
+        "Porsanger row (row 4):",
+        ...(
+          linkedRows.find((r) => r.entity.deliverySiteLabel === "Porsanger")
+            ?.evidenceLink.claimLinks ?? []
+        ).map((link) => `  ${formatClaimStatus(link)}`),
       ].join("\n")
     );
   }
@@ -176,16 +182,16 @@ async function main() {
     process.exit(1);
   }
 
-  if (report.rowsSection4Satisfied !== 3) {
+  if (report.rowsSection4Satisfied !== 4) {
     console.error(
-      `\nABORT: expected exactly 3 rows §4 satisfied (Alta + Hammerfest + Sør-Varanger), got ${report.rowsSection4Satisfied}`
+      `\nABORT: expected exactly 4 rows §4 satisfied (Alta + Hammerfest + Sør-Varanger + Porsanger), got ${report.rowsSection4Satisfied}`
     );
     process.exit(1);
   }
 
-  if (report.rowsStillBlocked !== report.rowCount - 3) {
+  if (report.rowsStillBlocked !== report.rowCount - 4) {
     console.error(
-      `\nABORT: expected ${report.rowCount - 3} rows still blocked, got ${report.rowsStillBlocked}`
+      `\nABORT: expected ${report.rowCount - 4} rows still blocked, got ${report.rowsStillBlocked}`
     );
     process.exit(1);
   }
@@ -269,6 +275,38 @@ async function main() {
   if (sorVarangerBlocked.length !== 0) {
     console.error(
       `\nABORT: Sør-Varanger row should have no blocked claims, got: ${sorVarangerBlocked.join(", ")}`
+    );
+    process.exit(1);
+  }
+
+  const porsangerRow = linkedRows.find(
+    (r) => r.entity.deliverySiteLabel === "Porsanger"
+  );
+  if (!porsangerRow) {
+    console.error("\nABORT: Porsanger delivery row missing from manifest");
+    process.exit(1);
+  }
+
+  const porsangerDeliveryLink = porsangerRow.evidenceLink.claimLinks.find(
+    (link) => link.claimClass === "delivery_municipality"
+  );
+  if (porsangerDeliveryLink?.status !== "row_confirmed") {
+    console.error(
+      `\nABORT: Porsanger delivery_municipality should be row_confirmed, got ${porsangerDeliveryLink?.status ?? "missing"}`
+    );
+    process.exit(1);
+  }
+
+  if (!porsangerRow.evidenceLink.summary.psaEligible) {
+    console.error("\nABORT: Porsanger row should have ROW_SECTION_4_SATISFIED (psaEligible)");
+    process.exit(1);
+  }
+
+  const porsangerBlocked =
+    porsangerRow.evidenceLink.summary.blockedClaimClasses ?? [];
+  if (porsangerBlocked.length !== 0) {
+    console.error(
+      `\nABORT: Porsanger row should have no blocked claims, got: ${porsangerBlocked.join(", ")}`
     );
     process.exit(1);
   }

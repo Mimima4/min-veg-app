@@ -32,6 +32,15 @@ export const LOSA_FINNMARK_PUBLICATION_DECISION_INDEX = [
     charterRef: "MAIN-LOSA-PUBLICATION-DECISION-SOR-VARANGER-2026-05-29-01",
     maxRows: 1,
   },
+  {
+    deliverySiteLabel: "Porsanger",
+    scope: "delivery_site_porsanger",
+    countyCode: "56",
+    gate: "P4-LOSA-PORSANGER-PUBLICATION-DECISION",
+    ownerPost: "P4-LOSA-PORSANGER-PUBLICATION-DECISION-post",
+    charterRef: "MAIN-LOSA-PUBLICATION-DECISION-PORSANGER-2026-05-29-01",
+    maxRows: 1,
+  },
 ];
 
 export function hasPublicationDecisionForManifestRow(manifestRow) {
