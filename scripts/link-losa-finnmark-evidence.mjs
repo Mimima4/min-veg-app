@@ -203,6 +203,12 @@ async function main() {
           linkedRows.find((r) => r.entity.deliverySiteLabel === "Tana")
             ?.evidenceLink.claimLinks ?? []
         ).map((link) => `  ${formatClaimStatus(link)}`),
+        "",
+        "Lebesby row (row 10):",
+        ...(
+          linkedRows.find((r) => r.entity.deliverySiteLabel === "Lebesby")
+            ?.evidenceLink.claimLinks ?? []
+        ).map((link) => `  ${formatClaimStatus(link)}`),
       ].join("\n")
     );
   }
@@ -212,16 +218,16 @@ async function main() {
     process.exit(1);
   }
 
-  if (report.rowsSection4Satisfied !== 9) {
+  if (report.rowsSection4Satisfied !== 10) {
     console.error(
-      `\nABORT: expected exactly 9 rows §4 satisfied (Alta + Hammerfest + Sør-Varanger + Porsanger + Karasjok + Kautokeino + Vardø + Nesseby + Tana), got ${report.rowsSection4Satisfied}`
+      `\nABORT: expected exactly 10 rows §4 satisfied (Alta + Hammerfest + Sør-Varanger + Porsanger + Karasjok + Kautokeino + Vardø + Nesseby + Tana + Lebesby), got ${report.rowsSection4Satisfied}`
     );
     process.exit(1);
   }
 
-  if (report.rowsStillBlocked !== report.rowCount - 9) {
+  if (report.rowsStillBlocked !== report.rowCount - 10) {
     console.error(
-      `\nABORT: expected ${report.rowCount - 9} rows still blocked, got ${report.rowsStillBlocked}`
+      `\nABORT: expected ${report.rowCount - 10} rows still blocked, got ${report.rowsStillBlocked}`
     );
     process.exit(1);
   }
@@ -447,6 +453,28 @@ async function main() {
   if (tanaBlocked.length !== 0) {
     console.error(
       `\nABORT: Tana row should have no blocked claims, got: ${tanaBlocked.join(", ")}`
+    );
+    process.exit(1);
+  }
+
+  const lebesbyRow = linkedRows.find(
+    (r) => r.entity.deliverySiteLabel === "Lebesby"
+  );
+  if (!lebesbyRow) {
+    console.error("\nABORT: Lebesby delivery row missing from manifest");
+    process.exit(1);
+  }
+
+  if (!lebesbyRow.evidenceLink.summary.psaEligible) {
+    console.error("\nABORT: Lebesby row should have ROW_SECTION_4_SATISFIED (psaEligible)");
+    process.exit(1);
+  }
+
+  const lebesbyBlocked =
+    lebesbyRow.evidenceLink.summary.blockedClaimClasses ?? [];
+  if (lebesbyBlocked.length !== 0) {
+    console.error(
+      `\nABORT: Lebesby row should have no blocked claims, got: ${lebesbyBlocked.join(", ")}`
     );
     process.exit(1);
   }
