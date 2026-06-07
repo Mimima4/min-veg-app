@@ -19,7 +19,7 @@ import {
 const COUNTY_CODE = "56";
 const DEFAULT_PROFESSION = "electrician";
 const EXPECTED_LOSA_ROW_COUNT = 18;
-const EXPECTED_EMISSION_ALLOWED_COUNT = 15;
+const EXPECTED_EMISSION_ALLOWED_COUNT = 16;
 
 function parseArgs(argv) {
   const args = {

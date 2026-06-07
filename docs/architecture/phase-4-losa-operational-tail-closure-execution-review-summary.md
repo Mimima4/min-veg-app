@@ -46,7 +46,7 @@
 
 ## Recommended next
 
-**Row 16+** — next kommune row §4 closure (per-kommune gate chain); **3** rows remain.
+**Row 17+** — Nordkapp + Vadsø §4 closure (per-kommune gate chain + LOSA UI badge); **2** rows remain.
 
 ---
 

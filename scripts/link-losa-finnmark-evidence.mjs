@@ -239,6 +239,12 @@ async function main() {
           linkedRows.find((r) => r.entity.deliverySiteLabel === "Loppa")
             ?.evidenceLink.claimLinks ?? []
         ).map((link) => `  ${formatClaimStatus(link)}`),
+        "",
+        "Måsøy row (row 16):",
+        ...(
+          linkedRows.find((r) => r.entity.deliverySiteLabel === "Måsøy")
+            ?.evidenceLink.claimLinks ?? []
+        ).map((link) => `  ${formatClaimStatus(link)}`),
       ].join("\n")
     );
   }
@@ -248,16 +254,16 @@ async function main() {
     process.exit(1);
   }
 
-  if (report.rowsSection4Satisfied !== 15) {
+  if (report.rowsSection4Satisfied !== 16) {
     console.error(
-      `\nABORT: expected exactly 15 rows §4 satisfied (Alta + Hammerfest + Sør-Varanger + Porsanger + Karasjok + Kautokeino + Vardø + Nesseby + Tana + Lebesby + Gamvik + Berlevåg + Hasvik + Båtsfjord + Loppa), got ${report.rowsSection4Satisfied}`
+      `\nABORT: expected exactly 16 rows §4 satisfied (Alta + Hammerfest + Sør-Varanger + Porsanger + Karasjok + Kautokeino + Vardø + Nesseby + Tana + Lebesby + Gamvik + Berlevåg + Hasvik + Båtsfjord + Loppa + Måsøy), got ${report.rowsSection4Satisfied}`
     );
     process.exit(1);
   }
 
-  if (report.rowsStillBlocked !== report.rowCount - 15) {
+  if (report.rowsStillBlocked !== report.rowCount - 16) {
     console.error(
-      `\nABORT: expected ${report.rowCount - 15} rows still blocked, got ${report.rowsStillBlocked}`
+      `\nABORT: expected ${report.rowCount - 16} rows still blocked, got ${report.rowsStillBlocked}`
     );
     process.exit(1);
   }
@@ -615,6 +621,28 @@ async function main() {
   if (loppaBlocked.length !== 0) {
     console.error(
       `\nABORT: Loppa row should have no blocked claims, got: ${loppaBlocked.join(", ")}`
+    );
+    process.exit(1);
+  }
+
+  const masoyRow = linkedRows.find(
+    (r) => r.entity.deliverySiteLabel === "Måsøy"
+  );
+  if (!masoyRow) {
+    console.error("\nABORT: Måsøy delivery row missing from manifest");
+    process.exit(1);
+  }
+
+  if (!masoyRow.evidenceLink.summary.psaEligible) {
+    console.error("\nABORT: Måsøy row should have ROW_SECTION_4_SATISFIED (psaEligible)");
+    process.exit(1);
+  }
+
+  const masoyBlocked =
+    masoyRow.evidenceLink.summary.blockedClaimClasses ?? [];
+  if (masoyBlocked.length !== 0) {
+    console.error(
+      `\nABORT: Måsøy row should have no blocked claims, got: ${masoyBlocked.join(", ")}`
     );
     process.exit(1);
   }
