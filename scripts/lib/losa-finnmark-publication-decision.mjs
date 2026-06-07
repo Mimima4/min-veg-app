@@ -23,6 +23,15 @@ export const LOSA_FINNMARK_PUBLICATION_DECISION_INDEX = [
     charterRef: "MAIN-LOSA-PUBLICATION-DECISION-HAMMERFEST-2026-05-29-01",
     maxRows: 1,
   },
+  {
+    deliverySiteLabel: "Sør-Varanger",
+    scope: "delivery_site_sor_varanger",
+    countyCode: "56",
+    gate: "P4-LOSA-SOR-VARANGER-PUBLICATION-DECISION",
+    ownerPost: "P4-LOSA-SOR-VARANGER-PUBLICATION-DECISION-post",
+    charterRef: "MAIN-LOSA-PUBLICATION-DECISION-SOR-VARANGER-2026-05-29-01",
+    maxRows: 1,
+  },
 ];
 
 export function hasPublicationDecisionForManifestRow(manifestRow) {

@@ -46,7 +46,7 @@
 
 ## Recommended next
 
-**Row 2 (Hammerfest)** — sub-gates **1–2** done (delivery + programme CONFIRMED); supporting evidence → publication → write remain open.
+**Row 4+** — next kommune row §4 closure (per-kommune gate chain); **15** rows remain.
 
 ---
 

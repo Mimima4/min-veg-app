@@ -66,12 +66,28 @@ export const LOSA_FINNMARK_CONFIRMED_INDEX = [
     note: "Hammerfest kommune official landing — delivery site for Hammerfest LOSA row only",
   },
   {
+    sourceId: "T2_KOMMUNE_SOR_VARANGER_REF",
+    claimClass: "delivery_municipality",
+    tier: "T2",
+    scope: "delivery_site_sor_varanger",
+    ownerPost: "P4-LOSA-CONFIRMED-SOR-VARANGER-DELIVERY-post",
+    note: "Sør-Varanger kommune official landing — delivery site for Sør-Varanger LOSA row only",
+  },
+  {
     sourceId: "T2_SCHOOL_NORDKAPP_VGS_PROGRAM_DEEP",
     claimClass: "programme_stage_availability",
     tier: "T2",
     scope: "delivery_site_hammerfest",
     ownerPost: "P4-LOSA-CONFIRMED-HAMMERFEST-PROGRAMME-post",
     note: "Nordkapp VGS utdanningstilbud listing — provider programme for Hammerfest LOSA delivery row",
+  },
+  {
+    sourceId: "T2_SCHOOL_NORDKAPP_VGS_PROGRAM_DEEP",
+    claimClass: "programme_stage_availability",
+    tier: "T2",
+    scope: "delivery_site_sor_varanger",
+    ownerPost: "P4-LOSA-CONFIRMED-SOR-VARANGER-PROGRAMME-post",
+    note: "Nordkapp VGS utdanningstilbud listing — provider programme for Sør-Varanger LOSA delivery row",
   },
   {
     sourceId: "T1T2_ALTA_LOSA_PUBLICATION_SUPPORT_PACKET",
@@ -102,6 +118,22 @@ export const LOSA_FINNMARK_CONFIRMED_INDEX = [
       "T1_REGJERINGEN_PROP57_FJERN_DEEP",
       "T2_SCHOOL_NORDKAPP_VGS",
       "T2_KOMMUNE_HAMMERFEST_REF",
+      "T2_SCHOOL_NORDKAPP_VGS_PROGRAM_DEEP",
+    ],
+  },
+  {
+    sourceId: "T1T2_SOR_VARANGER_LOSA_PUBLICATION_SUPPORT_PACKET",
+    claimClass: "publication_supporting_evidence",
+    tier: "T1+T2",
+    scope: "delivery_site_sor_varanger",
+    ownerPost: "P4-LOSA-SOR-VARANGER-SUPPORTING-EVIDENCE-post",
+    note: "Combined Tier 1+2 packet — never alone; requires Sør-Varanger row Tier 2 closure",
+    componentSourceIds: [
+      "T1_UDIR_FJERNUNDERVISNING_DEEP",
+      "T1_LOVDATA_OPPLARINGSLOVA_14_4_DEEP",
+      "T1_REGJERINGEN_PROP57_FJERN_DEEP",
+      "T2_SCHOOL_NORDKAPP_VGS",
+      "T2_KOMMUNE_SOR_VARANGER_REF",
       "T2_SCHOOL_NORDKAPP_VGS_PROGRAM_DEEP",
     ],
   },
@@ -161,6 +193,7 @@ export function isNordkappProviderLabel(providerLabel) {
 export const DELIVERY_SITE_SCOPE_BY_NORMALIZED_LABEL = {
   alta: "delivery_site_alta",
   hammerfest: "delivery_site_hammerfest",
+  "sør-varanger": "delivery_site_sor_varanger",
 };
 
 export function deliverySiteScopeForLabel(deliverySiteLabel) {
@@ -174,4 +207,10 @@ export function isAltaDeliverySite(deliverySiteLabel) {
 
 export function isHammerfestDeliverySite(deliverySiteLabel) {
   return normalizeDeliverySiteLabel(deliverySiteLabel) === "hammerfest";
+}
+
+export function isSorVarangerDeliverySite(deliverySiteLabel) {
+  return (
+    deliverySiteScopeForLabel(deliverySiteLabel) === "delivery_site_sor_varanger"
+  );
 }

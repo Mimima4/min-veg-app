@@ -5,6 +5,7 @@
 import {
   DEFAULT_ALTA_PILOT_CHARTER_ID,
   DEFAULT_HAMMERFEST_PILOT_CHARTER_ID,
+  DEFAULT_SOR_VARANGER_PILOT_CHARTER_ID,
   buildResolvedWriteCandidate,
   createServiceSupabase,
   insertLosaPsaRow,
@@ -83,7 +84,8 @@ Options:
 
 Known charters:
   ${DEFAULT_ALTA_PILOT_CHARTER_ID}
-  ${DEFAULT_HAMMERFEST_PILOT_CHARTER_ID}`);
+  ${DEFAULT_HAMMERFEST_PILOT_CHARTER_ID}
+  ${DEFAULT_SOR_VARANGER_PILOT_CHARTER_ID}`);
       process.exit(0);
     }
     throw new Error(`Unknown argument: ${token}`);
