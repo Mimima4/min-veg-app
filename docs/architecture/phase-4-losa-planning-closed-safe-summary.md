@@ -46,9 +46,9 @@
 | Metric | Value |
 |--------|--------|
 | LOSA manifest rows (Finnmark ref) | **18** |
-| Row §4 satisfied | **16** (Alta + Hammerfest + Sør-Varanger + Porsanger + Karasjok + Kautokeino + Vardø + Nesseby + Tana + Lebesby + Gamvik + Berlevåg + Hasvik + Båtsfjord + Loppa + Måsøy evidence) |
-| PSA LOSA writes | **16** (Alta `5601` + Hammerfest `5603` + Sør-Varanger `5636` + Porsanger `5630` + Karasjok `5612` + Kautokeino `5607` + Vardø `5638` + Nesseby `5622` + Tana `5605` + Lebesby `5614` + Gamvik `5616` + Berlevåg `5618` + Hasvik `5624` + Båtsfjord `5620` + Loppa `5634` + Måsøy `5626`) |
-| Route LOSA options | **16** eligible (#3 wired) |
+| Row §4 satisfied | **17** (+ Nordkapp evidence; 16 prior kommuner) |
+| PSA LOSA writes | **17** (+ Nordkapp `5628`) |
+| Route LOSA options | **17** eligible (#3 wired; LOSA UI badge) |
 | Contour B ordinary Finnmark schools | **6** (unchanged) |
 | P06 operational | **CLOSED (partial D)** |
 
@@ -93,7 +93,8 @@
 | Row **14** (Båtsfjord) §4 | **COMPLETE** — PSA inserted (`P4-LOSA-PSA-WRITE-BATSFJORD-PILOT-post`) |
 | Row **15** (Loppa) §4 | **COMPLETE** — PSA inserted (`P4-LOSA-PSA-WRITE-LOPPA-PILOT-post`) |
 | Row **16** (Måsøy) §4 | **COMPLETE** — PSA inserted (`P4-LOSA-PSA-WRITE-MASOY-PILOT-post`) |
-| Rows **17–18** §4 closure | **OPEN** — per-kommune gates (Nordkapp + Vadsø — UI badge revisit) |
+| Row **17** (Nordkapp) §4 | **COMPLETE** — PSA inserted (`P4-LOSA-PSA-WRITE-NORDKAPP-PILOT-post`) + LOSA route badge |
+| Row **18** (Vadsø) §4 | **OPEN** — per-kommune gate |
 | Bulk PSA write | **OPEN** — charter per row/session |
 | `NOT_READY_FOR_APPLY` | **unchanged** |
 

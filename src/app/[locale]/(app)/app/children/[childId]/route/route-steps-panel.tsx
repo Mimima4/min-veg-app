@@ -8,6 +8,11 @@ import type {
   StudyRouteSnapshotStep,
 } from "@/lib/routes/route-types";
 import type { StudyRouteStep } from "@/lib/routes/route-step-types";
+import {
+  isLosaAvailabilityScope,
+  LOSA_ROUTE_BADGE_LABEL,
+  LOSA_ROUTE_BADGE_TITLE,
+} from "@/lib/losa/availability-scope";
 import SaveRouteButton from "./[routeId]/save-route-button";
 
 function isRouteSnapshotPayloadStep(
@@ -74,6 +79,13 @@ const PRIVATE_SCHOOL_BADGE_CLASSES = {
     "inline-flex shrink-0 rounded-full border border-orange-300 bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-900",
 };
 
+const LOSA_BADGE_CLASSES = {
+  default:
+    "inline-flex shrink-0 rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-800",
+  onDarkSelectedRow:
+    "inline-flex shrink-0 rounded-full border border-sky-300 bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-950",
+};
+
 export default function RouteStepsPanel({
   childId,
   routeId,
@@ -98,7 +110,19 @@ export default function RouteStepsPanel({
     fromPayload: boolean;
     meta: string | null;
     institutionIsPrivateSchool: boolean;
+    isLosaDelivery: boolean;
   };
+
+  const renderLosaBadge = (isSelectedRow: boolean) => (
+    <span
+      className={
+        isSelectedRow ? LOSA_BADGE_CLASSES.onDarkSelectedRow : LOSA_BADGE_CLASSES.default
+      }
+      title={LOSA_ROUTE_BADGE_TITLE}
+    >
+      {LOSA_ROUTE_BADGE_LABEL}
+    </span>
+  );
 
   useEffect(() => {
     const onPointerDown = (event: MouseEvent) => {
@@ -128,6 +152,7 @@ export default function RouteStepsPanel({
         fromPayload: true,
         meta: option.verification_status,
         institutionIsPrivateSchool: option.institution_is_private_school === true,
+        isLosaDelivery: isLosaAvailabilityScope(option.option_kind),
       }));
       if (mapped.length > 0) return mapped;
       return [
@@ -142,6 +167,7 @@ export default function RouteStepsPanel({
           fromPayload: false,
           meta: null,
           institutionIsPrivateSchool: false,
+          isLosaDelivery: false,
         },
       ];
     }
@@ -161,6 +187,7 @@ export default function RouteStepsPanel({
             ? `${option.outcome_profession_ids.length} outcomes`
             : null,
         institutionIsPrivateSchool: false,
+        isLosaDelivery: false,
       }));
       if (mapped.length > 0) return mapped;
       return [
@@ -175,6 +202,7 @@ export default function RouteStepsPanel({
           fromPayload: false,
           meta: null,
           institutionIsPrivateSchool: false,
+          isLosaDelivery: false,
         },
       ];
     }
@@ -191,6 +219,7 @@ export default function RouteStepsPanel({
         fromPayload: false,
         meta: null,
         institutionIsPrivateSchool: false,
+        isLosaDelivery: false,
       },
     ];
   };
@@ -384,14 +413,20 @@ export default function RouteStepsPanel({
                               )}
 
                               {step.type === "programme_selection" &&
-                              selectedOption.institutionIsPrivateSchool ? (
-                                <div className="pt-0.5">
-                                  <span
-                                    className={PRIVATE_SCHOOL_BADGE_CLASSES.default}
-                                    title="Privat videregående skole"
-                                  >
-                                    Privatskole
-                                  </span>
+                              (selectedOption.isLosaDelivery ||
+                                selectedOption.institutionIsPrivateSchool) ? (
+                                <div className="flex flex-wrap gap-2 pt-0.5">
+                                  {selectedOption.isLosaDelivery
+                                    ? renderLosaBadge(false)
+                                    : null}
+                                  {selectedOption.institutionIsPrivateSchool ? (
+                                    <span
+                                      className={PRIVATE_SCHOOL_BADGE_CLASSES.default}
+                                      title="Privat videregående skole"
+                                    >
+                                      Privatskole
+                                    </span>
+                                  ) : null}
                                 </div>
                               ) : null}
 
@@ -440,20 +475,29 @@ export default function RouteStepsPanel({
                                 }`}
                               >
                                 <span className="min-w-0 flex-1 break-words">
-                                  {option.schoolName}
-                                </span>
-                                {option.institutionIsPrivateSchool ? (
-                                  <span
-                                    className={
-                                      option.id === selectedOption.id
-                                        ? PRIVATE_SCHOOL_BADGE_CLASSES.onDarkSelectedRow
-                                        : PRIVATE_SCHOOL_BADGE_CLASSES.default
-                                    }
-                                    title="Privat videregående skole"
-                                  >
-                                    Privatskole
+                                  <span className="block">
+                                    {option.isLosaDelivery && option.location
+                                      ? `${option.schoolName} · ${option.location}`
+                                      : option.schoolName}
                                   </span>
-                                ) : null}
+                                </span>
+                                <span className="flex shrink-0 flex-wrap items-center justify-end gap-1">
+                                  {option.isLosaDelivery
+                                    ? renderLosaBadge(option.id === selectedOption.id)
+                                    : null}
+                                  {option.institutionIsPrivateSchool ? (
+                                    <span
+                                      className={
+                                        option.id === selectedOption.id
+                                          ? PRIVATE_SCHOOL_BADGE_CLASSES.onDarkSelectedRow
+                                          : PRIVATE_SCHOOL_BADGE_CLASSES.default
+                                      }
+                                      title="Privat videregående skole"
+                                    >
+                                      Privatskole
+                                    </span>
+                                  ) : null}
+                                </span>
                               </button>
                             ))}
                           </div>

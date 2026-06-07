@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **DEFERRED** — implement when closing **Nordkapp** + **Vadsø** manifest rows |
+| **Status** | **IMPLEMENTED (row 17)** — validate on **Vadsø** row **18** |
 | **Date (UTC)** | 2026-05-29 |
 | **Pattern reference** | `Privatskole` badge in `route-steps-panel.tsx` |
 

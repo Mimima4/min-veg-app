@@ -50,14 +50,16 @@ export function parseLosaPsaNotes(notes: string | null | undefined): LosaPsaNote
   }
 }
 
+/** Provider school label only — delivery kommune is shown separately; LOSA via route UI badge. */
 export function buildLosaOptionDisplayTitle(params: {
   providerLabel: string | null | undefined;
-  deliverySiteLabel: string | null | undefined;
+  deliverySiteLabel?: string | null | undefined;
 }): string | null {
   const provider = String(params.providerLabel ?? "").trim();
-  const delivery = String(params.deliverySiteLabel ?? "").trim();
-  if (provider && delivery) {
-    return `${provider} – LOSA ${delivery}`;
-  }
-  return provider || delivery || null;
+  return provider || null;
 }
+
+export const LOSA_ROUTE_BADGE_LABEL = "LOSA" as const;
+
+export const LOSA_ROUTE_BADGE_TITLE =
+  "Lokal opplæringsordning / fjernundervisning" as const;

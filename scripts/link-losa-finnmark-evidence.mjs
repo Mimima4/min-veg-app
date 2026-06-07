@@ -245,6 +245,12 @@ async function main() {
           linkedRows.find((r) => r.entity.deliverySiteLabel === "Måsøy")
             ?.evidenceLink.claimLinks ?? []
         ).map((link) => `  ${formatClaimStatus(link)}`),
+        "",
+        "Nordkapp row (row 17):",
+        ...(
+          linkedRows.find((r) => r.entity.deliverySiteLabel === "Nordkapp")
+            ?.evidenceLink.claimLinks ?? []
+        ).map((link) => `  ${formatClaimStatus(link)}`),
       ].join("\n")
     );
   }
@@ -254,16 +260,16 @@ async function main() {
     process.exit(1);
   }
 
-  if (report.rowsSection4Satisfied !== 16) {
+  if (report.rowsSection4Satisfied !== 17) {
     console.error(
-      `\nABORT: expected exactly 16 rows §4 satisfied (Alta + Hammerfest + Sør-Varanger + Porsanger + Karasjok + Kautokeino + Vardø + Nesseby + Tana + Lebesby + Gamvik + Berlevåg + Hasvik + Båtsfjord + Loppa + Måsøy), got ${report.rowsSection4Satisfied}`
+      `\nABORT: expected exactly 17 rows §4 satisfied (Alta + Hammerfest + Sør-Varanger + Porsanger + Karasjok + Kautokeino + Vardø + Nesseby + Tana + Lebesby + Gamvik + Berlevåg + Hasvik + Båtsfjord + Loppa + Måsøy + Nordkapp), got ${report.rowsSection4Satisfied}`
     );
     process.exit(1);
   }
 
-  if (report.rowsStillBlocked !== report.rowCount - 16) {
+  if (report.rowsStillBlocked !== report.rowCount - 17) {
     console.error(
-      `\nABORT: expected ${report.rowCount - 16} rows still blocked, got ${report.rowsStillBlocked}`
+      `\nABORT: expected ${report.rowCount - 17} rows still blocked, got ${report.rowsStillBlocked}`
     );
     process.exit(1);
   }
@@ -643,6 +649,28 @@ async function main() {
   if (masoyBlocked.length !== 0) {
     console.error(
       `\nABORT: Måsøy row should have no blocked claims, got: ${masoyBlocked.join(", ")}`
+    );
+    process.exit(1);
+  }
+
+  const nordkappRow = linkedRows.find(
+    (r) => r.entity.deliverySiteLabel === "Nordkapp"
+  );
+  if (!nordkappRow) {
+    console.error("\nABORT: Nordkapp delivery row missing from manifest");
+    process.exit(1);
+  }
+
+  if (!nordkappRow.evidenceLink.summary.psaEligible) {
+    console.error("\nABORT: Nordkapp row should have ROW_SECTION_4_SATISFIED (psaEligible)");
+    process.exit(1);
+  }
+
+  const nordkappBlocked =
+    nordkappRow.evidenceLink.summary.blockedClaimClasses ?? [];
+  if (nordkappBlocked.length !== 0) {
+    console.error(
+      `\nABORT: Nordkapp row should have no blocked claims, got: ${nordkappBlocked.join(", ")}`
     );
     process.exit(1);
   }

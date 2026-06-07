@@ -46,7 +46,7 @@
 
 ## Recommended next
 
-**Row 17+** — Nordkapp + Vadsø §4 closure (per-kommune gate chain + LOSA UI badge); **2** rows remain.
+**Row 18** — Vadsø §4 closure (final manifest row); **1** row remains.
 
 ---
 

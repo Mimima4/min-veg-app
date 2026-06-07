@@ -149,6 +149,15 @@ export const LOSA_FINNMARK_PUBLICATION_DECISION_INDEX = [
     charterRef: "MAIN-LOSA-PUBLICATION-DECISION-MASOY-2026-05-29-01",
     maxRows: 1,
   },
+  {
+    deliverySiteLabel: "Nordkapp",
+    scope: "delivery_site_nordkapp",
+    countyCode: "56",
+    gate: "P4-LOSA-NORDKAPP-PUBLICATION-DECISION",
+    ownerPost: "P4-LOSA-NORDKAPP-PUBLICATION-DECISION-post",
+    charterRef: "MAIN-LOSA-PUBLICATION-DECISION-NORDKAPP-2026-05-29-01",
+    maxRows: 1,
+  },
 ];
 
 export function hasPublicationDecisionForManifestRow(manifestRow) {
