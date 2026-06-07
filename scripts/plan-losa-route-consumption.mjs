@@ -23,7 +23,7 @@ function parseArgs(argv) {
     county: DEFAULT_COUNTY,
     htmlFile: null,
     json: false,
-    expectRouteEligible: 14,
+    expectRouteEligible: 15,
   };
 
   for (let i = 2; i < argv.length; i += 1) {

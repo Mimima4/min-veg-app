@@ -131,6 +131,15 @@ export const LOSA_FINNMARK_PUBLICATION_DECISION_INDEX = [
     charterRef: "MAIN-LOSA-PUBLICATION-DECISION-BATSFJORD-2026-05-29-01",
     maxRows: 1,
   },
+  {
+    deliverySiteLabel: "Loppa",
+    scope: "delivery_site_loppa",
+    countyCode: "56",
+    gate: "P4-LOSA-LOPPA-PUBLICATION-DECISION",
+    ownerPost: "P4-LOSA-LOPPA-PUBLICATION-DECISION-post",
+    charterRef: "MAIN-LOSA-PUBLICATION-DECISION-LOPPA-2026-05-29-01",
+    maxRows: 1,
+  },
 ];
 
 export function hasPublicationDecisionForManifestRow(manifestRow) {

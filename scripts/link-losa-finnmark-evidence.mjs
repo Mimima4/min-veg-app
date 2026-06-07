@@ -233,6 +233,12 @@ async function main() {
           linkedRows.find((r) => r.entity.deliverySiteLabel === "Båtsfjord")
             ?.evidenceLink.claimLinks ?? []
         ).map((link) => `  ${formatClaimStatus(link)}`),
+        "",
+        "Loppa row (row 15):",
+        ...(
+          linkedRows.find((r) => r.entity.deliverySiteLabel === "Loppa")
+            ?.evidenceLink.claimLinks ?? []
+        ).map((link) => `  ${formatClaimStatus(link)}`),
       ].join("\n")
     );
   }
@@ -242,16 +248,16 @@ async function main() {
     process.exit(1);
   }
 
-  if (report.rowsSection4Satisfied !== 14) {
+  if (report.rowsSection4Satisfied !== 15) {
     console.error(
-      `\nABORT: expected exactly 14 rows §4 satisfied (Alta + Hammerfest + Sør-Varanger + Porsanger + Karasjok + Kautokeino + Vardø + Nesseby + Tana + Lebesby + Gamvik + Berlevåg + Hasvik + Båtsfjord), got ${report.rowsSection4Satisfied}`
+      `\nABORT: expected exactly 15 rows §4 satisfied (Alta + Hammerfest + Sør-Varanger + Porsanger + Karasjok + Kautokeino + Vardø + Nesseby + Tana + Lebesby + Gamvik + Berlevåg + Hasvik + Båtsfjord + Loppa), got ${report.rowsSection4Satisfied}`
     );
     process.exit(1);
   }
 
-  if (report.rowsStillBlocked !== report.rowCount - 14) {
+  if (report.rowsStillBlocked !== report.rowCount - 15) {
     console.error(
-      `\nABORT: expected ${report.rowCount - 14} rows still blocked, got ${report.rowsStillBlocked}`
+      `\nABORT: expected ${report.rowCount - 15} rows still blocked, got ${report.rowsStillBlocked}`
     );
     process.exit(1);
   }
@@ -587,6 +593,28 @@ async function main() {
   if (batsfjordBlocked.length !== 0) {
     console.error(
       `\nABORT: Båtsfjord row should have no blocked claims, got: ${batsfjordBlocked.join(", ")}`
+    );
+    process.exit(1);
+  }
+
+  const loppaRow = linkedRows.find(
+    (r) => r.entity.deliverySiteLabel === "Loppa"
+  );
+  if (!loppaRow) {
+    console.error("\nABORT: Loppa delivery row missing from manifest");
+    process.exit(1);
+  }
+
+  if (!loppaRow.evidenceLink.summary.psaEligible) {
+    console.error("\nABORT: Loppa row should have ROW_SECTION_4_SATISFIED (psaEligible)");
+    process.exit(1);
+  }
+
+  const loppaBlocked =
+    loppaRow.evidenceLink.summary.blockedClaimClasses ?? [];
+  if (loppaBlocked.length !== 0) {
+    console.error(
+      `\nABORT: Loppa row should have no blocked claims, got: ${loppaBlocked.join(", ")}`
     );
     process.exit(1);
   }
