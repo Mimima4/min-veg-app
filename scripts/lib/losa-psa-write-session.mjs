@@ -23,6 +23,9 @@ export const DEFAULT_SOR_VARANGER_PILOT_CHARTER_ID =
 export const DEFAULT_PORSANGER_PILOT_CHARTER_ID =
   "MAIN-LOSA-PSA-WRITE-PORSANGER-2026-05-29-01";
 
+export const DEFAULT_KARASJOK_PILOT_CHARTER_ID =
+  "MAIN-LOSA-PSA-WRITE-KARASJOK-2026-05-29-01";
+
 /** Bounded write charter profiles — one row per charter session. */
 export const LOSA_PSA_WRITE_CHARTER_PROFILES = {
   [DEFAULT_ALTA_PILOT_CHARTER_ID]: {
@@ -44,6 +47,11 @@ export const LOSA_PSA_WRITE_CHARTER_PROFILES = {
     deliverySite: "Porsanger",
     vilbliSchoolCode: "6108475",
     snapshotLabel: "losa-porsanger-pilot-2026-05-29",
+  },
+  [DEFAULT_KARASJOK_PILOT_CHARTER_ID]: {
+    deliverySite: "Karasjok",
+    vilbliSchoolCode: "6108476",
+    snapshotLabel: "losa-karasjok-pilot-2026-05-29",
   },
 };
 

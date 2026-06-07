@@ -173,6 +173,12 @@ async function main() {
           linkedRows.find((r) => r.entity.deliverySiteLabel === "Porsanger")
             ?.evidenceLink.claimLinks ?? []
         ).map((link) => `  ${formatClaimStatus(link)}`),
+        "",
+        "Karasjok row (row 5):",
+        ...(
+          linkedRows.find((r) => r.entity.deliverySiteLabel === "Karasjok")
+            ?.evidenceLink.claimLinks ?? []
+        ).map((link) => `  ${formatClaimStatus(link)}`),
       ].join("\n")
     );
   }
@@ -182,16 +188,16 @@ async function main() {
     process.exit(1);
   }
 
-  if (report.rowsSection4Satisfied !== 4) {
+  if (report.rowsSection4Satisfied !== 5) {
     console.error(
-      `\nABORT: expected exactly 4 rows §4 satisfied (Alta + Hammerfest + Sør-Varanger + Porsanger), got ${report.rowsSection4Satisfied}`
+      `\nABORT: expected exactly 5 rows §4 satisfied (Alta + Hammerfest + Sør-Varanger + Porsanger + Karasjok), got ${report.rowsSection4Satisfied}`
     );
     process.exit(1);
   }
 
-  if (report.rowsStillBlocked !== report.rowCount - 4) {
+  if (report.rowsStillBlocked !== report.rowCount - 5) {
     console.error(
-      `\nABORT: expected ${report.rowCount - 4} rows still blocked, got ${report.rowsStillBlocked}`
+      `\nABORT: expected ${report.rowCount - 5} rows still blocked, got ${report.rowsStillBlocked}`
     );
     process.exit(1);
   }
@@ -307,6 +313,28 @@ async function main() {
   if (porsangerBlocked.length !== 0) {
     console.error(
       `\nABORT: Porsanger row should have no blocked claims, got: ${porsangerBlocked.join(", ")}`
+    );
+    process.exit(1);
+  }
+
+  const karasjokRow = linkedRows.find(
+    (r) => r.entity.deliverySiteLabel === "Karasjok"
+  );
+  if (!karasjokRow) {
+    console.error("\nABORT: Karasjok delivery row missing from manifest");
+    process.exit(1);
+  }
+
+  if (!karasjokRow.evidenceLink.summary.psaEligible) {
+    console.error("\nABORT: Karasjok row should have ROW_SECTION_4_SATISFIED (psaEligible)");
+    process.exit(1);
+  }
+
+  const karasjokBlocked =
+    karasjokRow.evidenceLink.summary.blockedClaimClasses ?? [];
+  if (karasjokBlocked.length !== 0) {
+    console.error(
+      `\nABORT: Karasjok row should have no blocked claims, got: ${karasjokBlocked.join(", ")}`
     );
     process.exit(1);
   }

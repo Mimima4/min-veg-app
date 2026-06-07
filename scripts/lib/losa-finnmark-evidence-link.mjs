@@ -209,7 +209,9 @@ export function assessClaimClassEvidenceLink(manifestRow, claimClass) {
                     ? "P4-LOSA-SOR-VARANGER-PROGRAMME-FULL"
                     : deliveryScope === "delivery_site_porsanger"
                       ? "P4-LOSA-PORSANGER-PROGRAMME-FULL"
-                      : confirmed[0]?.ownerPost ?? "programme-full-closure";
+                      : deliveryScope === "delivery_site_karasjok"
+                        ? "P4-LOSA-KARASJOK-PROGRAMME-FULL"
+                        : confirmed[0]?.ownerPost ?? "programme-full-closure";
             return {
               claimClass,
               status: "row_confirmed",

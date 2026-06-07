@@ -46,9 +46,9 @@
 | Metric | Value |
 |--------|--------|
 | LOSA manifest rows (Finnmark ref) | **18** |
-| Row §4 satisfied | **4** (Alta + Hammerfest + Sør-Varanger + Porsanger evidence) |
-| PSA LOSA writes | **4** (Alta `5601` + Hammerfest `5603` + Sør-Varanger `5636` + Porsanger `5630`) |
-| Route LOSA options | **4** eligible (#3 wired) |
+| Row §4 satisfied | **5** (Alta + Hammerfest + Sør-Varanger + Porsanger + Karasjok evidence) |
+| PSA LOSA writes | **5** (Alta `5601` + Hammerfest `5603` + Sør-Varanger `5636` + Porsanger `5630` + Karasjok `5612`) |
+| Route LOSA options | **5** eligible (#3 wired) |
 | Contour B ordinary Finnmark schools | **6** (unchanged) |
 | P06 operational | **CLOSED (partial D)** |
 
@@ -81,7 +81,8 @@
 | Row **2** (Hammerfest) §4 | **COMPLETE** — PSA inserted (`P4-LOSA-PSA-WRITE-HAMMERFEST-PILOT-post`) |
 | Row **3** (Sør-Varanger) §4 | **COMPLETE** — PSA inserted (`P4-LOSA-PSA-WRITE-SOR-VARANGER-PILOT-post`) |
 | Row **4** (Porsanger) §4 | **COMPLETE** — PSA inserted (`P4-LOSA-PSA-WRITE-PORSANGER-PILOT-post`) |
-| Rows **5–18** §4 closure | **OPEN** — per-kommune gates |
+| Row **5** (Karasjok) §4 | **COMPLETE** — PSA inserted (`P4-LOSA-PSA-WRITE-KARASJOK-PILOT-post`) |
+| Rows **6–18** §4 closure | **OPEN** — per-kommune gates |
 | Bulk PSA write | **OPEN** — charter per row/session |
 | `NOT_READY_FOR_APPLY` | **unchanged** |
 

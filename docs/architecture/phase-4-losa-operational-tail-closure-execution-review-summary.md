@@ -46,7 +46,7 @@
 
 ## Recommended next
 
-**Row 5+** — next kommune row §4 closure (per-kommune gate chain); **14** rows remain.
+**Row 6+** — next kommune row §4 closure (per-kommune gate chain); **13** rows remain.
 
 ---
 

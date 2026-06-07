@@ -41,6 +41,15 @@ export const LOSA_FINNMARK_PUBLICATION_DECISION_INDEX = [
     charterRef: "MAIN-LOSA-PUBLICATION-DECISION-PORSANGER-2026-05-29-01",
     maxRows: 1,
   },
+  {
+    deliverySiteLabel: "Karasjok",
+    scope: "delivery_site_karasjok",
+    countyCode: "56",
+    gate: "P4-LOSA-KARASJOK-PUBLICATION-DECISION",
+    ownerPost: "P4-LOSA-KARASJOK-PUBLICATION-DECISION-post",
+    charterRef: "MAIN-LOSA-PUBLICATION-DECISION-KARASJOK-2026-05-29-01",
+    maxRows: 1,
+  },
 ];
 
 export function hasPublicationDecisionForManifestRow(manifestRow) {
