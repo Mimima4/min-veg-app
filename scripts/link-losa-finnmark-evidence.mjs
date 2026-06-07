@@ -179,6 +179,12 @@ async function main() {
           linkedRows.find((r) => r.entity.deliverySiteLabel === "Karasjok")
             ?.evidenceLink.claimLinks ?? []
         ).map((link) => `  ${formatClaimStatus(link)}`),
+        "",
+        "Kautokeino row (row 6):",
+        ...(
+          linkedRows.find((r) => r.entity.deliverySiteLabel === "Kautokeino")
+            ?.evidenceLink.claimLinks ?? []
+        ).map((link) => `  ${formatClaimStatus(link)}`),
       ].join("\n")
     );
   }
@@ -188,16 +194,16 @@ async function main() {
     process.exit(1);
   }
 
-  if (report.rowsSection4Satisfied !== 5) {
+  if (report.rowsSection4Satisfied !== 6) {
     console.error(
-      `\nABORT: expected exactly 5 rows §4 satisfied (Alta + Hammerfest + Sør-Varanger + Porsanger + Karasjok), got ${report.rowsSection4Satisfied}`
+      `\nABORT: expected exactly 6 rows §4 satisfied (Alta + Hammerfest + Sør-Varanger + Porsanger + Karasjok + Kautokeino), got ${report.rowsSection4Satisfied}`
     );
     process.exit(1);
   }
 
-  if (report.rowsStillBlocked !== report.rowCount - 5) {
+  if (report.rowsStillBlocked !== report.rowCount - 6) {
     console.error(
-      `\nABORT: expected ${report.rowCount - 5} rows still blocked, got ${report.rowsStillBlocked}`
+      `\nABORT: expected ${report.rowCount - 6} rows still blocked, got ${report.rowsStillBlocked}`
     );
     process.exit(1);
   }
@@ -335,6 +341,28 @@ async function main() {
   if (karasjokBlocked.length !== 0) {
     console.error(
       `\nABORT: Karasjok row should have no blocked claims, got: ${karasjokBlocked.join(", ")}`
+    );
+    process.exit(1);
+  }
+
+  const kautokeinoRow = linkedRows.find(
+    (r) => r.entity.deliverySiteLabel === "Kautokeino"
+  );
+  if (!kautokeinoRow) {
+    console.error("\nABORT: Kautokeino delivery row missing from manifest");
+    process.exit(1);
+  }
+
+  if (!kautokeinoRow.evidenceLink.summary.psaEligible) {
+    console.error("\nABORT: Kautokeino row should have ROW_SECTION_4_SATISFIED (psaEligible)");
+    process.exit(1);
+  }
+
+  const kautokeinoBlocked =
+    kautokeinoRow.evidenceLink.summary.blockedClaimClasses ?? [];
+  if (kautokeinoBlocked.length !== 0) {
+    console.error(
+      `\nABORT: Kautokeino row should have no blocked claims, got: ${kautokeinoBlocked.join(", ")}`
     );
     process.exit(1);
   }

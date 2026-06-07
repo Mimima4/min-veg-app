@@ -50,6 +50,15 @@ export const LOSA_FINNMARK_PUBLICATION_DECISION_INDEX = [
     charterRef: "MAIN-LOSA-PUBLICATION-DECISION-KARASJOK-2026-05-29-01",
     maxRows: 1,
   },
+  {
+    deliverySiteLabel: "Kautokeino",
+    scope: "delivery_site_kautokeino",
+    countyCode: "56",
+    gate: "P4-LOSA-KAUTOKEINO-PUBLICATION-DECISION",
+    ownerPost: "P4-LOSA-KAUTOKEINO-PUBLICATION-DECISION-post",
+    charterRef: "MAIN-LOSA-PUBLICATION-DECISION-KAUTOKEINO-2026-05-29-01",
+    maxRows: 1,
+  },
 ];
 
 export function hasPublicationDecisionForManifestRow(manifestRow) {
