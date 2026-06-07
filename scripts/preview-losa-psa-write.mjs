@@ -16,7 +16,7 @@ import { assessLosaPsaSchemaReadiness } from "./lib/losa-psa-schema.mjs";
 
 const DEFAULT_COUNTY = "56";
 const DEFAULT_PROFESSION = "electrician";
-const DEFAULT_EXPECT_WRITE_COUNT = 13;
+const DEFAULT_EXPECT_WRITE_COUNT = 14;
 
 function parseArgs(argv) {
   const args = {

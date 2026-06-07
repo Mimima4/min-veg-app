@@ -50,6 +50,9 @@ export const DEFAULT_BERLEVAG_PILOT_CHARTER_ID =
 export const DEFAULT_HASVIK_PILOT_CHARTER_ID =
   "MAIN-LOSA-PSA-WRITE-HASVIK-2026-05-29-01";
 
+export const DEFAULT_BATSFJORD_PILOT_CHARTER_ID =
+  "MAIN-LOSA-PSA-WRITE-BATSFJORD-2026-05-29-01";
+
 /** Bounded write charter profiles — one row per charter session. */
 export const LOSA_PSA_WRITE_CHARTER_PROFILES = {
   [DEFAULT_ALTA_PILOT_CHARTER_ID]: {
@@ -116,6 +119,11 @@ export const LOSA_PSA_WRITE_CHARTER_PROFILES = {
     deliverySite: "Hasvik",
     vilbliSchoolCode: "8873",
     snapshotLabel: "losa-hasvik-pilot-2026-05-29",
+  },
+  [DEFAULT_BATSFJORD_PILOT_CHARTER_ID]: {
+    deliverySite: "Båtsfjord",
+    vilbliSchoolCode: "908779",
+    snapshotLabel: "losa-batsfjord-pilot-2026-05-29",
   },
 };
 

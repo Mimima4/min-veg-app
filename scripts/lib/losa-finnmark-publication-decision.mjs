@@ -122,6 +122,15 @@ export const LOSA_FINNMARK_PUBLICATION_DECISION_INDEX = [
     charterRef: "MAIN-LOSA-PUBLICATION-DECISION-HASVIK-2026-05-29-01",
     maxRows: 1,
   },
+  {
+    deliverySiteLabel: "Båtsfjord",
+    scope: "delivery_site_batsfjord",
+    countyCode: "56",
+    gate: "P4-LOSA-BATSFJORD-PUBLICATION-DECISION",
+    ownerPost: "P4-LOSA-BATSFJORD-PUBLICATION-DECISION-post",
+    charterRef: "MAIN-LOSA-PUBLICATION-DECISION-BATSFJORD-2026-05-29-01",
+    maxRows: 1,
+  },
 ];
 
 export function hasPublicationDecisionForManifestRow(manifestRow) {

@@ -227,6 +227,12 @@ async function main() {
           linkedRows.find((r) => r.entity.deliverySiteLabel === "Hasvik")
             ?.evidenceLink.claimLinks ?? []
         ).map((link) => `  ${formatClaimStatus(link)}`),
+        "",
+        "Båtsfjord row (row 14):",
+        ...(
+          linkedRows.find((r) => r.entity.deliverySiteLabel === "Båtsfjord")
+            ?.evidenceLink.claimLinks ?? []
+        ).map((link) => `  ${formatClaimStatus(link)}`),
       ].join("\n")
     );
   }
@@ -236,16 +242,16 @@ async function main() {
     process.exit(1);
   }
 
-  if (report.rowsSection4Satisfied !== 13) {
+  if (report.rowsSection4Satisfied !== 14) {
     console.error(
-      `\nABORT: expected exactly 13 rows §4 satisfied (Alta + Hammerfest + Sør-Varanger + Porsanger + Karasjok + Kautokeino + Vardø + Nesseby + Tana + Lebesby + Gamvik + Berlevåg + Hasvik), got ${report.rowsSection4Satisfied}`
+      `\nABORT: expected exactly 14 rows §4 satisfied (Alta + Hammerfest + Sør-Varanger + Porsanger + Karasjok + Kautokeino + Vardø + Nesseby + Tana + Lebesby + Gamvik + Berlevåg + Hasvik + Båtsfjord), got ${report.rowsSection4Satisfied}`
     );
     process.exit(1);
   }
 
-  if (report.rowsStillBlocked !== report.rowCount - 13) {
+  if (report.rowsStillBlocked !== report.rowCount - 14) {
     console.error(
-      `\nABORT: expected ${report.rowCount - 13} rows still blocked, got ${report.rowsStillBlocked}`
+      `\nABORT: expected ${report.rowCount - 14} rows still blocked, got ${report.rowsStillBlocked}`
     );
     process.exit(1);
   }
@@ -559,6 +565,28 @@ async function main() {
   if (hasvikBlocked.length !== 0) {
     console.error(
       `\nABORT: Hasvik row should have no blocked claims, got: ${hasvikBlocked.join(", ")}`
+    );
+    process.exit(1);
+  }
+
+  const batsfjordRow = linkedRows.find(
+    (r) => r.entity.deliverySiteLabel === "Båtsfjord"
+  );
+  if (!batsfjordRow) {
+    console.error("\nABORT: Båtsfjord delivery row missing from manifest");
+    process.exit(1);
+  }
+
+  if (!batsfjordRow.evidenceLink.summary.psaEligible) {
+    console.error("\nABORT: Båtsfjord row should have ROW_SECTION_4_SATISFIED (psaEligible)");
+    process.exit(1);
+  }
+
+  const batsfjordBlocked =
+    batsfjordRow.evidenceLink.summary.blockedClaimClasses ?? [];
+  if (batsfjordBlocked.length !== 0) {
+    console.error(
+      `\nABORT: Båtsfjord row should have no blocked claims, got: ${batsfjordBlocked.join(", ")}`
     );
     process.exit(1);
   }
