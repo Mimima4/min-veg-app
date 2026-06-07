@@ -221,6 +221,12 @@ async function main() {
           linkedRows.find((r) => r.entity.deliverySiteLabel === "Berlevåg")
             ?.evidenceLink.claimLinks ?? []
         ).map((link) => `  ${formatClaimStatus(link)}`),
+        "",
+        "Hasvik row (row 13):",
+        ...(
+          linkedRows.find((r) => r.entity.deliverySiteLabel === "Hasvik")
+            ?.evidenceLink.claimLinks ?? []
+        ).map((link) => `  ${formatClaimStatus(link)}`),
       ].join("\n")
     );
   }
@@ -230,16 +236,16 @@ async function main() {
     process.exit(1);
   }
 
-  if (report.rowsSection4Satisfied !== 12) {
+  if (report.rowsSection4Satisfied !== 13) {
     console.error(
-      `\nABORT: expected exactly 12 rows §4 satisfied (Alta + Hammerfest + Sør-Varanger + Porsanger + Karasjok + Kautokeino + Vardø + Nesseby + Tana + Lebesby + Gamvik + Berlevåg), got ${report.rowsSection4Satisfied}`
+      `\nABORT: expected exactly 13 rows §4 satisfied (Alta + Hammerfest + Sør-Varanger + Porsanger + Karasjok + Kautokeino + Vardø + Nesseby + Tana + Lebesby + Gamvik + Berlevåg + Hasvik), got ${report.rowsSection4Satisfied}`
     );
     process.exit(1);
   }
 
-  if (report.rowsStillBlocked !== report.rowCount - 12) {
+  if (report.rowsStillBlocked !== report.rowCount - 13) {
     console.error(
-      `\nABORT: expected ${report.rowCount - 12} rows still blocked, got ${report.rowsStillBlocked}`
+      `\nABORT: expected ${report.rowCount - 13} rows still blocked, got ${report.rowsStillBlocked}`
     );
     process.exit(1);
   }
@@ -531,6 +537,28 @@ async function main() {
   if (berlevagBlocked.length !== 0) {
     console.error(
       `\nABORT: Berlevåg row should have no blocked claims, got: ${berlevagBlocked.join(", ")}`
+    );
+    process.exit(1);
+  }
+
+  const hasvikRow = linkedRows.find(
+    (r) => r.entity.deliverySiteLabel === "Hasvik"
+  );
+  if (!hasvikRow) {
+    console.error("\nABORT: Hasvik delivery row missing from manifest");
+    process.exit(1);
+  }
+
+  if (!hasvikRow.evidenceLink.summary.psaEligible) {
+    console.error("\nABORT: Hasvik row should have ROW_SECTION_4_SATISFIED (psaEligible)");
+    process.exit(1);
+  }
+
+  const hasvikBlocked =
+    hasvikRow.evidenceLink.summary.blockedClaimClasses ?? [];
+  if (hasvikBlocked.length !== 0) {
+    console.error(
+      `\nABORT: Hasvik row should have no blocked claims, got: ${hasvikBlocked.join(", ")}`
     );
     process.exit(1);
   }

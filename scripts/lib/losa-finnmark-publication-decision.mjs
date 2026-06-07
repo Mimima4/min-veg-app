@@ -113,6 +113,15 @@ export const LOSA_FINNMARK_PUBLICATION_DECISION_INDEX = [
     charterRef: "MAIN-LOSA-PUBLICATION-DECISION-BERLEVAG-2026-05-29-01",
     maxRows: 1,
   },
+  {
+    deliverySiteLabel: "Hasvik",
+    scope: "delivery_site_hasvik",
+    countyCode: "56",
+    gate: "P4-LOSA-HASVIK-PUBLICATION-DECISION",
+    ownerPost: "P4-LOSA-HASVIK-PUBLICATION-DECISION-post",
+    charterRef: "MAIN-LOSA-PUBLICATION-DECISION-HASVIK-2026-05-29-01",
+    maxRows: 1,
+  },
 ];
 
 export function hasPublicationDecisionForManifestRow(manifestRow) {

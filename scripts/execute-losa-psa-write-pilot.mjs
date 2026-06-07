@@ -15,6 +15,7 @@ import {
   DEFAULT_LEBESBY_PILOT_CHARTER_ID,
   DEFAULT_GAMVIK_PILOT_CHARTER_ID,
   DEFAULT_BERLEVAG_PILOT_CHARTER_ID,
+  DEFAULT_HASVIK_PILOT_CHARTER_ID,
   buildResolvedWriteCandidate,
   createServiceSupabase,
   insertLosaPsaRow,
@@ -103,7 +104,8 @@ Known charters:
   ${DEFAULT_TANA_PILOT_CHARTER_ID}
   ${DEFAULT_LEBESBY_PILOT_CHARTER_ID}
   ${DEFAULT_GAMVIK_PILOT_CHARTER_ID}
-  ${DEFAULT_BERLEVAG_PILOT_CHARTER_ID}`);
+  ${DEFAULT_BERLEVAG_PILOT_CHARTER_ID}
+  ${DEFAULT_HASVIK_PILOT_CHARTER_ID}`);
       process.exit(0);
     }
     throw new Error(`Unknown argument: ${token}`);
