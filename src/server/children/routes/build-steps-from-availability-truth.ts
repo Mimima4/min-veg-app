@@ -403,7 +403,34 @@ export function buildStepsFromAvailabilityTruth(params: {
     allPathVariants: params.pathVariants ?? [],
     professionSlug: params.professionSlug,
   });
-  const buildApprenticeshipOptions = (sourceOutcomeUrl: string | null) => {
+  const buildApprenticeshipOptionsFromKolonne3 = (
+    branchOptions: Array<{
+      optionId: string;
+      optionTitle: string;
+      sourceOutcomeUrl?: string | null;
+    }>
+  ) => {
+    return branchOptions.map((branch) => {
+      const scopedOutcomes = (params.navOutcomes ?? []).filter((outcome) => {
+        if (!branch.sourceOutcomeUrl) return false;
+        return outcome.sourceOutcome.sourceOutcomeUrl === branch.sourceOutcomeUrl;
+      });
+      const outcomeProfessionIds = scopedOutcomes.map((outcome) => {
+        const title = outcome.sourceOutcome.vilbliTitle || "outcome";
+        return `review-${title
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "")}`;
+      });
+      return {
+        option_id: branch.optionId,
+        option_title: branch.optionTitle,
+        outcome_profession_ids: outcomeProfessionIds,
+      };
+    });
+  };
+
+  const buildApprenticeshipOptionsFromYrkerUrl = (sourceOutcomeUrl: string | null) => {
     const scopedOutcomes = (params.navOutcomes ?? []).filter((outcome) => {
       if (!sourceOutcomeUrl) return false;
       return outcome.sourceOutcome.sourceOutcomeUrl === sourceOutcomeUrl;
@@ -526,6 +553,13 @@ export function buildStepsFromAvailabilityTruth(params: {
         continue;
       }
 
+      const kolonne3BranchOptions =
+        node.branchOptions && node.branchOptions.length > 0 ? node.branchOptions : null;
+      const apprenticeshipOptions = kolonne3BranchOptions
+        ? buildApprenticeshipOptionsFromKolonne3(kolonne3BranchOptions)
+        : buildApprenticeshipOptionsFromYrkerUrl(
+            resolvedApprenticeshipSourceOutcomeUrl ?? node.sourceOutcomeUrl ?? null
+          );
       steps.push({
         type: "apprenticeship_step",
         title: node.title,
@@ -533,9 +567,7 @@ export function buildStepsFromAvailabilityTruth(params: {
         education_level: "apprenticeship",
         fit_band: "strong",
         program_slug: null,
-        apprenticeship_options: buildApprenticeshipOptions(
-          resolvedApprenticeshipSourceOutcomeUrl ?? node.sourceOutcomeUrl ?? null
-        ),
+        apprenticeship_options: apprenticeshipOptions,
         current_profession_slug: params.professionSlug,
         source: "availability_truth",
         source_outcome_url:

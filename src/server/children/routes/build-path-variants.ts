@@ -21,6 +21,12 @@ export type PathVariantNode =
       type: "apprenticeship_step";
       title: string;
       sourceOutcomeUrl?: string | null;
+      /** Kolonne-3 bedrift fag from the active VG1→VG2 programme chain (per fylke). */
+      branchOptions?: Array<{
+        optionId: string;
+        optionTitle: string;
+        sourceOutcomeUrl?: string | null;
+      }>;
     };
 
 export type PathVariant = {
@@ -262,16 +268,22 @@ function resolveApprenticeshipOutcomeUrl(params: {
   vg3BranchOptions: Array<{ optionTitle: string; sourceOutcomeUrl: string }>;
   branchSkolerUrl: string | null;
   directYrkerUrl: string | null;
-  useBroadYrkerFirst: boolean;
 }): string | null {
-  if (params.useBroadYrkerFirst && params.directYrkerUrl) {
-    return params.directYrkerUrl;
-  }
   const fromPreferredBranch = params.vg3BranchOptions[0]?.sourceOutcomeUrl ?? null;
   const fromBranchSkoler = params.branchSkolerUrl
     ? toYrkerUrlFromSkolerUrl(params.branchSkolerUrl)
     : null;
   return fromPreferredBranch ?? fromBranchSkoler ?? params.directYrkerUrl;
+}
+
+function mapKolonne3BranchOptions(
+  vg3BranchOptions: Array<{ optionTitle: string; sourceOutcomeUrl: string }>
+): Array<{ optionId: string; optionTitle: string; sourceOutcomeUrl: string }> {
+  return vg3BranchOptions.map((option) => ({
+    optionId: `kolonne3-${slugify(option.optionTitle)}`,
+    optionTitle: option.optionTitle,
+    sourceOutcomeUrl: option.sourceOutcomeUrl,
+  }));
 }
 
 export async function buildPathVariants(
@@ -318,11 +330,12 @@ export async function buildPathVariants(
     sourceUrl,
     branchConfig,
   });
+  const kolonne3BranchOptions =
+    vg3BranchOptions.length > 0 ? mapKolonne3BranchOptions(vg3BranchOptions) : undefined;
   const apprenticeshipOutcomeUrl = resolveApprenticeshipOutcomeUrl({
     vg3BranchOptions,
     branchSkolerUrl,
     directYrkerUrl,
-    useBroadYrkerFirst: branchConfig?.preferVg3OptionOrdering === false,
   });
 
   const orderedStages = stages
@@ -345,7 +358,8 @@ export async function buildPathVariants(
     ? {
         type: "apprenticeship_step",
         title: apprenticeshipLabel!,
-        sourceOutcomeUrl: apprenticeshipOutcomeUrl,
+        sourceOutcomeUrl: kolonne3BranchOptions ? null : apprenticeshipOutcomeUrl,
+        branchOptions: kolonne3BranchOptions,
       }
     : null;
 
@@ -362,8 +376,8 @@ export async function buildPathVariants(
         title: "VG3 eller opplæring i bedrift",
         programSlug: null,
         programTitle: null,
-        options: vg3BranchOptions.map((option) => ({
-          optionId: `vg3-${slugify(option.optionTitle)}`,
+        options: (kolonne3BranchOptions ?? []).map((option) => ({
+          optionId: option.optionId,
           optionTitle: option.optionTitle,
           sourceOutcomeUrl: option.sourceOutcomeUrl,
         })),
@@ -406,14 +420,18 @@ export async function buildPathVariants(
   const outcomes: VilbliOutcomeProfession[] = [];
   const outcomeUrls = Array.from(
     new Set(
-      variants
-        .flatMap((variant) => variant.nodes)
-        .filter(
-          (node): node is Extract<PathVariantNode, { type: "apprenticeship_step" }> =>
-            node.type === "apprenticeship_step"
-        )
-        .map((node) => node.sourceOutcomeUrl)
-        .filter((value): value is string => Boolean(value))
+      kolonne3BranchOptions && kolonne3BranchOptions.length > 0
+        ? kolonne3BranchOptions
+            .map((option) => option.sourceOutcomeUrl)
+            .filter((value): value is string => Boolean(value))
+        : variants
+            .flatMap((variant) => variant.nodes)
+            .filter(
+              (node): node is Extract<PathVariantNode, { type: "apprenticeship_step" }> =>
+                node.type === "apprenticeship_step"
+            )
+            .map((node) => node.sourceOutcomeUrl)
+            .filter((value): value is string => Boolean(value))
     )
   );
   for (const outcomeUrl of outcomeUrls) {
