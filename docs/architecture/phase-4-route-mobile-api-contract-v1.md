@@ -62,8 +62,6 @@ Mutations may use `updated` (full `StudyRouteReadModel`) and/or `result` (ids/st
 **Stable error codes** (`src/server/children/routes/route-errors.ts`):  
 `invalid_request`, `route_not_found`, `profession_not_saved_for_child`, `route_access_denied`, `route_readonly_state`, `route_recompute_failed`, `route_variant_conflict`, `route_recompute_pending`, `internal_error`.
 
-**Note:** `get-study-route-alternatives` and `get-study-route-available-professions` currently map failures to `internal_error` only — mobile should treat unknown errors as retryable.
-
 ---
 
 ## 4. Endpoints
@@ -179,7 +177,7 @@ Mobile must build keys from **current** `steps[]` indices returned by `get-study
 | Mobile can use same endpoints as web | **PASS** |
 | LOSA option ids stable for save/reload | **PASS** — documented in §6 |
 | Read model parity API vs RSC | **PASS** — shared `getStudyRouteDetail` |
-| Alternatives / available-professions error shape | **WARN** — use generic `internal_error`; consider aligning to `toRouteErrorResponse` later (non-blocking) |
+| Alternatives / available-professions error shape | **PASS** — `toRouteErrorResponse` (aligned 2026-06-10) |
 | Institute / higher-ed routes | **OUT OF SCOPE** — separate contract when contour exists |
 
 ---

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getStudyRouteAlternatives } from "@/server/children/routes/get-study-route-alternatives";
+import { toRouteErrorResponse } from "@/server/children/routes/route-errors";
 
 export async function POST(req: Request) {
   try {
@@ -26,13 +27,7 @@ export async function POST(req: Request) {
         generatedAt: new Date().toISOString(),
       },
     });
-  } catch (error: any) {
-    return NextResponse.json({
-      ok: false,
-      error: {
-        code: "internal_error",
-        message: error.message ?? "Unknown error",
-      },
-    });
+  } catch (error) {
+    return NextResponse.json(toRouteErrorResponse(error));
   }
 }
