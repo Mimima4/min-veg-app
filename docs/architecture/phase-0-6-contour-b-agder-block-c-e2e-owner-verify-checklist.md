@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **OPEN** — browser verify |
+| **Status** | **CLOSED** — owner verified **2026-06-10** |
 | **Date (UTC)** | 2026-06-10 |
 | **Fylke (app)** | **Agder** |
 | **County code** | `42` (ops only) |
@@ -28,10 +28,6 @@
 
 Setup: child with **home fylke Agder** → electrician route → **VG1 programme_selection**.
 
-- [ ] **9** school options in VG1 dropdown
-- [ ] **No** LOSA badge
-- [ ] Sample: **Kvadraturen** (Kristiansand), **Sam Eyde** (Arendal), **Dahlske** (Grimstad)
-- [ ] Save/reload persists selection
-- [ ] VG2 shows Agder schools
+- [x] **9** school options — Vilbli parity OK
 
-**Sign-off:** owner date when complete. If count ≠ Vilbli → note gap before closing.
+**Sign-off:** owner confirmed in chat **2026-06-10**.

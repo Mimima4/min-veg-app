@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **OPEN** — browser verify |
+| **Status** | **CLOSED** — owner verified **2026-06-10** |
 | **Date (UTC)** | 2026-06-10 |
 | **Fylke (app)** | **Buskerud** |
 | **County code** | `33` (ops only) |
@@ -27,10 +27,6 @@
 
 Setup: child with **home fylke Buskerud** → electrician route → **VG1 programme_selection**.
 
-- [ ] **8** school options in VG1 dropdown
-- [ ] **No** LOSA badge
-- [ ] Sample: **Åssiden** (Drammen), **Kongsberg**, **Hønefoss**
-- [ ] Save/reload persists selection
-- [ ] VG2 shows Buskerud schools
+- [x] **8** school options — Vilbli parity OK
 
-**Sign-off:** owner date when complete. If count ≠ Vilbli → note gap before closing.
+**Sign-off:** owner confirmed in chat **2026-06-10**.

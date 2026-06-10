@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **ACTIVE** — Akershus **CLOSED**; batch **OPEN** |
+| **Status** | **NEAR CLOSED** — **6/7** signed; **Telemark** re-verify after Nome relay |
 | **Date (UTC)** | 2026-06-10 |
 | **Profession** | `electrician` |
 | **Contour** | **B** partial (non-green fylke) |
@@ -16,12 +16,12 @@ Formal Block C browser proof for Contour B fylke already ingested in **2026-06-0
 | Fylke (app label) | County code | VG1 schools (PSA) | Checklist | Status |
 |-------------------|-------------|-------------------|-----------|--------|
 | **Akershus** | `32` | **12** | `phase-0-6-contour-b-akershus-32-block-c-e2e-owner-verify-checklist.md` | **CLOSED** 2026-06-10 |
-| **Østfold** | `31` | **5** | `phase-0-6-contour-b-ostfold-block-c-e2e-owner-verify-checklist.md` | OPEN |
-| **Buskerud** | `33` | **8** | `phase-0-6-contour-b-buskerud-block-c-e2e-owner-verify-checklist.md` | OPEN |
-| **Innlandet** | `34` | **11** | `phase-0-6-contour-b-innlandet-block-c-e2e-owner-verify-checklist.md` | OPEN |
-| **Vestfold** | `39` | **5** | `phase-0-6-contour-b-vestfold-block-c-e2e-owner-verify-checklist.md` | OPEN |
-| **Telemark** | `40` | **4** | `phase-0-6-contour-b-telemark-block-c-e2e-owner-verify-checklist.md` | OPEN |
-| **Agder** | `42` | **9** | `phase-0-6-contour-b-agder-block-c-e2e-owner-verify-checklist.md` | OPEN |
+| **Østfold** | `31` | **5** | `phase-0-6-contour-b-ostfold-block-c-e2e-owner-verify-checklist.md` | **CLOSED** 2026-06-10 |
+| **Buskerud** | `33` | **8** | `phase-0-6-contour-b-buskerud-block-c-e2e-owner-verify-checklist.md` | **CLOSED** 2026-06-10 |
+| **Innlandet** | `34` | **11** | `phase-0-6-contour-b-innlandet-block-c-e2e-owner-verify-checklist.md` | **CLOSED** 2026-06-10 |
+| **Vestfold** | `39` | **5** | `phase-0-6-contour-b-vestfold-block-c-e2e-owner-verify-checklist.md` | **CLOSED** 2026-06-10 |
+| **Telemark** | `40` | **5** | `phase-0-6-contour-b-telemark-block-c-e2e-owner-verify-checklist.md` | **RE-VERIFY** (Nome relay) |
+| **Agder** | `42` | **9** | `phase-0-6-contour-b-agder-block-c-e2e-owner-verify-checklist.md` | **CLOSED** 2026-06-10 |
 
 **Not in batch:** green Contour A fylke (**Oslo, Rogaland, Vestland, Trøndelag**); pilots **Møre og Romsdal, Nordland, Troms, Finnmark** (already Block C proven).
 
@@ -35,6 +35,11 @@ Formal Block C browser proof for Contour B fylke already ingested in **2026-06-0
 
 ---
 
-## Akershus lesson (2026-06-10)
+## Relay gap lessons (2026-06-10)
 
-Vilbli **12** vs app **11** → missing **Ås videregående skole** until county `32` production re-relay (matcher ` AS` vs municipality **Ås**). Re-check Vilbli strukturkart if counts diverge.
+| Fylke | Vilbli vs app | Missing school | Fix |
+|-------|---------------|----------------|-----|
+| **Akershus** | 12 vs 11 | **Ås videregående skole** | re-relay `32` (matcher ` AS` vs **Ås**) |
+| **Telemark** | 5 vs 4 | **Nome videregående skole** | re-relay `40` |
+
+Re-check Vilbli strukturkart if counts diverge after batch relay.

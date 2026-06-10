@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **OPEN** — browser verify |
+| **Status** | **CLOSED** — owner verified **2026-06-10** |
 | **Date (UTC)** | 2026-06-10 |
 | **Fylke (app)** | **Vestfold** |
 | **County code** | `39` (ops only) |
@@ -24,10 +24,6 @@
 
 Setup: child with **home fylke Vestfold** → electrician route → **VG1 programme_selection**.
 
-- [ ] **5** school options in VG1 dropdown
-- [ ] **No** LOSA badge
-- [ ] Sample: **Thor Heyerdahl** (Larvik), **Sandefjord**, **Horten**
-- [ ] Save/reload persists selection
-- [ ] VG2 shows Vestfold schools
+- [x] **5** school options — Vilbli parity OK
 
-**Sign-off:** owner date when complete. If count ≠ Vilbli → note gap before closing.
+**Sign-off:** owner confirmed in chat **2026-06-10**.

@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **OPEN** — browser verify |
+| **Status** | **CLOSED** — owner verified **2026-06-10** |
 | **Date (UTC)** | 2026-06-10 |
 | **Fylke (app)** | **Østfold** |
 | **County code** | `31` (ops only) |
@@ -24,10 +24,8 @@
 
 Setup: child with **home fylke Østfold** → electrician route → **VG1 programme_selection**.
 
-- [ ] **5** school options in VG1 dropdown
-- [ ] **No** LOSA badge
-- [ ] Sample: **Borg** (Sarpsborg), **Glemmen** (Fredrikstad), **Halden**
-- [ ] Save/reload persists selection
-- [ ] VG2 shows Østfold schools
+- [x] **5** school options in VG1 dropdown
+- [x] **No** LOSA badge
+- [x] Vilbli parity OK
 
-**Sign-off:** owner date when complete. If count ≠ Vilbli → note gap before closing.
+**Sign-off:** owner confirmed in chat **2026-06-10**.

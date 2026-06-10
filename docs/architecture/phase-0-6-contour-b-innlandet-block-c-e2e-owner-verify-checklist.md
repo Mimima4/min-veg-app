@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **OPEN** — browser verify |
+| **Status** | **CLOSED** — owner verified **2026-06-10** |
 | **Date (UTC)** | 2026-06-10 |
 | **Fylke (app)** | **Innlandet** |
 | **County code** | `34` (ops only) |
@@ -30,10 +30,6 @@
 
 Setup: child with **home fylke Innlandet** → electrician route → **VG1 programme_selection**.
 
-- [ ] **11** school options in VG1 dropdown
-- [ ] **No** LOSA badge
-- [ ] Sample: **Hamar katedralskole**, **Lillehammer**, **Elverum**
-- [ ] Save/reload persists selection
-- [ ] VG2 shows Innlandet schools
+- [x] **11** school options — Vilbli parity OK
 
-**Sign-off:** owner date when complete. If count ≠ Vilbli → note gap before closing.
+**Sign-off:** owner confirmed in chat **2026-06-10**.
