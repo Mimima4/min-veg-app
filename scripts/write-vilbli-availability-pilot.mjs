@@ -1,4 +1,10 @@
+// RETIRED 2026-06-10 — legacy Oslo programme rows deactivated (batch 2 cleanup).
+// See docs/architecture/phase-0-6-p06-electrician-legacy-vgs-cleanup-charter.md
+
 import { createClient } from "@supabase/supabase-js";
+
+const RETIRED =
+  "write-vilbli-availability-pilot.mjs is retired; legacy electrician-vg1-elektro-oslo contour was deactivated.";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -179,7 +185,5 @@ async function run() {
   console.log("Done");
 }
 
-run().catch((error) => {
-  console.error("Write pilot failed:", error.message);
-  process.exit(1);
-});
+console.error(RETIRED);
+process.exit(1);

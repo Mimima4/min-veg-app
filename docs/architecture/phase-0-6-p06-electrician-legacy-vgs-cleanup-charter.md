@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **BATCH 1 DONE** (2026-06-10) — batch 2 pending owner OK |
+| **Status** | **COMPLETE** (batch 1 + 2, 2026-06-10) |
 | **Date (UTC)** | 2026-06-10 |
 | **Trigger** | Production audit: fake `mv-*` VGS + legacy Oslo/Bergen seeds still in DB while Vilbli/PSA truth covers all 15 fylke for `electrician` |
 | **Out of scope** | Legacy **higher-ed** contour (`doctor`, `software-developer`, `financial-analyst`); Git history |
@@ -52,7 +52,9 @@ Runtime boundary in `apply-route-selection-boundary.ts` already **hides** legacy
 | L-07 | `videregaende-bergen-electrical` | `electrician-vg2-elenergi-bergen` | 46 | Superseded by Vilbli/PSA Vestland truth |
 | L-08 | `fagskolen-oslo-technical` | `electrician-fagskole-technical-oslo` | 03 | Fagskole placeholder; not Vilbli VGS contour |
 
-**Seeds:** `scripts/sql/education-program-vg2-elenergi-oslo-seed.sql` (Oslo VG2 sibling); Oslo VG1 / Bergen / fagskole from earlier pilot seeds.
+**Deactivation:** `scripts/sql/deactivate-electrician-legacy-vgs-batch2.sql` — applied production 2026-06-10
+
+**Out of scope (kept active):** `electrician-vg2-elenergi-oslo` — orphan catalogue slug for historical Vilbli pilot (`institution_id` null); not a fake school row.
 
 ### Counterfactual (do not delete)
 
@@ -149,9 +151,11 @@ After data cleanup verified:
 
 - [x] Inventory L-01 … L-05 deactivated in production (2026-06-10).
 - [x] Zero active `mv-*` institutions or programs in DB (2026-06-10).
-- [ ] Inventory L-06 … L-08 deactivated in production.
-- [ ] Electrician legacy VGS seeds archived or removed from `scripts/sql/`.
-- [ ] Smoke + spot-check route E2E signed by owner.
+- [x] Inventory L-06 … L-08 deactivated in production (2026-06-10).
+- [x] Zero active legacy VGS `profession_program_links` for electrician (2026-06-10).
+- [x] Batch 1 seed archived; batch 2 had no standalone SQL seeds in repo.
+- [x] Smoke regression PASS (2026-06-10).
+- [ ] Spot-check route E2E per affected fylke (03, 46) — owner optional.
 - [ ] P06 safe summary updated with cleanup completion date.
 
 ---
@@ -161,5 +165,5 @@ After data cleanup verified:
 | Batch | Scope | Owner OK | Date |
 |-------|-------|----------|------|
 | 1 | L-01 … L-05 (`mv-*`) | **OK** | 2026-06-10 |
-| 2 | L-06 … L-08 (Oslo/Bergen/fagskole) | _pending_ | |
+| 2 | L-06 … L-08 (Oslo/Bergen/fagskole) | **OK** | 2026-06-10 |
 | 3 | Optional boundary/comment tidy | _pending_ | |

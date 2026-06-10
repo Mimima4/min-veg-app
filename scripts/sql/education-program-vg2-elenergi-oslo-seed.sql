@@ -1,5 +1,6 @@
 -- Min Veg
--- Seed: ensure VG2 Elenergi og ekom - Oslo exists in education_programs
+-- Seed: ensure VG2 Elenergi og ekom - Oslo catalogue slug exists in education_programs
+-- (orphan row, institution_id null — not a legacy fake school; see legacy VGS cleanup charter)
 -- Scope:
 --   Adds only one program row if missing.
 --   Does not modify Bergen row or any existing rows.
