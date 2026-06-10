@@ -17191,6 +17191,34 @@ function normalizeSchoolNameForMatch(value) {
 function extractIdentityCore(name) {
   return normalizeSchoolNameForMatch(name).replace(/\bavd\b.*$/, "").trim();
 }
+function extractAvdLocationLabel(vilbliSchoolName) {
+  const normalized = normalizeSchoolNameForMatch(vilbliSchoolName);
+  const match = normalized.match(/\b(?:avd|avdeling)\.?\s+(.+)$/);
+  return match?.[1]?.trim() || null;
+}
+function scoreAvdLocationInstitutionMatch(vilbliSchoolName, institutionName, institutionMunicipalityName) {
+  const avdLocation = extractAvdLocationLabel(vilbliSchoolName);
+  if (!avdLocation) {
+    return null;
+  }
+  const municipalityNorm = normalizeSchoolNameForMatch(institutionMunicipalityName ?? "");
+  const institutionNorm = normalizeSchoolNameForMatch(institutionName);
+  const avdTokens = avdLocation.split(" ").filter((token) => token.length >= 4);
+  if (avdTokens.length === 0) {
+    return null;
+  }
+  const primaryToken = avdTokens[0];
+  const municipalityMatches = municipalityNorm.length > 0 && (municipalityNorm === avdLocation || municipalityNorm.includes(primaryToken) || avdLocation.includes(municipalityNorm));
+  const institutionMatches = institutionNorm.includes(primaryToken) || avdTokens.every((token) => institutionNorm.includes(token));
+  if (!municipalityMatches && !institutionMatches) {
+    return null;
+  }
+  return {
+    matchType: "avd_location_match",
+    score: 0.96,
+    resolvedVia: "avd_location"
+  };
+}
 var MULTI_AVD_ALLOWED_MATCH_TYPES = /* @__PURE__ */ new Set(["exact_normalized", "core_name_match"]);
 function isMultiAvdIdentityTie({ vilbliSchoolName, tiedCandidates }) {
   if (tiedCandidates.length < 2) {
@@ -17241,10 +17269,18 @@ function pickBestAliasInstitutionMatch(aliasLabels, institutionName) {
   }
   return best;
 }
-function classifyInstitutionMatchForVilbliSchool(vilbliSchoolName, institutionName) {
+function classifyInstitutionMatchForVilbliSchool(vilbliSchoolName, institutionName, institutionMunicipalityName) {
   const semantics = classifyIdentitySemantics(vilbliSchoolName);
   if (semantics.isLosa) {
     return { matchType: "none", score: 0 };
+  }
+  const avdLocationMatch = scoreAvdLocationInstitutionMatch(
+    vilbliSchoolName,
+    institutionName,
+    institutionMunicipalityName
+  );
+  if (avdLocationMatch) {
+    return avdLocationMatch;
   }
   if (semantics.hasSlashAliases && semantics.aliasLabels.length > 0) {
     const best = pickBestAliasInstitutionMatch(semantics.aliasLabels, institutionName);
@@ -17650,7 +17686,7 @@ async function classifyReadiness({
       sourceExtractionFailed = true;
     }
   }
-  const { data: nsrInstitutions, error: nsrError } = await supabase.from("education_institutions").select("id, name, county_code, source").eq("county_code", countyCode).eq("source", "nsr").eq("is_active", true);
+  const { data: nsrInstitutions, error: nsrError } = await supabase.from("education_institutions").select("id, name, municipality_name, county_code, source").eq("county_code", countyCode).eq("source", "nsr").eq("is_active", true);
   if (nsrError) throw nsrError;
   const matchedSchools = [];
   const unmatchedSchools = [];
@@ -17658,7 +17694,11 @@ async function classifyReadiness({
   for (const school of uniqueExtractedSchools) {
     const ranked = (nsrInstitutions ?? []).map((institution) => ({
       institution,
-      ...classifyInstitutionMatchForVilbliSchool(school.schoolName, institution.name)
+      ...classifyInstitutionMatchForVilbliSchool(
+        school.schoolName,
+        institution.name,
+        institution.municipality_name
+      )
     })).filter((candidate) => candidate.matchType !== "none").sort((a, b) => b.score - a.score || a.institution.name.localeCompare(b.institution.name));
     const picked = pickInstitutionMatchesForVilbliSchool({
       vilbliSchoolName: school.schoolName,
@@ -19081,7 +19121,7 @@ async function runVgsTruthPipeline({
       source: "school_programme_link"
     });
   }
-  const { data: nsrInstitutions, error: nsrError } = await supabase.from("education_institutions").select("id, name, county_code, municipality_code, source").eq("county_code", countyCode).eq("source", "nsr").eq("is_active", true);
+  const { data: nsrInstitutions, error: nsrError } = await supabase.from("education_institutions").select("id, name, county_code, municipality_code, municipality_name, source").eq("county_code", countyCode).eq("source", "nsr").eq("is_active", true);
   if (nsrError) throw nsrError;
   const uniqueExtractedSchools = Array.from(
     new Map(
@@ -19095,7 +19135,11 @@ async function runVgsTruthPipeline({
   for (const school of uniqueExtractedSchools) {
     const ranked = (nsrInstitutions ?? []).map((institution) => ({
       institution,
-      ...classifyInstitutionMatchForVilbliSchool(school.schoolName, institution.name)
+      ...classifyInstitutionMatchForVilbliSchool(
+        school.schoolName,
+        institution.name,
+        institution.municipality_name
+      )
     })).filter((candidate) => candidate.matchType !== "none").sort((a, b) => b.score - a.score || a.institution.name.localeCompare(b.institution.name));
     const picked = pickInstitutionMatchesForVilbliSchool({
       vilbliSchoolName: school.schoolName,

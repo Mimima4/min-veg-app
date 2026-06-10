@@ -381,7 +381,7 @@ export async function classifyReadiness({
 
   const { data: nsrInstitutions, error: nsrError } = await supabase
     .from("education_institutions")
-    .select("id, name, county_code, source")
+    .select("id, name, municipality_name, county_code, source")
     .eq("county_code", countyCode)
     .eq("source", "nsr")
     .eq("is_active", true);
@@ -394,7 +394,11 @@ export async function classifyReadiness({
     const ranked = (nsrInstitutions ?? [])
       .map((institution) => ({
         institution,
-        ...classifyInstitutionMatchForVilbliSchool(school.schoolName, institution.name),
+        ...classifyInstitutionMatchForVilbliSchool(
+          school.schoolName,
+          institution.name,
+          institution.municipality_name
+        ),
       }))
       .filter((candidate) => candidate.matchType !== "none")
       .sort((a, b) => b.score - a.score || a.institution.name.localeCompare(b.institution.name));

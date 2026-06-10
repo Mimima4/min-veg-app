@@ -322,7 +322,7 @@ async function buildExpectedTruthSet({ supabase, professionSlug, countyCode }) {
 
   const { data: nsrInstitutions, error: nsrError } = await supabase
     .from("education_institutions")
-    .select("id, name, municipality_code")
+    .select("id, name, municipality_code, municipality_name")
     .eq("county_code", countyCode)
     .eq("source", "nsr")
     .eq("is_active", true);
@@ -335,7 +335,11 @@ async function buildExpectedTruthSet({ supabase, professionSlug, countyCode }) {
     const ranked = (nsrInstitutions ?? [])
       .map((institution) => ({
         institution,
-        ...classifyInstitutionMatchForVilbliSchool(school.schoolName, institution.name),
+        ...classifyInstitutionMatchForVilbliSchool(
+          school.schoolName,
+          institution.name,
+          institution.municipality_name
+        ),
       }))
       .filter((candidate) => candidate.matchType !== "none")
       .sort((a, b) => b.score - a.score || a.institution.name.localeCompare(b.institution.name));

@@ -21,6 +21,47 @@ function extractIdentityCore(name) {
   return normalizeSchoolNameForMatch(name).replace(/\bavd\b.*$/, "").trim();
 }
 
+/** e.g. "Førde vidaregåande skule avd. Høyanger" → "hoyanger" */
+export function extractAvdLocationLabel(vilbliSchoolName) {
+  const normalized = normalizeSchoolNameForMatch(vilbliSchoolName);
+  const match = normalized.match(/\b(?:avd|avdeling)\.?\s+(.+)$/);
+  return match?.[1]?.trim() || null;
+}
+
+function scoreAvdLocationInstitutionMatch(vilbliSchoolName, institutionName, institutionMunicipalityName) {
+  const avdLocation = extractAvdLocationLabel(vilbliSchoolName);
+  if (!avdLocation) {
+    return null;
+  }
+
+  const municipalityNorm = normalizeSchoolNameForMatch(institutionMunicipalityName ?? "");
+  const institutionNorm = normalizeSchoolNameForMatch(institutionName);
+  const avdTokens = avdLocation.split(" ").filter((token) => token.length >= 4);
+  if (avdTokens.length === 0) {
+    return null;
+  }
+
+  const primaryToken = avdTokens[0];
+  const municipalityMatches =
+    municipalityNorm.length > 0 &&
+    (municipalityNorm === avdLocation ||
+      municipalityNorm.includes(primaryToken) ||
+      avdLocation.includes(municipalityNorm));
+  const institutionMatches =
+    institutionNorm.includes(primaryToken) ||
+    avdTokens.every((token) => institutionNorm.includes(token));
+
+  if (!municipalityMatches && !institutionMatches) {
+    return null;
+  }
+
+  return {
+    matchType: "avd_location_match",
+    score: 0.96,
+    resolvedVia: "avd_location",
+  };
+}
+
 const MULTI_AVD_ALLOWED_MATCH_TYPES = new Set(["exact_normalized", "core_name_match"]);
 
 /**
@@ -91,10 +132,23 @@ function pickBestAliasInstitutionMatch(aliasLabels, institutionName) {
  * CASE 3: slash-separated Vilbli labels match NSR via alias segments, not the raw combined string.
  * CASE 4: LOSA rows never match ordinary NSR institutions here.
  */
-export function classifyInstitutionMatchForVilbliSchool(vilbliSchoolName, institutionName) {
+export function classifyInstitutionMatchForVilbliSchool(
+  vilbliSchoolName,
+  institutionName,
+  institutionMunicipalityName
+) {
   const semantics = classifyIdentitySemantics(vilbliSchoolName);
   if (semantics.isLosa) {
     return { matchType: "none", score: 0 };
+  }
+
+  const avdLocationMatch = scoreAvdLocationInstitutionMatch(
+    vilbliSchoolName,
+    institutionName,
+    institutionMunicipalityName
+  );
+  if (avdLocationMatch) {
+    return avdLocationMatch;
   }
 
   if (semantics.hasSlashAliases && semantics.aliasLabels.length > 0) {

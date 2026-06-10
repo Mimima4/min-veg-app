@@ -802,7 +802,7 @@ export async function runVgsTruthPipeline({
   // 2) Match Vilbli schools to NSR.
   const { data: nsrInstitutions, error: nsrError } = await supabase
     .from("education_institutions")
-    .select("id, name, county_code, municipality_code, source")
+    .select("id, name, county_code, municipality_code, municipality_name, source")
     .eq("county_code", countyCode)
     .eq("source", "nsr")
     .eq("is_active", true);
@@ -824,7 +824,11 @@ export async function runVgsTruthPipeline({
     const ranked = (nsrInstitutions ?? [])
       .map((institution) => ({
         institution,
-        ...classifyInstitutionMatchForVilbliSchool(school.schoolName, institution.name),
+        ...classifyInstitutionMatchForVilbliSchool(
+          school.schoolName,
+          institution.name,
+          institution.municipality_name
+        ),
       }))
       .filter((candidate) => candidate.matchType !== "none")
       .sort((a, b) => b.score - a.score || a.institution.name.localeCompare(b.institution.name));
