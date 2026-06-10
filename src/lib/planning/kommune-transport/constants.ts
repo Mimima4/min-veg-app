@@ -2,7 +2,7 @@
 export const KOMMUNE_TRANSPORT_PILOT_FYLKE_CODES = ["46"] as const;
 
 /** Bump when transport sort logic changes (invalidates route_input_signature). */
-export const KOMMUNE_TRANSPORT_LOGIC_VERSION = "v2-morning-depart-at";
+export const KOMMUNE_TRANSPORT_LOGIC_VERSION = "v3-norm-before-exception";
 
 export const KOMMUNE_TRANSPORT_ARRIVAL_BUFFER_MINUTES = 5;
 

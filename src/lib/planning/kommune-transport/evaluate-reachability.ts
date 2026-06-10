@@ -8,7 +8,8 @@ import { isTransportExceptionCorridor } from "./exception-kommuner";
 import { parseIsoToMinutes, resolveSchoolStartTimeIso } from "./school-start-time";
 import type { InstitutionReachability, ReachabilityMode } from "./types";
 
-const RANK_REACHABLE = 0;
+const RANK_NORM_REACHABLE = 0;
+const RANK_EXCEPTION_REACHABLE = 200;
 const RANK_UNKNOWN = 400;
 const RANK_NOT_REACHABLE = 800;
 
@@ -84,7 +85,6 @@ export function buildInstitutionReachability(params: {
   homeMunicipalityCodes: string[];
   stage: "VG1" | "VG2" | "VG3";
   referenceDate: Date;
-  morningDeparturesFromHomeHub: number | null;
   morningTripPatterns: EnturTripPattern[] | null;
   eveningReturnTripPatterns: EnturTripPattern[] | null;
 }): InstitutionReachability {
@@ -98,29 +98,18 @@ export function buildInstitutionReachability(params: {
       institutionId: params.institutionId,
       schoolMunicipalityCode: schoolCode,
       mode: "skipped_same_kommune",
-      sortRank: RANK_REACHABLE,
+      sortRank: RANK_NORM_REACHABLE,
       reachable: null,
       morningArrivalIso: null,
       marginMinutes: null,
     };
   }
 
-  const staticException = isTransportExceptionCorridor({
-    homeMunicipalityCodes: homeCodes,
-    schoolMunicipalityCode: schoolCode,
-  });
-  const dynamicSparse =
-    params.morningDeparturesFromHomeHub !== null &&
-    params.morningDeparturesFromHomeHub <= SPARSE_ROUTE_MAX_MORNING_DEPARTURES;
-
-  const mode: ReachabilityMode =
-    staticException || dynamicSparse ? "exception_round_trip" : "norm_buffer";
-
   if (params.morningTripPatterns === null) {
     return {
       institutionId: params.institutionId,
       schoolMunicipalityCode: schoolCode,
-      mode,
+      mode: "norm_buffer",
       sortRank: RANK_UNKNOWN,
       reachable: null,
       morningArrivalIso: null,
@@ -128,7 +117,45 @@ export function buildInstitutionReachability(params: {
     };
   }
 
-  if (mode === "exception_round_trip") {
+  const schoolStartIso = resolveSchoolStartTimeIso({
+    stage: params.stage,
+    referenceDate: params.referenceDate,
+  });
+  const onTimeArrivalIso = bestOnTimeMorningArrival({
+    tripPatterns: params.morningTripPatterns,
+    schoolStartIso,
+    bufferMinutes: KOMMUNE_TRANSPORT_ARRIVAL_BUFFER_MINUTES,
+  });
+
+  if (onTimeArrivalIso) {
+    const norm = isNormModeReachable({
+      arrivalIso: onTimeArrivalIso,
+      schoolStartIso,
+      bufferMinutes: KOMMUNE_TRANSPORT_ARRIVAL_BUFFER_MINUTES,
+    });
+
+    if (norm.reachable) {
+      return {
+        institutionId: params.institutionId,
+        schoolMunicipalityCode: schoolCode,
+        mode: "norm_buffer",
+        sortRank: RANK_NORM_REACHABLE,
+        reachable: true,
+        morningArrivalIso: onTimeArrivalIso,
+        marginMinutes: norm.marginMinutes,
+      };
+    }
+  }
+
+  const staticException = isTransportExceptionCorridor({
+    homeMunicipalityCodes: homeCodes,
+    schoolMunicipalityCode: schoolCode,
+  });
+  const dynamicSparseCorridor =
+    params.morningTripPatterns.length > 0 &&
+    params.morningTripPatterns.length <= SPARSE_ROUTE_MAX_MORNING_DEPARTURES;
+
+  if (staticException || dynamicSparseCorridor) {
     const reachable = hasEveningReturnTrip({
       outbound: params.morningTripPatterns,
       inbound: params.eveningReturnTripPatterns ?? [],
@@ -143,49 +170,22 @@ export function buildInstitutionReachability(params: {
     return {
       institutionId: params.institutionId,
       schoolMunicipalityCode: schoolCode,
-      mode,
-      sortRank: reachable ? RANK_REACHABLE : RANK_NOT_REACHABLE,
+      mode: "exception_round_trip",
+      sortRank: reachable ? RANK_EXCEPTION_REACHABLE : RANK_NOT_REACHABLE,
       reachable,
       morningArrivalIso: arrivalIso,
       marginMinutes: null,
     };
   }
 
-  const schoolStartIso = resolveSchoolStartTimeIso({
-    stage: params.stage,
-    referenceDate: params.referenceDate,
-  });
-  const arrivalIso = bestOnTimeMorningArrival({
-    tripPatterns: params.morningTripPatterns,
-    schoolStartIso,
-    bufferMinutes: KOMMUNE_TRANSPORT_ARRIVAL_BUFFER_MINUTES,
-  });
-  if (!arrivalIso) {
-    return {
-      institutionId: params.institutionId,
-      schoolMunicipalityCode: schoolCode,
-      mode,
-      sortRank: RANK_NOT_REACHABLE,
-      reachable: false,
-      morningArrivalIso: null,
-      marginMinutes: null,
-    };
-  }
-
-  const norm = isNormModeReachable({
-    arrivalIso,
-    schoolStartIso,
-    bufferMinutes: KOMMUNE_TRANSPORT_ARRIVAL_BUFFER_MINUTES,
-  });
-
   return {
     institutionId: params.institutionId,
     schoolMunicipalityCode: schoolCode,
-    mode,
-    sortRank: norm.reachable ? RANK_REACHABLE : RANK_NOT_REACHABLE,
-    reachable: norm.reachable,
-    morningArrivalIso: arrivalIso,
-    marginMinutes: norm.marginMinutes,
+    mode: "norm_buffer",
+    sortRank: RANK_NOT_REACHABLE,
+    reachable: false,
+    morningArrivalIso: null,
+    marginMinutes: null,
   };
 }
 

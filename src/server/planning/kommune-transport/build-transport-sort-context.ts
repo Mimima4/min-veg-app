@@ -4,7 +4,6 @@ import { normalizeMunicipalityCode } from "@/lib/planning/geo-distance";
 import { normalizeFylkeCodesFromMunicipalityCodes } from "@/lib/planning/norway-geo-code-normalization";
 import { KOMMUNE_TRANSPORT_PILOT_FYLKE_CODES } from "@/lib/planning/kommune-transport/constants";
 import {
-  countMorningDeparturesFromStop,
   planEnturTrip,
   planMorningTripsFromHub,
   resolveKommuneHubStopPlaceId,
@@ -176,18 +175,6 @@ export async function buildKommuneTransportSortContext(params: {
   const primaryHomeCode = homeMunicipalityCodes[0]!;
   const primaryHomeHub = homeHubIds.get(primaryHomeCode) ?? null;
 
-  let morningDeparturesFromHomeHub: number | null = null;
-  if (primaryHomeHub) {
-    try {
-      morningDeparturesFromHomeHub = await countMorningDeparturesFromStop({
-        stopPlaceId: primaryHomeHub,
-        referenceDateIso: schoolStartIso,
-      });
-    } catch {
-      morningDeparturesFromHomeHub = null;
-    }
-  }
-
   for (const institution of vg1Institutions) {
     const schoolCode = institution.municipalityCode;
     if (homeMunicipalityCodes.includes(schoolCode)) {
@@ -199,7 +186,6 @@ export async function buildKommuneTransportSortContext(params: {
           homeMunicipalityCodes,
           stage: "VG1",
           referenceDate,
-          morningDeparturesFromHomeHub,
           morningTripPatterns: [],
           eveningReturnTripPatterns: [],
         })
@@ -216,7 +202,6 @@ export async function buildKommuneTransportSortContext(params: {
           homeMunicipalityCodes,
           stage: "VG1",
           referenceDate,
-          morningDeparturesFromHomeHub,
           morningTripPatterns: null,
           eveningReturnTripPatterns: null,
         })
@@ -240,7 +225,6 @@ export async function buildKommuneTransportSortContext(params: {
           homeMunicipalityCodes,
           stage: "VG1",
           referenceDate,
-          morningDeparturesFromHomeHub,
           morningTripPatterns: null,
           eveningReturnTripPatterns: null,
         })
@@ -275,7 +259,6 @@ export async function buildKommuneTransportSortContext(params: {
         homeMunicipalityCodes,
         stage: "VG1",
         referenceDate,
-        morningDeparturesFromHomeHub,
         morningTripPatterns,
         eveningReturnTripPatterns,
       })
