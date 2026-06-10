@@ -1,3 +1,8 @@
+-- RETIRED 2026-06-10 — batch 1 electrician legacy VGS cleanup
+-- Do not re-apply. Superseded by Vilbli/PSA truth in all 15 fylke.
+-- Charter: docs/architecture/phase-0-6-p06-electrician-legacy-vgs-cleanup-charter.md
+-- Deactivation: scripts/sql/deactivate-electrician-mv-legacy-vgs-batch1.sql
+
 -- Min Veg — additive education dataset: electrician strong coverage (Norway-first baseline).
 --
 -- Purpose: widen geography-realistic strong programme options for profession_slug = 'electrician'
@@ -204,8 +209,3 @@ where exists (select 1 from education_programs ep where ep.slug = v.program_slug
       );
 
 commit;
-
--- Verification (run manually after apply):
--- select count(*) filter (where ppl.fit_band = 'strong') as electrician_strong
--- from profession_program_links ppl
--- where ppl.profession_slug = 'electrician';
