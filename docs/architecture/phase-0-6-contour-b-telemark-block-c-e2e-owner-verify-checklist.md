@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **RELAY FIXED** — re-verify browser (**5** VG1 expected) |
+| **Status** | **CLOSED** — owner verified **5/5** VG1+VG2 **2026-06-10** |
 | **Date (UTC)** | 2026-06-10 |
 | **Fylke (app)** | **Telemark** |
 | **County code** | `40` (ops only) |
@@ -30,10 +30,8 @@ Owner reported **4** schools vs Vilbli **5**. Missing **Nome** (Vilbli `8341`) �
 
 Setup: child with **home fylke Telemark** → electrician route → **VG1 programme_selection**.
 
-- [ ] **5** school options in VG1 dropdown (incl. **Nome**)
-- [ ] **No** LOSA badge
-- [ ] Sample: **Skogmo** (Skien), **Notodden**, **Nome**
-- [ ] Save/reload persists selection
-- [ ] VG2 shows **5** Telemark schools
+- [x] **5** school options in VG1 dropdown (incl. **Nome**)
+- [x] **5** VG2 schools — Vilbli parity OK
+- [x] **No** LOSA badge
 
-**Sign-off:** pending owner re-verify after relay.
+**Sign-off:** owner confirmed in chat **2026-06-10** (after Nome relay).

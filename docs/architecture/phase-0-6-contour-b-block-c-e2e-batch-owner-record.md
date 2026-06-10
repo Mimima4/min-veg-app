@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **NEAR CLOSED** — **6/7** signed; **Telemark** re-verify after Nome relay |
+| **Status** | **CLOSED** — **7/7** fylke Block C E2E **2026-06-10** |
 | **Date (UTC)** | 2026-06-10 |
 | **Profession** | `electrician` |
 | **Contour** | **B** partial (non-green fylke) |
@@ -20,7 +20,7 @@ Formal Block C browser proof for Contour B fylke already ingested in **2026-06-0
 | **Buskerud** | `33` | **8** | `phase-0-6-contour-b-buskerud-block-c-e2e-owner-verify-checklist.md` | **CLOSED** 2026-06-10 |
 | **Innlandet** | `34` | **11** | `phase-0-6-contour-b-innlandet-block-c-e2e-owner-verify-checklist.md` | **CLOSED** 2026-06-10 |
 | **Vestfold** | `39` | **5** | `phase-0-6-contour-b-vestfold-block-c-e2e-owner-verify-checklist.md` | **CLOSED** 2026-06-10 |
-| **Telemark** | `40` | **5** | `phase-0-6-contour-b-telemark-block-c-e2e-owner-verify-checklist.md` | **RE-VERIFY** (Nome relay) |
+| **Telemark** | `40` | **5** | `phase-0-6-contour-b-telemark-block-c-e2e-owner-verify-checklist.md` | **CLOSED** 2026-06-10 |
 | **Agder** | `42` | **9** | `phase-0-6-contour-b-agder-block-c-e2e-owner-verify-checklist.md` | **CLOSED** 2026-06-10 |
 
 **Not in batch:** green Contour A fylke (**Oslo, Rogaland, Vestland, Trøndelag**); pilots **Møre og Romsdal, Nordland, Troms, Finnmark** (already Block C proven).
