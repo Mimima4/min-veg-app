@@ -52,7 +52,7 @@ When **child kommune OR school kommune** is on the exception list **and** kommun
 - Test: **can arrive morning and depart evening** same weekday (round trip feasible).
 - Bestillingstransport / skoleskyss-only corridors: exception rules apply; do not mix into mass buffer logic.
 
-**Dynamic supplement:** if Entur shows **≤2 departures 06:00–09:00** on weekday for hub→school, treat pair as exception even if kommune not on static list.
+**Dynamic supplement:** if Entur shows **≤2 departures 06:00–09:00** on weekday for **hub→school** (per corridor, not home-hub global count), treat pair as exception **only when norm buffer fails**. Norm on-time arrival always wins (e.g. Vaksdal→Voss train). Logic version `v3-norm-before-exception`.
 
 ### Static exception list (~50 kommuner)
 
@@ -86,20 +86,36 @@ Expected PSA after cleanup: **VG1 28** / **VG2 11** (not 56/11).
 
 ---
 
+## Vestland E2E owner verify (2026-06-10)
+
+| Case | Expected | Owner |
+|------|----------|-------|
+| Vaksdal `4628` → Voss (inter-kommune, train) | Default VG1/VG2 **Voss** (not Østerøy/Bergen centroid) | ☑ |
+| Askøy → Bergen (inter-kommune) | Transport sort toward reachable Bergen schools | ☑ |
+| Bergen home ↔ Bergen school (same kommune) | Transport layer **skipped** | ☑ |
+
+**Sign-off:** owner browser verify in chat, 2026-06-10. Post-verify code fix `6f26347` (`v3-norm-before-exception`) for Vaksdal sparse-hub mis-rank.
+
+**Scope reminder:** rules apply to **all VGS professions/regions** on the shared contour — not per-profession exceptions. Higher-ed institutions are out of scope here.
+
+---
+
 ## Implementation gate
 
 - [x] Entur hub resolver (kommune → primary StopPlace) — `src/lib/planning/kommune-transport/entur-client.ts`
 - [x] Morning itinerary + start-time tier C — `school-start-time.ts`, `evaluate-reachability.ts`
 - [x] Exception list + dynamic ≤2-departure rule — `exception-kommuner.ts`
+- [x] Norm-before-exception + per-corridor sparse (`v3-norm-before-exception`) — `evaluate-reachability.ts`
 - [x] Wire into `selectTruthCandidateForRoute` / `buildStepsFromAvailabilityTruth` (sort only, non-gating)
 - [x] VG2 anchors to resolved VG1 step row (chain before transport tie-break)
-- [ ] Vestland E2E browser: Vaksdal→Voss, Askøy→Bergen, Bergen intra-kommune skip
-- [ ] Mobile API contract review (shared server modules; no new fields in snapshot v1)
+- [x] Vestland E2E browser: Vaksdal→Voss, Askøy→Bergen, Bergen intra-kommune skip
+- [x] Mobile API contract review — `phase-4-route-mobile-api-contract-v1.md` (signed 2026-06-10)
 
 ---
 
 ## References
 
 - `route-engine-master-spec.md`
+- `phase-4-route-mobile-api-contract-v1.md`
 - `phase-0-6-contour-b-mechanic-vilbli-branch-owner-record.md`
 - Entur developer: https://developer.entur.org/
