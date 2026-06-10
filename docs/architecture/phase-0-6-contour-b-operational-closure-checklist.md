@@ -91,6 +91,16 @@
 | **55** Troms | CASE 2 1:1 school-brand (`db67b40`): **VG1=5 / VG2=4** (was 3/2); multi-`avd` collapsed to Vilbli brand |
 | **56** Finnmark | CASE 3 slash-alias (`82c77f3`): **6 VG1** ordinary schools (Alta, Hammerfest, Kirkenes, Lakselv, Nordkapp, Vadsø); **12** active PSA; **18** LOSA rows still excluded (Block D tail) |
 
+**Evidence supplement (2026-06-10 — Block C Contour B batch E2E):**
+
+| Fylke | Owner browser E2E | Relay gap fix |
+|-------|-------------------|---------------|
+| **Akershus** | ☑ **12** VG1 Vilbli parity | **Ås** — re-relay `32` |
+| **Østfold, Buskerud, Innlandet, Vestfold, Agder** | ☑ counts match PSA | — |
+| **Telemark** | ☑ **5** VG1+VG2 | **Nome** — re-relay `40` |
+
+→ `phase-0-6-contour-b-block-c-e2e-batch-owner-record.md` **CLOSED** **7/7**. **Electrician** route `programme_selection` browser-proof complete for all Contour B non-green fylke ingested in **2026-06-04** batch.
+
 **Explicitly not in this block:** LOSA publication rows (Block D), identity resolution (Block D), full Vilbli parity (Block D).
 
 ---

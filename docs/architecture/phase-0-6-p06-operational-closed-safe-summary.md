@@ -4,8 +4,8 @@
 |--------|--------|
 | **Document type** | Repo-safe summary — **P06-OPERATIONAL-CLOSED** |
 | **Section** | **P06-OPERATIONAL-CLOSED-post** |
-| **Status code** | `P06_OPERATIONAL_CLOSED` (Block D LOSA tail complete 2026-05-29) |
-| **Date (UTC)** | 2026-06-05 |
+| **Status code** | `P06_OPERATIONAL_CLOSED` (Block C batch E2E supplement 2026-06-10) |
+| **Date (UTC)** | 2026-06-05 (closure) · **2026-06-10** (Block C batch doc-sync) |
 | **Checklist** | `phase-0-6-contour-b-operational-closure-checklist.md` |
 | **Policy** | `phase-0-6-processing-contour-owner-decision-record.md` §12, §13 |
 | **Head commit (reference)** | `834b2e0` |
@@ -33,7 +33,7 @@
 |-------|--------|-------|
 | **A** Policy | **CLOSED** | P06 §12 sole product rule |
 | **B** Automation | **CLOSED** | Scheduler + home-IP relay; 6-month cadence |
-| **C** MAIN write + E2E | **CLOSED** | Pilots **56/15/18/55**; green **03/11/46/50** unchanged |
+| **C** MAIN write + E2E | **CLOSED** | Pilots + **7** Contour B fylke browser E2E **2026-06-10** (see §7) |
 | **D** Vilbli parity | **CLOSED** | CASE 2/3 + P4 **18** LOSA PSA (`56`) |
 | **E** Coverage | **CLOSED** | County matrix; Møre **15** `10/0/0`; Akershus **32** `12/0/0` |
 | **F** Regression | **CLOSED** | `npm run smoke:contour-b`; CLI `--contour-b-partial` guard |
@@ -91,4 +91,26 @@ After **P06-OPERATIONAL-CLOSED**:
 
 ## 6. Recommended next gate
 
-**Post-pilot tail** — `phase-4-losa-post-pilot-next-steps-owner-record.md` (`NOT_READY_FOR_APPLY`, E2E verify, regional model analysis, cleanup audit).
+**Second VGS profession** — `phase-0-6-contour-b-second-profession-expansion-owner-record.md` (owner selects profession; expansion gate per `VGS_OPERATIONAL_RUNNERS.md`).
+
+**Completed tails (reference only):** Phase 4 LOSA post-pilot (`phase-4-losa-post-pilot-next-steps-owner-record.md` **CLOSED**); Block C Contour B batch E2E (§7).
+
+---
+
+## 7. Block C supplement — Contour B fylke E2E batch (2026-06-10)
+
+**Record:** `phase-0-6-contour-b-block-c-e2e-batch-owner-record.md` — **CLOSED** **7/7**.
+
+| Fylke (app label) | Owner E2E | Notes |
+|-------------------|-----------|-------|
+| Akershus | ☑ | **12** VG1; **Ås** gap fixed via re-relay `32` |
+| Østfold | ☑ | **5** VG1 |
+| Buskerud | ☑ | **8** VG1 |
+| Innlandet | ☑ | **11** VG1 |
+| Vestfold | ☑ | **5** VG1 |
+| Telemark | ☑ | **5** VG1; **Nome** gap fixed via re-relay `40` |
+| Agder | ☑ | **9** VG1 |
+
+**Relay-gap lesson:** batch relay **2026-06-04** predated some matcher fixes; if Vilbli count ≠ app dropdown → county production re-relay before closing E2E.
+
+**Electrician coverage:** all **15** fylke have PSA truth; Contour B browser proof complete for non-green B fylke + existing pilots (**Møre og Romsdal, Nordland, Troms, Finnmark**).
