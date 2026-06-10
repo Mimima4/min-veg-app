@@ -275,7 +275,7 @@ function scoreSourceOutcomeUrl(params: {
     }
 
     const branchConfig = getVilbliBranchConfig(params.professionSlug);
-    if (branchConfig?.preferredYrkerPathPattern.test(parsed.pathname)) {
+    if (branchConfig?.preferredYrkerPathPattern?.test(parsed.pathname)) {
       score += 80;
     }
 
