@@ -24,16 +24,17 @@ Rationale: `phase-4-losa-not-ready-for-apply-next-gate-owner-note.md`
 → `phase-4-losa-finnmark-route-e2e-owner-verify-checklist.md` — **CLOSED** 2026-06-10  
 Owner browser verify surfaced 2 defects (LOSA option-id collision; inline `LOSA` label duplication) — fixed and re-verified.
 
-## Step 4 — Regional models fit analysis (read-only)
+## Step 4 — Regional models fit analysis ✅
 
-→ `phase-4-losa-regional-delivery-models-fit-analysis.md`  
-**Requires owner review** before any new county slice or code.
+→ `phase-4-losa-regional-delivery-models-fit-analysis.md` — **OWNER SIGNED** 2026-06-10  
+Steigen/Innlandet: no LOSA reuse · Troms `55`: verify-first · decision rule adopted.
 
-## Step 5 — Phase 2 / step B (deferred Q&A)
+## Step 5 — Phase 2 / step B ✅
 
-→ `phase-4-losa-phase2-stepb-open-questions-stub.md`
+→ `phase-4-losa-phase2-stepb-open-questions-stub.md` — **OWNER SIGNED** 2026-06-10  
+Finnmark isolated · RLS independent · Contour A `56` not needed · next: step 6 or green-county charter.
 
-## Step 6 — P06/LOSA artifact cleanup (after steps 1–5)
+## Step 6 — P06/LOSA artifact cleanup ✅ (batch 1)
 
 → `phase-4-p06-losa-code-artifact-cleanup-audit-charter.md`  
-Inventory first; **no deletions** without owner sign-off per finding.
+Batch 1: `boundary.ts` deleted (C-01/C-07/C-08). C-02–C-06 **KEEP** / DOC-ONLY.

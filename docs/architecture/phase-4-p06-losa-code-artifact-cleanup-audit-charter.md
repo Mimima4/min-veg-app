@@ -21,13 +21,16 @@ Find **runtime/code** leftovers from multi-week pilot: stale guards, dead branch
 
 | ID | Location | Issue | Action |
 |----|----------|-------|--------|
-| C-01 | `src/lib/losa/boundary.ts` | Header says **"scaffold only"** + `wire_losa_into_app_or_api_or_ui` forbidden — **UI is wired** (`route-steps-panel`, `LOSA_ROUTE_UI_INTEGRATION_APPROVED`) | Update comments/constants or relocate boundary doc — **owner OK before edit** |
+| C-01 | ~~`src/lib/losa/boundary.ts`~~ | Stale scaffold; UI wired via `availability-scope.ts` | **DELETED** batch 1 (2026-06-10) |
 | C-02 | `extract-losa-finnmark-manifest.mjs` | Prints `STILL_BLOCKED_ALL_SECTION_4` for all rows — **planning default**, correct for raw manifest but confusing post-18/18 | Consider output tweak or doc cross-ref only |
 | C-03 | `losa-finnmark-entity.mjs` `assessLosaFinnmarkPublishabilityPosture()` | Always returns blocked posture — used for **manifest scaffolding**, not link CLI | Keep unless proven dead import path |
 | C-04 | Per-row `DEFAULT_*_PILOT_CHARTER_ID` (×18) in `losa-psa-write-session.mjs` | All rows closed — charters still needed for **idempotency / re-execute** | **Keep** |
 | C-05 | `link-losa-finnmark-evidence.mjs` per-row assertions (×18) | Large guard block — valuable regression harness | **Keep**; optional refactor later |
 | C-06 | Contour B `isLosa` skip in ingest | Still required so ordinary ingest doesn't emit LOSA as campus | **Keep** — verify no duplicate PSA path |
-| C-07 | `PHASE4_LOSA_ALLOWED_SCOPE_LABEL` | Unclear runtime consumer | Grep consumer; delete if zero refs **after owner OK** |
+| C-07 | ~~`PHASE4_LOSA_ALLOWED_SCOPE_LABEL` / `boundary.ts`~~ | Zero runtime/script imports | **DELETED** with C-01 batch 1 |
+| C-08 | `availability-scope.ts` | Single runtime boundary module | **DONE** — sole `src/lib/losa/*` boundary |
+
+**Audit grep (2026-06-10):** `boundary.ts` — 0 imports in `src/` + `scripts/`. `PHASE4_LOSA_*` constants — defined only in `boundary.ts`, unused elsewhere.
 
 ---
 
@@ -49,9 +52,20 @@ Find **runtime/code** leftovers from multi-week pilot: stale guards, dead branch
 
 ---
 
+## Classification summary (2026-06-10)
+
+| Class | IDs |
+|-------|-----|
+| **KEEP** | C-04, C-05, C-06 |
+| **DOC-ONLY** | C-02 |
+| **KEEP (CLI scaffold)** | C-03 |
+| **DONE (batch 1)** | C-01, C-07, C-08 |
+
+---
+
 ## Exit criteria
 
-- Inventory **100%** classified.
+- Inventory **100%** classified. ☑ 2026-06-10
 - Zero stale **misleading** runtime comments on wired paths.
 - No dead code paths that confuse next county slice.
 - P06 Block D docs aligned with **18 LOSA PSA** (step 1).

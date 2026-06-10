@@ -2,8 +2,8 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **ANALYSIS ONLY** — no code/app changes without owner approval |
-| **Date (UTC)** | 2026-05-29 |
+| **Status** | **OWNER SIGNED** — recommendations adopted 2026-06-10; no code without per-slice charter |
+| **Date (UTC)** | 2026-05-29 (analysis) · **2026-06-10** (owner sign-off) |
 | **Reference contour** | Finnmark LOSA: `provider` + `delivery_municipality` → `losa_fjern_delivery_municipality` |
 
 **Owner action required:** confirm whether each model warrants a **new slice** or a **different product scope** (apprenticeship / hybrid / campus) before any implementation.
@@ -100,3 +100,16 @@ Before any new county work:
 4. Only then charter per-row §4 (Finnmark pattern) or charter **new scope**.
 
 **No implementation authorized by this document.**
+
+---
+
+## Owner sign-off (2026-06-10)
+
+| Model | Owner decision |
+|-------|----------------|
+| Steigenmodellen (`18`) | **No reuse** — veksling/apprenticeship slice; Vilbli extract first |
+| Troms studiesentre (`55`) | **Maybe** — only after manifest + evidence on `55`; not automatic |
+| Innlandet veksling/Nettskolen (`34`) | **No reuse** — hybrid/Y-path; separate product scope |
+| Decision rule §4 | **Adopted** — manifest → legal frame → entity model → charter |
+
+**Owner sign-off:** chat 2026-06-10 (recommendations adopted)
