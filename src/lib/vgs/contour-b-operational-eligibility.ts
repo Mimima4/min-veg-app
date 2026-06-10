@@ -24,10 +24,11 @@ export const VGS_PIPELINE_COUNTY_CODES = new Set([
 ]);
 
 /** Sync with `VGS_PATH_DEFINITIONS` keys in `scripts/vgs-path-definitions.mjs`. */
-export const SUPPORTED_VGS_PROFESSION_SLUGS = new Set(["electrician"]);
+export const SUPPORTED_VGS_PROFESSION_SLUGS = new Set(["electrician", "mechanic"]);
 
 export const CONTOUR_A_OPERATIONAL_BY_PROFESSION: Record<string, Set<string>> = {
   electrician: new Set(["03", "11", "46", "50"]),
+  mechanic: new Set(["03", "11", "46", "50"]),
 };
 
 export const CONTOUR_A_GREEN_READINESS_STATUSES = new Set([

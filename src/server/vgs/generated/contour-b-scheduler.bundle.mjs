@@ -16721,6 +16721,17 @@ function parseStageFromProgramme(program) {
   if (titleMatch) return `VG${titleMatch[1]}`;
   return null;
 }
+function detectMechanicBranch(program) {
+  const title = normalizeBasic(program.title);
+  const code = normalizeBasic(program.program_code);
+  if (title.includes("kjoretoy") || title.includes("bilfaget") || code.includes("kjt") || code.includes("bmk")) {
+    return "kjoretoy_bilfaget";
+  }
+  if (title.includes("teknologi") || title.includes("industrifag") || code.includes("tip")) {
+    return "teknologi_industrifag";
+  }
+  return "unspecified";
+}
 function detectElectricianBranch(program) {
   const title = normalizeBasic(program.title);
   const code = normalizeBasic(program.program_code);
@@ -16735,6 +16746,67 @@ function detectElectricianBranch(program) {
   }
   return "unspecified";
 }
+var MECHANIC_PATH_DEFINITION = {
+  professionSlug: "mechanic",
+  contour: "vgs",
+  description: "Mekaniker VGS path: VG1 Teknologi- og industrifag, VG2 Kj\xF8ret\xF8y, full Kj\xF8ret\xF8y-related VG3/bedrift specialization list from Vilbli.",
+  sourceModel: {
+    buildVilbliUrl(countySlug) {
+      return `https://www.vilbli.no/nb/${countySlug}/strukturkart/v.tp/kjoretoy-skoler-og-laerebedrifter?kurs=v.tptip1----_v.tpkjt2----_v.tpbmk3----&side=p5`;
+    },
+    strukturkartReferenceUrl: "https://www.vilbli.no/nb/no/strukturkart/v.tp/bilfaget-lette-kjoretoy?kurs=v.tptip1----_v.tpkjt2----_v.tpbmk3----&side=p2"
+  },
+  stageNodes: [
+    {
+      nodeKey: "VG1_TEKNOLOGI",
+      stage: "VG1",
+      stageType: "school_programme",
+      branchSpecific: false,
+      requiredForWrite: true,
+      expectedLabel: "VG1 Teknologi- og industrifag",
+      programmeMatcher: {
+        includesAny: ["vg1 teknologi og industrifag", "teknologi- og industrifag", "teknologi og industrifag"]
+      }
+    },
+    {
+      nodeKey: "VG2_KJORETOY",
+      stage: "VG2",
+      stageType: "school_programme",
+      branchSpecific: true,
+      requiredForWrite: true,
+      branchKey: "kjoretoy_bilfaget",
+      expectedLabel: "VG2 Kj\xF8ret\xF8y",
+      programmeMatcher: {
+        includesAny: ["vg2 kjoretoy", "vg2 kj\xF8ret\xF8y", "kjoretoy"]
+      },
+      branchResolver: detectMechanicBranch
+    },
+    {
+      nodeKey: "VG3_OR_BEDRIFT_SPECIALIZATIONS",
+      stage: "VG3",
+      stageType: "awareness_only",
+      branchSpecific: false,
+      requiredForWrite: false,
+      expectedLabel: "VG3 or Oppl\xE6ring i bedrift \u2014 full Kj\xF8ret\xF8y-related specialization list from Vilbli (not P\xE5bygging)"
+    },
+    {
+      nodeKey: "APPRENTICESHIP_PROGRESS",
+      stage: "APPRENTICESHIP",
+      stageType: "progression",
+      branchSpecific: true,
+      requiredForWrite: false,
+      expectedLabel: "Oppl\xE6ring i bedrift (l\xE6re / fagbrev) after VG2 or VG3 specialization choice"
+    },
+    {
+      nodeKey: "FAGBREV_OUTCOME",
+      stage: "FAGBREV",
+      stageType: "progression_outcome",
+      branchSpecific: true,
+      requiredForWrite: false,
+      expectedLabel: "Fagbrev outcomes per selected Vilbli specialization"
+    }
+  ]
+};
 var ELECTRICIAN_PATH_DEFINITION = {
   professionSlug: "electrician",
   contour: "vgs",
@@ -16796,7 +16868,8 @@ var ELECTRICIAN_PATH_DEFINITION = {
   ]
 };
 var VGS_PATH_DEFINITIONS = {
-  electrician: ELECTRICIAN_PATH_DEFINITION
+  electrician: ELECTRICIAN_PATH_DEFINITION,
+  mechanic: MECHANIC_PATH_DEFINITION
 };
 function getVgsPathDefinition(professionSlug) {
   return VGS_PATH_DEFINITIONS[professionSlug] ?? null;
@@ -16821,12 +16894,369 @@ function mapProgrammeToPathNode(program, pathDefinition) {
   };
 }
 
-// scripts/vilbli-stage-extraction-helper.mjs
+// scripts/vgs-programme-materialization-planner.mjs
+var ELECTRICIAN_MATERIALIZATION_NODE_KEYS = ["VG1_ELEKTRO", "VG2_EL_BRANCH"];
+var MECHANIC_MATERIALIZATION_NODE_KEYS = ["VG1_TEKNOLOGI", "VG2_KJORETOY"];
+var PROFESSION_MATERIALIZATION_CONFIG = {
+  electrician: {
+    nodeKeys: ELECTRICIAN_MATERIALIZATION_NODE_KEYS,
+    deriveIdentitySpecs: deriveElectricianProgrammeIdentitySpecs,
+    countyScopedSlugPatterns: {
+      VG1: { slugMiddle: "vg1-elektro", codePrefix: "EL-VG1" },
+      VG2: { slugMiddle: "vg2-elenergi", codePrefix: "EL-VG2" }
+    },
+    trondelagSlugPatterns: {
+      VG1: { slug: "electrician-vg1-elektro-trondelag", code: "EL-VG1-TRONDELAG" },
+      VG2: { slug: "electrician-vg2-elenergi-trondelag", code: "EL-VG2-TRONDELAG" }
+    }
+  },
+  mechanic: {
+    nodeKeys: MECHANIC_MATERIALIZATION_NODE_KEYS,
+    deriveIdentitySpecs: deriveMechanicProgrammeIdentitySpecs,
+    countyScopedSlugPatterns: {
+      VG1: { slugMiddle: "vg1-teknologi", codePrefix: "MECH-VG1" },
+      VG2: { slugMiddle: "vg2-kjoretoy", codePrefix: "MECH-VG2" }
+    },
+    trondelagSlugPatterns: {
+      VG1: { slug: "mechanic-vg1-teknologi-trondelag", code: "MECH-VG1-TRONDELAG" },
+      VG2: { slug: "mechanic-vg2-kjoretoy-trondelag", code: "MECH-VG2-TRONDELAG" }
+    }
+  }
+};
+var SUPPORTED_PROFESSION_SLUGS = new Set(Object.keys(PROFESSION_MATERIALIZATION_CONFIG));
+var PLANNER_PROGRAMME_SOURCE = "vilbli";
+var PLANNER_WARNING_CODES = {
+  MISSING_REQUIRED_NODE: "missing_required_node",
+  UNSUPPORTED_PROFESSION_SLUG: "unsupported_profession_slug",
+  MISSING_COUNTY_CODE: "missing_county_code",
+  MISSING_COUNTY_META: "missing_county_meta",
+  MISSING_EXTRACTED_STAGES: "missing_extracted_stages",
+  UNSUPPORTED_REQUIRED_NODE: "unsupported_required_node",
+  DETERMINISTIC_IDENTITY_UNAVAILABLE: "deterministic_identity_unavailable"
+};
 function normalizeBasic2(value) {
   return String(value ?? "").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim();
 }
+function mapVilbliSchool(item) {
+  if (Array.isArray(item)) {
+    return {
+      schoolName: String(item[3] || ""),
+      schoolCode: String(item[4] || ""),
+      fylkeName: String(item[8] || ""),
+      schoolPagePath: String(item[9] || "")
+    };
+  }
+  return {
+    schoolName: String(item.schoolName || item.school_name || item.name || ""),
+    schoolCode: String(
+      item.schoolCode || item.orgOrSchoolCode || item.orgnr || item.orgnr_skole || ""
+    ),
+    fylkeName: String(item.fylkeName || item.fylke || item.county || ""),
+    schoolPagePath: String(item.schoolPagePath || item.url || item.href || "")
+  };
+}
+function stagePresentInCounty(stageRows, countyMeta) {
+  if (countyMeta == null || typeof countyMeta !== "object" || typeof countyMeta.label !== "string" || typeof countyMeta.slug !== "string") {
+    return false;
+  }
+  if (!Array.isArray(stageRows)) {
+    return false;
+  }
+  const normalizedCountyLabel = normalizeBasic2(countyMeta.label);
+  const filtered = stageRows.map(mapVilbliSchool).filter((school) => school.schoolName && school.schoolCode).filter(
+    (school) => normalizeBasic2(school.fylkeName) === normalizedCountyLabel || school.schoolPagePath.includes(`/${countyMeta.slug}/`)
+  );
+  return filtered.length > 0;
+}
+function countyTokenFromMeta(countyMeta) {
+  return String(countyMeta?.slug ?? "").toUpperCase().replace(/[^A-Z0-9]+/g, "_");
+}
+function deriveElectricianProgrammeIdentitySpecs({ professionSlug, countyCode, countyMeta }) {
+  if (professionSlug !== "electrician") {
+    return null;
+  }
+  if (countyMeta == null || typeof countyMeta.slug !== "string" || countyMeta.slug.length === 0) {
+    return null;
+  }
+  const config = PROFESSION_MATERIALIZATION_CONFIG.electrician;
+  if (countyCode === "50") {
+    return {
+      VG1_ELEKTRO: {
+        slug: config.trondelagSlugPatterns.VG1.slug,
+        programCode: config.trondelagSlugPatterns.VG1.code,
+        title: "VG1 Elektro og datateknologi"
+      },
+      VG2_EL_BRANCH: {
+        slug: config.trondelagSlugPatterns.VG2.slug,
+        programCode: config.trondelagSlugPatterns.VG2.code,
+        title: "VG2 Elenergi og ekom"
+      }
+    };
+  }
+  const countyUpper = countyTokenFromMeta(countyMeta);
+  const patterns = config.countyScopedSlugPatterns;
+  return {
+    VG1_ELEKTRO: {
+      slug: `${professionSlug}-${patterns.VG1.slugMiddle}-${countyMeta.slug}`,
+      programCode: `${patterns.VG1.codePrefix}-${countyUpper}`,
+      title: "VG1 Elektro og datateknologi"
+    },
+    VG2_EL_BRANCH: {
+      slug: `${professionSlug}-${patterns.VG2.slugMiddle}-${countyMeta.slug}`,
+      programCode: `${patterns.VG2.codePrefix}-${countyUpper}`,
+      title: "VG2 Elenergi og ekom"
+    }
+  };
+}
+function deriveMechanicProgrammeIdentitySpecs({ professionSlug, countyCode, countyMeta }) {
+  if (professionSlug !== "mechanic") {
+    return null;
+  }
+  if (countyMeta == null || typeof countyMeta.slug !== "string" || countyMeta.slug.length === 0) {
+    return null;
+  }
+  const config = PROFESSION_MATERIALIZATION_CONFIG.mechanic;
+  if (countyCode === "50") {
+    return {
+      VG1_TEKNOLOGI: {
+        slug: config.trondelagSlugPatterns.VG1.slug,
+        programCode: config.trondelagSlugPatterns.VG1.code,
+        title: "VG1 Teknologi- og industrifag"
+      },
+      VG2_KJORETOY: {
+        slug: config.trondelagSlugPatterns.VG2.slug,
+        programCode: config.trondelagSlugPatterns.VG2.code,
+        title: "VG2 Kj\xF8ret\xF8y"
+      }
+    };
+  }
+  const countyUpper = countyTokenFromMeta(countyMeta);
+  const patterns = config.countyScopedSlugPatterns;
+  return {
+    VG1_TEKNOLOGI: {
+      slug: `${professionSlug}-${patterns.VG1.slugMiddle}-${countyMeta.slug}`,
+      programCode: `${patterns.VG1.codePrefix}-${countyUpper}`,
+      title: "VG1 Teknologi- og industrifag"
+    },
+    VG2_KJORETOY: {
+      slug: `${professionSlug}-${patterns.VG2.slugMiddle}-${countyMeta.slug}`,
+      programCode: `${patterns.VG2.codePrefix}-${countyUpper}`,
+      title: "VG2 Kj\xF8ret\xF8y"
+    }
+  };
+}
+function isCountyScopedMaterializedProgramme({
+  professionSlug,
+  program,
+  countyMeta,
+  pathNode
+}) {
+  if (!pathNode) return false;
+  const profession = String(professionSlug ?? "").trim();
+  const config = PROFESSION_MATERIALIZATION_CONFIG[profession];
+  if (!config) return false;
+  const slug = String(program.slug ?? "").toLowerCase();
+  const countySlug = String(countyMeta?.slug ?? "").toLowerCase();
+  const programCode = String(program.program_code ?? "").toUpperCase();
+  const countyToken = countyTokenFromMeta(countyMeta);
+  if (!countySlug) return false;
+  const stage = pathNode.stage;
+  if (stage === "VG1") {
+    const trondelag = config.trondelagSlugPatterns?.VG1;
+    if (countySlug === "trondelag" && trondelag) {
+      return slug === trondelag.slug || programCode === trondelag.code;
+    }
+    const patterns = config.countyScopedSlugPatterns.VG1;
+    const slugMatch = slug === `${profession}-${patterns.slugMiddle}-${countySlug}`;
+    const codeMatch = programCode === `${patterns.codePrefix}-${countyToken}`;
+    return slugMatch || codeMatch;
+  }
+  if (stage === "VG2") {
+    const trondelag = config.trondelagSlugPatterns?.VG2;
+    if (countySlug === "trondelag" && trondelag) {
+      return slug === trondelag.slug || programCode === trondelag.code;
+    }
+    const patterns = config.countyScopedSlugPatterns.VG2;
+    const slugMatch = slug === `${profession}-${patterns.slugMiddle}-${countySlug}`;
+    const codeMatch = programCode === `${patterns.codePrefix}-${countyToken}`;
+    return slugMatch || codeMatch;
+  }
+  return false;
+}
+function pushUniqueInto(into, codes) {
+  const list = Array.isArray(codes) ? codes : [codes];
+  for (const c of list) {
+    if (!into.includes(c)) {
+      into.push(c);
+    }
+  }
+}
+function finalizedWarnings(ws) {
+  return [...new Set(ws)].sort();
+}
+function emptyStableResult(warningsExtra = []) {
+  return {
+    programmeSpecsByNodeKey: {},
+    plannedLinkSpecs: [],
+    missingRequiredNodeKeys: [],
+    skippedNodeKeys: [],
+    plannerWarnings: finalizedWarnings(warningsExtra)
+  };
+}
+function buildRequiredProgrammeSpecs({
+  professionSlug: professionSlugRaw,
+  countyCode: countyCodeRaw,
+  countyMeta,
+  requiredNodes: requiredNodesRaw,
+  extractedStages: extractedStagesRaw
+}) {
+  const professionSlug = typeof professionSlugRaw === "string" ? professionSlugRaw.trim() : "";
+  const countyCode = typeof countyCodeRaw === "string" ? countyCodeRaw.trim() : "";
+  let plannerWarnings = [];
+  const requiredNodes = Array.isArray(requiredNodesRaw) ? requiredNodesRaw : [];
+  let extractedStages = extractedStagesRaw;
+  if (extractedStagesRaw === void 0 || extractedStagesRaw === null || typeof extractedStagesRaw !== "object") {
+    pushUniqueInto(plannerWarnings, PLANNER_WARNING_CODES.MISSING_EXTRACTED_STAGES);
+    extractedStages = {};
+  }
+  const sanitizedStages = Object.fromEntries(
+    Object.entries(extractedStages).map(([stage, rows]) => [
+      stage,
+      Array.isArray(rows) ? rows : []
+    ])
+  );
+  if (!professionSlug) {
+    pushUniqueInto(plannerWarnings, PLANNER_WARNING_CODES.DETERMINISTIC_IDENTITY_UNAVAILABLE);
+    return emptyStableResult(plannerWarnings);
+  }
+  const professionConfig = PROFESSION_MATERIALIZATION_CONFIG[professionSlug];
+  if (!professionConfig || !SUPPORTED_PROFESSION_SLUGS.has(professionSlug)) {
+    pushUniqueInto(plannerWarnings, PLANNER_WARNING_CODES.UNSUPPORTED_PROFESSION_SLUG);
+    return emptyStableResult(plannerWarnings);
+  }
+  const materializationNodeKeys = professionConfig.nodeKeys;
+  const materializationNodeKeySet = new Set(materializationNodeKeys);
+  if (!countyCode) {
+    pushUniqueInto(plannerWarnings, PLANNER_WARNING_CODES.MISSING_COUNTY_CODE);
+    return emptyStableResult(plannerWarnings);
+  }
+  if (countyMeta == null || typeof countyMeta !== "object" || typeof countyMeta.slug !== "string" || countyMeta.slug.length === 0 || typeof countyMeta.label !== "string" || countyMeta.label.length === 0) {
+    pushUniqueInto(plannerWarnings, PLANNER_WARNING_CODES.MISSING_COUNTY_META);
+    return emptyStableResult(plannerWarnings);
+  }
+  const skippedNodeKeys = [];
+  for (const node of requiredNodes) {
+    const key = typeof node.nodeKey === "string" ? node.nodeKey : "";
+    if (key && !materializationNodeKeySet.has(key)) {
+      if (!skippedNodeKeys.includes(key)) {
+        skippedNodeKeys.push(key);
+      }
+    }
+  }
+  skippedNodeKeys.sort();
+  const supportedRequiredNodes = requiredNodes.filter(
+    (node) => typeof node.nodeKey === "string" && materializationNodeKeySet.has(node.nodeKey)
+  );
+  const byKey = {};
+  for (const node of supportedRequiredNodes) {
+    if (typeof node.nodeKey !== "string") continue;
+    byKey[node.nodeKey] = node;
+  }
+  const missingFromPathDefinitions = [];
+  const missingStages = [];
+  const missingPresenceNodeKeys = [];
+  for (const nodeKey of materializationNodeKeys) {
+    if (!byKey[nodeKey]) {
+      missingFromPathDefinitions.push(nodeKey);
+      pushUniqueInto(plannerWarnings, PLANNER_WARNING_CODES.UNSUPPORTED_REQUIRED_NODE);
+      continue;
+    }
+    const node = byKey[nodeKey];
+    const stageRows = sanitizedStages[node.stage] ?? [];
+    if (!stagePresentInCounty(stageRows, countyMeta)) {
+      missingPresenceNodeKeys.push(nodeKey);
+      if (!missingStages.includes(node.stage)) {
+        missingStages.push(node.stage);
+      }
+    }
+  }
+  if (missingPresenceNodeKeys.length > 0) {
+    pushUniqueInto(plannerWarnings, PLANNER_WARNING_CODES.MISSING_REQUIRED_NODE);
+  }
+  const pathCompleteLegacy = supportedRequiredNodes.length === materializationNodeKeys.length;
+  const stageOkLegacy = missingStages.length === 0;
+  if (!pathCompleteLegacy || !stageOkLegacy) {
+    return {
+      programmeSpecsByNodeKey: {},
+      plannedLinkSpecs: [],
+      missingRequiredNodeKeys: [
+        .../* @__PURE__ */ new Set([...missingPresenceNodeKeys, ...missingFromPathDefinitions])
+      ].sort(),
+      skippedNodeKeys,
+      plannerWarnings: finalizedWarnings(plannerWarnings)
+    };
+  }
+  const identitySpecs = professionConfig.deriveIdentitySpecs({
+    professionSlug,
+    countyCode,
+    countyMeta
+  });
+  if (!identitySpecs) {
+    pushUniqueInto(plannerWarnings, PLANNER_WARNING_CODES.DETERMINISTIC_IDENTITY_UNAVAILABLE);
+    return {
+      programmeSpecsByNodeKey: {},
+      plannedLinkSpecs: [],
+      missingRequiredNodeKeys: materializationNodeKeys.slice(),
+      skippedNodeKeys,
+      plannerWarnings: finalizedWarnings(plannerWarnings)
+    };
+  }
+  const orderedNodes = supportedRequiredNodes.length === materializationNodeKeys.length ? supportedRequiredNodes : materializationNodeKeys.map((nk) => byKey[nk]).filter(Boolean);
+  const programmeSpecsByNodeKey = {};
+  const plannedLinkSpecs = [];
+  for (const node of orderedNodes) {
+    const idPart = identitySpecs[node.nodeKey];
+    if (!idPart) {
+      pushUniqueInto(plannerWarnings, PLANNER_WARNING_CODES.DETERMINISTIC_IDENTITY_UNAVAILABLE);
+      return {
+        programmeSpecsByNodeKey: {},
+        plannedLinkSpecs: [],
+        missingRequiredNodeKeys: [...materializationNodeKeys],
+        skippedNodeKeys,
+        plannerWarnings: finalizedWarnings(plannerWarnings)
+      };
+    }
+    programmeSpecsByNodeKey[node.nodeKey] = {
+      nodeKey: node.nodeKey,
+      slug: idPart.slug,
+      programCode: idPart.programCode,
+      title: idPart.title,
+      level: "upper_secondary",
+      stage: node.stage,
+      countyCode,
+      source: PLANNER_PROGRAMME_SOURCE
+    };
+    plannedLinkSpecs.push({
+      professionSlug,
+      programmeSlug: idPart.slug,
+      nodeKey: node.nodeKey
+    });
+  }
+  return {
+    programmeSpecsByNodeKey,
+    plannedLinkSpecs,
+    missingRequiredNodeKeys: [],
+    skippedNodeKeys,
+    plannerWarnings: finalizedWarnings(plannerWarnings)
+  };
+}
+
+// scripts/vilbli-stage-extraction-helper.mjs
+function normalizeBasic3(value) {
+  return String(value ?? "").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim();
+}
 function slugToken(value) {
-  return normalizeBasic2(value).replace(/\s+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+  return normalizeBasic3(value).replace(/\s+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
 }
 function parseVilbliJsArrayLiteral(literal) {
   const trimmed = String(literal ?? "").trim();
@@ -16897,7 +17327,7 @@ function parseStageArraysFromHtml(html) {
   }
   return stageMap;
 }
-function mapVilbliSchool(item) {
+function mapVilbliSchool2(item) {
   if (Array.isArray(item)) {
     return {
       schoolName: String(item[3] || ""),
@@ -17002,23 +17432,31 @@ function parseSchoolProgrammeLinksFromHtml({ html, sourceUrl, countySlug }) {
       const stageFromKurs = resolveStageFromVilbliKurs(href);
       const stage = stageFromKurs ?? stageFromColumn;
       const rawTitle = String(entryMatch[3] ?? "").replace(/<[^>]+>/g, " ");
-      const title = normalizeBasic2(rawTitle);
+      const title = normalizeBasic3(rawTitle);
       const isSchoolBased = /\bskole\b/i.test(classAttr);
       const isApprenticeshipBedrift = /\bbedrift\b/i.test(classAttr);
       const hasAdrStyleUrl = /skoler-og-laerebedrifter/i.test(href);
       const inCountyPath = href.includes(`/${countySlug}/`);
       const excludedContour = EXCLUDED_PROGRAMME_PATTERNS.some((re) => re.test(title));
+      const linkPayload = {
+        stage,
+        title: normalizeBasic3(rawTitle),
+        titleDisplay: rawTitle.replace(/\s+/g, " ").trim(),
+        href: new URL(href, sourceUrl).toString(),
+        excluded: excludedContour,
+        skipReason: excludedContour ? "adult_or_completion_contour" : null,
+        columnId,
+        optionId: `opt-${slugToken(rawTitle)}-${slugToken(stage ?? "unknown")}`
+      };
       if (isSchoolBased && !isApprenticeshipBedrift && hasAdrStyleUrl && inCountyPath) {
         rows.push({
-          stage,
-          title: normalizeBasic2(rawTitle),
-          titleDisplay: rawTitle.replace(/\s+/g, " ").trim(),
-          href: new URL(href, sourceUrl).toString(),
-          excluded: excludedContour,
-          skipReason: excludedContour ? "adult_or_completion_contour" : null,
-          linkType: "school_programme",
-          columnId,
-          optionId: `opt-${slugToken(rawTitle)}-${slugToken(stage ?? "unknown")}`
+          ...linkPayload,
+          linkType: "school_programme"
+        });
+      } else if (isApprenticeshipBedrift && hasAdrStyleUrl && inCountyPath && !excludedContour) {
+        rows.push({
+          ...linkPayload,
+          linkType: "apprenticeship_branch_programme"
         });
       }
       entryMatch = entryRegex.exec(ul);
@@ -17038,8 +17476,8 @@ function extractVilbliStagesFromHtml({ html, countySlug, countyLabel }) {
   ]);
   const extractedStages = {};
   for (const stage of allStages) {
-    const mapSchools = (rawMapStageArrays[stage] ?? []).map(mapVilbliSchool).filter((school) => school.schoolName && school.schoolCode).filter(
-      (school) => normalizeBasic2(school.fylkeName) === normalizeBasic2(countyLabel) || school.schoolPagePath.includes(`/${countySlug}/`)
+    const mapSchools = (rawMapStageArrays[stage] ?? []).map(mapVilbliSchool2).filter((school) => school.schoolName && school.schoolCode).filter(
+      (school) => normalizeBasic3(school.fylkeName) === normalizeBasic3(countyLabel) || school.schoolPagePath.includes(`/${countySlug}/`)
     );
     const htmlSchools = (htmlStageLinks[stage] ?? []).map((school) => ({
       ...school,
@@ -17481,33 +17919,6 @@ function chooseStatus(params) {
   }
   return READYNESS_STATUSES.SOURCE_EXTRACTION_FAILED;
 }
-function countyTokenFromMeta(countyMeta) {
-  return String(countyMeta?.slug ?? "").toUpperCase().replace(/[^A-Z0-9]+/g, "_");
-}
-function isCountyScopedMaterializedProgramme({
-  program,
-  countyMeta,
-  pathNode
-}) {
-  if (!pathNode) return false;
-  const slug = String(program.slug ?? "").toLowerCase();
-  const countySlug = String(countyMeta?.slug ?? "").toLowerCase();
-  const programCode = String(program.program_code ?? "").toUpperCase();
-  const countyToken = countyTokenFromMeta(countyMeta);
-  if (!countySlug) return false;
-  const stage = pathNode.stage;
-  if (stage === "VG1") {
-    const slugMatch = slug === `electrician-vg1-elektro-${countySlug}`;
-    const codeMatch = programCode === `EL-VG1-${countyToken}`;
-    return slugMatch || codeMatch;
-  }
-  if (stage === "VG2") {
-    const slugMatch = slug === `electrician-vg2-elenergi-${countySlug}`;
-    const codeMatch = programCode === `EL-VG2-${countyToken}`;
-    return slugMatch || codeMatch;
-  }
-  return false;
-}
 function withIdentitySemanticsDiagnostics(result) {
   const summary = {
     totalSchoolsAnalyzed: 0,
@@ -17620,6 +18031,7 @@ async function classifyReadiness({
     const pathNode = pathDefinition ? mapProgrammeToPathNode(program, pathDefinition) : null;
     const hasInstitutionCountyMatch = institution?.county_code === countyCode;
     const hasCountyScopedMaterializedMatch = isCountyScopedMaterializedProgramme({
+      professionSlug,
       program,
       countyMeta,
       pathNode
@@ -17925,7 +18337,8 @@ var VGS_PIPELINE_COUNTY_CODES = /* @__PURE__ */ new Set([
   "56"
 ]);
 var CONTOUR_A_OPERATIONAL_BY_PROFESSION = {
-  electrician: /* @__PURE__ */ new Set(["03", "11", "46", "50"])
+  electrician: /* @__PURE__ */ new Set(["03", "11", "46", "50"]),
+  mechanic: /* @__PURE__ */ new Set(["03", "11", "46", "50"])
 };
 var CONTOUR_A_GREEN_READINESS_STATUSES = /* @__PURE__ */ new Set([
   "ready_for_write",
@@ -17981,257 +18394,10 @@ var http_fetch_default = fetchFn;
 
 // scripts/materialize-vgs-programmes-from-vilbli.mjs
 init_dist4();
-
-// scripts/vgs-programme-materialization-planner.mjs
-var ELECTRICIAN_MATERIALIZATION_NODE_KEYS = ["VG1_ELEKTRO", "VG2_EL_BRANCH"];
-var ELECTRICIAN_MATERIALIZATION_NODE_KEY_SET = new Set(
-  ELECTRICIAN_MATERIALIZATION_NODE_KEYS
-);
-var PLANNER_PROGRAMME_SOURCE = "vilbli";
-var PLANNER_WARNING_CODES = {
-  MISSING_REQUIRED_NODE: "missing_required_node",
-  UNSUPPORTED_PROFESSION_SLUG: "unsupported_profession_slug",
-  MISSING_COUNTY_CODE: "missing_county_code",
-  MISSING_COUNTY_META: "missing_county_meta",
-  MISSING_EXTRACTED_STAGES: "missing_extracted_stages",
-  UNSUPPORTED_REQUIRED_NODE: "unsupported_required_node",
-  DETERMINISTIC_IDENTITY_UNAVAILABLE: "deterministic_identity_unavailable"
+var MATERIALIZATION_NODE_KEYS_BY_PROFESSION = {
+  electrician: ELECTRICIAN_MATERIALIZATION_NODE_KEYS,
+  mechanic: MECHANIC_MATERIALIZATION_NODE_KEYS
 };
-function normalizeBasic3(value) {
-  return String(value ?? "").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim();
-}
-function mapVilbliSchool2(item) {
-  if (Array.isArray(item)) {
-    return {
-      schoolName: String(item[3] || ""),
-      schoolCode: String(item[4] || ""),
-      fylkeName: String(item[8] || ""),
-      schoolPagePath: String(item[9] || "")
-    };
-  }
-  return {
-    schoolName: String(item.schoolName || item.school_name || item.name || ""),
-    schoolCode: String(
-      item.schoolCode || item.orgOrSchoolCode || item.orgnr || item.orgnr_skole || ""
-    ),
-    fylkeName: String(item.fylkeName || item.fylke || item.county || ""),
-    schoolPagePath: String(item.schoolPagePath || item.url || item.href || "")
-  };
-}
-function stagePresentInCounty(stageRows, countyMeta) {
-  if (countyMeta == null || typeof countyMeta !== "object" || typeof countyMeta.label !== "string" || typeof countyMeta.slug !== "string") {
-    return false;
-  }
-  if (!Array.isArray(stageRows)) {
-    return false;
-  }
-  const normalizedCountyLabel = normalizeBasic3(countyMeta.label);
-  const filtered = stageRows.map(mapVilbliSchool2).filter((school) => school.schoolName && school.schoolCode).filter(
-    (school) => normalizeBasic3(school.fylkeName) === normalizedCountyLabel || school.schoolPagePath.includes(`/${countyMeta.slug}/`)
-  );
-  return filtered.length > 0;
-}
-function deriveElectricianProgrammeIdentitySpecs({ professionSlug, countyCode, countyMeta }) {
-  if (professionSlug !== "electrician") {
-    return null;
-  }
-  if (countyMeta == null || typeof countyMeta.slug !== "string" || countyMeta.slug.length === 0) {
-    return null;
-  }
-  if (countyCode === "50") {
-    return {
-      VG1_ELEKTRO: {
-        slug: "electrician-vg1-elektro-trondelag",
-        programCode: "EL-VG1-TRONDELAG",
-        title: "VG1 Elektro og datateknologi"
-      },
-      VG2_EL_BRANCH: {
-        slug: "electrician-vg2-elenergi-trondelag",
-        programCode: "EL-VG2-TRONDELAG",
-        title: "VG2 Elenergi og ekom"
-      }
-    };
-  }
-  const countyUpper = countyMeta.slug.toUpperCase().replace(/[^A-Z0-9]+/g, "_");
-  return {
-    VG1_ELEKTRO: {
-      slug: `${professionSlug}-vg1-elektro-${countyMeta.slug}`,
-      programCode: `EL-VG1-${countyUpper}`,
-      title: "VG1 Elektro og datateknologi"
-    },
-    VG2_EL_BRANCH: {
-      slug: `${professionSlug}-vg2-elenergi-${countyMeta.slug}`,
-      programCode: `EL-VG2-${countyUpper}`,
-      title: "VG2 Elenergi og ekom"
-    }
-  };
-}
-function pushUniqueInto(into, codes) {
-  const list = Array.isArray(codes) ? codes : [codes];
-  for (const c of list) {
-    if (!into.includes(c)) {
-      into.push(c);
-    }
-  }
-}
-function finalizedWarnings(ws) {
-  return [...new Set(ws)].sort();
-}
-function emptyStableResult(warningsExtra = []) {
-  return {
-    programmeSpecsByNodeKey: {},
-    plannedLinkSpecs: [],
-    missingRequiredNodeKeys: [],
-    skippedNodeKeys: [],
-    plannerWarnings: finalizedWarnings(warningsExtra)
-  };
-}
-function buildRequiredProgrammeSpecs({
-  professionSlug: professionSlugRaw,
-  countyCode: countyCodeRaw,
-  countyMeta,
-  requiredNodes: requiredNodesRaw,
-  extractedStages: extractedStagesRaw
-}) {
-  const professionSlug = typeof professionSlugRaw === "string" ? professionSlugRaw.trim() : "";
-  const countyCode = typeof countyCodeRaw === "string" ? countyCodeRaw.trim() : "";
-  let plannerWarnings = [];
-  const requiredNodes = Array.isArray(requiredNodesRaw) ? requiredNodesRaw : [];
-  let extractedStages = extractedStagesRaw;
-  if (extractedStagesRaw === void 0 || extractedStagesRaw === null || typeof extractedStagesRaw !== "object") {
-    pushUniqueInto(plannerWarnings, PLANNER_WARNING_CODES.MISSING_EXTRACTED_STAGES);
-    extractedStages = {};
-  }
-  const sanitizedStages = Object.fromEntries(
-    Object.entries(extractedStages).map(([stage, rows]) => [
-      stage,
-      Array.isArray(rows) ? rows : []
-    ])
-  );
-  if (!professionSlug) {
-    pushUniqueInto(plannerWarnings, PLANNER_WARNING_CODES.DETERMINISTIC_IDENTITY_UNAVAILABLE);
-    return emptyStableResult(plannerWarnings);
-  }
-  if (professionSlug !== "electrician") {
-    pushUniqueInto(plannerWarnings, PLANNER_WARNING_CODES.UNSUPPORTED_PROFESSION_SLUG);
-    return emptyStableResult(plannerWarnings);
-  }
-  if (!countyCode) {
-    pushUniqueInto(plannerWarnings, PLANNER_WARNING_CODES.MISSING_COUNTY_CODE);
-    return emptyStableResult(plannerWarnings);
-  }
-  if (countyMeta == null || typeof countyMeta !== "object" || typeof countyMeta.slug !== "string" || countyMeta.slug.length === 0 || typeof countyMeta.label !== "string" || countyMeta.label.length === 0) {
-    pushUniqueInto(plannerWarnings, PLANNER_WARNING_CODES.MISSING_COUNTY_META);
-    return emptyStableResult(plannerWarnings);
-  }
-  const skippedNodeKeys = [];
-  for (const node of requiredNodes) {
-    const key = typeof node.nodeKey === "string" ? node.nodeKey : "";
-    if (key && !ELECTRICIAN_MATERIALIZATION_NODE_KEY_SET.has(key)) {
-      if (!skippedNodeKeys.includes(key)) {
-        skippedNodeKeys.push(key);
-      }
-    }
-  }
-  skippedNodeKeys.sort();
-  const supportedRequiredNodes = requiredNodes.filter(
-    (node) => typeof node.nodeKey === "string" && ELECTRICIAN_MATERIALIZATION_NODE_KEY_SET.has(node.nodeKey)
-  );
-  const byKey = {};
-  for (const node of supportedRequiredNodes) {
-    if (typeof node.nodeKey !== "string") continue;
-    byKey[node.nodeKey] = node;
-  }
-  const missingFromPathDefinitions = [];
-  const missingStages = [];
-  const missingPresenceNodeKeys = [];
-  for (const nodeKey of ELECTRICIAN_MATERIALIZATION_NODE_KEYS) {
-    if (!byKey[nodeKey]) {
-      missingFromPathDefinitions.push(nodeKey);
-      pushUniqueInto(plannerWarnings, PLANNER_WARNING_CODES.UNSUPPORTED_REQUIRED_NODE);
-      continue;
-    }
-    const node = byKey[nodeKey];
-    const stageRows = sanitizedStages[node.stage] ?? [];
-    if (!stagePresentInCounty(stageRows, countyMeta)) {
-      missingPresenceNodeKeys.push(nodeKey);
-      if (!missingStages.includes(node.stage)) {
-        missingStages.push(node.stage);
-      }
-    }
-  }
-  if (missingPresenceNodeKeys.length > 0) {
-    pushUniqueInto(plannerWarnings, PLANNER_WARNING_CODES.MISSING_REQUIRED_NODE);
-  }
-  const pathCompleteLegacy = supportedRequiredNodes.length === ELECTRICIAN_MATERIALIZATION_NODE_KEYS.length;
-  const stageOkLegacy = missingStages.length === 0;
-  if (!pathCompleteLegacy || !stageOkLegacy) {
-    return {
-      programmeSpecsByNodeKey: {},
-      plannedLinkSpecs: [],
-      missingRequiredNodeKeys: [
-        .../* @__PURE__ */ new Set([...missingPresenceNodeKeys, ...missingFromPathDefinitions])
-      ].sort(),
-      skippedNodeKeys,
-      plannerWarnings: finalizedWarnings(plannerWarnings)
-    };
-  }
-  const identitySpecs = deriveElectricianProgrammeIdentitySpecs({
-    professionSlug,
-    countyCode,
-    countyMeta
-  });
-  if (!identitySpecs) {
-    pushUniqueInto(plannerWarnings, PLANNER_WARNING_CODES.DETERMINISTIC_IDENTITY_UNAVAILABLE);
-    return {
-      programmeSpecsByNodeKey: {},
-      plannedLinkSpecs: [],
-      missingRequiredNodeKeys: ELECTRICIAN_MATERIALIZATION_NODE_KEYS.slice(),
-      skippedNodeKeys,
-      plannerWarnings: finalizedWarnings(plannerWarnings)
-    };
-  }
-  const orderedNodes = supportedRequiredNodes.length === ELECTRICIAN_MATERIALIZATION_NODE_KEYS.length ? supportedRequiredNodes : ELECTRICIAN_MATERIALIZATION_NODE_KEYS.map((nk) => byKey[nk]).filter(Boolean);
-  const programmeSpecsByNodeKey = {};
-  const plannedLinkSpecs = [];
-  for (const node of orderedNodes) {
-    const idPart = identitySpecs[node.nodeKey];
-    if (!idPart) {
-      pushUniqueInto(plannerWarnings, PLANNER_WARNING_CODES.DETERMINISTIC_IDENTITY_UNAVAILABLE);
-      return {
-        programmeSpecsByNodeKey: {},
-        plannedLinkSpecs: [],
-        missingRequiredNodeKeys: [...ELECTRICIAN_MATERIALIZATION_NODE_KEYS],
-        skippedNodeKeys,
-        plannerWarnings: finalizedWarnings(plannerWarnings)
-      };
-    }
-    programmeSpecsByNodeKey[node.nodeKey] = {
-      nodeKey: node.nodeKey,
-      slug: idPart.slug,
-      programCode: idPart.programCode,
-      title: idPart.title,
-      level: "upper_secondary",
-      stage: node.stage,
-      countyCode,
-      source: PLANNER_PROGRAMME_SOURCE
-    };
-    plannedLinkSpecs.push({
-      professionSlug,
-      programmeSlug: idPart.slug,
-      nodeKey: node.nodeKey
-    });
-  }
-  return {
-    programmeSpecsByNodeKey,
-    plannedLinkSpecs,
-    missingRequiredNodeKeys: [],
-    skippedNodeKeys,
-    plannerWarnings: finalizedWarnings(plannerWarnings)
-  };
-}
-
-// scripts/materialize-vgs-programmes-from-vilbli.mjs
 var COUNTY_CODE_TO_VILBLI2 = {
   "03": { slug: "oslo", label: "Oslo" },
   "31": { slug: "ostfold", label: "\xD8stfold" },
@@ -18249,7 +18415,9 @@ var COUNTY_CODE_TO_VILBLI2 = {
   "15": { slug: "more-og-romsdal", label: "M\xF8re og Romsdal" },
   "18": { slug: "nordland", label: "Nordland" }
 };
-var REQUIRED_NODE_KEY_SET = new Set(ELECTRICIAN_MATERIALIZATION_NODE_KEYS);
+function materializationNodeKeysForProfession(professionSlug) {
+  return MATERIALIZATION_NODE_KEYS_BY_PROFESSION[professionSlug] ?? null;
+}
 function parseArgs2(argv) {
   const args = {};
   for (let i = 0; i < argv.length; i += 1) {
@@ -18305,16 +18473,21 @@ async function ensureProfessionLink(supabase, professionSlug, programSlug) {
   if (insertError) throw insertError;
   return "inserted";
 }
-function resolveSupportedRequiredNodes(pathDefinition) {
+function resolveSupportedRequiredNodes(pathDefinition, professionSlug) {
+  const materializationNodeKeys = materializationNodeKeysForProfession(professionSlug);
+  if (!materializationNodeKeys) {
+    throw new Error(`Unsupported profession for materialization: ${professionSlug}`);
+  }
+  const requiredNodeKeySet = new Set(materializationNodeKeys);
   const requiredNodes = pathDefinition.stageNodes.filter(
     (node) => node.requiredForWrite && node.stageType === "school_programme"
   );
   const supportedRequiredNodes = requiredNodes.filter(
-    (node) => REQUIRED_NODE_KEY_SET.has(node.nodeKey)
+    (node) => requiredNodeKeySet.has(node.nodeKey)
   );
-  if (supportedRequiredNodes.length !== REQUIRED_NODE_KEY_SET.size) {
+  if (supportedRequiredNodes.length !== materializationNodeKeys.length) {
     throw new Error(
-      "Required electrician nodes not fully present in path definition (VG1_ELEKTRO, VG2_EL_BRANCH)."
+      `Required ${professionSlug} nodes not fully present in path definition (${materializationNodeKeys.join(", ")}).`
     );
   }
   return supportedRequiredNodes;
@@ -18345,7 +18518,7 @@ async function materializeVgsProgrammesFromVilbli({
   if (!pathDefinition) {
     throw new Error(`No VGS path definition found for profession: ${profession}`);
   }
-  const supportedRequiredNodes = resolveSupportedRequiredNodes(pathDefinition);
+  const supportedRequiredNodes = resolveSupportedRequiredNodes(pathDefinition, profession);
   const resolvedSourceUrl = sourceUrl ?? pathDefinition.sourceModel.buildVilbliUrl(countyMeta.slug);
   const missingStages = supportedRequiredNodes.filter((node) => !stagePresentInCounty(extractedStages[node.stage] ?? [], countyMeta)).map((node) => node.stage);
   if (missingStages.length > 0) {
@@ -19104,6 +19277,17 @@ async function runVgsTruthPipeline({
     }
     const resolvedSchools = extractedProgramme.extractedStages[resolvedStage] ?? [];
     if (resolvedSchools.length === 0) {
+      if (link.linkType === "apprenticeship_branch_programme" && resolvedStage === "VG3") {
+        expandedStageEntries.push({
+          stage: resolvedStage,
+          titleDisplay: link.titleDisplay,
+          href: link.href,
+          schools: [],
+          optionId: link.optionId,
+          source: "apprenticeship_branch_programme"
+        });
+        continue;
+      }
       skippedNoSchoolAvailability.push({
         stage: resolvedStage,
         title: link.titleDisplay,

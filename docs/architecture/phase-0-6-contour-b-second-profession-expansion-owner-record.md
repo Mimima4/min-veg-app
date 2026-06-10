@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **PLANNING** — owner profession selection pending |
+| **Status** | **PILOT IN PROGRESS** — Vestland (`46`); materialization + dry-run |
 | **Date (UTC)** | 2026-06-10 |
 | **Prerequisite** | Electrician **15/15** fylke PSA + Block C E2E **CLOSED** (`phase-0-6-contour-b-block-c-e2e-batch-owner-record.md`) |
 
@@ -20,11 +20,13 @@ Add **one** new VGS-backed profession to Contour B pipeline + route `availabilit
 
 | # | Question | Status |
 |---|----------|--------|
-| P-1 | **Which profession slug?** (must exist in `professions` catalog + Vilbli strukturkart) | ☐ |
-| P-2 | **Pilot fylke** for first E2E (suggest one green or one B fylke with clean dry-run) | ☐ |
-| P-3 | **Rollout:** pilot fylke first vs all **15** fylke batch relay | ☐ |
+| P-1 | **Which profession slug?** | **OK — `mechanic`** (2026-06-10) |
+| P-2 | **Pilot fylke** for first E2E | **OK — Vestland (`46`)** 2026-06-10 |
+| P-3 | **Rollout:** pilot fylke first vs all **15** fylke batch relay | **OK — pilot first** 2026-06-10 |
 
-**Current pipeline:** only `electrician` in `scripts/vgs-path-definitions.mjs` and `SUPPORTED_VGS_PROFESSION_SLUGS`.
+**Signed Vilbli contour:** Teknologi- og industrifag → Kjøretøy → **kolonne-3 next steps for that chain** (per fylke; all sibling specializations in column; not Påbygging). Detail: `phase-0-6-contour-b-mechanic-vilbli-branch-owner-record.md`.
+
+**Pipeline today:** `electrician` operational **15/15**. `mechanic` path + materialization planner signed; **Vestland pilot** via Contour A truth pipeline. TS `SUPPORTED_VGS_PROFESSION_SLUGS` includes `mechanic` for route read path.
 
 ---
 
@@ -57,4 +59,4 @@ Pick profession with:
 
 ## 5. Next session
 
-Owner names **profession slug** + **pilot fylke** → charter path definition draft → dry-run one county → relay → E2E checklist (fylke **name**, not code).
+Owner names **pilot fylke** (P-2) + rollout scope (P-3) → extend materialization planner for `mechanic` → dry-run one county → relay → E2E checklist (fylke **name**, not code).

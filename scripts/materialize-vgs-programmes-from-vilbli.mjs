@@ -6,8 +6,14 @@ import { extractVilbliStagesFromHtml } from "./vilbli-stage-extraction-helper.mj
 import {
   buildRequiredProgrammeSpecs,
   ELECTRICIAN_MATERIALIZATION_NODE_KEYS,
+  MECHANIC_MATERIALIZATION_NODE_KEYS,
   stagePresentInCounty,
 } from "./vgs-programme-materialization-planner.mjs";
+
+const MATERIALIZATION_NODE_KEYS_BY_PROFESSION = {
+  electrician: ELECTRICIAN_MATERIALIZATION_NODE_KEYS,
+  mechanic: MECHANIC_MATERIALIZATION_NODE_KEYS,
+};
 
 const COUNTY_CODE_TO_VILBLI = {
   "03": { slug: "oslo", label: "Oslo" },
@@ -27,7 +33,9 @@ const COUNTY_CODE_TO_VILBLI = {
   "18": { slug: "nordland", label: "Nordland" },
 };
 
-const REQUIRED_NODE_KEY_SET = new Set(ELECTRICIAN_MATERIALIZATION_NODE_KEYS);
+function materializationNodeKeysForProfession(professionSlug) {
+  return MATERIALIZATION_NODE_KEYS_BY_PROFESSION[professionSlug] ?? null;
+}
 
 function parseArgs(argv) {
   const args = {};
@@ -108,16 +116,22 @@ async function ensureProfessionLink(supabase, professionSlug, programSlug) {
   return "inserted";
 }
 
-function resolveSupportedRequiredNodes(pathDefinition) {
+function resolveSupportedRequiredNodes(pathDefinition, professionSlug) {
+  const materializationNodeKeys = materializationNodeKeysForProfession(professionSlug);
+  if (!materializationNodeKeys) {
+    throw new Error(`Unsupported profession for materialization: ${professionSlug}`);
+  }
+  const requiredNodeKeySet = new Set(materializationNodeKeys);
+
   const requiredNodes = pathDefinition.stageNodes.filter(
     (node) => node.requiredForWrite && node.stageType === "school_programme"
   );
   const supportedRequiredNodes = requiredNodes.filter((node) =>
-    REQUIRED_NODE_KEY_SET.has(node.nodeKey)
+    requiredNodeKeySet.has(node.nodeKey)
   );
-  if (supportedRequiredNodes.length !== REQUIRED_NODE_KEY_SET.size) {
+  if (supportedRequiredNodes.length !== materializationNodeKeys.length) {
     throw new Error(
-      "Required electrician nodes not fully present in path definition (VG1_ELEKTRO, VG2_EL_BRANCH)."
+      `Required ${professionSlug} nodes not fully present in path definition (${materializationNodeKeys.join(", ")}).`
     );
   }
   return supportedRequiredNodes;
@@ -156,7 +170,7 @@ export async function materializeVgsProgrammesFromVilbli({
     throw new Error(`No VGS path definition found for profession: ${profession}`);
   }
 
-  const supportedRequiredNodes = resolveSupportedRequiredNodes(pathDefinition);
+  const supportedRequiredNodes = resolveSupportedRequiredNodes(pathDefinition, profession);
   const resolvedSourceUrl =
     sourceUrl ?? pathDefinition.sourceModel.buildVilbliUrl(countyMeta.slug);
 

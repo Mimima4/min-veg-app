@@ -1,11 +1,37 @@
-/** Pure programme identity + required-node rules for electrician VGS materialization. No IO. */
+/** Pure programme identity + required-node rules for VGS materialization. No IO. */
 
-/** Policy: only these electrician path nodes participate in deterministic materialization. */
+/** Policy: only these path nodes participate in deterministic materialization. */
 export const ELECTRICIAN_MATERIALIZATION_NODE_KEYS = ["VG1_ELEKTRO", "VG2_EL_BRANCH"];
+export const MECHANIC_MATERIALIZATION_NODE_KEYS = ["VG1_TEKNOLOGI", "VG2_KJORETOY"];
 
-const ELECTRICIAN_MATERIALIZATION_NODE_KEY_SET = new Set(
-  ELECTRICIAN_MATERIALIZATION_NODE_KEYS
-);
+const PROFESSION_MATERIALIZATION_CONFIG = {
+  electrician: {
+    nodeKeys: ELECTRICIAN_MATERIALIZATION_NODE_KEYS,
+    deriveIdentitySpecs: deriveElectricianProgrammeIdentitySpecs,
+    countyScopedSlugPatterns: {
+      VG1: { slugMiddle: "vg1-elektro", codePrefix: "EL-VG1" },
+      VG2: { slugMiddle: "vg2-elenergi", codePrefix: "EL-VG2" },
+    },
+    trondelagSlugPatterns: {
+      VG1: { slug: "electrician-vg1-elektro-trondelag", code: "EL-VG1-TRONDELAG" },
+      VG2: { slug: "electrician-vg2-elenergi-trondelag", code: "EL-VG2-TRONDELAG" },
+    },
+  },
+  mechanic: {
+    nodeKeys: MECHANIC_MATERIALIZATION_NODE_KEYS,
+    deriveIdentitySpecs: deriveMechanicProgrammeIdentitySpecs,
+    countyScopedSlugPatterns: {
+      VG1: { slugMiddle: "vg1-teknologi", codePrefix: "MECH-VG1" },
+      VG2: { slugMiddle: "vg2-kjoretoy", codePrefix: "MECH-VG2" },
+    },
+    trondelagSlugPatterns: {
+      VG1: { slug: "mechanic-vg1-teknologi-trondelag", code: "MECH-VG1-TRONDELAG" },
+      VG2: { slug: "mechanic-vg2-kjoretoy-trondelag", code: "MECH-VG2-TRONDELAG" },
+    },
+  },
+};
+
+const SUPPORTED_PROFESSION_SLUGS = new Set(Object.keys(PROFESSION_MATERIALIZATION_CONFIG));
 
 /** Semantics aligned with Vilbli-backed pipeline materialization (informational — not necessarily a DB column). */
 export const PLANNER_PROGRAMME_SOURCE = "vilbli";
@@ -80,6 +106,12 @@ export function stagePresentInCounty(stageRows, countyMeta) {
   return filtered.length > 0;
 }
 
+function countyTokenFromMeta(countyMeta) {
+  return String(countyMeta?.slug ?? "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "_");
+}
+
 /** @internal — same derivation as legacy script (no fetch / no DB). */
 function deriveElectricianProgrammeIdentitySpecs({ professionSlug, countyCode, countyMeta }) {
   if (professionSlug !== "electrician") {
@@ -90,35 +122,131 @@ function deriveElectricianProgrammeIdentitySpecs({ professionSlug, countyCode, c
     return null;
   }
 
+  const config = PROFESSION_MATERIALIZATION_CONFIG.electrician;
+
   if (countyCode === "50") {
     return {
       VG1_ELEKTRO: {
-        slug: "electrician-vg1-elektro-trondelag",
-        programCode: "EL-VG1-TRONDELAG",
+        slug: config.trondelagSlugPatterns.VG1.slug,
+        programCode: config.trondelagSlugPatterns.VG1.code,
         title: "VG1 Elektro og datateknologi",
       },
       VG2_EL_BRANCH: {
-        slug: "electrician-vg2-elenergi-trondelag",
-        programCode: "EL-VG2-TRONDELAG",
+        slug: config.trondelagSlugPatterns.VG2.slug,
+        programCode: config.trondelagSlugPatterns.VG2.code,
         title: "VG2 Elenergi og ekom",
       },
     };
   }
 
-  const countyUpper = countyMeta.slug.toUpperCase().replace(/[^A-Z0-9]+/g, "_");
+  const countyUpper = countyTokenFromMeta(countyMeta);
+  const patterns = config.countyScopedSlugPatterns;
 
   return {
     VG1_ELEKTRO: {
-      slug: `${professionSlug}-vg1-elektro-${countyMeta.slug}`,
-      programCode: `EL-VG1-${countyUpper}`,
+      slug: `${professionSlug}-${patterns.VG1.slugMiddle}-${countyMeta.slug}`,
+      programCode: `${patterns.VG1.codePrefix}-${countyUpper}`,
       title: "VG1 Elektro og datateknologi",
     },
     VG2_EL_BRANCH: {
-      slug: `${professionSlug}-vg2-elenergi-${countyMeta.slug}`,
-      programCode: `EL-VG2-${countyUpper}`,
+      slug: `${professionSlug}-${patterns.VG2.slugMiddle}-${countyMeta.slug}`,
+      programCode: `${patterns.VG2.codePrefix}-${countyUpper}`,
       title: "VG2 Elenergi og ekom",
     },
   };
+}
+
+/** @internal */
+function deriveMechanicProgrammeIdentitySpecs({ professionSlug, countyCode, countyMeta }) {
+  if (professionSlug !== "mechanic") {
+    return null;
+  }
+
+  if (countyMeta == null || typeof countyMeta.slug !== "string" || countyMeta.slug.length === 0) {
+    return null;
+  }
+
+  const config = PROFESSION_MATERIALIZATION_CONFIG.mechanic;
+
+  if (countyCode === "50") {
+    return {
+      VG1_TEKNOLOGI: {
+        slug: config.trondelagSlugPatterns.VG1.slug,
+        programCode: config.trondelagSlugPatterns.VG1.code,
+        title: "VG1 Teknologi- og industrifag",
+      },
+      VG2_KJORETOY: {
+        slug: config.trondelagSlugPatterns.VG2.slug,
+        programCode: config.trondelagSlugPatterns.VG2.code,
+        title: "VG2 Kjøretøy",
+      },
+    };
+  }
+
+  const countyUpper = countyTokenFromMeta(countyMeta);
+  const patterns = config.countyScopedSlugPatterns;
+
+  return {
+    VG1_TEKNOLOGI: {
+      slug: `${professionSlug}-${patterns.VG1.slugMiddle}-${countyMeta.slug}`,
+      programCode: `${patterns.VG1.codePrefix}-${countyUpper}`,
+      title: "VG1 Teknologi- og industrifag",
+    },
+    VG2_KJORETOY: {
+      slug: `${professionSlug}-${patterns.VG2.slugMiddle}-${countyMeta.slug}`,
+      programCode: `${patterns.VG2.codePrefix}-${countyUpper}`,
+      title: "VG2 Kjøretøy",
+    },
+  };
+}
+
+/**
+ * County-scoped materialized programme identity (slug / program_code) for classify-readiness.
+ * Keeps slug patterns aligned with `derive*ProgrammeIdentitySpecs`.
+ */
+export function isCountyScopedMaterializedProgramme({
+  professionSlug,
+  program,
+  countyMeta,
+  pathNode,
+}) {
+  if (!pathNode) return false;
+
+  const profession = String(professionSlug ?? "").trim();
+  const config = PROFESSION_MATERIALIZATION_CONFIG[profession];
+  if (!config) return false;
+
+  const slug = String(program.slug ?? "").toLowerCase();
+  const countySlug = String(countyMeta?.slug ?? "").toLowerCase();
+  const programCode = String(program.program_code ?? "").toUpperCase();
+  const countyToken = countyTokenFromMeta(countyMeta);
+
+  if (!countySlug) return false;
+
+  const stage = pathNode.stage;
+  if (stage === "VG1") {
+    const trondelag = config.trondelagSlugPatterns?.VG1;
+    if (countySlug === "trondelag" && trondelag) {
+      return slug === trondelag.slug || programCode === trondelag.code;
+    }
+    const patterns = config.countyScopedSlugPatterns.VG1;
+    const slugMatch = slug === `${profession}-${patterns.slugMiddle}-${countySlug}`;
+    const codeMatch = programCode === `${patterns.codePrefix}-${countyToken}`;
+    return slugMatch || codeMatch;
+  }
+
+  if (stage === "VG2") {
+    const trondelag = config.trondelagSlugPatterns?.VG2;
+    if (countySlug === "trondelag" && trondelag) {
+      return slug === trondelag.slug || programCode === trondelag.code;
+    }
+    const patterns = config.countyScopedSlugPatterns.VG2;
+    const slugMatch = slug === `${profession}-${patterns.slugMiddle}-${countySlug}`;
+    const codeMatch = programCode === `${patterns.codePrefix}-${countyToken}`;
+    return slugMatch || codeMatch;
+  }
+
+  return false;
 }
 
 function pushUniqueInto(into, codes) {
@@ -146,16 +274,9 @@ function emptyStableResult(warningsExtra = []) {
 }
 
 /**
- * Single source of deterministic programme/link identity for electrician required nodes.
+ * Single source of deterministic programme/link identity for required VGS path nodes.
  *
  * Does not fetch, write, or read env. Safe on incomplete inputs — returns warnings + stable shape.
- *
- * Definition alignment with execution-plan text:
- * - unsupported_required_node: required policy nodes (VG1_ELEKTRO / VG2_EL_BRANCH) absent from supplied path `requiredNodes`
- * - missing_required_node: path row exists but stage data absent in county / planner context cannot satisfy it
- *
- * Behaviour aligned with legacy `materialize-vgs-programmes-from-vilbli.mjs`: programmeSpecs are emitted only once
- * path completeness + Vilbli stage presence checks pass for both policy nodes (same order as legacy success path).
  */
 export function buildRequiredProgrammeSpecs({
   professionSlug: professionSlugRaw,
@@ -193,10 +314,14 @@ export function buildRequiredProgrammeSpecs({
     return emptyStableResult(plannerWarnings);
   }
 
-  if (professionSlug !== "electrician") {
+  const professionConfig = PROFESSION_MATERIALIZATION_CONFIG[professionSlug];
+  if (!professionConfig || !SUPPORTED_PROFESSION_SLUGS.has(professionSlug)) {
     pushUniqueInto(plannerWarnings, PLANNER_WARNING_CODES.UNSUPPORTED_PROFESSION_SLUG);
     return emptyStableResult(plannerWarnings);
   }
+
+  const materializationNodeKeys = professionConfig.nodeKeys;
+  const materializationNodeKeySet = new Set(materializationNodeKeys);
 
   if (!countyCode) {
     pushUniqueInto(plannerWarnings, PLANNER_WARNING_CODES.MISSING_COUNTY_CODE);
@@ -215,11 +340,11 @@ export function buildRequiredProgrammeSpecs({
     return emptyStableResult(plannerWarnings);
   }
 
-  /** Paths not part of VG1/VG2 electrician deterministic policy — tracked as skipped intentionally. */
+  /** Paths not part of VG1/VG2 deterministic policy — tracked as skipped intentionally. */
   const skippedNodeKeys = [];
   for (const node of requiredNodes) {
     const key = typeof node.nodeKey === "string" ? node.nodeKey : "";
-    if (key && !ELECTRICIAN_MATERIALIZATION_NODE_KEY_SET.has(key)) {
+    if (key && !materializationNodeKeySet.has(key)) {
       if (!skippedNodeKeys.includes(key)) {
         skippedNodeKeys.push(key);
       }
@@ -229,8 +354,7 @@ export function buildRequiredProgrammeSpecs({
 
   const supportedRequiredNodes = requiredNodes.filter(
     (node) =>
-      typeof node.nodeKey === "string" &&
-      ELECTRICIAN_MATERIALIZATION_NODE_KEY_SET.has(node.nodeKey)
+      typeof node.nodeKey === "string" && materializationNodeKeySet.has(node.nodeKey)
   );
 
   const byKey = {};
@@ -239,16 +363,11 @@ export function buildRequiredProgrammeSpecs({
     byKey[node.nodeKey] = node;
   }
 
-  /** Nodes required by deterministic policy order. */
   const missingFromPathDefinitions = [];
-
-  /** @type {string[]} */
   const missingStages = [];
-
-  /** Nodes that exist in policy but Vilbli county presence failed. */
   const missingPresenceNodeKeys = [];
 
-  for (const nodeKey of ELECTRICIAN_MATERIALIZATION_NODE_KEYS) {
+  for (const nodeKey of materializationNodeKeys) {
     if (!byKey[nodeKey]) {
       missingFromPathDefinitions.push(nodeKey);
       pushUniqueInto(plannerWarnings, PLANNER_WARNING_CODES.UNSUPPORTED_REQUIRED_NODE);
@@ -270,9 +389,8 @@ export function buildRequiredProgrammeSpecs({
     pushUniqueInto(plannerWarnings, PLANNER_WARNING_CODES.MISSING_REQUIRED_NODE);
   }
 
-  /** Match legacy semantics: specs only after BOTH policy nodes resolve (path-def + stages). */
   const pathCompleteLegacy =
-    supportedRequiredNodes.length === ELECTRICIAN_MATERIALIZATION_NODE_KEYS.length;
+    supportedRequiredNodes.length === materializationNodeKeys.length;
   const stageOkLegacy = missingStages.length === 0;
 
   if (!pathCompleteLegacy || !stageOkLegacy) {
@@ -287,7 +405,7 @@ export function buildRequiredProgrammeSpecs({
     };
   }
 
-  const identitySpecs = deriveElectricianProgrammeIdentitySpecs({
+  const identitySpecs = professionConfig.deriveIdentitySpecs({
     professionSlug,
     countyCode,
     countyMeta,
@@ -298,17 +416,16 @@ export function buildRequiredProgrammeSpecs({
     return {
       programmeSpecsByNodeKey: {},
       plannedLinkSpecs: [],
-      missingRequiredNodeKeys: ELECTRICIAN_MATERIALIZATION_NODE_KEYS.slice(),
+      missingRequiredNodeKeys: materializationNodeKeys.slice(),
       skippedNodeKeys,
       plannerWarnings: finalizedWarnings(plannerWarnings),
     };
   }
 
-  /** Preserve legacy iteration order: pathDefinition filter order equivalent is supportedRequiredNodes order. */
   const orderedNodes =
-    supportedRequiredNodes.length === ELECTRICIAN_MATERIALIZATION_NODE_KEYS.length
+    supportedRequiredNodes.length === materializationNodeKeys.length
       ? supportedRequiredNodes
-      : ELECTRICIAN_MATERIALIZATION_NODE_KEYS.map((nk) => byKey[nk]).filter(Boolean);
+      : materializationNodeKeys.map((nk) => byKey[nk]).filter(Boolean);
 
   /** @type {Record<string, object>} */
   const programmeSpecsByNodeKey = {};
@@ -322,7 +439,7 @@ export function buildRequiredProgrammeSpecs({
       return {
         programmeSpecsByNodeKey: {},
         plannedLinkSpecs: [],
-        missingRequiredNodeKeys: [...ELECTRICIAN_MATERIALIZATION_NODE_KEYS],
+        missingRequiredNodeKeys: [...materializationNodeKeys],
         skippedNodeKeys,
         plannerWarnings: finalizedWarnings(plannerWarnings),
       };

@@ -147,7 +147,7 @@ export async function getStudyRouteAvailableProfessions(
       return { items: [], emptyState: EMPTY_STATE };
     }
 
-    const variants = await buildPathVariants(truth.rows);
+    const variants = await buildPathVariants(truth.rows, professionSlug);
     const scopedOutcomes =
       selectedSourceOutcomeUrl !== null
         ? variants.outcomes.filter(

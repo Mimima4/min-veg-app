@@ -217,17 +217,27 @@ function parseSchoolProgrammeLinksFromHtml({ html, sourceUrl, countySlug }) {
       const inCountyPath = href.includes(`/${countySlug}/`);
       const excludedContour = EXCLUDED_PROGRAMME_PATTERNS.some((re) => re.test(title));
 
+      const linkPayload = {
+        stage,
+        title: normalizeBasic(rawTitle),
+        titleDisplay: rawTitle.replace(/\s+/g, " ").trim(),
+        href: new URL(href, sourceUrl).toString(),
+        excluded: excludedContour,
+        skipReason: excludedContour ? "adult_or_completion_contour" : null,
+        columnId,
+        optionId: `opt-${slugToken(rawTitle)}-${slugToken(stage ?? "unknown")}`,
+      };
+
       if (isSchoolBased && !isApprenticeshipBedrift && hasAdrStyleUrl && inCountyPath) {
         rows.push({
-          stage,
-          title: normalizeBasic(rawTitle),
-          titleDisplay: rawTitle.replace(/\s+/g, " ").trim(),
-          href: new URL(href, sourceUrl).toString(),
-          excluded: excludedContour,
-          skipReason: excludedContour ? "adult_or_completion_contour" : null,
+          ...linkPayload,
           linkType: "school_programme",
-          columnId,
-          optionId: `opt-${slugToken(rawTitle)}-${slugToken(stage ?? "unknown")}`,
+        });
+      } else if (isApprenticeshipBedrift && hasAdrStyleUrl && inCountyPath && !excludedContour) {
+        // VG3 / Opplæring i bedrift branch pages (e.g. Bilfaget, Elektrikerfaget).
+        rows.push({
+          ...linkPayload,
+          linkType: "apprenticeship_branch_programme",
         });
       }
       entryMatch = entryRegex.exec(ul);

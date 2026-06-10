@@ -34,6 +34,7 @@ export const VGS_PIPELINE_COUNTY_CODES = new Set([
  */
 export const CONTOUR_A_OPERATIONAL_BY_PROFESSION = {
   electrician: new Set(["03", "11", "46", "50"]),
+  mechanic: new Set(["03", "11", "46", "50"]),
 };
 
 export const CONTOUR_A_GREEN_READINESS_STATUSES = new Set([

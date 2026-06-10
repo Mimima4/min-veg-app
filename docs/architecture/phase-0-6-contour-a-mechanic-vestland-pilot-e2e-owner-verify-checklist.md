@@ -1,0 +1,54 @@
+# Phase 0–6 Contour A — Mechanic Vestland Pilot E2E Owner Verify Checklist
+
+| Field | Value |
+|-------|--------|
+| **Status** | **INGESTED** — browser E2E pending |
+| **Date (UTC)** | 2026-06-10 |
+| **Pair** | `mechanic` / **Vestland** (`46`) |
+| **Contour** | **A** (green fylke — `run-vgs-truth-pipeline`, not Contour B relay) |
+| **Prerequisite** | Dry-run `verification_ready_after_write` or documented blockers |
+
+---
+
+## Owner decisions (signed)
+
+| # | Decision | Status |
+|---|----------|--------|
+| P-2 | Pilot fylke = **Vestland** (`46`) | **OK** 2026-06-10 |
+| P-3 | Rollout = **pilot first**, then batch **15** fylke | **OK** 2026-06-10 |
+
+---
+
+## Automated proof (fill on run)
+
+| Check | Result |
+|-------|--------|
+| `classify-vgs-truth-readiness.mjs --profession mechanic --county 46` (pre-write) | `missing_profession_links`; Vilbli **28 VG1 / 11 VG2**; **0** unmatched |
+| `run-vgs-truth-pipeline.mjs --dry-run` (greenfield) | **Expected abort** — `missing_profession_links` until first write |
+| Production write `run-vgs-truth-pipeline.mjs --profession mechanic --county 46` | **OK** — `verification_ready_after_write`; **67** PSA rows |
+| Post-write classify | `verification_ready_after_write` |
+| PSA by stage (main DB) | **VG1 56** / **VG2 11** raw rows; UI dedupes VG1 to **~28** brands |
+| VG3/bedrift programme links (kolonne 3) | **10** (`mechanic-vg3-*-vestland`) |
+| `npm run smoke:contour-b` | **PASS** 2026-06-10 |
+| **Deploy** (`SUPPORTED_VGS_PROFESSION_SLUGS` + path-variants) | ☐ pending push |
+
+**Note:** Contour B relay returns `use_contour_a` for Vestland — use truth pipeline for ingest.
+
+---
+
+## Owner browser checklist (Vestland / mechanic)
+
+Setup: child with **home fylke Vestland** → mechanic route → **VG1 programme_selection** step.
+
+- [ ] Route loads without error
+- [ ] VG1 school count matches Vilbli strukturkart for Vestland (`v.tp` / Teknologi- og industrifag)
+- [ ] **No** LOSA badge (Vestland mechanic pilot — standard VGS only)
+- [ ] Sample schools visible (e.g. Bergen-area or rural Vestland VGS)
+- [ ] Card shows school name + municipality line
+- [ ] Select school → save route → reload → selection persists
+- [ ] VG2 step shows Vestland schools (Kjøretøy branch)
+- [ ] Route shows **Opplæring i bedrift** step after VG2 (or VG3 branch variant)
+- [ ] **VG3** lists **kolonne-3 continuations** from Kjøretøy chain in Vestland (≈10 bedrift fag; **not** Påbygging; **not** other VG2 columns)
+- [ ] Opplæring i bedrift / yrker scoped to selected specialization (or chain-default yrker)
+
+**Sign-off:** owner confirms in chat → mark **CLOSED** in `phase-0-6-contour-b-second-profession-expansion-owner-record.md`.

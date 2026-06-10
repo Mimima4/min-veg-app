@@ -7,6 +7,7 @@ import {
 } from "@/lib/losa/availability-scope";
 import type { StudyRouteSnapshotStep } from "@/lib/routes/route-types";
 import type { AvailabilityTruthRow } from "./get-availability-truth";
+import { getVilbliBranchConfig } from "@/lib/vgs/vilbli-branch-config";
 import type { PathVariant, VilbliOutcomeProfession } from "./build-path-variants";
 
 function stagePriority(stage: string): number {
@@ -271,6 +272,11 @@ function scoreSourceOutcomeUrl(params: {
     } else {
       // Broad education-area pages usually do not carry branch-specific "-yrker" suffix.
       score -= 25;
+    }
+
+    const branchConfig = getVilbliBranchConfig(params.professionSlug);
+    if (branchConfig?.preferredYrkerPathPattern.test(parsed.pathname)) {
+      score += 80;
     }
 
     const professionTokens = normalizeProfessionSlugTokens(params.professionSlug);

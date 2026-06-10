@@ -781,6 +781,21 @@ export async function runVgsTruthPipeline({
     }
     const resolvedSchools = extractedProgramme.extractedStages[resolvedStage] ?? [];
     if (resolvedSchools.length === 0) {
+      // Opplæring i bedrift branch pages (e.g. Bilfaget / Elektrikerfaget) may have no VG3 school map.
+      if (
+        link.linkType === "apprenticeship_branch_programme" &&
+        resolvedStage === "VG3"
+      ) {
+        expandedStageEntries.push({
+          stage: resolvedStage,
+          titleDisplay: link.titleDisplay,
+          href: link.href,
+          schools: [],
+          optionId: link.optionId,
+          source: "apprenticeship_branch_programme",
+        });
+        continue;
+      }
       skippedNoSchoolAvailability.push({
         stage: resolvedStage,
         title: link.titleDisplay,

@@ -1,6 +1,7 @@
 import { loadVilbliCountyHtml } from "./lib/load-vilbli-county-html.mjs";
 import { isMainModule } from "./lib/is-main-module.mjs";
 import { getVgsPathDefinition, mapProgrammeToPathNode } from "./vgs-path-definitions.mjs";
+import { isCountyScopedMaterializedProgramme } from "./vgs-programme-materialization-planner.mjs";
 import { extractVilbliStagesFromHtml } from "./vilbli-stage-extraction-helper.mjs";
 import { classifyIdentitySemantics } from "./school-identity-semantics.mjs";
 import {
@@ -120,41 +121,6 @@ function chooseStatus(params) {
     return READYNESS_STATUSES.READY_FOR_WRITE;
   }
   return READYNESS_STATUSES.SOURCE_EXTRACTION_FAILED;
-}
-
-function countyTokenFromMeta(countyMeta) {
-  return String(countyMeta?.slug ?? "")
-    .toUpperCase()
-    .replace(/[^A-Z0-9]+/g, "_");
-}
-
-function isCountyScopedMaterializedProgramme({
-  program,
-  countyMeta,
-  pathNode,
-}) {
-  if (!pathNode) return false;
-  const slug = String(program.slug ?? "").toLowerCase();
-  const countySlug = String(countyMeta?.slug ?? "").toLowerCase();
-  const programCode = String(program.program_code ?? "").toUpperCase();
-  const countyToken = countyTokenFromMeta(countyMeta);
-
-  if (!countySlug) return false;
-
-  const stage = pathNode.stage;
-  if (stage === "VG1") {
-    const slugMatch = slug === `electrician-vg1-elektro-${countySlug}`;
-    const codeMatch = programCode === `EL-VG1-${countyToken}`;
-    return slugMatch || codeMatch;
-  }
-
-  if (stage === "VG2") {
-    const slugMatch = slug === `electrician-vg2-elenergi-${countySlug}`;
-    const codeMatch = programCode === `EL-VG2-${countyToken}`;
-    return slugMatch || codeMatch;
-  }
-
-  return false;
 }
 
 function withIdentitySemanticsDiagnostics(result) {
@@ -301,6 +267,7 @@ export async function classifyReadiness({
     const pathNode = pathDefinition ? mapProgrammeToPathNode(program, pathDefinition) : null;
     const hasInstitutionCountyMatch = institution?.county_code === countyCode;
     const hasCountyScopedMaterializedMatch = isCountyScopedMaterializedProgramme({
+      professionSlug,
       program,
       countyMeta,
       pathNode,

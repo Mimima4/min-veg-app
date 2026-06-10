@@ -1,4 +1,8 @@
 import type { AvailabilityTruthRow } from "./get-availability-truth";
+import {
+  getVilbliBranchConfig,
+  type VilbliBranchProfessionConfig,
+} from "@/lib/vgs/vilbli-branch-config";
 
 export type PathVariantNode =
   | {
@@ -129,9 +133,17 @@ function toYrkerUrlFromSkolerUrl(url: string): string {
   return url.replace(/skoler-og-laerebedrifter/gi, "yrker");
 }
 
-function parseElektrikerfagetSkolerUrl(html: string, sourceUrl: string): string | null {
+function parseBranchSkolerUrl(
+  html: string,
+  sourceUrl: string,
+  branchConfig: VilbliBranchProfessionConfig | null
+): string | null {
+  if (!branchConfig) return null;
   const match = html.match(
-    /href=['"]([^'"]*elektrikerfaget-skoler-og-laerebedrifter[^'"]*)['"]/i
+    new RegExp(
+      `href=['"]([^'"]*${branchConfig.branchSkolerUrlPattern.source}[^'"]*)['"]`,
+      "i"
+    )
   );
   if (!match?.[1]) return null;
   return toAbsoluteUrl(match[1], sourceUrl);
@@ -144,9 +156,30 @@ function slugify(value: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
+function sortVg3BranchOptions(
+  options: Array<{ optionTitle: string; sourceOutcomeUrl: string }>,
+  branchConfig: VilbliBranchProfessionConfig | null
+): Array<{ optionTitle: string; sourceOutcomeUrl: string }> {
+  if (
+    !branchConfig?.preferVg3OptionOrdering ||
+    !branchConfig.preferredVg3OptionPattern
+  ) {
+    // Preserve Vilbli DOM order (truthful list; rådgiver explains differences).
+    return [...options];
+  }
+  const preferred = options
+    .filter((option) => branchConfig.preferredVg3OptionPattern!.test(option.optionTitle))
+    .sort((a, b) => a.optionTitle.localeCompare(b.optionTitle));
+  const others = options
+    .filter((option) => !branchConfig.preferredVg3OptionPattern!.test(option.optionTitle))
+    .sort((a, b) => a.optionTitle.localeCompare(b.optionTitle));
+  return [...preferred, ...others];
+}
+
 function parseVg3BranchingOptions(params: {
   html: string;
   sourceUrl: string;
+  branchConfig: VilbliBranchProfessionConfig | null;
 }): Array<{ optionTitle: string; sourceOutcomeUrl: string }> {
   const blockMatch = params.html.match(
     /<h4>\s*<span>Vg3\s*[–-]\s*Videregående trinn 3 eller opplæring i bedrift[^<]*<\/span>\s*<\/h4>[\s\S]*?<ul class="kursList">([\s\S]*?)<\/ul>/i
@@ -179,13 +212,7 @@ function parseVg3BranchingOptions(params: {
     };
   });
 
-  const preferred = options
-    .filter((option) => /elektrikerfaget/i.test(option.optionTitle))
-    .sort((a, b) => a.optionTitle.localeCompare(b.optionTitle));
-  const others = options
-    .filter((option) => !/elektrikerfaget/i.test(option.optionTitle))
-    .sort((a, b) => a.optionTitle.localeCompare(b.optionTitle));
-  return [...preferred, ...others];
+  return sortVg3BranchOptions(options, params.branchConfig);
 }
 
 function parseVilbliOutcomeProfessions(html: string, yrkerUrl: string): VilbliOutcomeProfession[] {
@@ -203,7 +230,6 @@ function parseVilbliOutcomeProfessions(html: string, yrkerUrl: string): VilbliOu
     });
   };
 
-  // Primary parser: legacy/default yrker pages with explicit /yrke/ links.
   const yrkeLinkRegex = /href=['"]([^'"]*\/yrke\/[^'"]+)['"][^>]*>([\s\S]*?)<\/a>/gi;
   let match = yrkeLinkRegex.exec(html);
   while (match) {
@@ -218,8 +244,6 @@ function parseVilbliOutcomeProfessions(html: string, yrkerUrl: string): VilbliOu
     return Array.from(outcomes.values());
   }
 
-  // Fallback parser: branch-specific pages where outcomes are listed as
-  // "bedrift" entries linking to skoler-og-laerebedrifter pages.
   const bedriftRegex =
     /<li class="[^"]*\bbedrift\b[^"]*"[\s\S]*?<a href=['"]([^'"]+)['"][^>]*>([\s\S]*?)<\/a>[\s\S]*?<\/li>/gi;
   match = bedriftRegex.exec(html);
@@ -234,9 +258,28 @@ function parseVilbliOutcomeProfessions(html: string, yrkerUrl: string): VilbliOu
   return Array.from(outcomes.values());
 }
 
+function resolveApprenticeshipOutcomeUrl(params: {
+  vg3BranchOptions: Array<{ optionTitle: string; sourceOutcomeUrl: string }>;
+  branchSkolerUrl: string | null;
+  directYrkerUrl: string | null;
+  useBroadYrkerFirst: boolean;
+}): string | null {
+  if (params.useBroadYrkerFirst && params.directYrkerUrl) {
+    return params.directYrkerUrl;
+  }
+  const fromPreferredBranch = params.vg3BranchOptions[0]?.sourceOutcomeUrl ?? null;
+  const fromBranchSkoler = params.branchSkolerUrl
+    ? toYrkerUrlFromSkolerUrl(params.branchSkolerUrl)
+    : null;
+  return fromPreferredBranch ?? fromBranchSkoler ?? params.directYrkerUrl;
+}
+
 export async function buildPathVariants(
-  truthRows: AvailabilityTruthRow[]
+  truthRows: AvailabilityTruthRow[],
+  professionSlug?: string | null
 ): Promise<PathVariantsResult> {
+  const branchConfig = getVilbliBranchConfig(String(professionSlug ?? "").trim());
+
   const sourceUrl = truthRows.find((row) => row.sourceReferenceUrl)?.sourceReferenceUrl ?? null;
   if (!sourceUrl) {
     return {
@@ -269,9 +312,18 @@ export async function buildPathVariants(
   const apprenticeshipLabel = resolveApprenticeshipLabel(sourceHtml);
   const hasApprenticeship = Boolean(apprenticeshipLabel);
   const directYrkerUrl = parseYrkerPageUrl(sourceHtml, sourceUrl);
-  const vg3SkolerUrl = parseElektrikerfagetSkolerUrl(sourceHtml, sourceUrl);
-  const vg3YrkerUrl = vg3SkolerUrl ? toYrkerUrlFromSkolerUrl(vg3SkolerUrl) : null;
-  const vg3BranchOptions = parseVg3BranchingOptions({ html: sourceHtml, sourceUrl });
+  const branchSkolerUrl = parseBranchSkolerUrl(sourceHtml, sourceUrl, branchConfig);
+  const vg3BranchOptions = parseVg3BranchingOptions({
+    html: sourceHtml,
+    sourceUrl,
+    branchConfig,
+  });
+  const apprenticeshipOutcomeUrl = resolveApprenticeshipOutcomeUrl({
+    vg3BranchOptions,
+    branchSkolerUrl,
+    directYrkerUrl,
+    useBroadYrkerFirst: branchConfig?.preferVg3OptionOrdering === false,
+  });
 
   const orderedStages = stages
     .filter((stage): stage is "VG1" | "VG2" | "VG3" =>
@@ -293,7 +345,7 @@ export async function buildPathVariants(
     ? {
         type: "apprenticeship_step",
         title: apprenticeshipLabel!,
-        sourceOutcomeUrl: directYrkerUrl,
+        sourceOutcomeUrl: apprenticeshipOutcomeUrl,
       }
     : null;
 
@@ -307,7 +359,7 @@ export async function buildPathVariants(
       const vg3Node: PathVariantNode = {
         type: "programme_selection",
         stage: "VG3",
-        title: vg3BranchOptions[0]?.optionTitle ?? "VG3",
+        title: "VG3 eller opplæring i bedrift",
         programSlug: null,
         programTitle: null,
         options: vg3BranchOptions.map((option) => ({
@@ -321,8 +373,7 @@ export async function buildPathVariants(
         vg3Node,
         {
           ...apprenticeshipNode,
-          sourceOutcomeUrl:
-            vg3BranchOptions[0]?.sourceOutcomeUrl ?? vg3YrkerUrl ?? directYrkerUrl,
+          sourceOutcomeUrl: apprenticeshipOutcomeUrl,
         },
       ];
       const directBedriftNodes = [...baseWithoutVg3, apprenticeshipNode];
@@ -375,7 +426,7 @@ export async function buildPathVariants(
 
   return {
     sourceUrl,
-    yrkerUrl: directYrkerUrl,
+    yrkerUrl: apprenticeshipOutcomeUrl ?? directYrkerUrl,
     stages,
     hasApprenticeship,
     variants,

@@ -382,7 +382,7 @@ export async function createInitialStudyRoute(
       const stageProgrammeIdentity = deriveStageProgrammeIdentity(
         ((linkedPrograms ?? []) as Array<{ slug: string; title: string | null }>)
       );
-      const pathVariants = await buildPathVariants(truth.rows);
+      const pathVariants = await buildPathVariants(truth.rows, professionRow.slug);
       const enrichedPathVariants = pathVariants.variants.map((variant) => ({
         ...variant,
         nodes: variant.nodes.map((node) => {
