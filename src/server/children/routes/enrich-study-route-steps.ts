@@ -1,6 +1,8 @@
 import {
   buildLosaOptionDisplayTitle,
-  isLosaAvailabilityScope,
+  isLosaProgrammeOption,
+  normalizeLosaDeliverySiteLabel,
+  normalizeLosaProviderLabel,
 } from "@/lib/losa/availability-scope";
 import { resolveInstitutionDisplayName } from "@/lib/i18n/institution-display-name";
 import { createClient } from "@/lib/supabase/server";
@@ -381,13 +383,17 @@ export async function enrichStudyRouteSteps(
           duration_label: formatDurationLabel(truthDuration),
           options: step.options?.map((option) => ({
             ...(() => {
-              if (isLosaAvailabilityScope(option.option_kind)) {
-                const providerLabel = option.institution_name ?? fallbackInstitutionName;
-                const deliverySiteLabel =
+              if (isLosaProgrammeOption(option)) {
+                const providerLabel =
+                  normalizeLosaProviderLabel(option.institution_name ?? fallbackInstitutionName) ??
+                  option.institution_name ??
+                  fallbackInstitutionName;
+                const deliverySiteLabel = normalizeLosaDeliverySiteLabel(
                   option.delivery_site_label ??
-                  option.institution_municipality ??
-                  option.institution_city ??
-                  null;
+                    option.institution_municipality ??
+                    option.institution_city ??
+                    null
+                );
                 const losaDisplayTitle =
                   option.display_title ??
                   buildLosaOptionDisplayTitle({

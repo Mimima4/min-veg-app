@@ -3,7 +3,7 @@
 | Field | Value |
 |--------|--------|
 | **Section** | **P06-CLOSURE** |
-| **Status** | **CLOSED (PARTIAL D)** — operational contour closed 2026-06-05; LOSA tail → Phase 4 |
+| **Status** | **CLOSED** — operational contour closed 2026-06-05; Block D LOSA tail complete 2026-05-29 (P4 **18/18**) |
 | **Goal** | Working **automatic** Contour **B** → PSA → route `programme_selection.options`; **no return** to P0–6 rework after closure |
 | **Prerequisite code** | `616ce82` — `--contour-b-partial`, `run-contour-b-operational-ingest.mjs`, `contour-b-operational-eligibility.mjs`, P06 §12 |
 | **NOT_READY_FOR_APPLY** | **unchanged** unless a separate gate says otherwise |
@@ -97,7 +97,7 @@
 
 ## Block D — Vilbli parity (identity + programme + LOSA in PSA)
 
-**Block status:** `CLOSED (PARTIAL)` (2026-06-05) — ordinary VGS parity on pilots; **18 LOSA** rows deferred to **Phase 4** (below)
+**Block status:** `CLOSED` (2026-06-05 ordinary; **2026-05-29** LOSA tail) — Vilbli parity on pilots including Finnmark **18** LOSA PSA rows
 
 **Purpose:** Route options converge toward Vilbli list for all rows that pass verification gates.
 
@@ -109,7 +109,7 @@
 | Pipeline/ingest rule for **published LOSA** implemented and proven on at least one county. |
 | Closure metrics in job or post: `vilbli_extract` / `psa_active` / `verified` counts (safe summary, no secrets). |
 
-**Partial closure note:** Ordinary school identity + programme parity is **closed** for Contour B pilots. Remaining Vilbli rows are **LOSA-only** and **OUT_OF_SCOPE** for P06 — not a P0–6 defect.
+**Closure note:** Ordinary school identity + programme parity **closed** for Contour B pilots. Finnmark **18** LOSA rows published via **Phase 4** (`losa_fjern_delivery_municipality`, ref `9b920a7`) — no longer deferred.
 
 **Closure evidence (ordinary VGS — 2026-06-05):**
 
@@ -117,15 +117,15 @@
 |-----------|--------|
 | CASE 2 multi-`avd` | `db67b40` — Troms **55** VG1=5/VG2=4; 1:1 school-brand emission |
 | CASE 3 slash-alias | `82c77f3` — Finnmark **56** 6 ordinary VG1 schools |
-| Identity tail (pilots) | **15/18/55** dry-run clean; **56** 6/18/0 with documented LOSA exclude |
+| Identity tail (pilots) | **15/18/55** dry-run clean; **56** ingest still 6 ordinary + skips `isLosa`; **18** LOSA via P4 PSA (not Contour B ordinary emit) |
 | Programme rows | Pilot counties `verification_ready_after_write` or Contour B partial planner |
 | Metrics | Safe summary `phase-0-6-p06-operational-closed-safe-summary.md` §4 |
 
-**Deferred (not P06):** LOSA publication path + pipeline rule — Phase 4 implementation gate.
+**LOSA path (2026-05-29):** Phase 4 reference pilot **18/18** §4 + PSA + route badge — see `phase-4-losa-planning-closed-safe-summary.md`.
 
-### Finnmark `56` — LOSA auditable exclude list (2026-06-05)
+### Finnmark `56` — LOSA (2026-05-29 update)
 
-**18** Vilbli rows `Nordkapp videregående skole – LOSA {kommune}` are **explicitly excluded** from ordinary PSA / route options until Phase 4 LOSA **implementation gate** (publishability contract `ACCEPTED WITH NOTES`; `publishability_posture=STILL_BLOCKED_ALL_SECTION_4`). Matcher CASE 4; Contour B partial skips `isLosa` rows. **Not** a matcher defect; **not** publishable as on-campus VGS schools without Tier 1+2 evidence per `phase-4-losa-finnmark-publishability-contract-draft.md`.
+**18** Vilbli LOSA rows: **excluded** from Contour B **ordinary** PSA emit (`isLosa` skip); **published** via Phase 4 chartered path (**18** `losa_fjern_delivery_municipality` rows in main DB). Contour B ingest dry-run may still show **6/18/0** for ordinary matcher — expected split.
 
 **5** slash-alias ordinary schools (Alta, Hammerfest, Kirkenes, Lakselv, Vadsø) are **in scope** for CASE 3 matching — separate from LOSA exclude.
 
@@ -172,9 +172,9 @@
 | **46** | Vestland | **A** | `verification_ready_after_write` | 22/0/0 OK | Relay skips |
 | **50** | Trøndelag | **A** | `verification_ready_after_write` | 15/0/0 OK | Relay skips |
 | **55** | Troms | **B** | `verification_ready_after_write` | 5/0/0 OK | CASE 2 1:1 emission |
-| **56** | Finnmark | **B** partial | `canonical_matching_review` | 6/18/0 ABORT | **OUT_OF_SCOPE** full Contour A: **18 LOSA** rows (Block D); Contour B partial OK |
+| **56** | Finnmark | **B** partial | `canonical_matching_review` | 6/18/0 ABORT (ordinary ingest) | **18** LOSA via P4 PSA; **6** ordinary VG1 (CASE 3) |
 
-**OUT_OF_SCOPE (full Contour A / ordinary PSA):** Finnmark **56** — 18 Vilbli LOSA municipality rows until Phase 4 publication gate (see Block D exclude list). All other pipeline counties are **IN_SCOPE** for Contour B batch/relay when eligibility passes.
+**OUT_OF_SCOPE (ordinary Contour A/B emit only):** Finnmark **56** LOSA rows remain **out of ordinary** `programme_in_school` ingest — published on **LOSA scope** instead. All other pipeline counties **IN_SCOPE** for Contour B when eligibility passes.
 
 ---
 
@@ -238,14 +238,14 @@
 
 ## Closure rule (binding)
 
-**P06-CLOSURE complete** when blocks **A through G** are **CLOSED** (Block **D** may be **PARTIAL** — LOSA tail → Phase 4).
+**P06-CLOSURE complete** when blocks **A through G** are **CLOSED** (Block **D** LOSA tail completed **2026-05-29** via P4 **18/18**).
 
-**Partial closure (2026-06-05 — binding for ops):**
+**Closure states (binding for ops):**
 
 | Blocks closed | Meaning |
 |---------------|---------|
 | A + B + C + F + G | **Automation works**; Vilbli parity may be incomplete |
-| All including **D** | **Automation works** and route options match Vilbli for all gated rows |
+| All including **D** | **Automation works** and route options match Vilbli for all gated rows (incl. **18** Finnmark LOSA via P4 scope) |
 
 ---
 

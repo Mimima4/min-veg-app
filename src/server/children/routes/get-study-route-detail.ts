@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { buildProgrammeSelectionOptionId } from "@/lib/losa/availability-scope";
 import type { StudyRouteReadModel } from "@/lib/routes/route-types";
 import { assembleStudyRouteReadModel } from "./assemble-study-route-read-model";
 import { buildStudyRouteSnapshotContext } from "./build-study-route-snapshot-context";
@@ -165,13 +166,9 @@ function buildSelectionSignatureFromPayload(selectedStepsPayload: unknown): stri
 
       const selectedIndex = matchedOptionIndex >= 0 ? matchedOptionIndex : 0;
       const selectedOption = options[selectedIndex];
-      const institutionId =
-        selectedOption && typeof selectedOption.institution_id === "string"
-          ? selectedOption.institution_id
-          : String(selectedIndex);
       signatureEntries.push({
         stepKey,
-        optionId: `programme-${institutionId}`,
+        optionId: buildProgrammeSelectionOptionId(selectedOption ?? {}, selectedIndex),
       });
       return;
     }

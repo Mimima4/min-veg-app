@@ -31,6 +31,20 @@ export type LosaPsaNotesMeta = {
   deliverySiteLabel?: string | null;
 };
 
+const LOSA_INLINE_LABEL_SPLIT =
+  /^(.+?)\s*(?:[–—-]\s*|\s+)(?:LOSA|lokal\s+oppl(?:æ|a)ring)\s+(.+)$/iu;
+
+const LOSA_DELIVERY_PREFIX = /^(?:LOSA|lokal\s+oppl(?:æ|a)ring)\s+/iu;
+
+export type ProgrammeSelectionOptionIdentityInput = {
+  institution_id?: string | null;
+  option_kind?: string | null;
+  delivery_municipality_code?: string | null;
+  delivery_site_label?: string | null;
+  institution_city?: string | null;
+  institution_municipality?: string | null;
+};
+
 export function parseLosaPsaNotes(notes: string | null | undefined): LosaPsaNotesMeta {
   if (!notes?.trim()) {
     return {};
@@ -40,14 +54,95 @@ export function parseLosaPsaNotes(notes: string | null | undefined): LosaPsaNote
     return {
       providerSchoolLabel:
         typeof parsed.provider_school_label === "string"
-          ? parsed.provider_school_label
+          ? normalizeLosaProviderLabel(parsed.provider_school_label)
           : null,
       deliverySiteLabel:
-        typeof parsed.delivery_site_label === "string" ? parsed.delivery_site_label : null,
+        typeof parsed.delivery_site_label === "string"
+          ? normalizeLosaDeliverySiteLabel(parsed.delivery_site_label)
+          : null,
     };
   } catch {
     return {};
   }
+}
+
+/** Strip Vilbli-style `Provider – LOSA Alta` down to provider-only. */
+export function normalizeLosaProviderLabel(
+  label: string | null | undefined
+): string | null {
+  const trimmed = String(label ?? "").trim();
+  if (!trimmed) return null;
+  const splitMatch = trimmed.match(LOSA_INLINE_LABEL_SPLIT);
+  if (splitMatch?.[1]) {
+    return splitMatch[1].trim() || trimmed;
+  }
+  return trimmed;
+}
+
+/** kommune line only — badge carries LOSA semantics. */
+export function normalizeLosaDeliverySiteLabel(
+  label: string | null | undefined
+): string | null {
+  const trimmed = String(label ?? "").trim();
+  if (!trimmed) return null;
+  const splitMatch = trimmed.match(LOSA_INLINE_LABEL_SPLIT);
+  if (splitMatch?.[2]) {
+    return splitMatch[2].trim() || trimmed;
+  }
+  const withoutPrefix = trimmed.replace(LOSA_DELIVERY_PREFIX, "").trim();
+  return withoutPrefix || trimmed;
+}
+
+export function resolveLosaDeliverySiteLabel(
+  option: ProgrammeSelectionOptionIdentityInput
+): string | null {
+  return normalizeLosaDeliverySiteLabel(
+    option.delivery_site_label ??
+      option.institution_city ??
+      option.institution_municipality
+  );
+}
+
+export function formatLosaDropdownLabel(params: {
+  providerLabel: string;
+  deliverySiteLabel: string | null | undefined;
+}): string {
+  const provider = normalizeLosaProviderLabel(params.providerLabel) ?? params.providerLabel.trim();
+  const delivery = normalizeLosaDeliverySiteLabel(params.deliverySiteLabel);
+  if (!delivery) return provider;
+  return `${provider} · ${delivery}`;
+}
+
+export function isLosaProgrammeOption(
+  option: ProgrammeSelectionOptionIdentityInput
+): boolean {
+  if (isLosaAvailabilityScope(option.option_kind)) {
+    return true;
+  }
+  const municipalityCode = String(option.delivery_municipality_code ?? "").trim();
+  return municipalityCode.length > 0;
+}
+
+export function buildProgrammeSelectionOptionId(
+  option: ProgrammeSelectionOptionIdentityInput,
+  index: number
+): string {
+  const institutionId = String(option.institution_id ?? "").trim();
+  if (isLosaProgrammeOption(option)) {
+    const municipalityCode = String(option.delivery_municipality_code ?? "").trim();
+    if (institutionId && municipalityCode) {
+      return `programme-losa-${institutionId}-${municipalityCode}`;
+    }
+    const deliveryKey = resolveLosaDeliverySiteLabel(option);
+    if (institutionId && deliveryKey) {
+      const slug = deliveryKey.toLowerCase().replace(/\s+/g, "-");
+      return `programme-losa-${institutionId}-${slug}`;
+    }
+  }
+  if (institutionId) {
+    return `programme-${institutionId}`;
+  }
+  return `programme-index-${index}`;
 }
 
 /** Provider school label only — delivery kommune is shown separately; LOSA via route UI badge. */

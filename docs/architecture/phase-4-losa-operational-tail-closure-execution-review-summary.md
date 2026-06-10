@@ -16,9 +16,9 @@
 | Metric | Value |
 |--------|-------|
 | Manifest rows (ref) | **18** |
-| §4 satisfied | **1** (Alta) |
-| PSA LOSA rows (main) | **1** |
-| Route eligible | **1** |
+| §4 satisfied | **18/18** (full Finnmark ref) |
+| PSA LOSA rows (main) | **18** |
+| Route eligible | **18** |
 | `#3` wired | **yes** (bounded) |
 | `NOT_READY_FOR_APPLY` | unchanged |
 
@@ -28,18 +28,18 @@
 
 | CLI | Result |
 |-----|--------|
-| `losa:finnmark-evidence-link` | PASS — 1/18, posture `REFERENCE_ROW_SECTION_4_SATISFIED_PARTIAL` |
-| `losa:finnmark-publication-plan` | PASS — 1 emission |
-| `losa:preview-psa-write` | PASS — 1 candidate |
-| `losa:execute-psa-write-pilot` | PASS — dry-run, already exists |
-| `losa:plan-route-consumption` | PASS — 1 eligible, #3 on |
+| `losa:finnmark-evidence-link` | PASS — **18/18**, **0** blocked |
+| `losa:finnmark-publication-plan` | PASS — **18** emission |
+| `losa:preview-psa-write` | PASS — **18** candidates |
+| `losa:execute-psa-write-pilot` | PASS — **18** charters (idempotent) |
+| `losa:plan-route-consumption` | PASS — **18** eligible, #3 on |
 
 ---
 
 ## Boundary
 
-- **Not** 17-row bulk write.
-- **Not** Contour B LOSA emit on `56`.
+- **Not** unchartered bulk write.
+- Contour B **ordinary** ingest still skips `isLosa` — LOSA via P4 scope only.
 - **Not** apply / `NOT_READY_FOR_APPLY` clearance.
 
 ---
@@ -52,4 +52,4 @@
 
 ## Final statement
 
-Finnmark reference pilot operational tail is **closed**. Product remains bounded to **1** LOSA option; scale requires explicit row-level gates.
+Finnmark reference pilot operational tail is **closed** at **18/18**. Post-pilot steps: `phase-4-losa-post-pilot-next-steps-owner-record.md`.

@@ -1,6 +1,8 @@
 import {
   buildLosaOptionDisplayTitle,
   isLosaAvailabilityScope,
+  normalizeLosaDeliverySiteLabel,
+  normalizeLosaProviderLabel,
   ORDINARY_AVAILABILITY_SCOPE,
 } from "@/lib/losa/availability-scope";
 import type { StudyRouteSnapshotStep } from "@/lib/routes/route-types";
@@ -155,8 +157,12 @@ function mapOrdinaryProgrammeOption(row: AvailabilityTruthRow) {
 }
 
 function mapLosaProgrammeOption(row: AvailabilityTruthRow) {
-  const providerLabel = row.providerSchoolLabel ?? row.institutionName;
-  const deliverySiteLabel = row.deliverySiteLabel ?? row.institutionMunicipality ?? null;
+  const providerLabel =
+    normalizeLosaProviderLabel(row.providerSchoolLabel ?? row.institutionName) ??
+    row.institutionName;
+  const deliverySiteLabel = normalizeLosaDeliverySiteLabel(
+    row.deliverySiteLabel ?? row.institutionMunicipality ?? null
+  );
   const displayTitle =
     buildLosaOptionDisplayTitle({
       providerLabel,

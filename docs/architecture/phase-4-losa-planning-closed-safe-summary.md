@@ -4,7 +4,7 @@
 |--------|--------|
 | **Document type** | Repo-safe summary — **P4-LOSA-PLANNING-CLOSED** |
 | **Section** | **P4-LOSA-PLANNING-CLOSED-post** |
-| **Status code** | `P4_LOSA_REFERENCE_PILOT_TAIL_COMPLETE` |
+| **Status code** | `P4_LOSA_FINNMARK_REF_MANIFEST_COMPLETE` |
 | **Date (UTC)** | 2026-06-05 (planning); reference pilot tail closed **2026-05-29** |
 | **Reference county** | `56` (Finnmark) — **not** a production exception rule |
 | **Head commit (reference)** | `aff1037`; tail closure `phase-4-losa-operational-tail-closure-execution-review-summary.md` |
@@ -16,11 +16,11 @@
 ## This document is
 
 - Formal **planning / scaffold closure** for Phase 4 LOSA (manifest → Route plan).
-- **Operational tail** **complete** for reference pilot (**1** Alta row): schema → §4 → PSA write → Route **#3**.
+- **Operational tail** **complete** for Finnmark ref (**18/18** rows): schema → §4 → PSA write → Route **#3** + LOSA badge.
 
 ## This document is not
 
-- Full **18**-row LOSA publication or nationwide product apply.
+- Nationwide product apply beyond Finnmark ref or `NOT_READY_FOR_APPLY` clearance.
 - `NOT_READY_FOR_APPLY` clearance.
 - Permission to treat Finnmark as special-case production rules.
 
@@ -50,7 +50,7 @@
 | PSA LOSA writes | **18** (all ref county delivery municipalities) |
 | Route LOSA options | **18** eligible (#3 wired; LOSA UI badge) |
 | Contour B ordinary Finnmark schools | **6** (unchanged) |
-| P06 operational | **CLOSED (partial D)** |
+| P06 operational | **CLOSED** (Block D LOSA tail complete) |
 
 ---
 
@@ -95,8 +95,9 @@
 | Row **16** (Måsøy) §4 | **COMPLETE** — PSA inserted (`P4-LOSA-PSA-WRITE-MASOY-PILOT-post`) |
 | Row **17** (Nordkapp) §4 | **COMPLETE** — PSA inserted (`P4-LOSA-PSA-WRITE-NORDKAPP-PILOT-post`) + LOSA route badge |
 | Row **18** (Vadsø) §4 | **COMPLETE** — PSA inserted (`P4-LOSA-PSA-WRITE-VADSO-PILOT-post`); **18/18** closed |
-| Bulk PSA write | **OPEN** — charter per row/session |
-| `NOT_READY_FOR_APPLY` | **unchanged** |
+| Bulk PSA write | **OPEN** — unchartered bulk still forbidden; **18/18** done per-row |
+| `NOT_READY_FOR_APPLY` | **unchanged** — see `phase-4-losa-not-ready-for-apply-next-gate-owner-note.md` |
+| Post-pilot steps | **ACTIVE** — `phase-4-losa-post-pilot-next-steps-owner-record.md` |
 
 ---
 

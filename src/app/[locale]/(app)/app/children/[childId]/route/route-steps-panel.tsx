@@ -9,7 +9,11 @@ import type {
 } from "@/lib/routes/route-types";
 import type { StudyRouteStep } from "@/lib/routes/route-step-types";
 import {
-  isLosaAvailabilityScope,
+  buildProgrammeSelectionOptionId,
+  formatLosaDropdownLabel,
+  isLosaProgrammeOption,
+  normalizeLosaDeliverySiteLabel,
+  normalizeLosaProviderLabel,
   LOSA_ROUTE_BADGE_LABEL,
   LOSA_ROUTE_BADGE_TITLE,
 } from "@/lib/losa/availability-scope";
@@ -141,19 +145,35 @@ export default function RouteStepsPanel({
 
   const buildStepOptions = (step: StudyRouteSnapshotStep) => {
     if (step.type === "programme_selection") {
-      const mapped = (step.options ?? []).map((option, index) => ({
-        id: `programme-${option.institution_id ?? index}`,
-        schoolName: option.institution_name ?? "Unknown school",
-        location: option.institution_city ?? option.institution_municipality ?? null,
-        website: option.institution_website ?? null,
-        programTitle: option.program_title ?? step.program_title ?? step.title,
-        displayTitle: option.display_title ?? option.program_title ?? step.program_title ?? step.title,
-        durationLabel: option.duration_label ?? step.duration_label ?? null,
-        fromPayload: true,
-        meta: option.verification_status,
-        institutionIsPrivateSchool: option.institution_is_private_school === true,
-        isLosaDelivery: isLosaAvailabilityScope(option.option_kind),
-      }));
+      const mapped = (step.options ?? []).map((option, index) => {
+        const isLosaDelivery = isLosaProgrammeOption(option);
+        const schoolName =
+          (isLosaDelivery
+            ? normalizeLosaProviderLabel(option.institution_name)
+            : option.institution_name) ?? "Unknown school";
+        const location = isLosaDelivery
+          ? normalizeLosaDeliverySiteLabel(
+              option.delivery_site_label ??
+                option.institution_city ??
+                option.institution_municipality
+            )
+          : option.institution_city ?? option.institution_municipality ?? null;
+
+        return {
+          id: buildProgrammeSelectionOptionId(option, index),
+          schoolName,
+          location,
+          website: option.institution_website ?? null,
+          programTitle: option.program_title ?? step.program_title ?? step.title,
+          displayTitle:
+            option.display_title ?? option.program_title ?? step.program_title ?? step.title,
+          durationLabel: option.duration_label ?? step.duration_label ?? null,
+          fromPayload: true,
+          meta: option.verification_status,
+          institutionIsPrivateSchool: option.institution_is_private_school === true,
+          isLosaDelivery,
+        };
+      });
       if (mapped.length > 0) return mapped;
       return [
         {
@@ -241,12 +261,24 @@ export default function RouteStepsPanel({
     }
 
     if (step.type === "programme_selection") {
-      const targetSchool = step.institution_name ?? null;
-      const targetLocation = step.institution_city ?? step.institution_municipality ?? null;
+      const targetSchool =
+        normalizeLosaProviderLabel(step.institution_name) ?? step.institution_name ?? null;
+      const targetLocation = normalizeLosaDeliverySiteLabel(
+        step.institution_city ?? step.institution_municipality ?? null
+      );
       const targetWebsite = step.institution_website ?? null;
       const matched = options.find((option) => {
-        if (!targetSchool || option.schoolName !== targetSchool) return false;
-        if (targetLocation && option.location && option.location !== targetLocation) return false;
+        const optionSchool =
+          option.isLosaDelivery
+            ? normalizeLosaProviderLabel(option.schoolName) ?? option.schoolName
+            : option.schoolName;
+        if (!targetSchool || optionSchool !== targetSchool) return false;
+        if (targetLocation && option.location) {
+          const optionLocation = option.isLosaDelivery
+            ? normalizeLosaDeliverySiteLabel(option.location) ?? option.location
+            : option.location;
+          if (optionLocation !== targetLocation) return false;
+        }
         if (targetWebsite && option.website && option.website !== targetWebsite) return false;
         return true;
       });
@@ -476,8 +508,11 @@ export default function RouteStepsPanel({
                               >
                                 <span className="min-w-0 flex-1 break-words">
                                   <span className="block">
-                                    {option.isLosaDelivery && option.location
-                                      ? `${option.schoolName} · ${option.location}`
+                                    {option.isLosaDelivery
+                                      ? formatLosaDropdownLabel({
+                                          providerLabel: option.schoolName,
+                                          deliverySiteLabel: option.location,
+                                        })
                                       : option.schoolName}
                                   </span>
                                 </span>

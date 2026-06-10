@@ -4,7 +4,7 @@
 |--------|--------|
 | **Document type** | Repo-safe summary — **P06-OPERATIONAL-CLOSED** |
 | **Section** | **P06-OPERATIONAL-CLOSED-post** |
-| **Status code** | `P06_OPERATIONAL_CLOSED_PARTIAL_D` |
+| **Status code** | `P06_OPERATIONAL_CLOSED` (Block D LOSA tail complete 2026-05-29) |
 | **Date (UTC)** | 2026-06-05 |
 | **Checklist** | `phase-0-6-contour-b-operational-closure-checklist.md` |
 | **Policy** | `phase-0-6-processing-contour-owner-decision-record.md` §12, §13 |
@@ -17,7 +17,7 @@
 ## This document is
 
 - Formal **operational closure** of Phase 0–6 Contour **B** (automation → PSA → route options).
-- **Partial Block D** closure: ordinary VGS Vilbli parity achieved on pilot counties; **18 Finnmark LOSA** rows remain **OUT_OF_SCOPE** until **Phase 4** implementation gate.
+- **Block D** closure: ordinary VGS Vilbli parity on pilot counties; Finnmark **18** LOSA rows published via **Phase 4** (ref pilot complete).
 
 ## This document is not
 
@@ -34,7 +34,7 @@
 | **A** Policy | **CLOSED** | P06 §12 sole product rule |
 | **B** Automation | **CLOSED** | Scheduler + home-IP relay; 6-month cadence |
 | **C** MAIN write + E2E | **CLOSED** | Pilots **56/15/18/55**; green **03/11/46/50** unchanged |
-| **D** Vilbli parity | **CLOSED (PARTIAL)** | CASE 2/3 done; **18 LOSA** → Phase 4 |
+| **D** Vilbli parity | **CLOSED** | CASE 2/3 + P4 **18** LOSA PSA (`56`) |
 | **E** Coverage | **CLOSED** | County matrix; Møre **15** `10/0/0`; Akershus **32** `12/0/0` |
 | **F** Regression | **CLOSED** | `npm run smoke:contour-b`; CLI `--contour-b-partial` guard |
 | **G** Sign-off | **CLOSED** | This summary + non-return rule |
@@ -60,10 +60,10 @@
 | **15** Møre | B | 10/0/0 OK | Active (owner E2E verified) |
 | **18** Nordland | B | 13/0/0 OK | Active |
 | **55** Troms | B | 5/0/0 OK | Active; VG1=5 / VG2=4 (CASE 2 1:1) |
-| **56** Finnmark | B partial | 6/18/0 ABORT (expected) | **12** active PSA; 6 ordinary VG1 schools (CASE 3) |
+| **56** Finnmark | B partial | 6/18/0 ABORT (ordinary ingest) | **6** ordinary VG1 + **18** LOSA PSA (P4); route **18** LOSA options |
 | **03/11/46/50** | A green | OK | Contour A only; B relay skips |
 
-**Block D partial tail:** Finnmark **18** Vilbli LOSA municipality rows — auditable exclude; Contour B partial skips `isLosa`. See `phase-4-losa-finnmark-publishability-contract-draft.md`.
+**Block D LOSA (2026-05-29):** **18/18** §4 + PSA + route — `phase-4-losa-planning-closed-safe-summary.md`. Contour B ingest still skips `isLosa` for ordinary emit.
 
 ---
 
@@ -71,9 +71,10 @@
 
 | Metric | Finnmark **56** ordinary | Finnmark **56** LOSA |
 |--------|--------------------------|----------------------|
-| Vilbli extract (VG1 sample) | 6 matched school-brands | 18 excluded |
-| PSA active (post ingest) | 12 rows | 0 ordinary PSA |
-| Full dry-run | ABORT on unmatched=18 | Expected; not matcher defect |
+| Vilbli extract (VG1 sample) | 6 matched school-brands | 18 LOSA-shaped |
+| PSA active | Contour B ordinary rows | **18** `losa_fjern_delivery_municipality` (P4) |
+| Route options | ~6 ordinary | **18** with LOSA badge |
+| Ingest dry-run | 6/18/0 (ordinary) | LOSA not via ordinary emit |
 
 ---
 
@@ -90,4 +91,4 @@ After **P06-OPERATIONAL-CLOSED**:
 
 ## 6. Recommended next gate
 
-**Phase 4 LOSA Finnmark implementation gate** — when owner approves publishability execution beyond planning evidence. Operational Contour B does **not** block on this for non-LOSA counties.
+**Post-pilot tail** — `phase-4-losa-post-pilot-next-steps-owner-record.md` (`NOT_READY_FOR_APPLY`, E2E verify, regional model analysis, cleanup audit).

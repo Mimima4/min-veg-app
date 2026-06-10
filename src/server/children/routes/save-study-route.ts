@@ -1,6 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  buildProgrammeSelectionOptionId,
+  isLosaProgrammeOption,
+  normalizeLosaDeliverySiteLabel,
+  normalizeLosaProviderLabel,
+} from "@/lib/losa/availability-scope";
 import { getStudyRouteDetail } from "./get-study-route-detail";
 import { RouteDomainError } from "./route-errors";
 
@@ -42,18 +48,31 @@ function applySelectedOptions(
     if (!selectedId || !Array.isArray(step.options)) return step;
 
     const selected = step.options.find((opt: any, i: number) => {
-      const id = `programme-${opt.institution_id ?? i}`;
-      return id === selectedId;
+      return buildProgrammeSelectionOptionId(opt, i) === selectedId;
     });
 
     if (!selected) return step;
 
+    const isLosa = isLosaProgrammeOption(selected);
+    const institutionName = isLosa
+      ? normalizeLosaProviderLabel(selected.institution_name) ?? selected.institution_name
+      : selected.institution_name;
+    const deliverySiteLabel = isLosa
+      ? normalizeLosaDeliverySiteLabel(
+          selected.delivery_site_label ??
+            selected.institution_city ??
+            selected.institution_municipality
+        )
+      : null;
+
     return {
       ...step,
-      institution_name: selected.institution_name ?? step.institution_name,
-      institution_city: selected.institution_city ?? step.institution_city,
+      institution_name: institutionName ?? step.institution_name,
+      institution_city: deliverySiteLabel ?? selected.institution_city ?? step.institution_city,
       institution_municipality:
-        selected.institution_municipality ?? step.institution_municipality,
+        deliverySiteLabel ??
+        selected.institution_municipality ??
+        step.institution_municipality,
       institution_website: selected.institution_website ?? step.institution_website,
       program_slug: selected.program_slug ?? step.program_slug,
     };
