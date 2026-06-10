@@ -76,7 +76,7 @@ VG3/bedrift specialization programmes: expanded from Vilbli bedrift links (`mech
 | # | Question | Status |
 |---|----------|--------|
 | P-2 | Pilot fylke | **OK — Vestland (`46`)** |
-| P-3 | Rollout | **OK — pilot first** |
+| P-3 | Rollout | **OK — pilot first** (Vestland transport logistics: `phase-4-route-kommune-transport-logistics-owner-record.md`) |
 | P-4 | VG3/bedrift list | **OK — all kolonne-3 continuations for Teknologi→Kjøretøy chain** (not single-fag filter; not global catalog) |
 
 ---

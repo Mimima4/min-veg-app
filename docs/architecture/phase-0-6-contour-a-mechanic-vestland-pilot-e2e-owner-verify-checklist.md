@@ -27,7 +27,7 @@
 | `run-vgs-truth-pipeline.mjs --dry-run` (greenfield) | **Expected abort** — `missing_profession_links` until first write |
 | Production write `run-vgs-truth-pipeline.mjs --profession mechanic --county 46` | **OK** — `verification_ready_after_write`; **67** PSA rows |
 | Post-write classify | `verification_ready_after_write` |
-| PSA by stage (main DB) | **VG1 56** / **VG2 11** raw rows; UI dedupes VG1 to **~28** brands |
+| PSA by stage (main DB) | **VG1 28** / **VG2 11** (duplicate `mechanic-vg1-teknologi-og-industrifag-vestland` removed 2026-06-10) |
 | VG3/bedrift programme links (kolonne 3) | **10** (`mechanic-vg3-*-vestland`) |
 | `npm run smoke:contour-b` | **PASS** 2026-06-10 |
 | **Deploy** (`SUPPORTED_VGS_PROFESSION_SLUGS` + path-variants) | ☐ pending push |
