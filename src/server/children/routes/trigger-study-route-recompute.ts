@@ -27,6 +27,7 @@ import { shouldUseAvailabilityTruth } from "./should-use-availability-truth";
 import { buildAvailabilityTruthLookupInputs } from "./build-availability-truth-lookup-inputs";
 import { buildPathVariants } from "./build-path-variants";
 import { mapVilbliOutcomesToNav } from "./map-vilbli-outcomes-to-nav";
+import { buildKommuneTransportSortContext } from "@/server/planning/kommune-transport/build-transport-sort-context";
 import { selectTruthCandidateForRoute } from "./select-truth-candidate-for-route";
 import { applyRouteSelectionBoundary } from "./apply-route-selection-boundary";
 import { toUniqueValidUuids } from "./route-id-guards";
@@ -607,11 +608,16 @@ export async function triggerStudyRouteRecompute(params: Params) {
         : { useTruth: false, truth: { hasTruth: false, rows: [] } };
 
       if (useTruth) {
+        const transportSortContext = await buildKommuneTransportSortContext({
+          rows: truth.rows,
+          homeMunicipalityCodes: preferredMunicipalityCodes,
+        });
         const selectedTruthCandidate = await selectTruthCandidateForRoute({
           supabase,
           rows: truth.rows,
           preferredMunicipalityCodes,
           relocationWillingness,
+          transportSortContext,
         });
         const { data: linkedPrograms } = await supabase
           .from("education_programs")
@@ -643,6 +649,7 @@ export async function triggerStudyRouteRecompute(params: Params) {
         recomputedSteps = buildStepsFromAvailabilityTruth({
           rows: truth.rows,
           selectedCandidate: selectedTruthCandidate,
+          transportSortContext,
           professionSlug: professionRow.slug,
           pathVariants: enrichedPathVariants,
           navOutcomes: navOutcomeMapping.mapped,

@@ -6,6 +6,8 @@ import {
   ORDINARY_AVAILABILITY_SCOPE,
 } from "@/lib/losa/availability-scope";
 import type { StudyRouteSnapshotStep } from "@/lib/routes/route-types";
+import { compareInstitutionTransportRank } from "@/lib/planning/kommune-transport/evaluate-reachability";
+import type { KommuneTransportSortContext } from "@/lib/planning/kommune-transport/types";
 import type { AvailabilityTruthRow } from "./get-availability-truth";
 import { getVilbliBranchConfig } from "@/lib/vgs/vilbli-branch-config";
 import type { PathVariant, VilbliOutcomeProfession } from "./build-path-variants";
@@ -56,10 +58,13 @@ function stageRowsSortedWithAnchor(params: {
   rows: AvailabilityTruthRow[];
   stage: "VG1" | "VG2" | "VG3";
   selectedCandidate?: AvailabilityTruthRow | null;
+  stageAnchorRow?: AvailabilityTruthRow | null;
+  transportSortContext?: KommuneTransportSortContext | null;
 }) {
   const stageRows = stageRowsSorted(params.rows, params.stage);
-  const anchorMunicipalityCode = params.selectedCandidate?.municipalityCode ?? null;
-  const anchorInstitutionId = params.selectedCandidate?.institutionId ?? null;
+  const anchorRow = params.stageAnchorRow ?? params.selectedCandidate ?? null;
+  const anchorMunicipalityCode = anchorRow?.municipalityCode ?? null;
+  const anchorInstitutionId = anchorRow?.institutionId ?? null;
 
   return [...stageRows].sort((a, b) => {
     const aSameInstitution = anchorInstitutionId
@@ -80,6 +85,17 @@ function stageRowsSortedWithAnchor(params: {
       : false;
     if (aSameMunicipality !== bSameMunicipality) {
       return aSameMunicipality ? -1 : 1;
+    }
+
+    if (params.transportSortContext?.computed && params.stage !== "VG3") {
+      const transportDelta = compareInstitutionTransportRank(
+        a.institutionId,
+        b.institutionId,
+        params.transportSortContext
+      );
+      if (transportDelta !== 0) {
+        return transportDelta;
+      }
     }
 
     const verificationDelta =
@@ -340,6 +356,7 @@ export function buildStepsFromAvailabilityTruth(params: {
   professionSlug: string;
   rows: AvailabilityTruthRow[];
   selectedCandidate?: AvailabilityTruthRow | null;
+  transportSortContext?: KommuneTransportSortContext | null;
   pathVariants?: PathVariant[];
   navOutcomes?: Array<{
     navTitle: string | null;
@@ -470,24 +487,35 @@ export function buildStepsFromAvailabilityTruth(params: {
 
   if (selectedVariant) {
     let selectedVg2RowForGate: AvailabilityTruthRow | null = null;
+    let vg1StageRowForAnchor: AvailabilityTruthRow | null = null;
     for (const node of selectedVariant.nodes) {
       if (node.type === "programme_selection") {
+        const stageAnchorRow: AvailabilityTruthRow | null =
+          node.stage === "VG2"
+            ? vg1StageRowForAnchor
+            : node.stage === "VG3"
+              ? selectedVg2RowForGate
+              : params.selectedCandidate ?? null;
         const { ordinaryRows, losaRows } = splitOrdinaryAndLosaRows(params.rows);
-        const stageRows = [
+        const stageRows: AvailabilityTruthRow[] = [
           ...dedupeRowsBySchoolBrand(
             stageRowsSortedWithAnchor({
               rows: ordinaryRows,
               stage: node.stage,
               selectedCandidate: params.selectedCandidate ?? null,
+              stageAnchorRow,
+              transportSortContext: params.transportSortContext,
             })
           ),
           ...stageRowsSortedWithAnchor({
             rows: losaRows,
             stage: node.stage,
             selectedCandidate: params.selectedCandidate ?? null,
+            stageAnchorRow,
+            transportSortContext: params.transportSortContext,
           }),
         ];
-        const stageRow = stageRows[0] ?? null;
+        const stageRow: AvailabilityTruthRow | null = stageRows[0] ?? null;
 
         if (node.stage === "VG3") {
           const vg3Eligible = isVg3GeographicallyEligible({
@@ -511,6 +539,9 @@ export function buildStepsFromAvailabilityTruth(params: {
         if (!hasStageAvailability) {
           // Child/family contour rule: school-based steps must have school availability.
           continue;
+        }
+        if (node.stage === "VG1") {
+          vg1StageRowForAnchor = stageRow;
         }
         if (node.stage === "VG2") {
           selectedVg2RowForGate = stageRow;

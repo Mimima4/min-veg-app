@@ -8,6 +8,8 @@ import {
   haversineDistanceKm,
   normalizeMunicipalityCode,
 } from "@/lib/planning/geo-distance";
+import { compareInstitutionTransportRank } from "@/lib/planning/kommune-transport/evaluate-reachability";
+import type { KommuneTransportSortContext } from "@/lib/planning/kommune-transport/types";
 import type { AvailabilityTruthRow } from "./get-availability-truth";
 
 const MAYBE_MAX_DISTANCE_KM = 400;
@@ -33,6 +35,7 @@ function sortCandidatesWithinScope(params: {
   preferredMunicipalityCodes: string[];
   homeFylkeCodes: string[];
   municipalityGeoPointByCode: Map<string, { lat: number; lng: number }>;
+  transportSortContext?: KommuneTransportSortContext | null;
 }): AvailabilityTruthRow[] {
   const preferredMunicipalitySet = new Set(params.preferredMunicipalityCodes);
   const homeFylkeSet = new Set(params.homeFylkeCodes);
@@ -85,6 +88,17 @@ function sortCandidatesWithinScope(params: {
       return aHomeFylkeMatch ? -1 : 1;
     }
 
+    if (params.transportSortContext?.computed) {
+      const transportDelta = compareInstitutionTransportRank(
+        a.institutionId,
+        b.institutionId,
+        params.transportSortContext
+      );
+      if (transportDelta !== 0) {
+        return transportDelta;
+      }
+    }
+
     const aDistance = getCandidateCentroidDistanceKm(a);
     const bDistance = getCandidateCentroidDistanceKm(b);
     if (aDistance !== bDistance) {
@@ -124,6 +138,7 @@ export async function selectTruthCandidateForRoute(params: {
   rows: AvailabilityTruthRow[];
   preferredMunicipalityCodes: string[];
   relocationWillingness: "no" | "maybe" | "yes" | null;
+  transportSortContext?: KommuneTransportSortContext | null;
 }): Promise<AvailabilityTruthRow | null> {
   if (params.rows.length === 0) {
     return null;
@@ -178,6 +193,7 @@ export async function selectTruthCandidateForRoute(params: {
         preferredMunicipalityCodes,
         homeFylkeCodes,
         municipalityGeoPointByCode,
+        transportSortContext: params.transportSortContext,
       })[0] ?? null
     );
   }
@@ -193,6 +209,7 @@ export async function selectTruthCandidateForRoute(params: {
         preferredMunicipalityCodes,
         homeFylkeCodes,
         municipalityGeoPointByCode,
+        transportSortContext: params.transportSortContext,
       })[0] ?? null
     );
   }
@@ -205,6 +222,7 @@ export async function selectTruthCandidateForRoute(params: {
         preferredMunicipalityCodes,
         homeFylkeCodes,
         municipalityGeoPointByCode,
+        transportSortContext: params.transportSortContext,
       })[0] ?? null
     );
   }
@@ -240,6 +258,7 @@ export async function selectTruthCandidateForRoute(params: {
           preferredMunicipalityCodes,
           homeFylkeCodes,
           municipalityGeoPointByCode,
+          transportSortContext: params.transportSortContext,
         })[0] ?? null
       );
     }
@@ -257,6 +276,7 @@ export async function selectTruthCandidateForRoute(params: {
           preferredMunicipalityCodes,
           homeFylkeCodes,
           municipalityGeoPointByCode,
+          transportSortContext: params.transportSortContext,
         })[0] ?? null
       );
     }
@@ -268,6 +288,7 @@ export async function selectTruthCandidateForRoute(params: {
       preferredMunicipalityCodes,
       homeFylkeCodes,
       municipalityGeoPointByCode,
+      transportSortContext: params.transportSortContext,
     })[0] ?? null
   );
 }

@@ -1,4 +1,5 @@
 import { createHash } from "crypto";
+import { KOMMUNE_TRANSPORT_LOGIC_VERSION } from "@/lib/planning/kommune-transport/constants";
 
 type RouteRelevantInputs = {
   preferredMunicipalityCodes: string[];
@@ -31,6 +32,7 @@ export function computeRouteInputSignature(inputs: RouteRelevantInputs): string 
     preferred_work_style: normalizeScalar(inputs.preferredWorkStyle),
     preferred_education_level: normalizeScalar(inputs.preferredEducationLevel),
     truth_version: normalizeScalar(inputs.truthVersion ?? null),
+    kommune_transport_logic_version: normalizeScalar(KOMMUNE_TRANSPORT_LOGIC_VERSION),
   });
 
   return createHash("sha256").update(canonicalPayload).digest("hex");

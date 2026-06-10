@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **SIGNED** — implementation pending |
+| **Status** | **PILOT IMPLEMENTED** — Vestland (`46`) active in route sort |
 | **Date (UTC)** | 2026-06-10 |
 | **Pilot scope** | **Vestland (`46`) first** |
 | **Applies to** | All professions (electrician, mechanic, …) — **one shared contour** |
@@ -86,14 +86,15 @@ Expected PSA after cleanup: **VG1 28** / **VG2 11** (not 56/11).
 
 ---
 
-## Implementation gate (not started)
+## Implementation gate
 
-- [ ] Entur hub resolver (kommune → primary StopPlace)
-- [ ] Morning itinerary + start-time tiers
-- [ ] Exception list + dynamic ≤2-departure rule
-- [ ] Wire into `selectTruthCandidateForRoute` / `buildStepsFromAvailabilityTruth` sort only
-- [ ] Vestland E2E: Vaksdal→Voss, Askøy→Bergen, Bergen intra-kommune skip
-- [ ] Mobile API contract review
+- [x] Entur hub resolver (kommune → primary StopPlace) — `src/lib/planning/kommune-transport/entur-client.ts`
+- [x] Morning itinerary + start-time tier C — `school-start-time.ts`, `evaluate-reachability.ts`
+- [x] Exception list + dynamic ≤2-departure rule — `exception-kommuner.ts`
+- [x] Wire into `selectTruthCandidateForRoute` / `buildStepsFromAvailabilityTruth` (sort only, non-gating)
+- [x] VG2 anchors to resolved VG1 step row (chain before transport tie-break)
+- [ ] Vestland E2E browser: Vaksdal→Voss, Askøy→Bergen, Bergen intra-kommune skip
+- [ ] Mobile API contract review (shared server modules; no new fields in snapshot v1)
 
 ---
 
