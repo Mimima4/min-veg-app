@@ -1,8 +1,7 @@
 import "server-only";
 
 import { normalizeMunicipalityCode } from "@/lib/planning/geo-distance";
-import { normalizeFylkeCodesFromMunicipalityCodes } from "@/lib/planning/norway-geo-code-normalization";
-import { KOMMUNE_TRANSPORT_PILOT_FYLKE_CODES } from "@/lib/planning/kommune-transport/constants";
+import { KOMMUNE_TRANSPORT_NATIONAL_ACTIVE } from "@/lib/planning/kommune-transport/constants";
 import {
   planEnturTrip,
   planMorningTripsFromHub,
@@ -44,15 +43,6 @@ async function resolveMunicipalityName(municipalityCode: string): Promise<string
   } catch {
     return null;
   }
-}
-
-function isPilotActiveForHomeMunicipalities(homeMunicipalityCodes: string[]): boolean {
-  const homeFylkeCodes = normalizeFylkeCodesFromMunicipalityCodes(homeMunicipalityCodes);
-  return homeFylkeCodes.some((code) =>
-    KOMMUNE_TRANSPORT_PILOT_FYLKE_CODES.includes(
-      code as (typeof KOMMUNE_TRANSPORT_PILOT_FYLKE_CODES)[number]
-    )
-  );
 }
 
 function collectVg1Vg2ChainInstitutionIds(rows: AvailabilityTruthRow[]): Set<string> {
@@ -128,11 +118,7 @@ export async function buildKommuneTransportSortContext(params: {
     )
   );
 
-  if (homeMunicipalityCodes.length === 0) {
-    return emptyTransportSortContext();
-  }
-
-  if (!isPilotActiveForHomeMunicipalities(homeMunicipalityCodes)) {
+  if (homeMunicipalityCodes.length === 0 || !KOMMUNE_TRANSPORT_NATIONAL_ACTIVE) {
     return emptyTransportSortContext();
   }
 

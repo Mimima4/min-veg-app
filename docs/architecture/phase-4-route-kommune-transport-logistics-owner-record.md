@@ -2,9 +2,9 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **PILOT IMPLEMENTED** — Vestland (`46`) active in route sort |
-| **Date (UTC)** | 2026-06-10 |
-| **Pilot scope** | **Vestland (`46`) first** |
+| **Status** | **NATIONAL ACTIVE** — all fylker (Vestland pilot validated 2026-06-10) |
+| **Date (UTC)** | 2026-06-10 (pilot) · 2026-06-10 (national rollout) |
+| **Pilot scope** | ~~Vestland (`46`) first~~ → **nationwide VGS** (`v4-national-rollout`) |
 | **Applies to** | All professions (electrician, mechanic, …) — **one shared contour** |
 
 ---
@@ -27,6 +27,7 @@
 | T-12 | Mobile: server-side only; same JSON API as web; compact fields; no web-only pipeline | **OK** |
 | D-1 | Remove duplicate `mechanic-vg1-teknologi-og-industrifag-vestland` (keep `mechanic-vg1-teknologi-vestland`) | **OK** |
 | D-2 | Pilot ingest/transport: **Vestland first** | **OK** |
+| D-3 | Transport sort **nationwide** for all VGS (same contour, all professions) | **OK** 2026-06-10 |
 
 ---
 
@@ -110,6 +111,7 @@ Expected PSA after cleanup: **VG1 28** / **VG2 11** (not 56/11).
 - [x] VG2 anchors to resolved VG1 step row (chain before transport tie-break)
 - [x] Vestland E2E browser: Vaksdal→Voss, Askøy→Bergen, Bergen intra-kommune skip
 - [x] Mobile API contract review — `phase-4-route-mobile-api-contract-v1.md` (signed 2026-06-10)
+- [x] National transport rollout — `KOMMUNE_TRANSPORT_NATIONAL_ACTIVE` (`v4-national-rollout`)
 
 ---
 

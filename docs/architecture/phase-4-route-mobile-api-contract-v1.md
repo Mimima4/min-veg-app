@@ -165,7 +165,7 @@ Mobile must build keys from **current** `steps[]` indices returned by `get-study
 | `saved` | Snapshot **not** silently replaced. `header.newRouteAvailable` or overview `newRouteAvailable` signals review needed. |
 | Profile save | Web triggers `trigger-study-route-recompute` for all routes when route-relevant fields change — mobile should call the same endpoint after equivalent profile updates. |
 
-**Pilot note:** kommune transport sort runs only when child home fylke is in `KOMMUNE_TRANSPORT_PILOT_FYLKE_CODES` (`46` Vestland today). Other fylker: same API, transport context empty → legacy distance/chain sort only.
+**National rollout (2026-06-10):** kommune transport sort runs for all Norwegian home municipalities when `KOMMUNE_TRANSPORT_NATIONAL_ACTIVE` is true (`v4-national-rollout`). Same API; server may call Entur on recompute/create.
 
 ---
 

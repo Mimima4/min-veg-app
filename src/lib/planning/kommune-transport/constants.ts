@@ -1,8 +1,8 @@
-/** Vestland pilot — expand fylke list when rolling out nationally. */
-export const KOMMUNE_TRANSPORT_PILOT_FYLKE_CODES = ["46"] as const;
+/** Nationwide VGS transport sort (Entur). Vestland pilot validated 2026-06-10. */
+export const KOMMUNE_TRANSPORT_NATIONAL_ACTIVE = true;
 
 /** Bump when transport sort logic changes (invalidates route_input_signature). */
-export const KOMMUNE_TRANSPORT_LOGIC_VERSION = "v3-norm-before-exception";
+export const KOMMUNE_TRANSPORT_LOGIC_VERSION = "v4-national-rollout";
 
 export const KOMMUNE_TRANSPORT_ARRIVAL_BUFFER_MINUTES = 5;
 
