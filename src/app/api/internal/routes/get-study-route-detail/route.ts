@@ -25,6 +25,7 @@ export async function POST(req: Request) {
       meta: {
         modelVersion: "v1",
         generatedAt: new Date().toISOString(),
+        recomputePending: Boolean(data.recomputePending),
       },
     });
   } catch (error) {

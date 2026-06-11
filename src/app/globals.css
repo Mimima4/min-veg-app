@@ -26,3 +26,32 @@ a {
   color: inherit;
   text-decoration: none;
 }
+
+@keyframes min-veg-loader-reveal {
+  0%,
+  8% {
+    stroke-dashoffset: 1;
+  }
+  68% {
+    stroke-dashoffset: 0;
+  }
+  84% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: 1;
+  }
+}
+
+.min-veg-loader-reveal-stroke {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: min-veg-loader-reveal 2.8s cubic-bezier(0.42, 0, 0.2, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .min-veg-loader-reveal-stroke {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}

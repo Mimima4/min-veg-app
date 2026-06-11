@@ -15,6 +15,14 @@ export const ENTUR_GEOCODER_AUTOCOMPLETE_URL =
 export const ENTUR_CLIENT_NAME =
   process.env.ENTUR_CLIENT_NAME?.trim() || "min-veg-minvegapp";
 
+/** Hub→hub Entur corridor cache (sort-only; keyed by reference Monday date). */
+export const ENTUR_CORRIDOR_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+
+export const ENTUR_CORRIDOR_CACHE_MAX_ENTRIES = 500;
+
+/** Max parallel hub→hub Entur fetches per route recompute. */
+export const ENTUR_CORRIDOR_FETCH_CONCURRENCY = 8;
+
 /** Tier C school-day start times (sort-only fallback; not shown as fact in UI). */
 export const DEFAULT_SCHOOL_START_TIME_BY_STAGE: Record<
   "VG1" | "VG2" | "VG3",

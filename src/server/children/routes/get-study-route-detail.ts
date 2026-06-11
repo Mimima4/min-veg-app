@@ -8,6 +8,7 @@ import { computeRouteInputSignature } from "./compute-route-input-signature";
 import { getAvailabilityTruthVersion } from "./get-availability-truth";
 import { shouldUseAvailabilityTruth } from "./should-use-availability-truth";
 import { buildAvailabilityTruthLookupInputs } from "./build-availability-truth-lookup-inputs";
+import { isLegacyTruthSnapshotShape } from "./evaluate-study-route-staleness";
 
 type Params = {
   childId: string;
@@ -190,30 +191,6 @@ function buildSelectionSignatureFromPayload(selectedStepsPayload: unknown): stri
   });
 
   return stableStringify(signatureEntries);
-}
-
-function isLegacyTruthSnapshotShape(selectedStepsPayload: unknown): boolean {
-  if (!Array.isArray(selectedStepsPayload)) {
-    return false;
-  }
-
-  let hasProgressionStep = false;
-  let hasApprenticeshipStep = false;
-
-  for (const step of selectedStepsPayload) {
-    if (!step || typeof step !== "object" || Array.isArray(step)) {
-      continue;
-    }
-    const typedStep = step as { type?: string };
-    if (typedStep.type === "progression_step") {
-      hasProgressionStep = true;
-    }
-    if (typedStep.type === "apprenticeship_step") {
-      hasApprenticeshipStep = true;
-    }
-  }
-
-  return hasProgressionStep || !hasApprenticeshipStep;
 }
 
 export async function getStudyRouteDetail(
@@ -402,21 +379,19 @@ export async function getStudyRouteDetail(
   // - OPEN_DECISION: exact material-shift thresholds remain out of scope here.
   const isWorkingRoute = route.status === "draft";
 
-  if (isStale && route.current_variant_id && !params.skipAutoRecompute) {
-    if (isWorkingRoute) {
-      const { triggerStudyRouteRecompute } = await import(
-        "./trigger-study-route-recompute"
-      );
+  const shouldDeferStaleDraftPresentation =
+    isStale && isWorkingRoute && Boolean(route.current_variant_id);
 
-      return triggerStudyRouteRecompute({
-        childId: params.childId,
-        routeId: params.routeId,
-        locale: params.locale,
-        triggeredByType: "system",
-        triggeredByUserId: null,
-        supabase,
-      });
-    }
+  if (shouldDeferStaleDraftPresentation) {
+    return assembleStudyRouteReadModel({
+      locale: params.locale,
+      route,
+      profession: profession as ProfessionRow,
+      currentSnapshot,
+      snapshotContext,
+      recomputePending: true,
+      supabase,
+    });
   }
 
   const showUpdateAvailableForSavedRoute =

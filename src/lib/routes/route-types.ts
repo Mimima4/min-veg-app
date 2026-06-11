@@ -234,6 +234,8 @@ export type StudyRouteReadModel = {
   alternativeRoutes: StudyRouteAlternativeTeaser[];
   savedSelectionSignatures?: string[];
   allowedActions: StudyRouteAllowedActions;
+  /** Draft route snapshot is stale — UI must not show school steps until recompute finishes. */
+  recomputePending?: boolean;
 };
 
 export type ChildStudyRouteOverviewItem = {

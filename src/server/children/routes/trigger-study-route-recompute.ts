@@ -38,6 +38,7 @@ type Params = {
   locale?: string;
   triggeredByType?: string;
   triggeredByUserId?: string | null;
+  triggerReason?: string;
   supabase?: SupabaseClient;
 };
 
@@ -404,6 +405,7 @@ export async function triggerStudyRouteRecompute(params: Params) {
   const locale = params.locale ?? "en";
   const triggeredByType = params.triggeredByType ?? "system";
   const triggeredByUserId = params.triggeredByUserId ?? null;
+  const triggerReason = params.triggerReason ?? "manual_recompute";
 
   const { data: route, error: routeError } = await supabase
     .from("study_routes")
@@ -456,7 +458,7 @@ export async function triggerStudyRouteRecompute(params: Params) {
     .insert({
       route_id: route.id,
       route_variant_id: route.current_variant_id,
-      trigger_reason: "manual_recompute",
+      trigger_reason: triggerReason,
       triggered_by_type: triggeredByType,
       triggered_by_user_id: triggeredByUserId,
       result_status: "running",

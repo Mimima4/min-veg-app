@@ -1,17 +1,20 @@
 import "server-only";
 
 import { normalizeMunicipalityCode } from "@/lib/planning/geo-distance";
-import { KOMMUNE_TRANSPORT_NATIONAL_ACTIVE } from "@/lib/planning/kommune-transport/constants";
 import {
-  planEnturTrip,
-  planMorningTripsFromHub,
-  resolveKommuneHubStopPlaceId,
-} from "@/lib/planning/kommune-transport/entur-client";
+  ENTUR_CORRIDOR_FETCH_CONCURRENCY,
+  KOMMUNE_TRANSPORT_NATIONAL_ACTIVE,
+} from "@/lib/planning/kommune-transport/constants";
+import { resolveKommuneHubStopPlaceId } from "@/lib/planning/kommune-transport/entur-client";
 import { buildInstitutionReachability } from "@/lib/planning/kommune-transport/evaluate-reachability";
+import {
+  buildHubCorridorCacheKey,
+  getHubCorridorTrips,
+  type HubCorridorTrips,
+} from "@/lib/planning/kommune-transport/hub-corridor-cache";
 import {
   formatReferenceDateTimeIso,
   nextMondayUtc,
-  resolveSchoolStartTimeIso,
 } from "@/lib/planning/kommune-transport/school-start-time";
 import {
   emptyTransportSortContext,
@@ -106,6 +109,32 @@ async function resolveHubForMunicipality(params: {
   return hubId;
 }
 
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  mapper: (item: T) => Promise<R>
+): Promise<R[]> {
+  if (items.length === 0) {
+    return [];
+  }
+
+  const results = new Array<R>(items.length);
+  let nextIndex = 0;
+
+  async function worker(): Promise<void> {
+    while (nextIndex < items.length) {
+      const currentIndex = nextIndex;
+      nextIndex += 1;
+      results[currentIndex] = await mapper(items[currentIndex]!);
+    }
+  }
+
+  const workerCount = Math.min(concurrency, items.length);
+  await Promise.all(Array.from({ length: workerCount }, () => worker()));
+
+  return results;
+}
+
 export async function buildKommuneTransportSortContext(params: {
   rows: AvailabilityTruthRow[];
   homeMunicipalityCodes: string[];
@@ -128,10 +157,6 @@ export async function buildKommuneTransportSortContext(params: {
   }
 
   const referenceDate = nextMondayUtc();
-  const schoolStartIso = resolveSchoolStartTimeIso({
-    stage: "VG1",
-    referenceDate,
-  });
   const eveningDepartIso = formatReferenceDateTimeIso({
     referenceDate,
     hour: 15,
@@ -142,25 +167,25 @@ export async function buildKommuneTransportSortContext(params: {
   const nameCache = new Map<string, string | null>();
   const institutionReachabilityById = new Map<string, InstitutionReachability>();
 
-  const homeHubIds = new Map<string, string | null>();
-  for (const homeCode of homeMunicipalityCodes) {
-    const homeName =
-      vg1Institutions.find((row) => row.municipalityCode === homeCode)?.municipalityName ??
-      homeCode;
-    homeHubIds.set(
-      homeCode,
+  const primaryHomeCode = homeMunicipalityCodes[0]!;
+
+  await Promise.all(
+    homeMunicipalityCodes.map(async (homeCode) => {
+      const homeName =
+        vg1Institutions.find((row) => row.municipalityCode === homeCode)?.municipalityName ??
+        homeCode;
       await resolveHubForMunicipality({
         municipalityCode: homeCode,
         municipalityName: homeName,
         hubCache,
         nameCache,
-      })
-    );
-  }
+      });
+    })
+  );
 
-  const primaryHomeCode = homeMunicipalityCodes[0]!;
-  const primaryHomeHub = homeHubIds.get(primaryHomeCode) ?? null;
+  const primaryHomeHub = hubCache.get(primaryHomeCode) ?? null;
 
+  const crossMunicipalityInstitutions: MunicipalityNameRow[] = [];
   for (const institution of vg1Institutions) {
     const schoolCode = institution.municipalityCode;
     if (homeMunicipalityCodes.includes(schoolCode)) {
@@ -195,19 +220,41 @@ export async function buildKommuneTransportSortContext(params: {
       continue;
     }
 
-    const schoolHub = await resolveHubForMunicipality({
-      municipalityCode: schoolCode,
-      municipalityName: institution.municipalityName,
-      hubCache,
-      nameCache,
-    });
+    crossMunicipalityInstitutions.push(institution);
+  }
 
+  const uniqueSchoolMunicipalityCodes = Array.from(
+    new Set(crossMunicipalityInstitutions.map((row) => row.municipalityCode))
+  );
+
+  await Promise.all(
+    uniqueSchoolMunicipalityCodes.map(async (municipalityCode) => {
+      const municipalityName =
+        crossMunicipalityInstitutions.find(
+          (row) => row.municipalityCode === municipalityCode
+        )?.municipalityName ?? municipalityCode;
+      await resolveHubForMunicipality({
+        municipalityCode,
+        municipalityName,
+        hubCache,
+        nameCache,
+      });
+    })
+  );
+
+  const corridorKeys = new Map<
+    string,
+    { schoolHubId: string; institutionIds: string[] }
+  >();
+
+  for (const institution of crossMunicipalityInstitutions) {
+    const schoolHub = hubCache.get(institution.municipalityCode) ?? null;
     if (!schoolHub) {
       institutionReachabilityById.set(
         institution.institutionId,
         buildInstitutionReachability({
           institutionId: institution.institutionId,
-          schoolMunicipalityCode: schoolCode,
+          schoolMunicipalityCode: institution.municipalityCode,
           homeMunicipalityCodes,
           stage: "VG1",
           referenceDate,
@@ -218,37 +265,66 @@ export async function buildKommuneTransportSortContext(params: {
       continue;
     }
 
-    let morningTripPatterns = null;
-    let eveningReturnTripPatterns = null;
-    try {
-      morningTripPatterns = await planMorningTripsFromHub({
-        fromStopPlaceId: primaryHomeHub,
-        toStopPlaceId: schoolHub,
-        referenceDate,
+    const corridorKey = buildHubCorridorCacheKey({
+      homeHubId: primaryHomeHub!,
+      schoolHubId: schoolHub,
+      referenceDate,
+    });
+    const existing = corridorKeys.get(corridorKey);
+    if (existing) {
+      existing.institutionIds.push(institution.institutionId);
+    } else {
+      corridorKeys.set(corridorKey, {
+        schoolHubId: schoolHub,
+        institutionIds: [institution.institutionId],
       });
-      eveningReturnTripPatterns = await planEnturTrip({
-        fromStopPlaceId: schoolHub,
-        toStopPlaceId: primaryHomeHub,
-        arriveBy: false,
-        dateTimeIso: eveningDepartIso,
-      });
-    } catch {
-      morningTripPatterns = null;
-      eveningReturnTripPatterns = null;
     }
+  }
 
-    institutionReachabilityById.set(
-      institution.institutionId,
-      buildInstitutionReachability({
-        institutionId: institution.institutionId,
-        schoolMunicipalityCode: schoolCode,
-        homeMunicipalityCodes,
-        stage: "VG1",
-        referenceDate,
-        morningTripPatterns,
-        eveningReturnTripPatterns,
-      })
+  if (primaryHomeHub && corridorKeys.size > 0) {
+    const homeHubId = primaryHomeHub;
+    const corridorTripsByKey = new Map<string, HubCorridorTrips>();
+
+    await mapWithConcurrency(
+      [...corridorKeys.entries()],
+      ENTUR_CORRIDOR_FETCH_CONCURRENCY,
+      async ([corridorKey, corridor]) => {
+        const trips = await getHubCorridorTrips({
+          homeHubId,
+          schoolHubId: corridor.schoolHubId,
+          referenceDate,
+          eveningDepartIso,
+        });
+        corridorTripsByKey.set(corridorKey, trips);
+      }
     );
+
+    for (const [corridorKey, corridor] of corridorKeys.entries()) {
+      const trips = corridorTripsByKey.get(corridorKey) ?? {
+        morningTripPatterns: null,
+        eveningReturnTripPatterns: null,
+      };
+
+      for (const institutionId of corridor.institutionIds) {
+        const institution = crossMunicipalityInstitutions.find(
+          (row) => row.institutionId === institutionId
+        );
+        if (!institution) continue;
+
+        institutionReachabilityById.set(
+          institutionId,
+          buildInstitutionReachability({
+            institutionId,
+            schoolMunicipalityCode: institution.municipalityCode,
+            homeMunicipalityCodes,
+            stage: "VG1",
+            referenceDate,
+            morningTripPatterns: trips.morningTripPatterns,
+            eveningReturnTripPatterns: trips.eveningReturnTripPatterns,
+          })
+        );
+      }
+    }
   }
 
   return {

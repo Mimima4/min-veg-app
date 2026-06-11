@@ -7,7 +7,6 @@ import type {
   StudyRouteSnapshotContext,
   StudyRouteCompetitionLevel,
   StudyRouteSnapshotStep,
-  StudyRouteAvailableProfession,
 } from "@/lib/routes/route-types";
 import { getStudyRouteAlternatives } from "./get-study-route-alternatives";
 import { getStudyRouteAvailableProfessions } from "./get-study-route-available-professions";
@@ -47,6 +46,7 @@ type AssembleParams = {
   alreadySavedEquivalent?: boolean;
   equivalentSavedRouteId?: string | null;
   savedSelectionSignatures?: string[];
+  recomputePending?: boolean;
   supabase?: SupabaseClient;
 };
 
@@ -100,23 +100,34 @@ export async function assembleStudyRouteReadModel(
 ): Promise<StudyRouteReadModel> {
   const supportedLocale = (params.locale ?? "en") as SupportedLocale;
   const supabase = params.supabase ?? (await createClient());
+  const recomputePending = Boolean(params.recomputePending);
 
-  const alternatives = await getStudyRouteAlternatives({
-    routeId: params.route.id,
-  });
+  const alternatives = recomputePending
+    ? []
+    : await getStudyRouteAlternatives({
+        routeId: params.route.id,
+      });
 
-  const availableProfessions = await getStudyRouteAvailableProfessions({
-    routeId: params.route.id,
-    locale: params.locale,
-  });
+  const availableProfessions = recomputePending
+    ? {
+        items: [],
+        emptyState: null,
+      }
+    : await getStudyRouteAvailableProfessions({
+        routeId: params.route.id,
+        locale: params.locale,
+      });
 
-  const snapshotSteps = Array.isArray(params.currentSnapshot?.selected_steps_payload)
-    ? params.currentSnapshot.selected_steps_payload
-    : [];
-  const enrichedSteps = await enrichStudyRouteSteps(
-    snapshotSteps as StudyRouteSnapshotStep[],
-    { locale: params.locale }
-  );
+  const snapshotSteps = recomputePending
+    ? []
+    : Array.isArray(params.currentSnapshot?.selected_steps_payload)
+      ? params.currentSnapshot.selected_steps_payload
+      : [];
+  const enrichedSteps = recomputePending
+    ? []
+    : await enrichStudyRouteSteps(snapshotSteps as StudyRouteSnapshotStep[], {
+        locale: params.locale,
+      });
   const truthApprenticeshipStep = enrichedSteps.find(
     (step): step is Extract<StudyRouteSnapshotStep, { type: "apprenticeship_step" }> =>
       step.type === "apprenticeship_step" && step.source === "availability_truth"
@@ -166,8 +177,10 @@ export async function assembleStudyRouteReadModel(
   })();
 
   const resolvedState = resolveStudyRouteState({
-    selectedStepsPayload: params.currentSnapshot?.selected_steps_payload,
-    snapshotSignals,
+    selectedStepsPayload: recomputePending
+      ? []
+      : params.currentSnapshot?.selected_steps_payload,
+    snapshotSignals: recomputePending ? {} : snapshotSignals,
     snapshotContext: params.snapshotContext,
   });
 
@@ -183,7 +196,7 @@ export async function assembleStudyRouteReadModel(
 
   let competitionLevel: StudyRouteCompetitionLevel = baseCompetitionLevel;
 
-  if (selectedProgramSlug) {
+  if (!recomputePending && selectedProgramSlug) {
     const { data: selectedProgramRow } = await supabase
       .from("education_programs")
       .select("institution_id")
@@ -209,6 +222,16 @@ export async function assembleStudyRouteReadModel(
   const competitionLabel = competitionLevelToLabel(competitionLevel);
   const alreadySavedEquivalent = Boolean(params.alreadySavedEquivalent);
 
+  const pendingHeader = recomputePending
+    ? {
+        overallFitLabel: null,
+        feasibilityLabel: null,
+        realismLabel: null,
+        stepsCount: 0,
+        warningsCount: 0,
+      }
+    : null;
+
   return {
     identity: {
       routeId: params.route.id,
@@ -228,17 +251,31 @@ export async function assembleStudyRouteReadModel(
       professionTitle,
       routeLabel: professionTitle,
       stageContextLabel: params.snapshotContext?.planning.preferredEducationLevel ?? null,
-      overallFitLabel: resolvedState.headerSummary.overallFitLabel,
-      feasibilityLabel: resolvedState.headerSummary.feasibilityLabel,
-      realismLabel: resolvedState.headerSummary.realismLabel,
+      overallFitLabel:
+        pendingHeader?.overallFitLabel ?? resolvedState.headerSummary.overallFitLabel,
+      feasibilityLabel:
+        pendingHeader?.feasibilityLabel ?? resolvedState.headerSummary.feasibilityLabel,
+      realismLabel:
+        pendingHeader?.realismLabel ?? resolvedState.headerSummary.realismLabel,
       competitionLevel,
       competitionLabel,
-      stepsCount: resolvedState.headerSummary.stepsCount,
-      warningsCount: resolvedState.headerSummary.warningsCount,
+      stepsCount: pendingHeader?.stepsCount ?? resolvedState.headerSummary.stepsCount,
+      warningsCount:
+        pendingHeader?.warningsCount ?? resolvedState.headerSummary.warningsCount,
       newRouteAvailable: resolvedState.headerSummary.newRouteAvailable,
     },
     steps: presentationSteps,
-    signals: resolvedState.signals,
+    signals: recomputePending
+      ? {
+          warnings: [],
+          improvementGuidance: [],
+          evidenceComposition: {
+            hasParentInput: false,
+            hasSchoolEvidence: false,
+            hasDerivedSignals: false,
+          },
+        }
+      : resolvedState.signals,
     availableProfessions: {
       ...availableProfessions,
       items: availableProfessionsWithBuckets,
@@ -248,15 +285,16 @@ export async function assembleStudyRouteReadModel(
     equivalentSavedRouteId: params.equivalentSavedRouteId ?? null,
     savedSelectionSignatures: params.savedSelectionSignatures ?? [],
     allowedActions: {
-      canEditRoute: true,
-      canOpenAlternatives: true,
-      canSaveAsNewVariant: !alreadySavedEquivalent,
-      canReplaceCurrentVariant: true,
-      canOpenAvailableProfessions: true,
+      canEditRoute: !recomputePending,
+      canOpenAlternatives: !recomputePending,
+      canSaveAsNewVariant: !alreadySavedEquivalent && !recomputePending,
+      canReplaceCurrentVariant: !recomputePending,
+      canOpenAvailableProfessions: !recomputePending,
       canExportConsultationPdf: false,
       canShareReadOnlyRoute: false,
       canRemoveSavedRoute: true,
     },
+    recomputePending: recomputePending || undefined,
   } as StudyRouteReadModel & {
     alreadySavedEquivalent: boolean;
     equivalentSavedRouteId: string | null;

@@ -4,7 +4,7 @@ import AppPrivateNav from "@/components/layout/app-private-nav";
 import { CompetitionBadge } from "@/components/route/competition-badge";
 import { getStudyRouteDetail } from "@/server/children/routes/get-study-route-detail";
 import { getRouteStrategies } from "@/server/children/routes/route-strategy-rules";
-import RouteStepsPanel from "../route-steps-panel";
+import RouteStepsRecomputePanel from "../route-steps-recompute-panel";
 import RouteSignalsPanel from "../route-signals-panel";
 import RouteAvailableProfessionsPanel from "../route-available-professions-panel";
 import AlternativeRoutesCollapsible from "../alternative-routes-collapsible";
@@ -47,10 +47,12 @@ export default async function StudyRouteDetailPage({
       route.header.competitionLevel === "very_high") &&
     strategies.length > 0;
 
+  const isRecomputePending = Boolean(route.recomputePending);
+
   const statusItems = [
     {
       label: "Fit",
-      value: route.header.overallFitLabel ?? "—",
+      value: isRecomputePending ? "—" : (route.header.overallFitLabel ?? "—"),
     },
     {
       label: "Education level",
@@ -58,7 +60,7 @@ export default async function StudyRouteDetailPage({
     },
     {
       label: "Realism",
-      value: route.header.realismLabel ?? "—",
+      value: isRecomputePending ? "—" : (route.header.realismLabel ?? "—"),
     },
     ...(route.header.competitionLabel
       ? [
@@ -105,7 +107,9 @@ export default async function StudyRouteDetailPage({
                   <CompetitionBadge level={competitionLevel} />
                 </div>
                 <p className="mt-2 text-sm text-stone-600">
-                  {route.header.feasibilityLabel ?? "No feasibility summary yet."}
+                  {isRecomputePending
+                    ? "Building a fresh route for this profession."
+                    : (route.header.feasibilityLabel ?? "No feasibility summary yet.")}
                 </p>
               </div>
             </div>
@@ -122,10 +126,11 @@ export default async function StudyRouteDetailPage({
             </dl>
           </div>
 
-          <RouteStepsPanel
+          <RouteStepsRecomputePanel
             childId={childId}
             routeId={routeId}
             locale={locale}
+            recomputePending={isRecomputePending}
             isSavedRoute={
               route.identity.status === "saved" ||
               (
@@ -161,13 +166,17 @@ export default async function StudyRouteDetailPage({
             </div>
           )}
 
-          <AlternativeRoutesCollapsible alternatives={route.alternativeRoutes} />
-          <RouteSignalsPanel signals={route.signals} />
-          <RouteAvailableProfessionsPanel
-            locale={locale}
-            availableProfessions={route.availableProfessions}
-            steps={route.steps}
-          />
+          {!isRecomputePending && (
+            <>
+              <AlternativeRoutesCollapsible alternatives={route.alternativeRoutes} />
+              <RouteSignalsPanel signals={route.signals} />
+              <RouteAvailableProfessionsPanel
+                locale={locale}
+                availableProfessions={route.availableProfessions}
+                steps={route.steps}
+              />
+            </>
+          )}
         </div>
       </div>
     </LocalePageShell>
