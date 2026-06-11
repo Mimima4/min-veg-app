@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { MinVegRoadLoader } from "@/components/route/min-veg-road-loader";
 import type {
   StudyRouteCompetitionLevel,
+  StudyRouteReadModel,
   StudyRouteReadModelStep,
 } from "@/lib/routes/route-types";
 import RouteStepsPanel from "./route-steps-panel";
@@ -60,14 +61,29 @@ export default function RouteStepsRecomputePanel({
   savedSelectionSignatures,
 }: Props) {
   const router = useRouter();
+  const [isRefreshing, startTransition] = useTransition();
   const [pending, setPending] = useState(recomputePending);
+  const [displaySteps, setDisplaySteps] = useState(steps);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
   const runStartedRef = useRef(false);
 
   useEffect(() => {
+    runStartedRef.current = false;
     setPending(recomputePending);
-  }, [recomputePending]);
+    setDisplaySteps(steps);
+    setErrorMessage(null);
+  }, [childId, routeId, recomputePending, steps]);
+
+  const finishRecompute = (updated?: StudyRouteReadModel) => {
+    if (updated?.steps && updated.steps.length > 0) {
+      setDisplaySteps(updated.steps);
+    }
+    setPending(false);
+    startTransition(() => {
+      router.refresh();
+    });
+  };
 
   useEffect(() => {
     if (!pending || runStartedRef.current) {
@@ -89,7 +105,7 @@ export default function RouteStepsRecomputePanel({
         );
         const triggerPayload = (await triggerResponse.json()) as {
           ok?: boolean;
-          updated?: { recomputePending?: boolean };
+          updated?: StudyRouteReadModel;
           error?: { message?: string };
         };
 
@@ -104,8 +120,7 @@ export default function RouteStepsRecomputePanel({
         }
 
         if (!triggerPayload.updated?.recomputePending) {
-          setPending(false);
-          router.refresh();
+          finishRecompute(triggerPayload.updated);
           return;
         }
 
@@ -121,8 +136,7 @@ export default function RouteStepsRecomputePanel({
           }
 
           if (!stillPending) {
-            setPending(false);
-            router.refresh();
+            finishRecompute(triggerPayload.updated);
             return;
           }
 
@@ -143,8 +157,14 @@ export default function RouteStepsRecomputePanel({
 
     return () => {
       cancelled = true;
+      runStartedRef.current = false;
     };
   }, [pending, childId, routeId, locale, router, retryKey]);
+
+  const showLoader =
+    !errorMessage &&
+    (pending ||
+      (displaySteps.length === 0 && (recomputePending || isRefreshing)));
 
   if (errorMessage) {
     return (
@@ -167,7 +187,7 @@ export default function RouteStepsRecomputePanel({
     );
   }
 
-  if (pending) {
+  if (showLoader) {
     return (
       <div className="w-full rounded-2xl border border-stone-200 bg-white">
         <MinVegRoadLoader />
@@ -181,7 +201,7 @@ export default function RouteStepsRecomputePanel({
       routeId={routeId}
       locale={locale}
       isSavedRoute={isSavedRoute}
-      steps={steps}
+      steps={displaySteps}
       competitionLevel={competitionLevel}
       savedSelectionSignatures={savedSelectionSignatures}
     />
