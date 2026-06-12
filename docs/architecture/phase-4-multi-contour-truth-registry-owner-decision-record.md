@@ -161,7 +161,7 @@ filter_id  →  eligible contour(s)  →  path variant (VGS) or post-VGS chain  
 
 | Phase | Deliverable | Contours |
 |-------|-------------|----------|
-| **P4-MCT-1** | NAV matcher owner record + wire on VGS | C-VGS, C-NAV |
+| **P4-MCT-1** | NAV matcher owner record + wire on VGS | C-VGS, C-NAV — see `phase-4-nav-matcher-owner-decision-record.md` |
 | **P4-MCT-2** | Fagskole authority proof + ingest charter + pilot county/profession | C-FAGSKOLE |
 | **P4-MCT-3** | Høyskole bachelor pilot (one path family, e.g. maskiningeniør) | C-HOYSKOLE-BACHELOR |
 | **P4-MCT-4** | One lang profesjonsløp charter (e.g. lege) | C-PROFESJONSSTUDIER |
@@ -206,3 +206,4 @@ VGS PSA remains source of truth for C-VGS until unified table migration is chart
 - `route-path-engine-production-spec.md` — institution + programme + stage rule
 - `phase-4-route-kommune-transport-logistics-owner-record.md` — C-TRANSPORT-KOMMUNE
 - `phase-4-losa-not-ready-for-apply-partial-clearance-owner-decision-record.md` — C-LOSA-FJERN
+- `phase-4-nav-matcher-owner-decision-record.md` — matcher contract (P4-MCT-1)

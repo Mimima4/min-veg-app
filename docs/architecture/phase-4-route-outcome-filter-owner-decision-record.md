@@ -85,18 +85,11 @@ For canon `fast_to_work` / `open` on mechanic, electrician, etc.:
 
 ---
 
-## 4. NAV matcher contract (next work item)
+## 4. NAV matcher contract
 
-| `filter_id` | Matcher focus | Exclude |
-|-------------|---------------|---------|
-| `fast_to_work` | Yrker with lære/fagbrev after VG2 chain | VG3-specific titles, akademisk STYRK |
-| `vg3_before_apprenticeship` | Yrker tied to VG3 spesialisering | Broad “mekaniker” without spesialisering |
-| `fagskole_after_vgs` | Fagskole-related STYRK / påbyggende yrker | Direct lære-only outcomes |
-| `long_academic` | Høyskole/uni + lang profesjonsløp STYRK groups | Fagbrev/lære-only outcomes |
-| `pabygging_studiekompetanse` | Etter-VGS contour only | All VG1→VG2 lære matching |
-| `open` / `flexible` | Default profession outcome + ranked cross-filter alts | — |
+**Authority:** `phase-4-nav-matcher-owner-decision-record.md` (effective 2026-06-10).
 
-Chain model: **NAV → catalog profession → path family → VG1 anchor → VG2 branches → VG3/lære outcomes**.
+Summary: `filter_id` → path variant → scoped Vilbli outcomes → NAV gates → catalog profession. Chain: **NAV → catalog profession → path family → VG1 anchor → VG2 branches → VG3/lære outcomes**.
 
 ---
 
@@ -128,6 +121,7 @@ Chain model: **NAV → catalog profession → path family → VG1 anchor → VG2
 
 ## 7. References
 
+- `phase-4-nav-matcher-owner-decision-record.md` — matcher API, variant selection, NAV gates
 - `phase-4-multi-contour-truth-registry-owner-decision-record.md` — truth sources, ingest, and live rules per education layer
 - `route-engine-master-spec.md` — `preferred_education_level` in route input signature
 - `route-engine-stage-6-ux.md` — route outcome filter UX (aligned §6 C-1…C-3)
