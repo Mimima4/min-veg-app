@@ -68,7 +68,14 @@ async function main() {
   const skipRelay = String(args["skip-relay"] ?? "").toLowerCase() === "true";
   const skipGreenA = String(args["skip-green-a"] ?? "").toLowerCase() === "true";
   const skipStaleBatch = String(args["skip-stale-batch"] ?? "").toLowerCase() === "true";
-  const scopeArgs = filterArgs(args, ["profession", "county"]);
+  const hasScopeFilter = Boolean(args.profession || args.county);
+  if (!dryRun && hasScopeFilter) {
+    throw new Error(
+      "[scheduled-ops] --profession/--county are smoke-only (--dry-run). " +
+        "Production relay must run the full Contour B matrix."
+    );
+  }
+  const scopeArgs = dryRun ? filterArgs(args, ["profession", "county"]) : [];
 
   const steps = [];
 

@@ -5,7 +5,7 @@
  *
  * Usage:
  *   node scripts/run-contour-b-operational-scheduler.mjs [--dry-run]
- *   node scripts/run-contour-b-operational-scheduler.mjs --profession electrician --county 56 [--dry-run]
+ *   node scripts/run-contour-b-operational-scheduler.mjs --dry-run --profession electrician --county 56  # smoke only
  *
  * Env:
  *   CONTOUR_B_SCHEDULER_MAX_CONSECUTIVE_FAILURES (default 5) — abort batch after N ingest failures in a row
@@ -15,6 +15,7 @@ import {
   SUPPORTED_VGS_PROFESSION_SLUGS,
   VGS_PIPELINE_COUNTY_CODES,
 } from "./lib/contour-b-operational-eligibility.mjs";
+import { assertContourBRelayProductionScope } from "./lib/contour-b-relay-scope.mjs";
 import { parseArgs, runNodeScript, spawnNodeScript } from "./lib/node-script-runner.mjs";
 
 function buildPairList(args) {
@@ -35,6 +36,7 @@ function buildPairList(args) {
 
 function run() {
   const args = parseArgs(process.argv.slice(2));
+  assertContourBRelayProductionScope(args, "run-contour-b-operational-scheduler");
   const isDryRun = String(args["dry-run"] ?? "").toLowerCase() === "true";
   const maxConsecutiveFailures = Number(
     process.env.CONTOUR_B_SCHEDULER_MAX_CONSECUTIVE_FAILURES ?? "5"

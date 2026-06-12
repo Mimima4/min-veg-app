@@ -40,6 +40,32 @@ type ProgramLookupRow = {
   title: string | null;
 };
 
+const PROGRAM_LOOKUP_CHUNK_SIZE = 80;
+
+async function loadProgramsByColumnInChunks(
+  supabase: SupabaseClient,
+  column: "slug" | "program_code",
+  keys: string[]
+): Promise<ProgramLookupRow[]> {
+  const rows: ProgramLookupRow[] = [];
+  for (let index = 0; index < keys.length; index += PROGRAM_LOOKUP_CHUNK_SIZE) {
+    const chunk = keys.slice(index, index + PROGRAM_LOOKUP_CHUNK_SIZE);
+    const { data, error } = await supabase
+      .from("education_programs")
+      .select("id, slug, program_code, title")
+      .in(column, chunk)
+      .eq("is_active", true);
+
+    if (error) {
+      const label = column === "slug" ? "slug" : "code";
+      throw new Error(`Failed to load availability-truth program ids by ${label}: ${error.message}`);
+    }
+
+    rows.push(...((data ?? []) as ProgramLookupRow[]));
+  }
+  return rows;
+}
+
 async function resolveProgramsBySlugsOrCodes(
   supabase: SupabaseClient,
   programmeSlugsOrCodes: string[]
@@ -51,36 +77,12 @@ async function resolveProgramsBySlugsOrCodes(
     return new Map<string, { slug: string; programCode: string | null; title: string | null }>();
   }
 
-  const [{ data: slugPrograms, error: slugProgramsError }, { data: codePrograms, error: codeProgramsError }] =
-    await Promise.all([
-      supabase
-        .from("education_programs")
-        .select("id, slug, program_code, title")
-        .in("slug", normalizedKeys)
-        .eq("is_active", true),
-      supabase
-        .from("education_programs")
-        .select("id, slug, program_code, title")
-        .in("program_code", normalizedKeys)
-        .eq("is_active", true),
-    ]);
+  const [slugPrograms, codePrograms] = await Promise.all([
+    loadProgramsByColumnInChunks(supabase, "slug", normalizedKeys),
+    loadProgramsByColumnInChunks(supabase, "program_code", normalizedKeys),
+  ]);
 
-  if (slugProgramsError) {
-    throw new Error(
-      `Failed to load availability-truth program ids by slug: ${slugProgramsError.message}`
-    );
-  }
-
-  if (codeProgramsError) {
-    throw new Error(
-      `Failed to load availability-truth program ids by code: ${codeProgramsError.message}`
-    );
-  }
-
-  const typedPrograms = [
-    ...((slugPrograms ?? []) as ProgramLookupRow[]),
-    ...((codePrograms ?? []) as ProgramLookupRow[]),
-  ];
+  const typedPrograms = [...slugPrograms, ...codePrograms];
 
   return new Map(
     typedPrograms.map((program) => [
@@ -126,22 +128,7 @@ export async function getAvailabilityTruth({
     )
   ).filter(Boolean) as AvailabilityScope[];
 
-  const { data: availabilityRows, error: availabilityError } = await supabase
-    .from("programme_school_availability")
-    .select(
-      "education_program_id, institution_id, county_code, municipality_code, availability_scope, stage, verification_status, updated_at, source_reference_url, notes"
-    )
-    .in("education_program_id", educationProgramIds)
-    .eq("county_code", normalizedCountyCode)
-    .eq("is_active", true)
-    .in("availability_scope", normalizedScopes)
-    .in("verification_status", ["verified", "needs_review"]);
-
-  if (availabilityError) {
-    throw new Error(`Failed to load availability truth rows: ${availabilityError.message}`);
-  }
-
-  const typedAvailabilityRows = (availabilityRows ?? []) as Array<{
+  const availabilityRows: Array<{
     education_program_id: string;
     institution_id: string;
     county_code: string;
@@ -152,9 +139,31 @@ export async function getAvailabilityTruth({
     updated_at: string | null;
     source_reference_url: string | null;
     notes: string | null;
-  }>;
+  }> = [];
 
-  if (typedAvailabilityRows.length === 0) {
+  for (let index = 0; index < educationProgramIds.length; index += PROGRAM_LOOKUP_CHUNK_SIZE) {
+    const programIdChunk = educationProgramIds.slice(index, index + PROGRAM_LOOKUP_CHUNK_SIZE);
+    const { data, error: availabilityError } = await supabase
+      .from("programme_school_availability")
+      .select(
+        "education_program_id, institution_id, county_code, municipality_code, availability_scope, stage, verification_status, updated_at, source_reference_url, notes"
+      )
+      .in("education_program_id", programIdChunk)
+      .eq("county_code", normalizedCountyCode)
+      .eq("is_active", true)
+      .in("availability_scope", normalizedScopes)
+      .in("verification_status", ["verified", "needs_review"]);
+
+    if (availabilityError) {
+      throw new Error(`Failed to load availability truth rows: ${availabilityError.message}`);
+    }
+
+    availabilityRows.push(
+      ...((data ?? []) as typeof availabilityRows)
+    );
+  }
+
+  if (availabilityRows.length === 0) {
     return {
       hasTruth: false,
       rows: [] as AvailabilityTruthRow[],
@@ -162,7 +171,7 @@ export async function getAvailabilityTruth({
   }
 
   const institutionIds = Array.from(
-    new Set(typedAvailabilityRows.map((row) => row.institution_id).filter(Boolean))
+    new Set(availabilityRows.map((row) => row.institution_id).filter(Boolean))
   );
 
   const institutions = await selectEducationInstitutions(supabase, {
@@ -195,7 +204,7 @@ export async function getAvailabilityTruth({
   };
 
   const rows: AvailabilityTruthRow[] = [];
-  for (const row of typedAvailabilityRows) {
+  for (const row of availabilityRows) {
     const program = programById.get(row.education_program_id);
     const institution = institutionById.get(row.institution_id);
 

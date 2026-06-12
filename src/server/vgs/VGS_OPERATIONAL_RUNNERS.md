@@ -72,6 +72,8 @@ Readiness values such as `missing_programme_rows` or `canonical_matching_review`
 
 **Every 6 months** — automated via **home-IP relay** (see below). Vilbli.no returns a stub (~2KB, HTTP 202) to Vercel/datacenter IPs, so **do not** rely on Vercel Cron to fetch Vilbli directly.
 
+**Production relay scope (binding):** Contour B relay **always** runs the **full** `SUPPORTED_VGS_PROFESSION_SLUGS × VGS_PIPELINE_COUNTY_CODES` matrix. **Never** scope production relay to one profession or one county. `--profession` / `--county` are **smoke-only** with `--dry-run` (scripts enforce this).
+
 ## Production automation (required)
 
 1. **Mac (or any network where Vilbli returns full HTML ~97KB)** with `.env.local`:
@@ -82,7 +84,7 @@ Readiness values such as `missing_programme_rows` or `canonical_matching_review`
 
 ```bash
 set -a && source .env.local && set +a
-node scripts/relay-contour-b-vilbli-to-production.mjs --dry-run --county 56
+node scripts/relay-contour-b-vilbli-to-production.mjs --dry-run --county 56 --profession electrician
 ```
 
 3. **Full batch (all pipeline counties):**
@@ -170,7 +172,7 @@ Auth: `Authorization: Bearer <CRON_SECRET>` or `x-internal-secret`.
 ## Local-only (no Vercel)
 
 ```bash
-node scripts/run-contour-b-operational-scheduler.mjs [--dry-run] [--county 56]
+node scripts/run-contour-b-operational-scheduler.mjs [--dry-run]
 ```
 
 Uses direct Vilbli fetch from your machine + local Supabase env.

@@ -1,5 +1,8 @@
 import { normalizeFylkeCodesFromMunicipalityCodes } from "@/lib/planning/norway-geo-code-normalization";
+import { vilbliCountySlugsForFylkeCodes } from "@/lib/vgs/vilbli-county-meta";
 import type { SupabaseClient } from "@supabase/supabase-js";
+
+const PROGRAMME_SLUG_LOOKUP_CHUNK_SIZE = 80;
 
 function parseRegionalProgrammeSlug(slug: string): {
   professionPrefix: string;
@@ -18,6 +21,56 @@ function parseRegionalProgrammeSlug(slug: string): {
   return { professionPrefix, regionSuffix };
 }
 
+function scopeProgrammeSlugsToChildCounties(params: {
+  slugs: string[];
+  countyCodes: string[];
+}): string[] {
+  const countySlugs = vilbliCountySlugsForFylkeCodes(params.countyCodes);
+  if (countySlugs.size === 0) {
+    return params.slugs;
+  }
+
+  const scoped = params.slugs.filter((slug) => {
+    const parsed = parseRegionalProgrammeSlug(slug);
+    if (!parsed) {
+      return false;
+    }
+    return countySlugs.has(parsed.regionSuffix.toLowerCase());
+  });
+
+  return scoped.length > 0 ? scoped : params.slugs;
+}
+
+async function loadActiveProgrammeRowsBySlug(
+  supabase: SupabaseClient,
+  slugs: string[]
+): Promise<Array<{ slug: string; program_code: string | null }>> {
+  const uniqueSlugs = Array.from(new Set(slugs.filter(Boolean)));
+  if (uniqueSlugs.length === 0) {
+    return [];
+  }
+
+  const rows: Array<{ slug: string; program_code: string | null }> = [];
+  for (let index = 0; index < uniqueSlugs.length; index += PROGRAMME_SLUG_LOOKUP_CHUNK_SIZE) {
+    const chunk = uniqueSlugs.slice(index, index + PROGRAMME_SLUG_LOOKUP_CHUNK_SIZE);
+    const { data, error } = await supabase
+      .from("education_programs")
+      .select("slug, program_code")
+      .in("slug", chunk)
+      .eq("is_active", true);
+
+    if (error) {
+      throw new Error(
+        `Failed to resolve programme codes for availability lookup: ${error.message}`
+      );
+    }
+
+    rows.push(...((data ?? []) as Array<{ slug: string; program_code: string | null }>));
+  }
+
+  return rows;
+}
+
 export async function buildAvailabilityTruthLookupInputs(params: {
   supabase: SupabaseClient;
   preferredMunicipalityCodes: string[];
@@ -31,9 +84,14 @@ export async function buildAvailabilityTruthLookupInputs(params: {
     params.preferredMunicipalityCodes
   );
 
-  const orderedSlugs = Array.from(
-    new Set([...params.primaryProgrammeSlugs, ...params.fallbackProgrammeSlugs].filter(Boolean))
-  );
+  const orderedSlugs = scopeProgrammeSlugsToChildCounties({
+    slugs: Array.from(
+      new Set([...params.primaryProgrammeSlugs, ...params.fallbackProgrammeSlugs].filter(Boolean))
+    ),
+    countyCodes,
+  });
+
+  const countySlugs = vilbliCountySlugsForFylkeCodes(countyCodes);
 
   const regionalSignatures = Array.from(
     new Set(
@@ -55,6 +113,9 @@ export async function buildAvailabilityTruthLookupInputs(params: {
   for (const signature of regionalSignatures) {
     const [professionPrefix, regionSuffix] = signature.split("|");
     if (!professionPrefix || !regionSuffix) {
+      continue;
+    }
+    if (countySlugs.size > 0 && !countySlugs.has(regionSuffix.toLowerCase())) {
       continue;
     }
 
@@ -89,23 +150,10 @@ export async function buildAvailabilityTruthLookupInputs(params: {
     };
   }
 
-  const { data: rows, error } = await params.supabase
-    .from("education_programs")
-    .select("slug, program_code")
-    .in("slug", expandedOrderedSlugs)
-    .eq("is_active", true);
-
-  if (error) {
-    throw new Error(
-      `Failed to resolve programme codes for availability lookup: ${error.message}`
-    );
-  }
+  const rows = await loadActiveProgrammeRowsBySlug(params.supabase, expandedOrderedSlugs);
 
   const codeBySlug = new Map(
-    ((rows ?? []) as Array<{ slug: string; program_code: string | null }>).map((row) => [
-      row.slug,
-      row.program_code,
-    ])
+    rows.map((row) => [row.slug, row.program_code])
   );
 
   const orderedInputs: string[] = [];

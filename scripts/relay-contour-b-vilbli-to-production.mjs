@@ -4,7 +4,8 @@
  *
  * Env: VERCEL_APP_URL, CRON_SECRET (e.g. from .env.local)
  *
- *   node scripts/relay-contour-b-vilbli-to-production.mjs [--dry-run] [--county 56]
+ *   node scripts/relay-contour-b-vilbli-to-production.mjs [--dry-run]
+ *   node scripts/relay-contour-b-vilbli-to-production.mjs --dry-run --county 56 --profession electrician  # smoke only
  */
 import { getVgsPathDefinition } from "./vgs-path-definitions.mjs";
 import { COUNTY_CODE_TO_VILBLI } from "./lib/vilbli-county-meta.mjs";
@@ -13,6 +14,7 @@ import {
   VGS_PIPELINE_COUNTY_CODES,
 } from "./lib/contour-b-operational-eligibility.mjs";
 import { vilbliFetch } from "./lib/vilbli-fetch.mjs";
+import { assertContourBRelayProductionScope } from "./lib/contour-b-relay-scope.mjs";
 
 function parseArgs(argv) {
   const args = { "dry-run": "false" };
@@ -33,6 +35,7 @@ function parseArgs(argv) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
+  assertContourBRelayProductionScope(args, "relay-contour-b-vilbli-to-production");
   const dryRun = String(args["dry-run"] ?? "").toLowerCase() === "true";
   const professionFilter = String(args.profession ?? "").trim();
   const countyFilter = String(args.county ?? "").trim();
