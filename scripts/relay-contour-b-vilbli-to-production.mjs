@@ -46,12 +46,22 @@ async function main() {
   const relayUrl = `${baseUrl}/api/internal/vgs/ingest-contour-b-vilbli-relay`;
   const results = [];
 
-  for (const professionSlug of SUPPORTED_VGS_PROFESSION_SLUGS) {
-    if (professionFilter && professionSlug !== professionFilter) continue;
-    if (!getVgsPathDefinition(professionSlug)) continue;
+  const professionSlugs = [...SUPPORTED_VGS_PROFESSION_SLUGS].filter(
+    (slug) => (!professionFilter || slug === professionFilter) && getVgsPathDefinition(slug)
+  );
+  const countyCodes = [...VGS_PIPELINE_COUNTY_CODES].filter(
+    (code) => !countyFilter || code === countyFilter
+  );
+  const plannedPairs = professionSlugs.length * countyCodes.length;
+  let pairIndex = 0;
 
-    for (const countyCode of VGS_PIPELINE_COUNTY_CODES) {
-      if (countyFilter && countyCode !== countyFilter) continue;
+  console.error(
+    `[relay] starting ${plannedPairs} pair(s) dryRun=${dryRun} (Vilbli fetch + API per pair; full batch may take 15–45 min)`
+  );
+
+  for (const professionSlug of professionSlugs) {
+    for (const countyCode of countyCodes) {
+      pairIndex += 1;
 
       const countyMeta = COUNTY_CODE_TO_VILBLI[countyCode];
       const entry = { professionSlug, countyCode, action: null, reason: null };
@@ -59,10 +69,16 @@ async function main() {
         entry.action = "skipped";
         entry.reason = "unsupported_county";
         results.push(entry);
+        console.error(
+          `[relay] (${pairIndex}/${plannedPairs}) ${professionSlug}/${countyCode} skipped unsupported_county`
+        );
         continue;
       }
 
       try {
+        console.error(
+          `[relay] (${pairIndex}/${plannedPairs}) ${professionSlug}/${countyCode} fetching Vilbli…`
+        );
         const sourceUrl = getVgsPathDefinition(professionSlug).sourceModel.buildVilbliUrl(
           countyMeta.slug
         );
@@ -74,6 +90,9 @@ async function main() {
           );
         }
 
+        console.error(
+          `[relay] (${pairIndex}/${plannedPairs}) ${professionSlug}/${countyCode} posting to API…`
+        );
         const response = await fetch(relayUrl, {
           method: "POST",
           headers: {

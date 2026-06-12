@@ -48,6 +48,22 @@ async function main() {
   );
 
   const results = [];
+  const plannedPairs = Object.entries(CONTOUR_A_OPERATIONAL_BY_PROFESSION).reduce(
+    (count, [professionSlug, countySet]) => {
+      if (professionFilter && professionSlug !== professionFilter) return count;
+      if (!SUPPORTED_VGS_PROFESSION_SLUGS.has(professionSlug)) return count;
+      return (
+        count +
+        [...countySet].filter((code) => !countyFilter || code === countyFilter).length
+      );
+    },
+    0
+  );
+  let pairIndex = 0;
+
+  console.error(
+    `[green-a] starting ${plannedPairs} pair(s) dryRun=${dryRun} (Vilbli + truth pipeline per pair)`
+  );
 
   for (const [professionSlug, countySet] of Object.entries(
     CONTOUR_A_OPERATIONAL_BY_PROFESSION
@@ -58,8 +74,12 @@ async function main() {
     for (const countyCode of countySet) {
       if (countyFilter && countyCode !== countyFilter) continue;
 
+      pairIndex += 1;
       const entry = { professionSlug, countyCode, action: null, reason: null };
       try {
+        console.error(
+          `[green-a] (${pairIndex}/${plannedPairs}) ${professionSlug}/${countyCode} classifying readiness…`
+        );
         const readiness = await classifyReadiness({
           professionSlug,
           countyCode,

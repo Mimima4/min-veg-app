@@ -4,6 +4,7 @@
  * Env: .env.local typical — VERCEL_APP_URL, CRON_SECRET, Supabase service role.
  *
  *   node scripts/run-vgs-scheduled-ops.mjs [--dry-run]
+ *   node scripts/run-vgs-scheduled-ops.mjs --dry-run --county 56 --profession electrician  # quick smoke
  *   node scripts/run-vgs-scheduled-ops.mjs --skip-relay --skip-green-a   # batch only
  */
 import { spawn } from "node:child_process";
@@ -30,6 +31,20 @@ function parseArgs(argv) {
   return args;
 }
 
+function filterArgs(args, keys) {
+  const out = [];
+  for (const key of keys) {
+    const value = args[key];
+    if (value === undefined || value === "false") continue;
+    if (value === "true") {
+      out.push(`--${key}`);
+      continue;
+    }
+    out.push(`--${key}`, value);
+  }
+  return out;
+}
+
 function runNodeScript(scriptName, extraArgs = []) {
   return new Promise((resolve, reject) => {
     const scriptPath = path.join(ROOT, "scripts", scriptName);
@@ -53,6 +68,7 @@ async function main() {
   const skipRelay = String(args["skip-relay"] ?? "").toLowerCase() === "true";
   const skipGreenA = String(args["skip-green-a"] ?? "").toLowerCase() === "true";
   const skipStaleBatch = String(args["skip-stale-batch"] ?? "").toLowerCase() === "true";
+  const scopeArgs = filterArgs(args, ["profession", "county"]);
 
   const steps = [];
 
@@ -60,14 +76,18 @@ async function main() {
     steps.push({
       name: "contour-b-relay",
       run: () =>
-        runNodeScript("relay-contour-b-vilbli-to-production.mjs", [...dryRunFlag]),
+        runNodeScript("relay-contour-b-vilbli-to-production.mjs", [
+          ...dryRunFlag,
+          ...scopeArgs,
+        ]),
     });
   }
 
   if (!skipGreenA) {
     steps.push({
       name: "contour-a-green",
-      run: () => runNodeScript("run-contour-a-green-counties.mjs", [...dryRunFlag]),
+      run: () =>
+        runNodeScript("run-contour-a-green-counties.mjs", [...dryRunFlag, ...scopeArgs]),
     });
   }
 

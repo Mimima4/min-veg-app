@@ -125,8 +125,11 @@ Load: `launchctl load ~/Library/LaunchAgents/no.minveg.contour-b-relay.plist`
 ```bash
 set -a && source .env.local && set +a
 
-# Dry-run full cycle
+# Dry-run full cycle (30 relay pairs — **15–45 min**, not hung)
 npm run ops:scheduled -- --dry-run
+
+# Quick dry-run smoke (one county)
+npm run ops:scheduled -- --dry-run --county 56 --profession electrician
 
 # Production 6-month cycle: relay → green counties → stale-draft batch
 npm run ops:scheduled
