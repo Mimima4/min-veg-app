@@ -118,6 +118,56 @@ node scripts/relay-contour-b-vilbli-to-production.mjs   # production write
 
 Load: `launchctl load ~/Library/LaunchAgents/no.minveg.contour-b-relay.plist`
 
+## Unified scheduled ops (Contour B + green A + stale drafts)
+
+**Scripts (home IP):**
+
+```bash
+set -a && source .env.local && set +a
+
+# Dry-run full cycle
+npm run ops:scheduled -- --dry-run
+
+# Production 6-month cycle: relay → green counties → stale-draft batch
+npm run ops:scheduled
+
+# Quarterly stale-draft sweep only (03:00–05:00 Oslo; no --force)
+npm run ops:scheduled -- --skip-relay --skip-green-a
+
+# Individual steps
+npm run ops:green-counties
+npm run ops:stale-draft-batch -- --force   # manual anytime
+```
+
+| Step | Script | Notes |
+|------|--------|--------|
+| Contour B relay | `relay-contour-b-vilbli-to-production.mjs` | Skips green `03/11/46/50`; post-relay draft batch in API |
+| Contour A green | `run-contour-a-green-counties.mjs` | `03/11/46/50` × electrician/mechanic; see `phase-4-green-county-ops-automation-owner-charter.md` |
+| Stale drafts | `run-stale-draft-recompute-batch.mjs` | Calls production API; **03:00–05:00** unless `--force` |
+
+**launchd (6-month full ops — replace relay-only plist or add sibling):**
+
+```xml
+<!-- ~/Library/LaunchAgents/no.minveg.vgs-scheduled-ops.plist -->
+<key>ProgramArguments</key>
+<array>
+  <string>/bin/bash</string>
+  <string>-lc</string>
+  <string>cd /path/to/min-veg-app && set -a && source .env.local && set +a && npm run ops:scheduled</string>
+</array>
+<key>StartCalendarInterval</key>
+<array>
+  <dict><key>Month</key><integer>1</integer><key>Day</key><integer>1</integer><key>Hour</key><integer>3</integer></dict>
+  <dict><key>Month</key><integer>7</integer><key>Day</key><integer>1</integer><key>Hour</key><integer>3</integer></dict>
+</array>
+```
+
+**Quarterly stale-draft-only** (1st of Feb/May/Aug/Nov at 03:00):
+
+```xml
+<string>... npm run ops:scheduled -- --skip-relay --skip-green-a</string>
+```
+
 ## API endpoints
 
 | Endpoint | Role |

@@ -190,7 +190,7 @@ export default function RouteStepsRecomputePanel({
   if (showLoader) {
     return (
       <div className="w-full rounded-2xl border border-stone-200 bg-white">
-        <MinVegRoadLoader />
+        <MinVegRoadLoader locale={locale} />
       </div>
     );
   }

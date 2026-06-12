@@ -1,9 +1,15 @@
+"use client";
+
+import { useParams } from "next/navigation";
 import { MinVegRoadLoader } from "@/components/route/min-veg-road-loader";
 
 /**
  * Instant fallback while route pages stream SSR — avoids blank screen on navigation.
  */
 export function RoutePageLoadingShell() {
+  const params = useParams();
+  const locale = typeof params?.locale === "string" ? params.locale : "en";
+
   return (
     <main className="min-h-screen bg-stone-50 px-6 py-16">
       <div className="mx-auto w-full max-w-6xl">
@@ -15,7 +21,7 @@ export function RoutePageLoadingShell() {
             <div className="mt-2 h-4 w-full max-w-lg animate-pulse rounded bg-stone-100" aria-hidden />
           </div>
           <div className="w-full rounded-2xl border border-stone-200 bg-white">
-            <MinVegRoadLoader />
+            <MinVegRoadLoader locale={locale} />
           </div>
         </div>
       </div>

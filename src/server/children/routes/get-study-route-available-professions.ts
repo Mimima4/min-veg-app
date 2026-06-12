@@ -104,14 +104,20 @@ export async function getStudyRouteAvailableProfessions(
         )
       : [];
 
-    const { data: targetProfession } = await supabase
-      .from("study_routes")
-      .select("target_profession_id, professions!inner(slug)")
-      .eq("id", params.routeId)
+    const { data: profession, error: professionError } = await supabase
+      .from("professions")
+      .select("slug")
+      .eq("id", route.target_profession_id)
+      .eq("is_active", true)
       .maybeSingle();
 
-    const professionSlug =
-      (targetProfession as any)?.professions?.slug ?? null;
+    if (professionError) {
+      throw new Error(
+        `Failed to load route profession for available professions: ${professionError.message}`
+      );
+    }
+
+    const professionSlug = profession?.slug ?? null;
     if (!professionSlug) {
       return { items: [], emptyState: EMPTY_STATE };
     }

@@ -102,7 +102,8 @@ Copy examples: *«Строим маршрут…»*, *«Прокладываем
 |-------|--------|
 | **A′** | Non-blocking draft stale path + honest loader shell — **done** |
 | **B** | Parallel Entur in `build-transport-sort-context.ts`; hub→hub cache — **done** |
-| **C** | Production background jobs: post-relay draft recompute; optional 03:00–05:00 batch — **done** |
+| **C** | Production background jobs: post-relay draft recompute; 03:00–05:00 batch + ops scripts — **done** |
+| **D** | Instant `loading.tsx` on route navigation; loader i18n (nb/nn/en/se) — **done** |
 
 ### Code touchpoints (when implemented)
 
@@ -149,7 +150,7 @@ curl -sS -X POST "$APP_URL/api/internal/routes/run-stale-draft-recompute-batch" 
   -d '{"force":true,"dryRun":true}'
 ```
 
-Quarterly / 6-month launchd: invoke the same endpoint with `force: false` in the **03:00–05:00** window (no `force`).
+Quarterly / 6-month launchd: `npm run ops:scheduled` (full) or `npm run ops:scheduled -- --skip-relay --skip-green-a` (quarterly sweep). See `VGS_OPERATIONAL_RUNNERS.md` § Unified scheduled ops.
 
 ---
 

@@ -1,9 +1,11 @@
 "use client";
 
 import { useId } from "react";
+import { getRouteLoaderMessage } from "@/lib/i18n/route-loader-copy";
 import { MIN_VEG_ROAD_REVEAL_PATH } from "./min-veg-road-loader-path";
 
 type MinVegRoadLoaderProps = {
+  locale?: string;
   message?: string;
   className?: string;
 };
@@ -12,9 +14,11 @@ type MinVegRoadLoaderProps = {
  * Adapted from owner GIF: static pin + smooth SVG-mask road reveal on app background.
  */
 export function MinVegRoadLoader({
-  message = "Building route…",
+  locale,
+  message,
   className = "",
 }: MinVegRoadLoaderProps) {
+  const displayMessage = message ?? getRouteLoaderMessage(locale);
   const maskId = `min-veg-road-reveal-${useId().replace(/:/g, "")}`;
 
   return (
@@ -64,7 +68,7 @@ export function MinVegRoadLoader({
         />
       </div>
 
-      <p className="mt-6 text-sm font-medium text-stone-600">{message}</p>
+      <p className="mt-6 text-sm font-medium text-stone-600">{displayMessage}</p>
     </div>
   );
 }
