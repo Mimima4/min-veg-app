@@ -18344,6 +18344,11 @@ var CONTOUR_A_GREEN_READINESS_STATUSES = /* @__PURE__ */ new Set([
   "ready_for_write",
   "verification_ready_after_write"
 ]);
+var CONTOUR_A_GREEN_PIPELINE_RUNNABLE_STATUSES = /* @__PURE__ */ new Set([
+  ...CONTOUR_A_GREEN_READINESS_STATUSES,
+  "missing_programme_rows",
+  "missing_profession_links"
+]);
 function getContourAOperationalCounties(professionSlug) {
   const profession = String(professionSlug ?? "").trim();
   return CONTOUR_A_OPERATIONAL_BY_PROFESSION[profession] ?? /* @__PURE__ */ new Set();
@@ -19758,7 +19763,7 @@ async function runVgsTruthPipeline({
             availability_scope: AVAILABILITY_SCOPE,
             stage,
             source: SOURCE,
-            source_reference_url: programme.href,
+            source_reference_url: stage === "VG3" && programme.href ? programme.href : sourceUrl,
             source_snapshot_label: snapshotLabel,
             is_active: true,
             first_seen_at: (/* @__PURE__ */ new Date()).toISOString(),

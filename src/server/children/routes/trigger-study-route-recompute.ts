@@ -649,7 +649,8 @@ export async function triggerStudyRouteRecompute(params: Params) {
             };
           }),
         }));
-        const pathVariantNavContext = buildRoutePathVariantNavContext({
+        const pathVariantNavContext = await buildRoutePathVariantNavContext({
+          supabase,
           professionSlug: professionRow.slug,
           preferredEducationLevel: snapshotContext.planning.preferredEducationLevel,
           pathVariants,

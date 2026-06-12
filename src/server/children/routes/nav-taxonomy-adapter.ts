@@ -1,9 +1,13 @@
-type NavTaxonomyCategory = {
+import { parseNavTaxonomyHtml } from "@/lib/nav/parse-nav-taxonomy-html";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { getCurrentNavOccupationSnapshot } from "@/server/nav/get-nav-occupation-snapshot";
+
+export type NavTaxonomyCategory = {
   code: string;
   label: string;
 };
 
-type NavTaxonomyOccupation = {
+export type NavTaxonomyOccupation = {
   code: string;
   label: string;
   level1Code: string | null;
@@ -11,61 +15,65 @@ type NavTaxonomyOccupation = {
 
 export type NavTaxonomySnapshot = {
   sourceUrl: string;
+  snapshotVersion: number;
   level1Categories: NavTaxonomyCategory[];
   occupations: NavTaxonomyOccupation[];
 };
 
-const NAV_TAXONOMY_SOURCE_URL = "https://arbeidsplassen.nav.no/stillinger";
+export const NAV_TAXONOMY_SOURCE_URL = "https://arbeidsplassen.nav.no/stillinger";
 
-function normalizeWhitespace(value: string): string {
-  return value.replace(/\s+/g, " ").trim();
-}
-
-export async function getNavTaxonomySnapshot(): Promise<NavTaxonomySnapshot> {
+/** Ingest only — never call from route request path. */
+export async function fetchNavTaxonomyFromSource(): Promise<{
+  sourceUrl: string;
+  sourceFetchedAt: string;
+  level1Categories: NavTaxonomyCategory[];
+  occupations: Array<NavTaxonomyOccupation & { level1Label: string | null }>;
+}> {
   const response = await fetch(NAV_TAXONOMY_SOURCE_URL, {
     headers: { "user-agent": "Mozilla/5.0" },
   });
   if (!response.ok) {
     throw new Error(`NAV taxonomy request failed (${response.status})`);
   }
-  const html = await response.text();
+  const parsed = parseNavTaxonomyHtml(await response.text(), NAV_TAXONOMY_SOURCE_URL);
 
-  const level1Categories = new Map<string, NavTaxonomyCategory>();
-  const level1Regex =
-    /id="[^"]*option-occupationlevel1-([^"]+)"[^>]*>[\s\S]*?<p[^>]*>([^<]+)<\/p>/gi;
-  let match = level1Regex.exec(html);
-  while (match) {
-    const code = normalizeWhitespace(match[1] ?? "");
-    const label = normalizeWhitespace((match[2] ?? "").replace(/\s*\(Kategori\)\s*$/i, ""));
-    if (code && label && !level1Categories.has(code)) {
-      level1Categories.set(code, { code, label });
-    }
-    match = level1Regex.exec(html);
+  return {
+    sourceUrl: parsed.sourceUrl,
+    sourceFetchedAt: new Date().toISOString(),
+    level1Categories: parsed.level1Categories,
+    occupations: parsed.occupations,
+  };
+}
+
+/** Production read path — materialized snapshot only. */
+export async function getNavTaxonomySnapshot(
+  supabase: SupabaseClient
+): Promise<NavTaxonomySnapshot> {
+  const snapshot = await getCurrentNavOccupationSnapshot(supabase);
+  if (!snapshot) {
+    throw new Error(
+      "NAV occupation snapshot is not loaded. Run scripts/run-nav-occupation-snapshot-ingest.mjs"
+    );
   }
 
-  const occupations = new Map<string, NavTaxonomyOccupation>();
-  const level2Regex =
-    /id="[^"]*option-occupationlevel2-([^"]+)"[^>]*>[\s\S]*?<p[^>]*>([^<]+)<\/p>/gi;
-  match = level2Regex.exec(html);
-  while (match) {
-    const code = normalizeWhitespace(match[1] ?? "");
-    const label = normalizeWhitespace((match[2] ?? "").replace(/\s*\(Kategori\)\s*$/i, ""));
-    if (!code || !label || occupations.has(code)) {
-      match = level2Regex.exec(html);
-      continue;
+  const level1Categories = new Map<string, NavTaxonomyCategory>();
+  for (const row of snapshot.occupations) {
+    if (row.level1Code && row.level1Label && !level1Categories.has(row.level1Code)) {
+      level1Categories.set(row.level1Code, {
+        code: row.level1Code,
+        label: row.level1Label,
+      });
     }
-    const level1Code = code.includes(".") ? code.split(".")[0] : null;
-    occupations.set(code, {
-      code,
-      label,
-      level1Code,
-    });
-    match = level2Regex.exec(html);
   }
 
   return {
-    sourceUrl: NAV_TAXONOMY_SOURCE_URL,
+    sourceUrl: snapshot.sourceUrl,
+    snapshotVersion: snapshot.snapshotVersion,
     level1Categories: Array.from(level1Categories.values()),
-    occupations: Array.from(occupations.values()),
+    occupations: snapshot.occupations.map((row) => ({
+      code: row.styrkCode,
+      label: row.label,
+      level1Code: row.level1Code,
+    })),
   };
 }

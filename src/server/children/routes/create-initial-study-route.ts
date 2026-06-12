@@ -408,7 +408,8 @@ export async function createInitialStudyRoute(
           };
         }),
       }));
-      const pathVariantNavContext = buildRoutePathVariantNavContext({
+      const pathVariantNavContext = await buildRoutePathVariantNavContext({
+        supabase,
         professionSlug: professionRow.slug,
         preferredEducationLevel: childPlanning.preferred_education_level,
         pathVariants,

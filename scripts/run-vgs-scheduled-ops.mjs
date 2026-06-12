@@ -6,6 +6,7 @@
  *   node scripts/run-vgs-scheduled-ops.mjs [--dry-run]
  *   node scripts/run-vgs-scheduled-ops.mjs --dry-run --county 56 --profession electrician  # quick smoke
  *   node scripts/run-vgs-scheduled-ops.mjs --skip-relay --skip-green-a   # batch only
+ *   node scripts/run-vgs-scheduled-ops.mjs --skip-nav-snapshot          # skip NAV STYRK refresh
  */
 import { spawn } from "node:child_process";
 import path from "node:path";
@@ -45,10 +46,10 @@ function filterArgs(args, keys) {
   return out;
 }
 
-function runNodeScript(scriptName, extraArgs = []) {
+function runNodeScript(scriptName, extraArgs = [], nodeFlags = []) {
   return new Promise((resolve, reject) => {
     const scriptPath = path.join(ROOT, "scripts", scriptName);
-    const child = spawn(process.execPath, [scriptPath, ...extraArgs], {
+    const child = spawn(process.execPath, [...nodeFlags, scriptPath, ...extraArgs], {
       cwd: ROOT,
       stdio: "inherit",
       env: process.env,
@@ -68,6 +69,7 @@ async function main() {
   const skipRelay = String(args["skip-relay"] ?? "").toLowerCase() === "true";
   const skipGreenA = String(args["skip-green-a"] ?? "").toLowerCase() === "true";
   const skipStaleBatch = String(args["skip-stale-batch"] ?? "").toLowerCase() === "true";
+  const skipNavSnapshot = String(args["skip-nav-snapshot"] ?? "").toLowerCase() === "true";
   const hasScopeFilter = Boolean(args.profession || args.county);
   if (!dryRun && hasScopeFilter) {
     throw new Error(
@@ -106,6 +108,18 @@ async function main() {
           ...dryRunFlag,
           ...(dryRun ? ["--force"] : []),
         ]),
+    });
+  }
+
+  if (!skipNavSnapshot) {
+    steps.push({
+      name: "nav-occupation-snapshot",
+      run: () =>
+        runNodeScript(
+          "run-nav-occupation-snapshot-ingest.mjs",
+          [...dryRunFlag],
+          ["--experimental-strip-types"]
+        ),
     });
   }
 

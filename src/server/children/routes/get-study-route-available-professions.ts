@@ -155,7 +155,8 @@ export async function getStudyRouteAvailableProfessions(
     }
 
     const pathVariants = await buildPathVariants(truth.rows, professionSlug);
-    const pathVariantNavContext = buildRoutePathVariantNavContext({
+    const pathVariantNavContext = await buildRoutePathVariantNavContext({
+      supabase,
       professionSlug,
       preferredEducationLevel: planning?.preferred_education_level ?? "open",
       pathVariants,

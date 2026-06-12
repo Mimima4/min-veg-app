@@ -1,4 +1,6 @@
 import { normalizeRouteOutcomeFilterId } from "@/lib/nav/route-outcome-filter-id";
+import { getCurrentNavOccupationSnapshot } from "@/server/nav/get-nav-occupation-snapshot";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { PathVariant, PathVariantsResult } from "./build-path-variants";
 import { resolvePathFamilyNavMatches } from "./resolve-path-family-nav-matches";
 import { resolvePathVariantForFilter } from "./resolve-path-variant-for-filter";
@@ -11,15 +13,17 @@ export type RoutePathVariantNavContext = {
   hiddenFilterIds: ReturnType<typeof resolvePathVariantForFilter>["hiddenFilterIds"];
   scopedOutcomes: PathVariantsResult["outcomes"];
   navMatches: ReturnType<typeof resolvePathFamilyNavMatches>;
+  navSnapshotVersion: number | null;
 };
 
-export function buildRoutePathVariantNavContext(params: {
+export async function buildRoutePathVariantNavContext(params: {
+  supabase: SupabaseClient;
   professionSlug: string;
   preferredEducationLevel: string | null;
   pathVariants: PathVariantsResult;
   enrichedPathVariants: PathVariant[];
   childContext: boolean;
-}): RoutePathVariantNavContext {
+}): Promise<RoutePathVariantNavContext> {
   const filterId = normalizeRouteOutcomeFilterId(params.preferredEducationLevel);
   const variantResolution = resolvePathVariantForFilter({
     filterId,
@@ -38,11 +42,22 @@ export function buildRoutePathVariantNavContext(params: {
     primaryPathVariantId: variantResolution.primaryPathVariantId,
   });
 
-  const navMatches = resolvePathFamilyNavMatches({
+  const rawNavMatches = resolvePathFamilyNavMatches({
     professionSlug: params.professionSlug,
     filterId: variantResolution.effectiveFilterId,
     outcomes: scopedOutcomes,
   });
+
+  const snapshot = await getCurrentNavOccupationSnapshot(params.supabase);
+  const navMatches = snapshot
+    ? rawNavMatches
+        .filter((match) => snapshot.occupationsByCode.has(match.navCode))
+        .map((match) => ({
+          ...match,
+          navYrkeskategori:
+            snapshot.occupationsByCode.get(match.navCode)?.level1Label ?? null,
+        }))
+    : [];
 
   return {
     filterId,
@@ -51,5 +66,6 @@ export function buildRoutePathVariantNavContext(params: {
     hiddenFilterIds: variantResolution.hiddenFilterIds,
     scopedOutcomes,
     navMatches,
+    navSnapshotVersion: snapshot?.snapshotVersion ?? null,
   };
 }
