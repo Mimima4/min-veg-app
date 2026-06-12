@@ -37,7 +37,7 @@ export default function RemoveFromCompareButton({
     if (nextIds.length >= 2) {
       router.push(`/${locale}/app/children/${childId}/compare?ids=${nextIds.join(",")}`);
     } else {
-      router.push(`/${locale}/app/children/${childId}/matches`);
+      router.push(`/${locale}/app/children/${childId}/route`);
     }
   }
 

@@ -83,9 +83,23 @@ function assertOperationalIngestDryRun() {
   console.error("[smoke] contour-b operational ingest dry-run (56): OK");
 }
 
+function assertRouteTruthInvariantSmoke() {
+  const result = spawnSync(process.execPath, ["scripts/smoke-route-truth-invariants.mjs"], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+    stdio: "pipe",
+  });
+  if (result.status !== 0) {
+    const combined = `${result.stdout ?? ""}${result.stderr ?? ""}`;
+    throw new Error(`Route truth invariant smoke failed:\n${combined.slice(-800)}`);
+  }
+  console.error("[smoke] route-truth invariants: OK");
+}
+
 async function run() {
   assertCliContourBPartialRejected();
   assertOperationalIngestDryRun();
+  assertRouteTruthInvariantSmoke();
   console.error("[smoke] contour-b regression: PASS");
 }
 

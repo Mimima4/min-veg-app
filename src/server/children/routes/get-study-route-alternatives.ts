@@ -1,13 +1,15 @@
 import { createClient } from "@/lib/supabase/server";
+import { getRouteOutcomeFilterLabelNb } from "@/lib/nav/route-outcome-filter-labels";
+import { parseOutcomeFilterVariantReason } from "@/lib/nav/parse-outcome-filter-variant-reason";
 import type {
   StudyRouteAlternativeTeaser,
   StudyRouteSnapshotStep,
 } from "@/lib/routes/route-types";
-import { enrichStudyRouteSteps } from "./enrich-study-route-steps";
 import {
   batchGetRouteAdmissionRealismForCandidates,
   getRouteAdmissionRealism,
 } from "./get-route-admission-realism";
+import { enrichStudyRouteSteps } from "./enrich-study-route-steps";
 
 type Params = {
   routeId: string;
@@ -20,6 +22,14 @@ type VariantRow = {
   is_current: boolean;
   status: string;
 };
+
+function resolveVariantLabel(variant: VariantRow): string {
+  const filterId = parseOutcomeFilterVariantReason(variant.variant_reason);
+  if (filterId) {
+    return getRouteOutcomeFilterLabelNb(filterId);
+  }
+  return variant.variant_label ?? (variant.is_current ? "Current route" : "Alternative route");
+}
 
 type SnapshotRow = {
   route_variant_id: string;
@@ -231,26 +241,13 @@ export async function getStudyRouteAlternatives(
     return { variantId: variant.id, steps };
   });
 
-  const snapshotSteps = variantSteps.flatMap((v) => v.steps);
-  const enrichedSteps =
-    snapshotSteps.length > 0
-      ? await enrichStudyRouteSteps(snapshotSteps)
-      : [];
-
   const programmeSelectionByVariantId = new Map<string, ProgrammeSelectionStep>();
-  let stepOffset = 0;
   for (const { variantId, steps } of variantSteps) {
-    const enrichedSlice = enrichedSteps.slice(
-      stepOffset,
-      stepOffset + steps.length
-    );
-    stepOffset += steps.length;
-
-    const programmeStep = enrichedSlice.find(
-      (s) => s && typeof s === "object" && !Array.isArray(s) && (s as any).type === "programme_selection"
+    const programmeStep = steps.find(
+      (step) => step.type === "programme_selection" && typeof step.program_slug === "string"
     ) as ProgrammeSelectionStep | undefined;
 
-    if (programmeStep && typeof programmeStep.program_slug === "string") {
+    if (programmeStep) {
       programmeSelectionByVariantId.set(variantId, programmeStep);
     }
   }
@@ -296,7 +293,7 @@ export async function getStudyRouteAlternatives(
     ? admissionMetricsByVariantId.get(currentVariant.id) ?? null
     : null;
 
-  return typedVariants.map((variant) => {
+  const teasers = typedVariants.map((variant) => {
     const snapshot = snapshotMap.get(variant.id)?.selected_steps_payload ?? null;
     const candidateMetrics = admissionMetricsByVariantId.get(variant.id) ?? null;
     const realismDelta = currentMetrics
@@ -309,21 +306,50 @@ export async function getStudyRouteAlternatives(
         )
       : null;
 
+    const routeOutcomeFilterId = parseOutcomeFilterVariantReason(variant.variant_reason);
+
     return {
       variantId: variant.id,
-      label:
-        variant.variant_label ??
-        (variant.is_current ? "Current route" : "Alternative route"),
+      label: resolveVariantLabel(variant),
       isCurrent: variant.is_current,
+      routeOutcomeFilterId,
       variantStatus: variant.status,
-      mainDifference:
-        variant.variant_reason ??
-        (variant.is_current
-          ? "Current active route variant"
-          : "Alternative variant for the same target profession"),
+      mainDifference: routeOutcomeFilterId
+        ? "Alternative route shaped by a different education outcome filter"
+        : variant.variant_reason ??
+          (variant.is_current
+            ? "Current active route variant"
+            : "Alternative variant for the same target profession"),
       realismDelta,
       riskDelta,
       changedStepsCount: getChangedStepsCount(currentSnapshot, snapshot),
     };
   });
+
+  const outcomeAlternatives = teasers.filter(
+    (teaser) =>
+      !teaser.isCurrent &&
+      Boolean(teaser.routeOutcomeFilterId) &&
+      (teaser.changedStepsCount ?? 0) > 0
+  );
+
+  return Promise.all(
+    outcomeAlternatives.map(async (teaser) => {
+      const payload = snapshotMap.get(teaser.variantId)?.selected_steps_payload ?? null;
+      const rawSteps = Array.isArray(payload) ? (payload as StudyRouteSnapshotStep[]) : [];
+      if (rawSteps.length === 0) {
+        return teaser;
+      }
+
+      const enrichedSteps = await enrichStudyRouteSteps(rawSteps);
+      const presentationSteps = enrichedSteps.filter(
+        (step) => !(step.source === "availability_truth" && step.type === "outcome_step")
+      );
+
+      return {
+        ...teaser,
+        steps: presentationSteps,
+      };
+    })
+  );
 }

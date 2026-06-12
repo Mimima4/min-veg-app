@@ -43,7 +43,10 @@ export default function RouteAvailableProfessionsPanel({
   }, [availableProfessions.items, selectedOptionId]);
 
   return (
-    <div className="rounded-2xl border border-stone-200 bg-white p-6">
+    <div
+      id="route-available-professions"
+      className="rounded-2xl border border-stone-200 bg-white p-6"
+    >
       <h2 className="text-lg font-semibold text-stone-900">
         Available professions
       </h2>

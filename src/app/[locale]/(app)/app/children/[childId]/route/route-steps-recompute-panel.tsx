@@ -9,6 +9,10 @@ import type {
   StudyRouteReadModelStep,
 } from "@/lib/routes/route-types";
 import RouteStepsPanel from "./route-steps-panel";
+import {
+  releaseClientRecomputeLock,
+  tryAcquireClientRecomputeLock,
+} from "@/lib/routes/client-recompute-lock";
 
 type Props = {
   childId: string;
@@ -67,9 +71,14 @@ export default function RouteStepsRecomputePanel({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
   const runStartedRef = useRef(false);
+  const routeKeyRef = useRef(`${childId}:${routeId}`);
 
   useEffect(() => {
-    runStartedRef.current = false;
+    const routeKey = `${childId}:${routeId}`;
+    if (routeKeyRef.current !== routeKey) {
+      routeKeyRef.current = routeKey;
+      runStartedRef.current = false;
+    }
     setPending(recomputePending);
     setDisplaySteps(steps);
     setErrorMessage(null);
@@ -91,6 +100,10 @@ export default function RouteStepsRecomputePanel({
     }
 
     runStartedRef.current = true;
+    const lockKey = `${childId}:${routeId}`;
+    if (!tryAcquireClientRecomputeLock(lockKey)) {
+      return;
+    }
     let cancelled = false;
 
     const run = async () => {
@@ -150,6 +163,8 @@ export default function RouteStepsRecomputePanel({
             error instanceof Error ? error.message : "Route recompute failed"
           );
         }
+      } finally {
+        releaseClientRecomputeLock(lockKey);
       }
     };
 
@@ -157,14 +172,14 @@ export default function RouteStepsRecomputePanel({
 
     return () => {
       cancelled = true;
-      runStartedRef.current = false;
     };
   }, [pending, childId, routeId, locale, router, retryKey]);
 
   const showLoader =
     !errorMessage &&
     (pending ||
-      (displaySteps.length === 0 && (recomputePending || isRefreshing)));
+      isRefreshing ||
+      (displaySteps.length === 0 && recomputePending));
 
   if (errorMessage) {
     return (

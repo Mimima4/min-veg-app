@@ -15,6 +15,10 @@ import {
   type PreferredEducationLevel,
   type PreferredWorkStyle,
 } from "@/server/children/planning/get-child-planning-state";
+import {
+  formatChildRouteScopedProfessionsHref,
+  pickPreferredStudyRouteForProfessions,
+} from "@/server/children/routes/build-child-route-scoped-professions-href";
 
 type ChildRow = {
   id: string;
@@ -231,6 +235,26 @@ export async function getFamilyPageData({
     savedStudyRouteCountByChildId.set(typedRoute.child_id, current + 1);
   }
 
+  const { data: workingRoutes, error: workingRoutesError } =
+    childIds.length > 0
+      ? await supabase
+          .from("study_routes")
+          .select("id, child_id, status, updated_at")
+          .in("child_id", childIds)
+          .is("archived_at", null)
+          .in("status", ["draft", "saved"])
+          .order("updated_at", { ascending: false })
+      : { data: [], error: null };
+
+  if (workingRoutesError) {
+    return {
+      kind: "error",
+      title: "Family",
+      subtitle: "There was a problem loading working routes.",
+      message: workingRoutesError.message,
+    };
+  }
+
   const { data: professions, error: professionsError } = await supabase
     .from("professions")
     .select(
@@ -273,6 +297,16 @@ export async function getFamilyPageData({
       savedProfessionCount: savedCountByChildId.get(child.id) ?? 0,
     });
 
+    const preferredRoute = pickPreferredStudyRouteForProfessions(
+      (workingRoutes ?? []) as Array<{
+        id: string;
+        child_id: string;
+        status: string;
+        updated_at: string;
+      }>,
+      child.id
+    );
+
     return {
       id: child.id,
       displayName: child.display_name || "Unnamed child",
@@ -287,7 +321,11 @@ export async function getFamilyPageData({
       profileHref: `/${locale}/app/children/${child.id}`,
       currentSignalsHref: `/${locale}/app/children/${child.id}#current-signals`,
       derivedStrengthsHref: `/${locale}/app/children/${child.id}/summary#derived-strengths`,
-      matchingProfessionsHref: `/${locale}/app/children/${child.id}/matches`,
+      matchingProfessionsHref: formatChildRouteScopedProfessionsHref({
+        locale,
+        childId: child.id,
+        routeId: preferredRoute?.id ?? null,
+      }),
       savedProfessionsHref: `/${locale}/app/children/${child.id}#saved-professions`,
       savedStudyRoutesHref: `/${locale}/app/children/${child.id}#saved-study-routes`,
     };

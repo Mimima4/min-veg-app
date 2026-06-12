@@ -1,5 +1,8 @@
 import { normalizeRouteOutcomeFilterId } from "@/lib/nav/route-outcome-filter-id";
-import { getCurrentNavOccupationSnapshot } from "@/server/nav/get-nav-occupation-snapshot";
+import {
+  getCurrentNavOccupationSnapshot,
+  type NavOccupationSnapshot,
+} from "@/server/nav/get-nav-occupation-snapshot";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { PathVariant, PathVariantsResult } from "./build-path-variants";
 import { resolvePathFamilyNavMatches } from "./resolve-path-family-nav-matches";
@@ -20,16 +23,21 @@ export async function buildRoutePathVariantNavContext(params: {
   supabase: SupabaseClient;
   professionSlug: string;
   preferredEducationLevel: string | null;
+  filterIdOverride?: ReturnType<typeof normalizeRouteOutcomeFilterId>;
   pathVariants: PathVariantsResult;
   enrichedPathVariants: PathVariant[];
   childContext: boolean;
+  /** Reuse within one recompute turn to avoid repeated snapshot reads. */
+  navOccupationSnapshot?: NavOccupationSnapshot | null;
 }): Promise<RoutePathVariantNavContext> {
-  const filterId = normalizeRouteOutcomeFilterId(params.preferredEducationLevel);
+  const filterId =
+    params.filterIdOverride ?? normalizeRouteOutcomeFilterId(params.preferredEducationLevel);
   const variantResolution = resolvePathVariantForFilter({
     filterId,
     professionSlug: params.professionSlug,
     variants: params.enrichedPathVariants,
     childContext: params.childContext,
+    hasVg3SchoolProgrammeAvailability: params.pathVariants.hasVg3SchoolProgrammeAvailability,
   });
 
   const scopedPathVariants: PathVariantsResult = {
@@ -48,7 +56,10 @@ export async function buildRoutePathVariantNavContext(params: {
     outcomes: scopedOutcomes,
   });
 
-  const snapshot = await getCurrentNavOccupationSnapshot(params.supabase);
+  const snapshot =
+    params.navOccupationSnapshot !== undefined
+      ? params.navOccupationSnapshot
+      : await getCurrentNavOccupationSnapshot(params.supabase);
   const navMatches = snapshot
     ? rawNavMatches
         .filter((match) => snapshot.occupationsByCode.has(match.navCode))

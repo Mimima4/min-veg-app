@@ -16,6 +16,8 @@ type Params = {
   locale?: string;
   supabase?: SupabaseClient;
   selectedOptions?: Record<string, string>;
+  /** Save snapshot from a non-current outcome-filter variant on the same working route. */
+  sourceVariantId?: string;
 };
 
 function applySelectedOptions(
@@ -178,10 +180,32 @@ export async function saveStudyRoute(params: Params) {
     });
   }
 
-  if (!route.current_variant_id) {
+  const sourceVariantId = String(params.sourceVariantId ?? "").trim() || null;
+  let snapshotVariantId = route.current_variant_id;
+
+  if (sourceVariantId) {
+    const { data: sourceVariant, error: sourceVariantError } = await supabase
+      .from("study_route_variants")
+      .select("id")
+      .eq("id", sourceVariantId)
+      .eq("route_id", route.id)
+      .neq("status", "archived")
+      .maybeSingle();
+
+    if (sourceVariantError || !sourceVariant) {
+      throw new RouteDomainError(
+        "route_variant_conflict",
+        "Alternative route variant not found for save",
+        { routeId: route.id, routeVariantId: sourceVariantId }
+      );
+    }
+    snapshotVariantId = sourceVariant.id;
+  }
+
+  if (!snapshotVariantId) {
     throw new RouteDomainError(
       "route_variant_conflict",
-      "Route has no current variant to save",
+      "Route has no variant snapshot to save",
       { routeId: route.id }
     );
   }
@@ -191,15 +215,15 @@ export async function saveStudyRoute(params: Params) {
     .select(
       "selected_steps_payload, signals_payload, stage_context, available_professions_payload, alternatives_teaser_payload, route_input_signature, route_source"
     )
-    .eq("route_variant_id", route.current_variant_id)
+    .eq("route_variant_id", snapshotVariantId)
     .eq("is_current_snapshot", true)
     .maybeSingle();
 
   if (currentSnapshotError) {
     throw new RouteDomainError(
       "internal_error",
-      `Failed to fetch current route snapshot: ${currentSnapshotError.message}`,
-      { routeId: route.id, routeVariantId: route.current_variant_id }
+      `Failed to fetch route snapshot for save: ${currentSnapshotError.message}`,
+      { routeId: route.id, routeVariantId: snapshotVariantId }
     );
   }
 

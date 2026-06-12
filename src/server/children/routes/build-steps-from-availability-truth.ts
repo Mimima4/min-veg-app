@@ -10,7 +10,12 @@ import { compareInstitutionTransportRank } from "@/lib/planning/kommune-transpor
 import type { KommuneTransportSortContext } from "@/lib/planning/kommune-transport/types";
 import type { AvailabilityTruthRow } from "./get-availability-truth";
 import { getVilbliBranchConfig } from "@/lib/vgs/vilbli-branch-config";
-import type { PathVariant, VilbliOutcomeProfession } from "./build-path-variants";
+import { assertRouteTruthInvariants } from "@/lib/vgs/route-truth-invariants";
+import type {
+  PathVariant,
+  PathVariantNode,
+  VilbliOutcomeProfession,
+} from "./build-path-variants";
 
 function stagePriority(stage: string): number {
   const order: Record<string, number> = {
@@ -157,6 +162,7 @@ function mapOrdinaryProgrammeOption(row: AvailabilityTruthRow) {
     institution_municipality: row.institutionMunicipality,
     institution_website: row.institutionWebsite,
     program_title: row.programTitle,
+    program_slug: row.programSlug,
     stage: row.stage,
     duration_label: null,
     display_title: row.programTitle,
@@ -230,23 +236,66 @@ function dedupeRowsBySchoolBrand(rows: AvailabilityTruthRow[]): AvailabilityTrut
   return deduped;
 }
 
-function isVg3GeographicallyEligible(params: {
-  selectedVg2Row: AvailabilityTruthRow | null;
-  vg3Candidate: AvailabilityTruthRow | null;
-}): boolean {
-  const { selectedVg2Row, vg3Candidate } = params;
-  if (!selectedVg2Row || !vg3Candidate) return false;
-  if (selectedVg2Row.institutionId === vg3Candidate.institutionId) {
-    return true;
+function resolveVg3InstitutionWebsite(params: {
+  stageRow: AvailabilityTruthRow | null;
+  continuityRow: AvailabilityTruthRow | null;
+}): string | null {
+  if (params.stageRow?.institutionWebsite) {
+    return params.stageRow.institutionWebsite;
   }
-  if (
-    selectedVg2Row.municipalityCode &&
-    vg3Candidate.municipalityCode &&
-    selectedVg2Row.municipalityCode === vg3Candidate.municipalityCode
-  ) {
-    return true;
+
+  if (!params.stageRow || !params.continuityRow) {
+    return null;
   }
-  return false;
+
+  const sameSchool =
+    (params.stageRow.institutionId &&
+      params.continuityRow.institutionId &&
+      params.stageRow.institutionId === params.continuityRow.institutionId) ||
+    schoolBrandKey(params.stageRow.institutionName) ===
+      schoolBrandKey(params.continuityRow.institutionName);
+
+  return sameSchool ? params.continuityRow.institutionWebsite ?? null : null;
+}
+
+/** VG3+ uses regional availability — not VG1/VG2 logistics continuity. */
+function regionalStageRows(params: {
+  rows: AvailabilityTruthRow[];
+  stage: "VG1" | "VG2" | "VG3";
+}): AvailabilityTruthRow[] {
+  const { ordinaryRows, losaRows } = splitOrdinaryAndLosaRows(params.rows);
+  return [
+    ...dedupeRowsBySchoolBrand(stageRowsSorted(ordinaryRows, params.stage)),
+    ...stageRowsSorted(losaRows, params.stage),
+  ];
+}
+
+function continuityStageRows(params: {
+  rows: AvailabilityTruthRow[];
+  stage: "VG1" | "VG2" | "VG3";
+  selectedCandidate?: AvailabilityTruthRow | null;
+  stageAnchorRow?: AvailabilityTruthRow | null;
+  transportSortContext?: KommuneTransportSortContext | null;
+}): AvailabilityTruthRow[] {
+  const { ordinaryRows, losaRows } = splitOrdinaryAndLosaRows(params.rows);
+  return [
+    ...dedupeRowsBySchoolBrand(
+      stageRowsSortedWithAnchor({
+        rows: ordinaryRows,
+        stage: params.stage,
+        selectedCandidate: params.selectedCandidate ?? null,
+        stageAnchorRow: params.stageAnchorRow ?? null,
+        transportSortContext: params.transportSortContext,
+      })
+    ),
+    ...stageRowsSortedWithAnchor({
+      rows: losaRows,
+      stage: params.stage,
+      selectedCandidate: params.selectedCandidate ?? null,
+      stageAnchorRow: params.stageAnchorRow ?? null,
+      transportSortContext: params.transportSortContext,
+    }),
+  ];
 }
 
 function toStageAwareProgrammeTitle(params: {
@@ -498,45 +547,22 @@ export function buildStepsFromAvailabilityTruth(params: {
           node.stage === "VG2"
             ? vg1StageRowForAnchor
             : node.stage === "VG3"
-              ? selectedVg2RowForGate
+              ? null
               : params.selectedCandidate ?? null;
-        const { ordinaryRows, losaRows } = splitOrdinaryAndLosaRows(params.rows);
-        const stageRows: AvailabilityTruthRow[] = [
-          ...dedupeRowsBySchoolBrand(
-            stageRowsSortedWithAnchor({
-              rows: ordinaryRows,
-              stage: node.stage,
-              selectedCandidate: params.selectedCandidate ?? null,
-              stageAnchorRow,
-              transportSortContext: params.transportSortContext,
-            })
-          ),
-          ...stageRowsSortedWithAnchor({
-            rows: losaRows,
-            stage: node.stage,
-            selectedCandidate: params.selectedCandidate ?? null,
-            stageAnchorRow,
-            transportSortContext: params.transportSortContext,
-          }),
-        ];
+        const stageRows: AvailabilityTruthRow[] =
+          node.stage === "VG3"
+            ? regionalStageRows({ rows: params.rows, stage: "VG3" })
+            : continuityStageRows({
+                rows: params.rows,
+                stage: node.stage,
+                selectedCandidate: params.selectedCandidate ?? null,
+                stageAnchorRow,
+                transportSortContext: params.transportSortContext,
+              });
         const stageRow: AvailabilityTruthRow | null = stageRows[0] ?? null;
 
-        if (node.stage === "VG3") {
-          const vg3Eligible = isVg3GeographicallyEligible({
-            selectedVg2Row: selectedVg2RowForGate,
-            vg3Candidate: stageRow,
-          });
-          if (!vg3Eligible) {
-            // Debug-only guardrail: this helps trace why VG3 was skipped.
-            console.info("[build-steps-from-availability-truth] VG3 skipped", {
-              skipReason: "vg3_not_geographically_eligible",
-              vg2InstitutionId: selectedVg2RowForGate?.institutionId ?? null,
-              vg2MunicipalityCode: selectedVg2RowForGate?.municipalityCode ?? null,
-              vg3InstitutionId: stageRow?.institutionId ?? null,
-              vg3MunicipalityCode: stageRow?.municipalityCode ?? null,
-            });
-            continue;
-          }
+        if (node.stage === "VG3" && stageRows.length === 0) {
+          continue;
         }
 
         const hasStageAvailability = stageRows.length > 0;
@@ -628,6 +654,13 @@ export function buildStepsFromAvailabilityTruth(params: {
       options: buildProgrammeSelectionOptions([defaultRow]),
     });
   }
+
+  assertRouteTruthInvariants({
+    variants: params.pathVariants ?? (selectedVariant ? [selectedVariant] : []),
+    steps,
+    truthRows: params.rows,
+    context: `build-steps:${params.professionSlug}`,
+  });
 
   return steps;
 }

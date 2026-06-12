@@ -14,6 +14,8 @@ type Params = {
   childId: string;
   routeId: string;
   locale?: string;
+  /** Read-only preview of a non-current outcome-filter variant. */
+  previewVariantId?: string | null;
   forceNewRouteAvailable?: boolean;
   /** Avoid re-entering auto-recompute when a recompute turn already yielded. */
   skipAutoRecompute?: boolean;
@@ -253,7 +255,30 @@ export async function getStudyRouteDetail(
       }
     | null = null;
 
-  if (route.current_variant_id) {
+  const previewVariantId = String(params.previewVariantId ?? "").trim();
+  let snapshotVariantId = route.current_variant_id;
+
+  if (previewVariantId) {
+    const { data: previewVariant, error: previewVariantError } = await supabase
+      .from("study_route_variants")
+      .select("id")
+      .eq("id", previewVariantId)
+      .eq("route_id", route.id)
+      .neq("status", "archived")
+      .maybeSingle();
+
+    if (previewVariantError) {
+      throw new Error(
+        `Failed to validate preview study route variant: ${previewVariantError.message}`
+      );
+    }
+    if (!previewVariant) {
+      throw new Error("Preview study route variant not found");
+    }
+    snapshotVariantId = previewVariant.id;
+  }
+
+  if (snapshotVariantId) {
     const { data: snapshot, error: snapshotError } = await supabase
       .from("study_route_snapshots")
       .select(
@@ -266,7 +291,7 @@ export async function getStudyRouteDetail(
           route_source
         `
       )
-      .eq("route_variant_id", route.current_variant_id)
+      .eq("route_variant_id", snapshotVariantId)
       .eq("is_current_snapshot", true)
       .order("generated_at", { ascending: false })
       .limit(1)
@@ -285,7 +310,7 @@ export async function getStudyRouteDetail(
     locale: params.locale ?? "en",
     childId: route.child_id,
     routeId: route.id,
-    routeVariantId: route.current_variant_id,
+    routeVariantId: snapshotVariantId,
     targetProfessionId: route.target_profession_id,
     supabase,
   });

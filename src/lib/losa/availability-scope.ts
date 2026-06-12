@@ -38,6 +38,7 @@ const LOSA_DELIVERY_PREFIX = /^(?:LOSA|lokal\s+oppl(?:æ|a)ring)\s+/iu;
 
 export type ProgrammeSelectionOptionIdentityInput = {
   institution_id?: string | null;
+  program_slug?: string | null;
   option_kind?: string | null;
   delivery_municipality_code?: string | null;
   delivery_site_label?: string | null;
@@ -128,6 +129,7 @@ export function buildProgrammeSelectionOptionId(
   index: number
 ): string {
   const institutionId = String(option.institution_id ?? "").trim();
+  const programSlug = String(option.program_slug ?? "").trim();
   if (isLosaProgrammeOption(option)) {
     const municipalityCode = String(option.delivery_municipality_code ?? "").trim();
     if (institutionId && municipalityCode) {
@@ -140,7 +142,10 @@ export function buildProgrammeSelectionOptionId(
     }
   }
   if (institutionId) {
-    return `programme-${institutionId}`;
+    if (programSlug) {
+      return `programme-${institutionId}-${programSlug}`;
+    }
+    return `programme-${institutionId}-${index}`;
   }
   return `programme-index-${index}`;
 }

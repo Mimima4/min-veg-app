@@ -20,6 +20,7 @@ import type {
   PreferredWorkStyle,
 } from "@/server/children/planning/get-child-planning-state";
 import { requireAppAccess } from "@/server/billing/require-app-access";
+import { resolveChildRouteScopedProfessionsHref } from "@/server/children/routes/build-child-route-scoped-professions-href";
 
 function TagList({
   title,
@@ -70,7 +71,10 @@ export default async function ChildDetailPage({
     redirect(`/${locale}/app/family`);
   }
 
-  const result = await getChildProfilePageData({ locale, childId });
+  const [result, routeScopedProfessionsHref] = await Promise.all([
+    getChildProfilePageData({ locale, childId }),
+    resolveChildRouteScopedProfessionsHref({ locale, childId }),
+  ]);
 
   if (result.kind === "redirect") {
     redirect(result.href);
@@ -162,7 +166,7 @@ export default async function ChildDetailPage({
 
           <div className="mt-4 flex flex-wrap gap-3">
             <Link
-              href={`/${locale}/app/children/${child.id}/matches`}
+              href={routeScopedProfessionsHref}
               className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-4 py-2 text-sm text-stone-900 transition hover:border-stone-400"
             >
               Explore professions

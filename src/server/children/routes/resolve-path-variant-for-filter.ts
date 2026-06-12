@@ -17,10 +17,6 @@ function variantById(variants: PathVariant[], variantId: string): PathVariant | 
   return variants.find((variant) => variant.variantId === variantId) ?? null;
 }
 
-function hasVg3BranchVariant(variants: PathVariant[]): boolean {
-  return variants.some((variant) => variant.variantId === PATH_VARIANT_VG3_THEN_BEDRIFT);
-}
-
 function pickFallbackVariant(variants: PathVariant[]): PathVariant | null {
   const withNodes = variants.filter((variant) => variant.nodes.length > 0);
   return (
@@ -36,14 +32,14 @@ export function resolvePathVariantForFilter(params: {
   professionSlug: string;
   variants: PathVariant[];
   childContext: boolean;
+  hasVg3SchoolProgrammeAvailability: boolean;
 }): ResolvePathVariantForFilterResult {
   const pathFamilySlug = resolvePathFamilySlug(params.professionSlug);
-  const hasVg3 = hasVg3BranchVariant(params.variants);
   const hiddenFilterIds = getHiddenRouteOutcomeFilterIds({
     filterId: params.filterId,
     childContext: params.childContext,
     pathFamilySlug,
-    hasVg3BranchVariant: hasVg3,
+    hasVg3BranchVariant: params.hasVg3SchoolProgrammeAvailability,
   });
 
   let effectiveFilterId = params.filterId;

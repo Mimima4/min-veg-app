@@ -11,10 +11,13 @@ import AlternativeRoutesCollapsible from "../alternative-routes-collapsible";
 
 export default async function StudyRouteDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string; childId: string; routeId: string }>;
+  searchParams: Promise<{ variantId?: string }>;
 }) {
   const { locale, childId, routeId } = await params;
+  const { variantId: previewVariantId } = await searchParams;
   const supabase = await createClient();
 
   const {
@@ -37,7 +40,10 @@ export default async function StudyRouteDetailPage({
     childId,
     routeId,
     locale,
+    previewVariantId,
   });
+
+  const isAlternativePreview = Boolean(previewVariantId);
 
   const competitionLevel = route.header.competitionLevel;
 
@@ -85,9 +91,11 @@ export default async function StudyRouteDetailPage({
       locale={locale}
       title={route.header.professionTitle}
       subtitle={
-        route.identity.status === "saved"
-          ? "Current saved route for this target profession."
-          : "Current route for this target profession."
+        isAlternativePreview
+          ? "Preview of an alternative route variant for the same target profession."
+          : route.identity.status === "saved"
+            ? "Current saved route for this target profession."
+            : "Current route for this target profession."
       }
       backHref={`/${locale}/app/children/${childId}/route`}
       backLabel="Back routes"
@@ -168,7 +176,13 @@ export default async function StudyRouteDetailPage({
 
           {!isRecomputePending && (
             <>
-              <AlternativeRoutesCollapsible alternatives={route.alternativeRoutes} />
+              <AlternativeRoutesCollapsible
+                locale={locale}
+                childId={childId}
+                routeId={routeId}
+                alternatives={route.alternativeRoutes}
+                savedSelectionSignatures={route.savedSelectionSignatures ?? []}
+              />
               <RouteSignalsPanel signals={route.signals} />
               <RouteAvailableProfessionsPanel
                 locale={locale}

@@ -3,6 +3,7 @@ import {
   availabilityScopesForRouteTruth,
   buildLosaOptionDisplayTitle,
   isLosaAvailabilityScope,
+  LOSA_AVAILABILITY_SCOPE,
   ORDINARY_AVAILABILITY_SCOPE,
   parseLosaPsaNotes,
   type AvailabilityScope,
@@ -163,11 +164,116 @@ export async function getAvailabilityTruth({
     );
   }
 
+  if (normalizedScopes.includes(LOSA_AVAILABILITY_SCOPE)) {
+    const existingLosaKeys = new Set(
+      availabilityRows
+        .filter((row) => isLosaAvailabilityScope(row.availability_scope))
+        .map((row) =>
+          [
+            row.institution_id,
+            row.municipality_code ?? "",
+            row.stage,
+            row.education_program_id,
+          ].join("::")
+        )
+    );
+
+    const { data: countyLosaRows, error: countyLosaError } = await supabase
+      .from("programme_school_availability")
+      .select(
+        "education_program_id, institution_id, county_code, municipality_code, availability_scope, stage, verification_status, updated_at, source_reference_url, notes"
+      )
+      .eq("county_code", normalizedCountyCode)
+      .eq("is_active", true)
+      .eq("availability_scope", LOSA_AVAILABILITY_SCOPE)
+      .in("verification_status", ["verified", "needs_review"])
+      .in("stage", ["VG1", "VG2"]);
+
+    if (countyLosaError) {
+      throw new Error(
+        `Failed to load county LOSA availability truth rows: ${countyLosaError.message}`
+      );
+    }
+
+    for (const row of (countyLosaRows ?? []) as typeof availabilityRows) {
+      const key = [
+        row.institution_id,
+        row.municipality_code ?? "",
+        row.stage,
+        row.education_program_id,
+      ].join("::");
+      if (existingLosaKeys.has(key)) {
+        continue;
+      }
+      availabilityRows.push(row);
+      existingLosaKeys.add(key);
+    }
+  }
+
   if (availabilityRows.length === 0) {
     return {
       hasTruth: false,
       rows: [] as AvailabilityTruthRow[],
     };
+  }
+
+  const supplementalProgramIds = Array.from(
+    new Set(
+      availabilityRows
+        .map((row) => row.education_program_id)
+        .filter((id) => id && !programById.has(id))
+    )
+  );
+  if (supplementalProgramIds.length > 0) {
+    for (let index = 0; index < supplementalProgramIds.length; index += PROGRAM_LOOKUP_CHUNK_SIZE) {
+      const chunk = supplementalProgramIds.slice(index, index + PROGRAM_LOOKUP_CHUNK_SIZE);
+      const { data, error } = await supabase
+        .from("education_programs")
+        .select("id, slug, program_code, title")
+        .in("id", chunk)
+        .eq("is_active", true);
+
+      if (error) {
+        throw new Error(
+          `Failed to load supplemental availability-truth programmes: ${error.message}`
+        );
+      }
+
+      for (const program of (data ?? []) as ProgramLookupRow[]) {
+        programById.set(program.id, {
+          slug: program.slug,
+          programCode: program.program_code,
+          title: program.title,
+        });
+      }
+    }
+  }
+
+  const requestedProgramKeys = new Set(
+    programmeSlugsOrCodes.map((value) => value.trim().toLowerCase()).filter(Boolean)
+  );
+  type RouteProgramLookup = {
+    id: string;
+    slug: string;
+    programCode: string | null;
+    title: string | null;
+  };
+  const routeProgramByStage = new Map<string, RouteProgramLookup>();
+  for (const [programId, program] of programById.entries()) {
+    const stageMatch = program.slug.match(/-vg([1-3])-/i);
+    if (!stageMatch) {
+      continue;
+    }
+    const stage = `VG${stageMatch[1]}`;
+    const isRequestedProgram =
+      requestedProgramKeys.has(program.slug.toLowerCase()) ||
+      (program.programCode
+        ? requestedProgramKeys.has(program.programCode.toLowerCase())
+        : false);
+    const existing = routeProgramByStage.get(stage) ?? null;
+    if (!existing || (isRequestedProgram && !requestedProgramKeys.has(existing.slug.toLowerCase()))) {
+      routeProgramByStage.set(stage, { id: programId, ...program });
+    }
   }
 
   const institutionIds = Array.from(
@@ -205,7 +311,12 @@ export async function getAvailabilityTruth({
 
   const rows: AvailabilityTruthRow[] = [];
   for (const row of availabilityRows) {
-    const program = programById.get(row.education_program_id);
+    const storedProgram = programById.get(row.education_program_id);
+    const routeProgram = routeProgramByStage.get(row.stage) ?? null;
+    const program =
+      storedProgram && !isLosaAvailabilityScope(row.availability_scope)
+        ? storedProgram
+        : (routeProgram ?? storedProgram);
     const institution = institutionById.get(row.institution_id);
 
     if (!program) {
@@ -239,7 +350,7 @@ export async function getAvailabilityTruth({
       : institution?.municipality_name ?? null;
 
     rows.push({
-      educationProgramId: row.education_program_id,
+      educationProgramId: routeProgram?.id ?? row.education_program_id,
       programSlug: program.slug,
       programCode: program.programCode,
       programTitle: program.title,

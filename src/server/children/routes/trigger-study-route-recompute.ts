@@ -35,6 +35,11 @@ import { buildKommuneTransportSortContext } from "@/server/planning/kommune-tran
 import { selectTruthCandidateForRoute } from "./select-truth-candidate-for-route";
 import { applyRouteSelectionBoundary } from "./apply-route-selection-boundary";
 import { toUniqueValidUuids } from "./route-id-guards";
+import type { RoutePathVariantNavContext } from "./build-route-path-variant-nav-context";
+import type { PathVariant, PathVariantsResult } from "./build-path-variants";
+import type { AvailabilityTruthRow } from "./get-availability-truth";
+import type { KommuneTransportSortContext } from "@/lib/planning/kommune-transport/types";
+import { syncStudyRouteOutcomeFilterAlternatives } from "./sync-study-route-outcome-filter-alternatives";
 
 type Params = {
   childId: string;
@@ -586,6 +591,14 @@ export async function triggerStudyRouteRecompute(params: Params) {
 
     let recomputedSteps: StudyRouteSnapshotStep[] = [];
     let admissionRealismRecord = null;
+    let outcomeFilterAlternativesContext: {
+      pathVariantNavContext: RoutePathVariantNavContext;
+      truthRows: AvailabilityTruthRow[];
+      selectedCandidate: AvailabilityTruthRow | null;
+      transportSortContext: KommuneTransportSortContext;
+      pathVariants: PathVariantsResult;
+      enrichedPathVariants: PathVariant[];
+    } | null = null;
 
     if (typedLinks.length > 0) {
       const previousProgrammeStep = previousSteps.find(
@@ -674,6 +687,15 @@ export async function triggerStudyRouteRecompute(params: Params) {
           selectedPathVariantId: pathVariantNavContext.primaryPathVariantId,
           navOutcomes: navOutcomesForSteps,
         });
+
+        outcomeFilterAlternativesContext = {
+          pathVariantNavContext,
+          truthRows: truth.rows,
+          selectedCandidate: selectedTruthCandidate,
+          transportSortContext,
+          pathVariants,
+          enrichedPathVariants,
+        };
 
         if (selectedTruthCandidate) {
           selectedProgram = {
@@ -892,6 +914,30 @@ export async function triggerStudyRouteRecompute(params: Params) {
         stableStringify(extractMaterialSignalsSubset(recomputedSignals));
 
     if (isEquivalentToCurrentSnapshot) {
+      if (
+        outcomeFilterAlternativesContext &&
+        recomputedSteps.some((step) => step.source === "availability_truth")
+      ) {
+        await syncStudyRouteOutcomeFilterAlternatives({
+          supabase,
+          routeId: route.id,
+          primaryVariantId: route.current_variant_id,
+          primarySteps: recomputedSteps,
+          primaryNavContext: outcomeFilterAlternativesContext.pathVariantNavContext,
+          professionSlug: professionRow.slug,
+          truthRows: outcomeFilterAlternativesContext.truthRows,
+          selectedCandidate: outcomeFilterAlternativesContext.selectedCandidate,
+          transportSortContext: outcomeFilterAlternativesContext.transportSortContext,
+          pathVariants: outcomeFilterAlternativesContext.pathVariants,
+          enrichedPathVariants: outcomeFilterAlternativesContext.enrichedPathVariants,
+          childContext: true,
+          snapshotContext,
+          routeInputSignature,
+          createdByType: triggeredByType,
+          createdByUserId: triggeredByUserId,
+        });
+      }
+
       await supabase
         .from("study_route_recompute_runs")
         .update({
@@ -923,6 +969,10 @@ export async function triggerStudyRouteRecompute(params: Params) {
       );
     }
 
+    const routeSource = recomputedSteps.some((step) => step.source === "availability_truth")
+      ? "availability_truth"
+      : "legacy";
+
     await insertRecomputedSnapshotWithRetry({
       supabase,
       routeVariantId: route.current_variant_id,
@@ -930,10 +980,29 @@ export async function triggerStudyRouteRecompute(params: Params) {
       recomputedSteps,
       recomputedSignals,
       routeInputSignature,
-      routeSource: recomputedSteps.some((step) => step.source === "availability_truth")
-        ? "availability_truth"
-        : "legacy",
+      routeSource,
     });
+
+    if (outcomeFilterAlternativesContext && routeSource === "availability_truth") {
+      await syncStudyRouteOutcomeFilterAlternatives({
+        supabase,
+        routeId: route.id,
+        primaryVariantId: route.current_variant_id,
+        primarySteps: recomputedSteps,
+        primaryNavContext: outcomeFilterAlternativesContext.pathVariantNavContext,
+        professionSlug: professionRow.slug,
+        truthRows: outcomeFilterAlternativesContext.truthRows,
+        selectedCandidate: outcomeFilterAlternativesContext.selectedCandidate,
+        transportSortContext: outcomeFilterAlternativesContext.transportSortContext,
+        pathVariants: outcomeFilterAlternativesContext.pathVariants,
+        enrichedPathVariants: outcomeFilterAlternativesContext.enrichedPathVariants,
+        childContext: true,
+        snapshotContext,
+        routeInputSignature,
+        createdByType: triggeredByType,
+        createdByUserId: triggeredByUserId,
+      });
+    }
 
     await supabase
       .from("study_route_recompute_runs")

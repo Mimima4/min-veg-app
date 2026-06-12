@@ -35,6 +35,11 @@ import { buildKommuneTransportSortContext } from "@/server/planning/kommune-tran
 import { selectTruthCandidateForRoute } from "./select-truth-candidate-for-route";
 import { applyRouteSelectionBoundary } from "./apply-route-selection-boundary";
 import { toUniqueValidUuids } from "./route-id-guards";
+import type { RoutePathVariantNavContext } from "./build-route-path-variant-nav-context";
+import type { PathVariant, PathVariantsResult } from "./build-path-variants";
+import type { AvailabilityTruthRow } from "./get-availability-truth";
+import type { KommuneTransportSortContext } from "@/lib/planning/kommune-transport/types";
+import { syncStudyRouteOutcomeFilterAlternatives } from "./sync-study-route-outcome-filter-alternatives";
 
 type Params = {
   childId: string;
@@ -351,6 +356,14 @@ export async function createInitialStudyRoute(
 
   let initialSteps: StudyRouteSnapshotStep[] = [];
   let admissionRealismRecord = null;
+  let outcomeFilterAlternativesContext: {
+    pathVariantNavContext: RoutePathVariantNavContext;
+    truthRows: AvailabilityTruthRow[];
+    selectedCandidate: AvailabilityTruthRow | null;
+    transportSortContext: KommuneTransportSortContext;
+    pathVariants: PathVariantsResult;
+    enrichedPathVariants: PathVariant[];
+  } | null = null;
 
   if (typedLinks.length > 0) {
     const preferredMunicipalityCodes = Array.isArray(childPlanning.preferred_municipality_codes)
@@ -433,6 +446,15 @@ export async function createInitialStudyRoute(
         selectedPathVariantId: pathVariantNavContext.primaryPathVariantId,
         navOutcomes: navOutcomesForSteps,
       });
+
+      outcomeFilterAlternativesContext = {
+        pathVariantNavContext,
+        truthRows: truth.rows,
+        selectedCandidate: selectedTruthCandidate,
+        transportSortContext,
+        pathVariants,
+        enrichedPathVariants,
+      };
 
       if (selectedTruthCandidate) {
         selectedProgram = {
@@ -714,6 +736,27 @@ export async function createInitialStudyRoute(
       "internal_error",
       `Failed to create initial study route snapshot: ${snapshotError.message}`
     );
+  }
+
+  if (outcomeFilterAlternativesContext && routeSource === "availability_truth") {
+    await syncStudyRouteOutcomeFilterAlternatives({
+      supabase,
+      routeId: route.id,
+      primaryVariantId: variant.id,
+      primarySteps: initialSteps,
+      primaryNavContext: outcomeFilterAlternativesContext.pathVariantNavContext,
+      professionSlug: professionRow.slug,
+      truthRows: outcomeFilterAlternativesContext.truthRows,
+      selectedCandidate: outcomeFilterAlternativesContext.selectedCandidate,
+      transportSortContext: outcomeFilterAlternativesContext.transportSortContext,
+      pathVariants: outcomeFilterAlternativesContext.pathVariants,
+      enrichedPathVariants: outcomeFilterAlternativesContext.enrichedPathVariants,
+      childContext: true,
+      snapshotContext,
+      routeInputSignature,
+      createdByType,
+      createdByUserId,
+    });
   }
 
   const { error: routeUpdateError } = await supabase

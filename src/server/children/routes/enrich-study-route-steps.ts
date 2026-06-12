@@ -441,10 +441,9 @@ export async function enrichStudyRouteSteps(
                 option.institution_is_private_school !== undefined &&
                 option.institution_is_private_school !== null
                   ? option.institution_is_private_school
-                  : institutionId
+                  : institutionId && isValidUuid(institutionId)
                     ? (privateSchoolByInstitutionId.get(institutionId) ?? null)
                     : null;
-
               return {
                 ...option,
                 institution_name: resolvedOptionInstitutionName,
@@ -453,7 +452,8 @@ export async function enrichStudyRouteSteps(
                   option.institution_municipality ??
                   option.institution_city ??
                   fallbackMunicipalityName,
-                institution_website: option.institution_website ?? null,
+                institution_website:
+                  option.institution_website ?? fallbackInstitutionWebsite ?? null,
                 program_title: optionDisplayProgramTitle,
                 stage: option.stage ?? step.stage ?? null,
                 duration_label: option.duration_label ?? formatDurationLabel(truthDuration),

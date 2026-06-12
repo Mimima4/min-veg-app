@@ -3,6 +3,8 @@ import {
   getVilbliBranchConfig,
   type VilbliBranchProfessionConfig,
 } from "@/lib/vgs/vilbli-branch-config";
+import { hasVg3SchoolProgrammeAvailability } from "@/lib/vgs/vg3-school-programme-availability";
+import { assertRouteTruthInvariants } from "@/lib/vgs/route-truth-invariants";
 
 export type PathVariantNode =
   | {
@@ -46,6 +48,8 @@ export type PathVariantsResult = {
   yrkerUrl: string | null;
   stages: string[];
   hasApprenticeship: boolean;
+  /** PSA-backed VG3 school programmes in this county — not Vilbli kolonne-3 bedrift alone. */
+  hasVg3SchoolProgrammeAvailability: boolean;
   variants: PathVariant[];
   outcomes: VilbliOutcomeProfession[];
 };
@@ -345,12 +349,15 @@ export async function buildPathVariants(
   const branchConfig = getVilbliBranchConfig(String(professionSlug ?? "").trim());
 
   const sourceUrl = resolvePathVariantSourceUrl(truthRows, professionSlug);
+  const hasVg3SchoolTruth = hasVg3SchoolProgrammeAvailability(truthRows);
+
   if (!sourceUrl) {
     return {
       sourceUrl: null,
       yrkerUrl: null,
       stages: [],
       hasApprenticeship: false,
+      hasVg3SchoolProgrammeAvailability: hasVg3SchoolTruth,
       variants: [],
       outcomes: [],
     };
@@ -365,6 +372,7 @@ export async function buildPathVariants(
       yrkerUrl: null,
       stages: [],
       hasApprenticeship: false,
+      hasVg3SchoolProgrammeAvailability: hasVg3SchoolTruth,
       variants: [],
       outcomes: [],
     };
@@ -394,6 +402,7 @@ export async function buildPathVariants(
     .filter((stage): stage is "VG1" | "VG2" | "VG3" =>
       stage === "VG1" || stage === "VG2" || stage === "VG3"
     )
+    .filter((stage) => stage !== "VG3" || hasVg3SchoolTruth)
     .sort((a, b) => stageOrder(a) - stageOrder(b));
 
   const baseProgrammeNodes: PathVariantNode[] = orderedStages.map((stage) => {
@@ -422,39 +431,37 @@ export async function buildPathVariants(
         (node): node is Extract<PathVariantNode, { type: "programme_selection" }> =>
           node.type === "programme_selection" && node.stage !== "VG3"
       );
-      const vg3Node: PathVariantNode = {
-        type: "programme_selection",
-        stage: "VG3",
-        title: "VG3 eller opplæring i bedrift",
-        programSlug: null,
-        programTitle: null,
-        options: (kolonne3BranchOptions ?? []).map((option) => ({
-          optionId: option.optionId,
-          optionTitle: option.optionTitle,
-          sourceOutcomeUrl: option.sourceOutcomeUrl,
-        })),
-      };
-      const withVg3Nodes = [
-        ...baseWithoutVg3,
-        vg3Node,
-        {
-          ...apprenticeshipNode,
-          sourceOutcomeUrl: apprenticeshipOutcomeUrl,
-        },
-      ];
       const directBedriftNodes = [...baseWithoutVg3, apprenticeshipNode];
       variants = [
-        {
-          variantId: "vilbli-branch-vg3-then-bedrift",
-          label: "VG1 → VG2 → VG3 → opplæring i bedrift",
-          nodes: withVg3Nodes,
-        },
         {
           variantId: "vilbli-branch-direct-bedrift",
           label: "VG1 → VG2 → opplæring i bedrift",
           nodes: directBedriftNodes,
         },
       ];
+
+      if (hasVg3SchoolTruth) {
+        const vg3TruthRow = selectStageRow(truthRows, "VG3");
+        const vg3Node: PathVariantNode = {
+          type: "programme_selection",
+          stage: "VG3",
+          title: vg3TruthRow?.programTitle ?? "VG3",
+          programSlug: vg3TruthRow?.programSlug ?? null,
+          programTitle: vg3TruthRow?.programTitle ?? null,
+        };
+        variants.unshift({
+          variantId: "vilbli-branch-vg3-then-bedrift",
+          label: "VG1 → VG2 → VG3 → opplæring i bedrift",
+          nodes: [
+            ...baseWithoutVg3,
+            vg3Node,
+            {
+              ...apprenticeshipNode,
+              sourceOutcomeUrl: apprenticeshipOutcomeUrl,
+            },
+          ],
+        });
+      }
     } else {
       const nodes = apprenticeshipNode
         ? [...baseProgrammeNodes, apprenticeshipNode]
@@ -494,11 +501,19 @@ export async function buildPathVariants(
     outcomes.push(...parseVilbliOutcomeProfessions(await yrkerResponse.text(), outcomeUrl));
   }
 
+  assertRouteTruthInvariants({
+    variants,
+    steps: [],
+    truthRows,
+    context: `build-path-variants:${String(professionSlug ?? "unknown")}`,
+  });
+
   return {
     sourceUrl,
     yrkerUrl: apprenticeshipOutcomeUrl ?? directYrkerUrl,
     stages,
     hasApprenticeship,
+    hasVg3SchoolProgrammeAvailability: hasVg3SchoolTruth,
     variants,
     outcomes,
   };

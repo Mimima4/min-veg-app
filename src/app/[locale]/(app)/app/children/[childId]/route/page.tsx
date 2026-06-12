@@ -8,6 +8,7 @@ import { requireAppAccess } from "@/server/billing/require-app-access";
 import { createInitialStudyRoute } from "@/server/children/routes/create-initial-study-route";
 import { getChildStudyRoutesOverview } from "@/server/children/routes/get-child-study-routes-overview";
 import { getFamilyPageData } from "@/server/family/overview/get-family-page-data";
+import { resolveChildRouteScopedProfessionsHref } from "@/server/children/routes/build-child-route-scoped-professions-href";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -56,6 +57,11 @@ export default async function ChildRouteOverviewPage({
   if (!child) {
     notFound();
   }
+
+  const routeScopedProfessionsHref = await resolveChildRouteScopedProfessionsHref({
+    locale,
+    childId,
+  });
 
   let overview = await getChildStudyRoutesOverview({
     childId,
@@ -172,7 +178,7 @@ export default async function ChildRouteOverviewPage({
 
           <div className="mt-4 flex flex-wrap gap-3">
             <Link
-              href={`/${locale}/app/children/${childId}/matches`}
+              href={routeScopedProfessionsHref}
               className="inline-flex items-center rounded-xl bg-stone-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-stone-700"
             >
               Open professions

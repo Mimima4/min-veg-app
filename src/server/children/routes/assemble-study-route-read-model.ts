@@ -135,7 +135,7 @@ export async function assembleStudyRouteReadModel(
   const apprenticeshipOptions = truthApprenticeshipStep?.apprenticeship_options ?? [];
   const optionIdByOutcomeId = new Map<string, string>();
   for (const option of apprenticeshipOptions) {
-    for (const outcomeId of option.outcome_profession_ids) {
+    for (const outcomeId of option.outcome_profession_ids ?? []) {
       optionIdByOutcomeId.set(outcomeId, option.option_id);
     }
   }

@@ -181,11 +181,13 @@ export type StudyRouteAlternativeTeaser = {
   variantId: string;
   label: string;
   isCurrent: boolean;
+  routeOutcomeFilterId?: string | null;
   variantStatus?: string | null;
   mainDifference?: string | null;
   realismDelta?: string | null;
   riskDelta?: string | null;
   changedStepsCount?: number | null;
+  steps?: StudyRouteReadModelStep[];
 };
 
 export type StudyRouteAllowedActions = {

@@ -41,6 +41,8 @@ type Props = {
   steps: StudyRouteReadModelStep[];
   competitionLevel?: StudyRouteCompetitionLevel;
   savedSelectionSignatures?: string[];
+  compact?: boolean;
+  showHeader?: boolean;
 };
 
 function humanizeStepType(type: StudyRouteSnapshotStep["type"]): string {
@@ -98,7 +100,30 @@ export default function RouteStepsPanel({
   steps,
   competitionLevel,
   savedSelectionSignatures = [],
+  compact = false,
+  showHeader = true,
 }: Props) {
+  const cardWidth = compact ? "w-[200px] min-w-[200px]" : "w-[320px]";
+  const cardMinHeight = compact ? "min-h-[11.5rem]" : "";
+  const panelPadding = compact ? "p-3" : "p-6";
+  const cardPadding = compact ? "p-3" : "p-4";
+  const stepTitleClass = compact ? "text-xs font-semibold leading-snug" : "text-xl font-semibold";
+  const schoolNameClass = compact
+    ? "mt-1.5 line-clamp-2 text-[11px] leading-snug text-stone-700"
+    : "mt-2 text-base text-stone-700";
+  const metaClass = compact ? "mt-2 space-y-1 text-[11px] leading-snug text-stone-600" : "mt-3 space-y-1 text-sm text-stone-600";
+  const arrowClass = compact
+    ? "shrink-0 self-center text-sm text-stone-400"
+    : "mt-16 shrink-0 text-xl text-stone-400";
+  const stepsGap = compact ? "gap-2" : "gap-3";
+  const stepsRowAlign = compact ? "items-stretch" : "items-start";
+  const stepTypeBadgeClass = compact
+    ? "inline-flex max-w-full rounded-full border border-stone-300 bg-white px-2 py-0.5 text-[10px] font-medium leading-tight text-stone-700"
+    : "inline-flex rounded-full border border-stone-300 bg-white px-3 py-1 text-xs font-medium text-stone-700";
+  const cardShellClass = `${cardWidth} ${cardMinHeight} flex h-full shrink-0 flex-col rounded-xl border border-stone-200 bg-stone-50 ${cardPadding}`;
+  const listRowClass = compact
+    ? "flex w-full items-start justify-between gap-1 rounded-md border px-2 py-1 text-left text-xs"
+    : "flex w-full items-start justify-between gap-2 rounded-md border px-3 py-2 text-left text-sm";
   const [selectedOptionByStep, setSelectedOptionByStep] = useState<Record<string, string>>({});
   const [openStepKey, setOpenStepKey] = useState<string | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -143,6 +168,25 @@ export default function RouteStepsPanel({
     return () => document.removeEventListener("mousedown", onPointerDown);
   }, [openStepKey]);
 
+  const dedupeStepOptions = (options: StepOption[]) => {
+    const seen = new Set<string>();
+    return options.filter((option) => {
+      if (seen.has(option.id)) return false;
+      seen.add(option.id);
+      return true;
+    });
+  };
+
+  const resolveProgrammeDropdownLabel = (option: StepOption) => {
+    if (option.isLosaDelivery) {
+      return formatLosaDropdownLabel({
+        providerLabel: option.schoolName,
+        deliverySiteLabel: option.location,
+      });
+    }
+    return option.schoolName;
+  };
+
   const buildStepOptions = (step: StudyRouteSnapshotStep) => {
     if (step.type === "programme_selection") {
       const mapped = (step.options ?? []).map((option, index) => {
@@ -163,7 +207,7 @@ export default function RouteStepsPanel({
           id: buildProgrammeSelectionOptionId(option, index),
           schoolName,
           location,
-          website: option.institution_website ?? null,
+          website: option.institution_website ?? step.institution_website ?? null,
           programTitle: option.program_title ?? step.program_title ?? step.title,
           displayTitle:
             option.display_title ?? option.program_title ?? step.program_title ?? step.title,
@@ -174,7 +218,7 @@ export default function RouteStepsPanel({
           isLosaDelivery,
         };
       });
-      if (mapped.length > 0) return mapped;
+      if (mapped.length > 0) return dedupeStepOptions(mapped);
       return [
         {
           id: "programme-current",
@@ -193,7 +237,9 @@ export default function RouteStepsPanel({
     }
 
     if (step.type === "apprenticeship_step") {
-      const mapped = (step.apprenticeship_options ?? []).map((option) => ({
+      const mapped = (step.apprenticeship_options ?? []).map((option) => {
+        const outcomeCount = option.outcome_profession_ids?.length ?? 0;
+        return {
         id: option.option_id,
         schoolName: option.option_title,
         location: step.institution_city ?? step.institution_municipality ?? null,
@@ -202,13 +248,11 @@ export default function RouteStepsPanel({
         displayTitle: step.program_title ?? step.title,
         durationLabel: step.duration_label ?? null,
         fromPayload: true,
-        meta:
-          option.outcome_profession_ids.length > 0
-            ? `${option.outcome_profession_ids.length} outcomes`
-            : null,
+        meta: outcomeCount > 0 ? `${outcomeCount} outcomes` : null,
         institutionIsPrivateSchool: false,
         isLosaDelivery: false,
-      }));
+      };
+      });
       if (mapped.length > 0) return mapped;
       return [
         {
@@ -333,30 +377,39 @@ export default function RouteStepsPanel({
   const alreadySavedBySignature = savedSelectionSignatures.includes(currentSelectionSignature);
 
   return (
-    <div ref={panelRef} className="w-full rounded-2xl border border-stone-200 bg-white p-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <h2 className="text-lg font-semibold text-stone-900">Route steps</h2>
-        <SaveRouteButton
-          childId={childId}
-          routeId={routeId}
-          locale={locale}
-          isSaved={(isSavedRoute && !isDirtySelection) || alreadySavedBySignature}
-          selectedOptions={selectedOptionByStep}
-        />
-      </div>
+    <div
+      ref={panelRef}
+      className={`w-full ${showHeader ? `rounded-2xl border border-stone-200 bg-white ${panelPadding}` : ""}`}
+    >
+      {showHeader ? (
+        <>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <h2 className="text-lg font-semibold text-stone-900">Route steps</h2>
+            <SaveRouteButton
+              childId={childId}
+              routeId={routeId}
+              locale={locale}
+              isSaved={(isSavedRoute && !isDirtySelection) || alreadySavedBySignature}
+              selectedOptions={selectedOptionByStep}
+            />
+          </div>
 
-      <p className="mt-2 text-sm text-stone-600">
-        This path shows the currently selected route.
-      </p>
+          <p className="mt-2 text-sm text-stone-600">
+            This path shows the currently selected route.
+          </p>
+        </>
+      ) : null}
 
       {steps.length === 0 ? (
-        <div className="mt-5 rounded-xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-600">
+        <div
+          className={`${showHeader ? "mt-5" : "mt-0"} rounded-xl border border-stone-200 bg-stone-50 ${cardPadding} ${compact ? "text-xs" : "text-sm"} text-stone-600`}
+        >
           No route steps are available yet.
         </div>
       ) : (
-        <div className="mt-5 overflow-x-auto pb-2">
-          <div className="flex min-w-max items-start gap-3">
-            {steps.map((step, index) => {
+        <div className={`${showHeader ? "mt-5" : "mt-0"} overflow-x-auto pb-2`}>
+          <div className={`flex min-w-max ${stepsRowAlign} ${stepsGap}`}>
+            {steps.flatMap((step, index) => {
               if (isRouteSnapshotPayloadStep(step)) {
                 const stepKey = `snap-${index}-${step.type}-${step.program_slug ?? "none"}`;
                 const showCompetitionBadge =
@@ -394,94 +447,144 @@ export default function RouteStepsPanel({
                         selectedOption.schoolName
                     : selectedOption.schoolName;
                 const selectedLocation = selectedOption.location;
-                const selectedWebsite = selectedOption.website ?? null;
+                const selectedWebsite =
+                  selectedOption.website ??
+                  (step.type === "programme_selection" ? step.institution_website ?? null : null);
                 const selectedDurationLabel = selectedOption.durationLabel ?? step.duration_label;
                 const selectedWebsiteLabel =
                   selectedWebsite && step.programme_url && selectedWebsite === step.programme_url
                     ? "Visit programme page"
                     : "Visit school website";
 
-                return (
-                  <div
-                    key={stepKey}
-                    className="flex items-start gap-3"
-                    ref={(element) => {
-                      stepRefByKey.current[stepKey] = element;
-                    }}
-                  >
-                    <div className="w-[320px] shrink-0 rounded-xl border border-stone-200 bg-stone-50 p-4">
+                const card = (
+                    <div
+                      key={stepKey}
+                      className={cardShellClass}
+                      ref={(element) => {
+                        stepRefByKey.current[stepKey] = element;
+                      }}
+                    >
                       <button
                         type="button"
                         onClick={() =>
                           setOpenStepKey((prev) => (prev === stepKey ? null : stepKey))
                         }
-                        className="w-full text-left"
+                        className="flex h-full w-full flex-col text-left"
                         aria-expanded={isOpen}
                       >
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="min-w-0">
-                            <div className="mt-1 flex flex-wrap items-center gap-2">
-                              <h4 className="text-xl font-semibold text-stone-900">
-                                {displayProgrammeTitle}
-                              </h4>
+                        {compact ? (
+                          <div className="flex min-h-0 flex-1 flex-col">
+                            <h4 className={`${stepTitleClass} line-clamp-3 text-stone-900`}>
+                              {displayProgrammeTitle}
+                            </h4>
 
-                              {showCompetitionBadge && competitionLevel ? (
-                                <CompetitionBadge level={competitionLevel} />
-                              ) : null}
+                            <div className="mt-2 flex items-center justify-between gap-1">
+                              <span className={stepTypeBadgeClass}>
+                                {humanizeStepType(step.type)}
+                              </span>
+                              <span className="text-[10px] text-stone-500">{isOpen ? "▲" : "▼"}</span>
                             </div>
 
-                            {selectedSchoolName ? (
-                              <p className="mt-2 text-base text-stone-700">{selectedSchoolName}</p>
-                            ) : null}
+                            <div className="mt-auto pt-2">
+                              {selectedSchoolName ? (
+                                <p className={schoolNameClass}>{selectedSchoolName}</p>
+                              ) : null}
 
-                            <div className="mt-3 space-y-1 text-sm text-stone-600">
-                              {selectedLocation && <div>{selectedLocation}</div>}
+                              <div className={metaClass}>
+                                {selectedLocation && <div>{selectedLocation}</div>}
 
-                              {selectedDurationLabel && (
-                                <div>
-                                  {step.type === "apprenticeship_step" ? "Work time" : "Study time"}:{" "}
-                                  {selectedDurationLabel}
-                                </div>
-                              )}
+                                {selectedDurationLabel && (
+                                  <div>
+                                    {step.type === "apprenticeship_step" ? "Work time" : "Study time"}:{" "}
+                                    {selectedDurationLabel}
+                                  </div>
+                                )}
 
-                              {step.type === "programme_selection" &&
-                              (selectedOption.isLosaDelivery ||
-                                selectedOption.institutionIsPrivateSchool) ? (
-                                <div className="flex flex-wrap gap-2 pt-0.5">
-                                  {selectedOption.isLosaDelivery
-                                    ? renderLosaBadge(false)
-                                    : null}
-                                  {selectedOption.institutionIsPrivateSchool ? (
-                                    <span
-                                      className={PRIVATE_SCHOOL_BADGE_CLASSES.default}
-                                      title="Privat videregående skole"
+                                {step.type === "programme_selection" ? (
+                                  selectedWebsite ? (
+                                    <a
+                                      href={selectedWebsite}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex text-[11px] text-blue-600 hover:underline"
+                                      onClick={(event) => event.stopPropagation()}
                                     >
-                                      Privatskole
-                                    </span>
-                                  ) : null}
-                                </div>
-                              ) : null}
-
-                              {selectedWebsite && (
-                                <a
-                                  href={selectedWebsite}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex text-sm text-blue-600 hover:underline"
-                                >
-                                  {selectedWebsiteLabel}
-                                </a>
-                              )}
+                                      {selectedWebsiteLabel}
+                                    </a>
+                                  ) : (
+                                    <span className="inline-block min-h-[1rem]" aria-hidden />
+                                  )
+                                ) : null}
+                              </div>
                             </div>
                           </div>
+                        ) : (
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="min-w-0">
+                              <div className="mt-1 flex flex-wrap items-center gap-2">
+                                <h4 className={stepTitleClass + " text-stone-900"}>
+                                  {displayProgrammeTitle}
+                                </h4>
 
-                          <div className="flex items-center gap-2">
-                            <span className="inline-flex rounded-full border border-stone-300 bg-white px-3 py-1 text-xs font-medium text-stone-700">
-                              {humanizeStepType(step.type)}
-                            </span>
-                            <span className="text-xs text-stone-500">{isOpen ? "▲" : "▼"}</span>
+                                {showCompetitionBadge && competitionLevel ? (
+                                  <CompetitionBadge level={competitionLevel} />
+                                ) : null}
+                              </div>
+
+                              {selectedSchoolName ? (
+                                <p className={schoolNameClass}>{selectedSchoolName}</p>
+                              ) : null}
+
+                              <div className={metaClass}>
+                                {selectedLocation && <div>{selectedLocation}</div>}
+
+                                {selectedDurationLabel && (
+                                  <div>
+                                    {step.type === "apprenticeship_step" ? "Work time" : "Study time"}:{" "}
+                                    {selectedDurationLabel}
+                                  </div>
+                                )}
+
+                                {step.type === "programme_selection" &&
+                                (selectedOption.isLosaDelivery ||
+                                  selectedOption.institutionIsPrivateSchool) ? (
+                                  <div className="flex flex-wrap gap-2 pt-0.5">
+                                    {selectedOption.isLosaDelivery
+                                      ? renderLosaBadge(false)
+                                      : null}
+                                    {selectedOption.institutionIsPrivateSchool ? (
+                                      <span
+                                        className={PRIVATE_SCHOOL_BADGE_CLASSES.default}
+                                        title="Privat videregående skole"
+                                      >
+                                        Privatskole
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                ) : null}
+
+                                {selectedWebsite && (
+                                  <a
+                                    href={selectedWebsite}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex text-sm text-blue-600 hover:underline"
+                                    onClick={(event) => event.stopPropagation()}
+                                  >
+                                    {selectedWebsiteLabel}
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <span className={stepTypeBadgeClass}>
+                                {humanizeStepType(step.type)}
+                              </span>
+                              <span className="text-xs text-stone-500">{isOpen ? "▲" : "▼"}</span>
+                            </div>
                           </div>
-                        </div>
+                        )}
                       </button>
 
                       {isOpen ? (
@@ -500,7 +603,7 @@ export default function RouteStepsPanel({
                                     setOpenStepKey(null);
                                   }
                                 }
-                                className={`flex w-full items-start justify-between gap-2 rounded-md border px-3 py-2 text-left text-sm ${
+                                className={`${listRowClass} ${
                                   option.id === selectedOption.id
                                     ? "border-stone-700 bg-stone-900 text-white"
                                     : "border-stone-200 bg-white text-stone-800 hover:bg-stone-100"
@@ -508,11 +611,8 @@ export default function RouteStepsPanel({
                               >
                                 <span className="min-w-0 flex-1 break-words">
                                   <span className="block">
-                                    {option.isLosaDelivery
-                                      ? formatLosaDropdownLabel({
-                                          providerLabel: option.schoolName,
-                                          deliverySiteLabel: option.location,
-                                        })
+                                    {step.type === "programme_selection"
+                                      ? resolveProgrammeDropdownLabel(option)
                                       : option.schoolName}
                                   </span>
                                 </span>
@@ -539,19 +639,24 @@ export default function RouteStepsPanel({
                         </div>
                       ) : null}
                     </div>
-
-                    {index < steps.length - 1 ? (
-                      <div className="mt-16 shrink-0 text-xl text-stone-400">→</div>
-                    ) : null}
-                  </div>
                 );
+
+                if (index < steps.length - 1) {
+                  return [
+                    card,
+                    <div key={`${stepKey}-arrow`} className={arrowClass}>
+                      →
+                    </div>,
+                  ];
+                }
+
+                return [card];
               }
 
               const legacy = step as StudyRouteStep;
 
-              return (
-                <div key={legacy.stepId} className="flex items-start gap-3">
-                  <div className="w-[320px] shrink-0 rounded-xl border border-stone-200 bg-stone-50 p-4">
+              const legacyCard = (
+                  <div key={legacy.stepId} className={cardShellClass}>
                     <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0">
                         <p className="text-xs uppercase tracking-wide text-stone-500">
@@ -571,9 +676,7 @@ export default function RouteStepsPanel({
                         ) : null}
                       </div>
 
-                      <span className="inline-flex rounded-full border border-stone-300 bg-white px-3 py-1 text-xs font-medium text-stone-700">
-                        {legacy.stepType}
-                      </span>
+                      <span className={stepTypeBadgeClass}>{legacy.stepType}</span>
                     </div>
 
                     {legacy.description ? (
@@ -600,12 +703,18 @@ export default function RouteStepsPanel({
                       </div>
                     </dl>
                   </div>
-
-                  {index < steps.length - 1 ? (
-                    <div className="mt-16 shrink-0 text-xl text-stone-400">→</div>
-                  ) : null}
-                </div>
               );
+
+              if (index < steps.length - 1) {
+                return [
+                  legacyCard,
+                  <div key={`${legacy.stepId}-arrow`} className={arrowClass}>
+                    →
+                  </div>,
+                ];
+              }
+
+              return [legacyCard];
             })}
           </div>
         </div>

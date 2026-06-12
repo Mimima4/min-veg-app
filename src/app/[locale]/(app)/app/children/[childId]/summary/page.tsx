@@ -8,6 +8,7 @@ import CompareProfessionsButton from "@/components/planning/compare-professions-
 import SaveProfessionToChildButton from "../save-profession-to-child-button";
 import { getChildSummaryPageData } from "@/server/children/summary/get-child-summary-page-data";
 import { requireAppAccess } from "@/server/billing/require-app-access";
+import { resolveChildRouteScopedProfessionsHref } from "@/server/children/routes/build-child-route-scoped-professions-href";
 
 function TagList({
   title,
@@ -102,7 +103,10 @@ export default async function ChildSummaryPage({
     redirect(`/${locale}/app/family`);
   }
 
-  const result = await getChildSummaryPageData({ locale, childId });
+  const [result, routeScopedProfessionsHref] = await Promise.all([
+    getChildSummaryPageData({ locale, childId }),
+    resolveChildRouteScopedProfessionsHref({ locale, childId }),
+  ]);
 
   if (result.kind === "redirect") {
     redirect(result.href);
@@ -167,7 +171,7 @@ export default async function ChildSummaryPage({
 
             <div className="grid w-full max-w-[22rem] gap-3 sm:w-auto sm:max-w-none sm:grid-cols-2">
               <Link
-                href={`/${locale}/app/children/${child.id}/matches`}
+                href={routeScopedProfessionsHref}
                 className="inline-flex w-full items-center justify-center rounded-full border border-stone-300 bg-white px-4 py-2 text-sm text-stone-900 transition hover:border-stone-400"
               >
                 Explore professions
@@ -301,7 +305,7 @@ export default async function ChildSummaryPage({
 
                 <div className="grid w-full max-w-[22rem] gap-3 sm:w-auto sm:max-w-none sm:grid-cols-2">
                   <Link
-                    href={`/${locale}/app/children/${child.id}/matches`}
+                    href={routeScopedProfessionsHref}
                     className="inline-flex w-full items-center justify-center rounded-full border border-stone-300 bg-white px-4 py-2 text-sm text-stone-900 transition hover:border-stone-400"
                   >
                     Open full explorer

@@ -20,6 +20,7 @@ import {
 } from "@/lib/planning/profession-tag-catalog";
 import SaveProfessionToChildButton from "../save-profession-to-child-button";
 import { requireAppAccess } from "@/server/billing/require-app-access";
+import { resolveChildRouteScopedProfessionsHref } from "@/server/children/routes/build-child-route-scoped-professions-href";
 
 function TagList({
   title,
@@ -91,6 +92,10 @@ export default async function ChildComparePage({
   }
 
   const resolvedSearchParams = await searchParams;
+  const routeScopedProfessionsHref = await resolveChildRouteScopedProfessionsHref({
+    locale,
+    childId,
+  });
   const supabase = await createClient();
 
   const idsParam = Array.isArray(resolvedSearchParams.ids)
@@ -104,7 +109,7 @@ export default async function ChildComparePage({
     .slice(0, 3);
 
   if (requestedIds.length < 2) {
-    redirect(`/${locale}/app/children/${childId}/matches`);
+    redirect(routeScopedProfessionsHref);
   }
 
   const {
@@ -194,7 +199,7 @@ export default async function ChildComparePage({
     .filter(Boolean);
 
   if (orderedProfessions.length < 2) {
-    redirect(`/${locale}/app/children/${childId}/matches`);
+    redirect(routeScopedProfessionsHref);
   }
 
   return (
@@ -202,8 +207,8 @@ export default async function ChildComparePage({
       locale={locale}
       title={`${child.display_name || "Child"} compare`}
       subtitle="Compare selected professions side by side for fit, development areas, and education direction."
-      backHref={`/${locale}/app/children/${child.id}/matches`}
-      backLabel="Back profession explorer"
+      backHref={routeScopedProfessionsHref}
+      backLabel="Back to route professions"
     >
       <AppPrivateNav locale={locale} currentPath="/app/family" />
 
