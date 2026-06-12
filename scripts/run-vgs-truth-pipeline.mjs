@@ -1362,7 +1362,7 @@ export async function runVgsTruthPipeline({
           availability_scope: AVAILABILITY_SCOPE,
           stage,
           source: SOURCE,
-          source_reference_url: programme.href,
+          source_reference_url: stage === "VG3" && programme.href ? programme.href : sourceUrl,
           source_snapshot_label: snapshotLabel,
           is_active: true,
           first_seen_at: new Date().toISOString(),

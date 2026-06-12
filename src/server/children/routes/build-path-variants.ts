@@ -286,13 +286,65 @@ function mapKolonne3BranchOptions(
   }));
 }
 
+/** Prefer the Vilbli chain page (VG1→VG2→bedrift), not VG1-only sibling strukturkart pages. */
+export function resolvePathVariantSourceUrl(
+  truthRows: AvailabilityTruthRow[],
+  professionSlug?: string | null
+): string | null {
+  const urls = Array.from(
+    new Set(
+      truthRows
+        .map((row) => row.sourceReferenceUrl?.trim())
+        .filter((url): url is string => Boolean(url))
+    )
+  );
+  if (urls.length === 0) {
+    return null;
+  }
+  if (urls.length === 1) {
+    return urls[0];
+  }
+
+  const profession = String(professionSlug ?? "").trim();
+
+  if (profession === "mechanic") {
+    const chainUrl = urls.find(
+      (url) =>
+        /kjoretoy-skoler-og-laerebedrifter/i.test(url) &&
+        /v\.tpkjt2|v\.tptip1/i.test(url)
+    );
+    if (chainUrl) return chainUrl;
+    const kjoretoyUrl = urls.find((url) => /kjoretoy-skoler-og-laerebedrifter/i.test(url));
+    if (kjoretoyUrl) return kjoretoyUrl;
+  }
+
+  if (profession === "electrician") {
+    const chainUrl = urls.find(
+      (url) =>
+        /elenergi-og-ekom-skoler-og-laerebedrifter/i.test(url) &&
+        /v\.elele2|v\.elele1/i.test(url)
+    );
+    if (chainUrl) return chainUrl;
+  }
+
+  const vg1SiblingOnly = new Set(
+    urls.filter((url) => /teknologi-og-industrifag-skoler-og-laerebedrifter/i.test(url))
+  );
+  const chainCandidates = urls.filter((url) => !vg1SiblingOnly.has(url));
+  if (chainCandidates.length > 0) {
+    return [...chainCandidates].sort((a, b) => b.length - a.length)[0];
+  }
+
+  return urls[0];
+}
+
 export async function buildPathVariants(
   truthRows: AvailabilityTruthRow[],
   professionSlug?: string | null
 ): Promise<PathVariantsResult> {
   const branchConfig = getVilbliBranchConfig(String(professionSlug ?? "").trim());
 
-  const sourceUrl = truthRows.find((row) => row.sourceReferenceUrl)?.sourceReferenceUrl ?? null;
+  const sourceUrl = resolvePathVariantSourceUrl(truthRows, professionSlug);
   if (!sourceUrl) {
     return {
       sourceUrl: null,
