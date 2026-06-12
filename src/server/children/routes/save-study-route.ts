@@ -296,6 +296,7 @@ export async function saveStudyRoute(params: Params) {
       const locale = params.locale ?? "en";
       revalidatePath(`/${locale}/app/children/${route.child_id}`);
       revalidatePath(`/${locale}/app/children/${route.child_id}/route`);
+      revalidatePath(`/${locale}/app/children/${route.child_id}/route/${params.routeId}`);
       revalidatePath(`/${locale}/app/route`);
       return getStudyRouteDetail({
         childId: route.child_id,
@@ -395,6 +396,7 @@ export async function saveStudyRoute(params: Params) {
   const locale = params.locale ?? "en";
   revalidatePath(`/${locale}/app/children/${route.child_id}`);
   revalidatePath(`/${locale}/app/children/${route.child_id}/route`);
+  revalidatePath(`/${locale}/app/children/${route.child_id}/route/${params.routeId}`);
   revalidatePath(`/${locale}/app/route`);
 
   return getStudyRouteDetail({

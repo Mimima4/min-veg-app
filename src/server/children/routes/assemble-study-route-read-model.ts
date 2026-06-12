@@ -9,6 +9,7 @@ import type {
   StudyRouteSnapshotStep,
 } from "@/lib/routes/route-types";
 import { getStudyRouteAlternatives } from "./get-study-route-alternatives";
+import { resolveAlternativesSourceRouteId } from "./resolve-alternatives-source-route-id";
 import { getStudyRouteAvailableProfessions } from "./get-study-route-available-professions";
 import {
   applyAdmissionCompetitionAdjustment,
@@ -102,10 +103,24 @@ export async function assembleStudyRouteReadModel(
   const supabase = params.supabase ?? (await createClient());
   const recomputePending = Boolean(params.recomputePending);
 
-  const alternatives = recomputePending
+  const skipAlternatives =
+    recomputePending || params.route.status === "saved";
+
+  const alternativesRouteId = skipAlternatives
+    ? params.route.id
+    : await resolveAlternativesSourceRouteId({
+        supabase,
+        childId: params.route.child_id,
+        targetProfessionId: params.route.target_profession_id,
+        routeId: params.route.id,
+        routeStatus: params.route.status,
+      });
+
+  const alternatives = skipAlternatives
     ? []
     : await getStudyRouteAlternatives({
-        routeId: params.route.id,
+        routeId: alternativesRouteId,
+        savedSelectionSignatures: params.savedSelectionSignatures,
       });
 
   const availableProfessions = recomputePending

@@ -5,6 +5,7 @@ import type {
   StudyRouteAlternativeTeaser,
   StudyRouteSnapshotStep,
 } from "@/lib/routes/route-types";
+import { buildSelectionSignatureFromPayload } from "@/lib/routes/selection-signature";
 import {
   batchGetRouteAdmissionRealismForCandidates,
   getRouteAdmissionRealism,
@@ -13,6 +14,7 @@ import { enrichStudyRouteSteps } from "./enrich-study-route-steps";
 
 type Params = {
   routeId: string;
+  savedSelectionSignatures?: string[];
 };
 
 type VariantRow = {
@@ -326,6 +328,8 @@ export async function getStudyRouteAlternatives(
     };
   });
 
+  const savedSignatureSet = new Set(params.savedSelectionSignatures ?? []);
+
   const outcomeAlternatives = teasers.filter(
     (teaser) =>
       !teaser.isCurrent &&
@@ -337,8 +341,11 @@ export async function getStudyRouteAlternatives(
     outcomeAlternatives.map(async (teaser) => {
       const payload = snapshotMap.get(teaser.variantId)?.selected_steps_payload ?? null;
       const rawSteps = Array.isArray(payload) ? (payload as StudyRouteSnapshotStep[]) : [];
+      const isSaved =
+        rawSteps.length > 0 &&
+        savedSignatureSet.has(buildSelectionSignatureFromPayload(rawSteps));
       if (rawSteps.length === 0) {
-        return teaser;
+        return { ...teaser, isSaved };
       }
 
       const enrichedSteps = await enrichStudyRouteSteps(rawSteps);
@@ -349,6 +356,7 @@ export async function getStudyRouteAlternatives(
       return {
         ...teaser,
         steps: presentationSteps,
+        isSaved,
       };
     })
   );

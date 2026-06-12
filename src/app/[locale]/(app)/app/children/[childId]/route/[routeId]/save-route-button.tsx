@@ -62,13 +62,7 @@ export default function SaveRouteButton({
       return;
     }
 
-    const nextRouteId = payload?.result?.routeId;
-    if (typeof nextRouteId === "string" && nextRouteId.length > 0) {
-      router.replace(`/${locale}/app/children/${childId}/route/${nextRouteId}`);
-      router.refresh();
-      return;
-    }
-
+    // Stay on the working route page; saved routes are listed separately.
     router.refresh();
   }
 

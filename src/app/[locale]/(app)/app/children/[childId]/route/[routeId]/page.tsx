@@ -54,6 +54,7 @@ export default async function StudyRouteDetailPage({
     strategies.length > 0;
 
   const isRecomputePending = Boolean(route.recomputePending);
+  const isSavedRouteView = route.identity.status === "saved";
 
   const statusItems = [
     {
@@ -176,13 +177,15 @@ export default async function StudyRouteDetailPage({
 
           {!isRecomputePending && (
             <>
-              <AlternativeRoutesCollapsible
-                locale={locale}
-                childId={childId}
-                routeId={routeId}
-                alternatives={route.alternativeRoutes}
-                savedSelectionSignatures={route.savedSelectionSignatures ?? []}
-              />
+              {!isSavedRouteView ? (
+                <AlternativeRoutesCollapsible
+                  locale={locale}
+                  childId={childId}
+                  routeId={routeId}
+                  alternatives={route.alternativeRoutes}
+                  savedSelectionSignatures={route.savedSelectionSignatures ?? []}
+                />
+              ) : null}
               <RouteSignalsPanel signals={route.signals} />
               <RouteAvailableProfessionsPanel
                 locale={locale}

@@ -57,7 +57,7 @@ export default function AlternativeRoutesCollapsible({
                   childId={childId}
                   routeId={routeId}
                   locale={locale}
-                  isSaved={false}
+                  isSaved={alternative.isSaved === true}
                   sourceVariantId={alternative.variantId}
                   size="compact"
                 />

@@ -181,6 +181,8 @@ export type StudyRouteAlternativeTeaser = {
   variantId: string;
   label: string;
   isCurrent: boolean;
+  /** True when an equivalent saved route already exists for this variant snapshot. */
+  isSaved?: boolean;
   routeOutcomeFilterId?: string | null;
   variantStatus?: string | null;
   mainDifference?: string | null;
