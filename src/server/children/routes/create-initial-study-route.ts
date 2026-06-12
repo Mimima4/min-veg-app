@@ -26,7 +26,11 @@ import { buildStepsFromAvailabilityTruth } from "./build-steps-from-availability
 import { shouldUseAvailabilityTruth } from "./should-use-availability-truth";
 import { buildAvailabilityTruthLookupInputs } from "./build-availability-truth-lookup-inputs";
 import { buildPathVariants } from "./build-path-variants";
-import { mapVilbliOutcomesToNav } from "./map-vilbli-outcomes-to-nav";
+import { buildRoutePathVariantNavContext } from "./build-route-path-variant-nav-context";
+import {
+  attachCatalogProfessionIdsToNavMatches,
+  resolveCatalogProfessionIdsForNavMatches,
+} from "./resolve-catalog-profession-ids-for-nav-matches";
 import { buildKommuneTransportSortContext } from "@/server/planning/kommune-transport/build-transport-sort-context";
 import { selectTruthCandidateForRoute } from "./select-truth-candidate-for-route";
 import { applyRouteSelectionBoundary } from "./apply-route-selection-boundary";
@@ -50,6 +54,7 @@ type ChildPlanningRow = {
   id: string;
   preferred_municipality_codes: unknown;
   relocation_willingness: "no" | "maybe" | "yes" | null;
+  preferred_education_level: string | null;
 };
 
 type ExistingRouteRow = {
@@ -163,7 +168,9 @@ export async function createInitialStudyRoute(
     await Promise.all([
       supabase
         .from("child_profiles")
-        .select("id, preferred_municipality_codes, relocation_willingness")
+        .select(
+          "id, preferred_municipality_codes, relocation_willingness, preferred_education_level"
+        )
         .eq("id", params.childId)
         .maybeSingle(),
       supabase
@@ -401,8 +408,20 @@ export async function createInitialStudyRoute(
           };
         }),
       }));
-      const navOutcomeMapping = await mapVilbliOutcomesToNav({
-        outcomes: pathVariants.outcomes,
+      const pathVariantNavContext = buildRoutePathVariantNavContext({
+        professionSlug: professionRow.slug,
+        preferredEducationLevel: childPlanning.preferred_education_level,
+        pathVariants,
+        enrichedPathVariants,
+        childContext: true,
+      });
+      const professionIdBySlug = await resolveCatalogProfessionIdsForNavMatches({
+        supabase,
+        navMatches: pathVariantNavContext.navMatches,
+      });
+      const navOutcomesForSteps = attachCatalogProfessionIdsToNavMatches({
+        navMatches: pathVariantNavContext.navMatches,
+        professionIdBySlug,
       });
       initialSteps = buildStepsFromAvailabilityTruth({
         rows: truth.rows,
@@ -410,7 +429,8 @@ export async function createInitialStudyRoute(
         transportSortContext,
         professionSlug: professionRow.slug,
         pathVariants: enrichedPathVariants,
-        navOutcomes: navOutcomeMapping.mapped,
+        selectedPathVariantId: pathVariantNavContext.primaryPathVariantId,
+        navOutcomes: navOutcomesForSteps,
       });
 
       if (selectedTruthCandidate) {

@@ -358,10 +358,12 @@ export function buildStepsFromAvailabilityTruth(params: {
   selectedCandidate?: AvailabilityTruthRow | null;
   transportSortContext?: KommuneTransportSortContext | null;
   pathVariants?: PathVariant[];
+  selectedPathVariantId?: string | null;
   navOutcomes?: Array<{
     navTitle: string | null;
     navYrkeskategori: string | null;
     reviewNeeded: boolean;
+    catalogProfessionId?: string | null;
     sourceOutcome: VilbliOutcomeProfession;
   }>;
 }): StudyRouteSnapshotStep[] {
@@ -390,31 +392,38 @@ export function buildStepsFromAvailabilityTruth(params: {
     if (verificationDelta !== 0) return verificationDelta;
     return (a.institutionName ?? "").localeCompare(b.institutionName ?? "");
   })[0];
+  const pathVariantCandidates = (params.pathVariants ?? []).filter(
+    (variant) => variant.nodes.length > 0
+  );
   const selectedVariant =
-    (params.pathVariants ?? [])
-      .filter((variant) => variant.nodes.length > 0)
-      .sort((a, b) => {
-        const missingProgrammeStages = (variant: PathVariant): number =>
-          variant.nodes.filter((node) => {
-            if (node.type !== "programme_selection") return false;
-            return stageRowsSorted(params.rows, node.stage).length === 0;
-          }).length;
-        const aMissingCount = missingProgrammeStages(a);
-        const bMissingCount = missingProgrammeStages(b);
-        const byMissingCount = aMissingCount - bMissingCount;
-        if (byMissingCount !== 0) return byMissingCount;
+    (params.selectedPathVariantId
+      ? pathVariantCandidates.find(
+          (variant) => variant.variantId === params.selectedPathVariantId
+        )
+      : null) ??
+    pathVariantCandidates.sort((a, b) => {
+      const missingProgrammeStages = (variant: PathVariant): number =>
+        variant.nodes.filter((node) => {
+          if (node.type !== "programme_selection") return false;
+          return stageRowsSorted(params.rows, node.stage).length === 0;
+        }).length;
+      const aMissingCount = missingProgrammeStages(a);
+      const bMissingCount = missingProgrammeStages(b);
+      const byMissingCount = aMissingCount - bMissingCount;
+      if (byMissingCount !== 0) return byMissingCount;
 
-        const byNodeLength = b.nodes.length - a.nodes.length;
-        if (byNodeLength !== 0) return byNodeLength;
-        const aHasVg3 = a.nodes.some(
-          (node) => node.type === "programme_selection" && node.stage === "VG3"
-        );
-        const bHasVg3 = b.nodes.some(
-          (node) => node.type === "programme_selection" && node.stage === "VG3"
-        );
-        if (aHasVg3 === bHasVg3) return 0;
-        return bHasVg3 ? 1 : -1;
-      })[0] ?? null;
+      const byNodeLength = b.nodes.length - a.nodes.length;
+      if (byNodeLength !== 0) return byNodeLength;
+      const aHasVg3 = a.nodes.some(
+        (node) => node.type === "programme_selection" && node.stage === "VG3"
+      );
+      const bHasVg3 = b.nodes.some(
+        (node) => node.type === "programme_selection" && node.stage === "VG3"
+      );
+      if (aHasVg3 === bHasVg3) return 0;
+      return bHasVg3 ? 1 : -1;
+    })[0] ??
+    null;
   const resolvedApprenticeshipSourceOutcomeUrl = resolveApprenticeshipSourceOutcomeUrl({
     selectedVariant,
     allPathVariants: params.pathVariants ?? [],
@@ -432,13 +441,9 @@ export function buildStepsFromAvailabilityTruth(params: {
         if (!branch.sourceOutcomeUrl) return false;
         return outcome.sourceOutcome.sourceOutcomeUrl === branch.sourceOutcomeUrl;
       });
-      const outcomeProfessionIds = scopedOutcomes.map((outcome) => {
-        const title = outcome.sourceOutcome.vilbliTitle || "outcome";
-        return `review-${title
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/^-+|-+$/g, "")}`;
-      });
+      const outcomeProfessionIds = scopedOutcomes
+        .map((outcome) => outcome.catalogProfessionId ?? null)
+        .filter((id): id is string => Boolean(id));
       return {
         option_id: branch.optionId,
         option_title: branch.optionTitle,
@@ -468,11 +473,10 @@ export function buildStepsFromAvailabilityTruth(params: {
           outcome_profession_ids: [],
         });
       }
-      const professionId = `review-${(outcome.sourceOutcome.vilbliTitle || "outcome")
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "")}`;
-      grouped.get(optionId)!.outcome_profession_ids.push(professionId);
+      const professionId = outcome.catalogProfessionId ?? null;
+      if (professionId) {
+        grouped.get(optionId)!.outcome_profession_ids.push(professionId);
+      }
     }
     return Array.from(grouped.values());
   };

@@ -7,7 +7,8 @@ import type {
 import type { ChildPlanningState } from "@/server/children/planning/get-child-planning-state";
 import { getAdjacentProfessionsForPrograms } from "@/server/professions/adjacency/get-adjacent-professions-for-program";
 import { buildPathVariants } from "./build-path-variants";
-import { mapVilbliOutcomesToNav } from "./map-vilbli-outcomes-to-nav";
+import { buildRoutePathVariantNavContext } from "./build-route-path-variant-nav-context";
+import { resolveCatalogProfessionIdsForNavMatches } from "./resolve-catalog-profession-ids-for-nav-matches";
 import { shouldUseAvailabilityTruth } from "./should-use-availability-truth";
 import { buildAvailabilityTruthLookupInputs } from "./build-availability-truth-lookup-inputs";
 
@@ -91,7 +92,7 @@ export async function getStudyRouteAvailableProfessions(
     const { data: planning } = childProfile?.child_id
       ? await supabase
           .from("child_profiles")
-          .select("preferred_municipality_codes")
+          .select("preferred_municipality_codes, preferred_education_level")
           .eq("id", childProfile.child_id)
           .maybeSingle()
       : { data: null };
@@ -153,69 +154,40 @@ export async function getStudyRouteAvailableProfessions(
       return { items: [], emptyState: EMPTY_STATE };
     }
 
-    const variants = await buildPathVariants(truth.rows, professionSlug);
-    const scopedOutcomes =
-      selectedSourceOutcomeUrl !== null
-        ? variants.outcomes.filter(
-            (outcome) => outcome.sourceOutcomeUrl === selectedSourceOutcomeUrl
-          )
-        : variants.outcomes;
-    if (selectedSourceOutcomeUrl === null) {
-      console.info(
-        "[get-study-route-available-professions] fallback_to_unscoped_outcomes",
-        {
-          routeId: params.routeId,
-          reason: "missing_selected_source_outcome_url",
-          outcomesCount: variants.outcomes.length,
-        }
-      );
-    }
-    const navMapped = await mapVilbliOutcomesToNav({
-      outcomes: scopedOutcomes,
+    const pathVariants = await buildPathVariants(truth.rows, professionSlug);
+    const pathVariantNavContext = buildRoutePathVariantNavContext({
+      professionSlug,
+      preferredEducationLevel: planning?.preferred_education_level ?? "open",
+      pathVariants,
+      enrichedPathVariants: pathVariants.variants,
+      childContext: true,
     });
-    const { data: localProfessions } = await supabase
-      .from("professions")
-      .select("id, slug, title_i18n")
-      .eq("is_active", true);
-
-    const normalize = (value: string) =>
-      value
-        .toLowerCase()
-        .normalize("NFKD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^\p{L}\p{N}\s]/gu, " ")
-        .replace(/\s+/g, " ")
-        .trim();
-
-    const localByTitle = new Map<string, { id: string; slug: string }>();
-    for (const row of (localProfessions ?? []) as Array<{
-      id: string;
-      slug: string;
-      title_i18n: Record<string, string> | null;
-    }>) {
-      for (const localeTitle of Object.values(row.title_i18n ?? {})) {
-        const key = normalize(localeTitle);
-        if (!localByTitle.has(key)) {
-          localByTitle.set(key, { id: row.id, slug: row.slug });
-        }
-      }
-    }
+    const professionIdBySlug = await resolveCatalogProfessionIdsForNavMatches({
+      supabase,
+      navMatches: pathVariantNavContext.navMatches,
+    });
 
     const items: StudyRouteAvailableProfession[] = [];
-    for (const item of navMapped.mapped) {
-      const matchingTitle = item.navTitle ?? item.sourceOutcome.vilbliTitle;
-      const local = localByTitle.get(normalize(matchingTitle));
+    for (const match of pathVariantNavContext.navMatches) {
+      const professionId = professionIdBySlug.get(match.catalogProfessionSlug);
+      if (!professionId) continue;
+
+      if (
+        selectedSourceOutcomeUrl !== null &&
+        match.sourceOutcome.sourceOutcomeUrl !== selectedSourceOutcomeUrl
+      ) {
+        continue;
+      }
+
       items.push({
-        professionId:
-          local?.id ??
-          `review-${normalize(item.sourceOutcome.vilbliTitle).replace(/\s+/g, "-")}`,
-        slug: local?.slug ?? null,
-        title: item.sourceOutcome.vilbliTitle,
-        navTitle: item.navTitle,
-        navYrkeskategori: item.navYrkeskategori,
-        reviewNeeded: item.reviewNeeded || !local,
+        professionId,
+        slug: match.catalogProfessionSlug,
+        title: match.sourceOutcome.vilbliTitle,
+        navTitle: match.navTitle,
+        navYrkeskategori: match.navYrkeskategori,
+        reviewNeeded: false,
         whyOpenedLabel: "Outcome from source-backed Vilbli path",
-        similarityLabel: item.reviewNeeded ? "Review needed" : "NAV mapped",
+        similarityLabel: "NAV mapped",
       });
     }
 

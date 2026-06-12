@@ -26,7 +26,11 @@ import { buildStepsFromAvailabilityTruth } from "./build-steps-from-availability
 import { shouldUseAvailabilityTruth } from "./should-use-availability-truth";
 import { buildAvailabilityTruthLookupInputs } from "./build-availability-truth-lookup-inputs";
 import { buildPathVariants } from "./build-path-variants";
-import { mapVilbliOutcomesToNav } from "./map-vilbli-outcomes-to-nav";
+import { buildRoutePathVariantNavContext } from "./build-route-path-variant-nav-context";
+import {
+  attachCatalogProfessionIdsToNavMatches,
+  resolveCatalogProfessionIdsForNavMatches,
+} from "./resolve-catalog-profession-ids-for-nav-matches";
 import { buildKommuneTransportSortContext } from "@/server/planning/kommune-transport/build-transport-sort-context";
 import { selectTruthCandidateForRoute } from "./select-truth-candidate-for-route";
 import { applyRouteSelectionBoundary } from "./apply-route-selection-boundary";
@@ -645,8 +649,20 @@ export async function triggerStudyRouteRecompute(params: Params) {
             };
           }),
         }));
-        const navOutcomeMapping = await mapVilbliOutcomesToNav({
-          outcomes: pathVariants.outcomes,
+        const pathVariantNavContext = buildRoutePathVariantNavContext({
+          professionSlug: professionRow.slug,
+          preferredEducationLevel: snapshotContext.planning.preferredEducationLevel,
+          pathVariants,
+          enrichedPathVariants,
+          childContext: true,
+        });
+        const professionIdBySlug = await resolveCatalogProfessionIdsForNavMatches({
+          supabase,
+          navMatches: pathVariantNavContext.navMatches,
+        });
+        const navOutcomesForSteps = attachCatalogProfessionIdsToNavMatches({
+          navMatches: pathVariantNavContext.navMatches,
+          professionIdBySlug,
         });
         recomputedSteps = buildStepsFromAvailabilityTruth({
           rows: truth.rows,
@@ -654,7 +670,8 @@ export async function triggerStudyRouteRecompute(params: Params) {
           transportSortContext,
           professionSlug: professionRow.slug,
           pathVariants: enrichedPathVariants,
-          navOutcomes: navOutcomeMapping.mapped,
+          selectedPathVariantId: pathVariantNavContext.primaryPathVariantId,
+          navOutcomes: navOutcomesForSteps,
         });
 
         if (selectedTruthCandidate) {
