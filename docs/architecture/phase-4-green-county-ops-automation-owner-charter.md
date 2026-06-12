@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **OWNER SIGNED** — automation scripts in repo (2026-06-11) |
+| **Status** | **OPS BOOTSTRAP CLOSED** (2026-06-11) — launchd installed; initial production refresh run |
 | **Governs** | Contour A truth refresh for `03` / `11` / `46` / `50` |
 | **Separate from** | Finnmark LOSA `56` (closed 18/18); Contour B partial relay |
 
@@ -60,6 +60,19 @@ Dry-run anytime: append `-- --dry-run` (batch step uses `--force` in dry-run for
 1. Child home fylke **46** Vestland (e.g. Vaksdal) → electrician route → `programme_selection` options from truth.
 2. `node scripts/verify-contour-b-psa-snapshot.mjs` — green counties `hasTruth: true`; `latestUpdatedAt` advanced after refresh.
 3. Stale **draft** routes in affected fylke recompute (relay hook + end-of-ops batch).
+
+---
+
+## Bootstrap run (2026-06-11)
+
+| Pair | Result |
+|------|--------|
+| electrician `11`, `46`, `50` | **refreshed** |
+| electrician `03` | **skipped** — `missing_programme_rows` (Oslo partial truth; 5 VG2 rows) |
+| mechanic `46` | **refreshed** |
+| mechanic `03`, `11`, `50` | **skipped** — `missing_programme_rows` (separate path/materialization charter if product needs mechanic in green counties) |
+
+Post-refresh: `ops:stale-draft-batch --force` → **3/3** stale drafts recomputed. launchd: `./scripts/install-vgs-launchd.sh` on owner Mac.
 
 ---
 

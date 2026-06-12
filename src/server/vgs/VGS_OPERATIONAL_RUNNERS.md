@@ -148,28 +148,14 @@ npm run ops:stale-draft-batch -- --force   # manual anytime
 | Contour A green | `run-contour-a-green-counties.mjs` | `03/11/46/50` × electrician/mechanic; see `phase-4-green-county-ops-automation-owner-charter.md` |
 | Stale drafts | `run-stale-draft-recompute-batch.mjs` | Calls production API; **03:00–05:00** unless `--force` |
 
-**launchd (6-month full ops — replace relay-only plist or add sibling):**
+**launchd install (one command):**
 
-```xml
-<!-- ~/Library/LaunchAgents/no.minveg.vgs-scheduled-ops.plist -->
-<key>ProgramArguments</key>
-<array>
-  <string>/bin/bash</string>
-  <string>-lc</string>
-  <string>cd /path/to/min-veg-app && set -a && source .env.local && set +a && npm run ops:scheduled</string>
-</array>
-<key>StartCalendarInterval</key>
-<array>
-  <dict><key>Month</key><integer>1</integer><key>Day</key><integer>1</integer><key>Hour</key><integer>3</integer></dict>
-  <dict><key>Month</key><integer>7</integer><key>Day</key><integer>1</integer><key>Hour</key><integer>3</integer></dict>
-</array>
+```bash
+chmod +x scripts/install-vgs-launchd.sh
+./scripts/install-vgs-launchd.sh
 ```
 
-**Quarterly stale-draft-only** (1st of Feb/May/Aug/Nov at 03:00):
-
-```xml
-<string>... npm run ops:scheduled -- --skip-relay --skip-green-a</string>
-```
+See `scripts/launchd/README.md` — installs 6-month full ops + quarterly stale-batch agents with logs under `~/Library/Logs/`.
 
 ## API endpoints
 
