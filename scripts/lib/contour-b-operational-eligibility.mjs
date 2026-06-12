@@ -42,6 +42,13 @@ export const CONTOUR_A_GREEN_READINESS_STATUSES = new Set([
   "verification_ready_after_write",
 ]);
 
+/** Pre-write states the Contour A pipeline can fix via programme materialization. */
+export const CONTOUR_A_GREEN_PIPELINE_RUNNABLE_STATUSES = new Set([
+  ...CONTOUR_A_GREEN_READINESS_STATUSES,
+  "missing_programme_rows",
+  "missing_profession_links",
+]);
+
 export function getContourAOperationalCounties(professionSlug) {
   const profession = String(professionSlug ?? "").trim();
   return CONTOUR_A_OPERATIONAL_BY_PROFESSION[profession] ?? new Set();

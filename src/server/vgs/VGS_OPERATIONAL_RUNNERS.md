@@ -131,10 +131,10 @@ npm run ops:scheduled -- --dry-run
 # Quick dry-run smoke (one county)
 npm run ops:scheduled -- --dry-run --county 56 --profession electrician
 
-# Production 6-month cycle: relay → green counties → stale-draft batch
+# Production full cycle (Feb/Aug schedule): relay → green counties → stale-draft batch
 npm run ops:scheduled
 
-# Quarterly stale-draft sweep only (03:00–05:00 Oslo; no --force)
+# Quarterly stale-draft sweep only (Jan/Apr/Jul/Oct; 03:00–05:00 Oslo; no --force)
 npm run ops:scheduled -- --skip-relay --skip-green-a
 
 # Individual steps
@@ -155,7 +155,7 @@ chmod +x scripts/install-vgs-launchd.sh
 ./scripts/install-vgs-launchd.sh
 ```
 
-See `scripts/launchd/README.md` — installs 6-month full ops + quarterly stale-batch agents with logs under `~/Library/Logs/`.
+See `scripts/launchd/README.md` — **Feb/Aug** full ops + **Jan/Apr/Jul/Oct** stale-batch agents; logs under `~/Library/Logs/`.
 
 ## API endpoints
 

@@ -10,7 +10,7 @@ import { createClient } from "@supabase/supabase-js";
 import { classifyReadiness } from "./classify-vgs-truth-readiness.mjs";
 import {
   CONTOUR_A_OPERATIONAL_BY_PROFESSION,
-  CONTOUR_A_GREEN_READINESS_STATUSES,
+  CONTOUR_A_GREEN_PIPELINE_RUNNABLE_STATUSES,
   SUPPORTED_VGS_PROFESSION_SLUGS,
 } from "./lib/contour-b-operational-eligibility.mjs";
 import { runVgsTruthPipeline } from "./run-vgs-truth-pipeline.mjs";
@@ -86,9 +86,9 @@ async function main() {
           supabase,
         });
 
-        if (!CONTOUR_A_GREEN_READINESS_STATUSES.has(readiness.status)) {
+        if (!CONTOUR_A_GREEN_PIPELINE_RUNNABLE_STATUSES.has(readiness.status)) {
           entry.action = "skipped";
-          entry.reason = `readiness_not_green:${readiness.status}`;
+          entry.reason = `readiness_not_runnable:${readiness.status}`;
           results.push(entry);
           console.error(
             `[green-a] skip ${professionSlug}/${countyCode} readiness=${readiness.status}`

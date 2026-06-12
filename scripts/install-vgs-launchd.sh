@@ -45,13 +45,13 @@ ${months}
 EOF
 }
 
-OPS_MONTHS='    <dict><key>Month</key><integer>1</integer><key>Day</key><integer>1</integer><key>Hour</key><integer>3</integer><key>Minute</key><integer>0</integer></dict>
-    <dict><key>Month</key><integer>7</integer><key>Day</key><integer>1</integer><key>Hour</key><integer>3</integer><key>Minute</key><integer>0</integer></dict>'
+OPS_MONTHS='    <dict><key>Month</key><integer>2</integer><key>Day</key><integer>1</integer><key>Hour</key><integer>3</integer><key>Minute</key><integer>0</integer></dict>
+    <dict><key>Month</key><integer>8</integer><key>Day</key><integer>1</integer><key>Hour</key><integer>3</integer><key>Minute</key><integer>0</integer></dict>'
 
-QUARTERLY_MONTHS='    <dict><key>Month</key><integer>2</integer><key>Day</key><integer>1</integer><key>Hour</key><integer>3</integer><key>Minute</key><integer>0</integer></dict>
-    <dict><key>Month</key><integer>5</integer><key>Day</key><integer>1</integer><key>Hour</key><integer>3</integer><key>Minute</key><integer>0</integer></dict>
-    <dict><key>Month</key><integer>8</integer><key>Day</key><integer>1</integer><key>Hour</key><integer>3</integer><key>Minute</key><integer>0</integer></dict>
-    <dict><key>Month</key><integer>11</integer><key>Day</key><integer>1</integer><key>Hour</key><integer>3</integer><key>Minute</key><integer>0</integer></dict>'
+QUARTERLY_MONTHS='    <dict><key>Month</key><integer>1</integer><key>Day</key><integer>1</integer><key>Hour</key><integer>3</integer><key>Minute</key><integer>0</integer></dict>
+    <dict><key>Month</key><integer>4</integer><key>Day</key><integer>1</integer><key>Hour</key><integer>3</integer><key>Minute</key><integer>0</integer></dict>
+    <dict><key>Month</key><integer>7</integer><key>Day</key><integer>1</integer><key>Hour</key><integer>3</integer><key>Minute</key><integer>0</integer></dict>
+    <dict><key>Month</key><integer>10</integer><key>Day</key><integer>1</integer><key>Hour</key><integer>3</integer><key>Minute</key><integer>0</integer></dict>'
 
 write_plist "${OPS_PLIST}" "no.minveg.vgs-scheduled-ops" "${OPS_SCRIPT}" "${OPS_MONTHS}"
 write_plist "${QUARTERLY_PLIST}" "no.minveg.vgs-quarterly-stale-batch" "${QUARTERLY_SCRIPT}" "${QUARTERLY_MONTHS}"
@@ -64,6 +64,6 @@ for plist in "${OPS_PLIST}" "${QUARTERLY_PLIST}"; do
 done
 
 echo "Installed:"
-echo "  ${OPS_PLIST} (Jan 1 + Jul 1, 03:00 — full ops)"
-echo "  ${QUARTERLY_PLIST} (Feb/May/Aug/Nov 1, 03:00 — stale-draft batch)"
+echo "  ${OPS_PLIST} (Feb 1 + Aug 1, 03:00 — full ops; after typical Vilbli January refresh)"
+echo "  ${QUARTERLY_PLIST} (Jan/Apr/Jul/Oct 1, 03:00 — stale-draft batch)"
 echo "Logs: ${LOG_DIR}/no.minveg.vgs-*.log"

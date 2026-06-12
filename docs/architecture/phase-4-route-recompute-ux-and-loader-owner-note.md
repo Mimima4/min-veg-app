@@ -17,7 +17,7 @@
 | R-2 | **Draft + stale:** fast shell + global loader **without** VG1/school step names until fresh snapshot | **OK** |
 | R-3 | **Saved + stale:** keep saved snapshot; surface `newRouteAvailable` / outdated warning — **no** silent overwrite | **OK** |
 | R-4 | **Refresh policy:** event-driven (Vilbli relay / `truth_version`, profile change, logic-version bump) — **not** weekly full recompute | **OK** |
-| R-5 | **Optional batch:** rare job in **03:00–05:00** (quarterly or aligned with **6-month** Vilbli relay per `VGS_OPERATIONAL_RUNNERS.md`) | **OK** |
+| R-5 | **Batch:** **Jan/Apr/Jul/Oct** stale-draft sweep; **Feb/Aug** full Vilbli+green ops (**03:00** Oslo) — see `VGS_OPERATIONAL_RUNNERS.md` | **OK** (updated 2026-06-11) |
 | R-6 | **Entur:** sort-only (T-1); `route_input_signature` does **not** include timetable — day-to-day disruptions must not reshape routes | **OK** |
 | R-7 | **`MinVegRoadLoader`:** one global “thinking” animation for slow blocking surfaces (route recompute, heavy loads) — not every short button click | **OK** |
 | R-8 | **Loader animation:** **top → down** — lines grow **from pin downward**; pin stays top-center; **no** rotate or mirror of logo | **OK** |

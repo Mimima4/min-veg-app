@@ -10,8 +10,8 @@ Wrapper scripts: `scripts/cron/run-vgs-scheduled-ops.sh`, `scripts/cron/run-vgs-
 
 | Label | Schedule | Action |
 |-------|----------|--------|
-| `no.minveg.vgs-scheduled-ops` | 1 Jan, 1 Jul @ 03:00 | `npm run ops:scheduled` |
-| `no.minveg.vgs-quarterly-stale-batch` | 1 Feb/May/Aug/Nov @ 03:00 | stale-draft batch only |
+| `no.minveg.vgs-scheduled-ops` | **1 Feb, 1 Aug** @ 03:00 | full ops (Vilbli relay + green A + batch) |
+| `no.minveg.vgs-quarterly-stale-batch` | **1 Jan/Apr/Jul/Oct** @ 03:00 | stale-draft batch only |
 
 Requires `.env.local` at repo root with `VERCEL_APP_URL`, `CRON_SECRET`, Supabase keys.
 
