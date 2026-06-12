@@ -531,45 +531,54 @@ The following filters must be available on the route-level page:
 
 - Relocation willingness
 - Commune filter
-- Learning depth (user-facing layer of `preferred_education_level`)
+- Route outcome filter (user-facing layer of `preferred_education_level`)
 
 These filters are duplicated from child/profile truth only as route-scoped controls for exploration and refinement.
 
-### Learning depth
+**Governance:** catalog, ordering, and matcher contract are locked in `phase-4-route-outcome-filter-owner-decision-record.md`.
 
-`preferred_education_level` remains the internal technical field.
+### Route outcome filter
 
-User-facing presentation on the route page must use human-readable options:
+`preferred_education_level` remains the internal technical field (`filter_id`).
 
-- Fastest path to work
-- Balanced path
-- Broad future options
-- Highest academic depth
+User-facing labels must be **short Norwegian copy** (no instruction-style helper wall). Display order for barn/ungdom:
 
-Helper text may be shown in small text below the filter when expanded:
+| `filter_id` | UI label (nb) |
+|-------------|---------------|
+| `open` | Åpen / Ikke valgt ennå |
+| `fast_to_work` | Kort vei til fagbrev |
+| `vg3_before_apprenticeship` | Velg fag på VG3 før læretid |
+| `fagskole_after_vgs` | Fagskole etter VGS (1–2 år) |
+| `long_academic` | Lang og spesialisert utdanning |
+| `flexible` | Vis meg ulike realistiske veier |
+| `pabygging_studiekompetanse` | Påbygging til generell studiekompetanse |
 
-"How long and how deeply should this path invest in education before work?"
+**Child / barn rules:**
+- `pabygging_studiekompetanse` is **disabled** on child profiles and child route filters (separate etter-VGS contour).
+- `fagskole_after_vgs` may appear as informational / neste steg; primary VGS construction remains VG1→VG2→(VG3)→lære.
+
+Retired IDs (do not use in new UI): `practice_first`, `keep_study_options`, `short_after_vgs`, `school_then_work` — see owner record §2.
 
 ### Dynamic availability rule
 
-Learning depth options must be dynamically filtered per profession and route family.
+Route outcome filter options must be dynamically filtered per profession and route family.
 
 Only options that can produce valid and realistic routes for the current profession may be shown.
 
 Examples:
-- Doctor -> no "Fastest path to work"
-- Driver -> no "Highest academic depth" unless a real valid route exists
-- Electrician -> may show multiple valid depths if route reality supports them
+- Lege / doctor path family -> no `fast_to_work`
+- Driver -> no `long_academic` unless a real valid route exists
+- Electrician / mechanic -> may show multiple valid filters when route reality supports them
 
-### Behavior without active learning-depth filter
+### Behavior without active route-outcome filter
 
-If no learning-depth filter is active:
+If no route-outcome filter is active (`open`):
 
 - the system must NOT default to shortest-path-only logic
 - the system should prefer realistic route diversity where available
-- alternative routes should prioritize materially different education contours before school-only variation
-
-This means alternatives should first reflect different valid programme/education contours, if such contours exist.
+- alternative routes must differ by **`filter_id`**, not near-duplicate path variants
+- default alternative ordering (yrkesfag canon `fast_to_work`): **VG3 før læretid → fagskole etter VGS → lang og spesialisert utdanning**
+- institution-level variation comes only after contour-level (`filter_id`) variation
 
 ### Persistence controls
 
@@ -603,55 +612,34 @@ Local route filters override profile-level settings only inside the current prof
 
 They must not silently overwrite profile truth unless the user explicitly chooses "Save to profile".
 
-### Learning depth impact on route selection
+### Route outcome filter impact on route selection
 
-Learning depth does not change route construction logic.
+The filter does **not** replace the route engine or Vilbli truth pipeline.
 
-It only affects:
-- which route contour is selected as primary
-- how alternatives are prioritized
+It **does** determine:
+- which **path contour / variant** is selected as primary (when implemented)
+- how **alternatives** are prioritized (by different `filter_id`)
+- **NAV / STYRK matcher scope** for the active profession route (when implemented)
 
----
-
-### Behavior WITHOUT learning-depth filter
-
-If no learning-depth filter is selected:
-
-1. The system must construct the most realistic and complete route first
-   (master-spec-first, geography-aware, feasibility-aware)
-
-2. Alternatives must be generated contour-first:
-   - shorter path (if valid)
-   - broader path (if valid)
-   - deeper academic path (if valid)
-
-3. Only after contour-level variation:
-   institution-level variation may be shown
-
-This ensures:
-- diversity of real educational strategies
-- alignment with real-world decision-making
-- no collapse into shortest-path bias
+Until matcher and contour wiring land, the field may still affect signature/staleness, legacy profession-fit pages, and display only — see owner record implementation note.
 
 ---
 
-### Behavior WITH learning-depth filter
+### Behavior WITH route-outcome filter
 
-If a learning-depth filter is selected:
+If a route-outcome filter is selected:
 
-1. The selected contour becomes the primary route
+1. The selected `filter_id` contour becomes the primary route
 
-2. Alternatives are prioritized as:
+2. Alternatives must use **other valid `filter_id` values** from the catalog (per owner record §3), in distance order from canon
 
-   a) Same programme / same structure, different institutions
-
-   b) Neighbouring valid contours (if realistic and allowed)
+3. Within the same `filter_id`, institution-level variation may be shown
 
 ---
 
 ### Constraint
 
-Learning depth must never produce routes that do not exist in reality.
+Route outcome filter must never produce routes that do not exist in reality.
 
 If only one valid contour exists:
 - filter options must be reduced accordingly

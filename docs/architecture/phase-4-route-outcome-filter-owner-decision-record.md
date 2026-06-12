@@ -113,24 +113,21 @@ Chain model: **NAV → catalog profession → path family → VG1 anchor → VG2
 
 ---
 
-## 6. Known conflicts with older docs (pending separate owner approval)
+## 6. Conflict resolution log
 
-**Do not silently edit the files below.** Resolve via explicit owner decision to amend or supersede.
+| # | Topic | Resolution | Status |
+|---|-------|------------|--------|
+| C-1 | Four abstract learning-depth options vs seven outcome filters | Stage 6 UX amended to §2 catalog | **Resolved** 2026-06-10 |
+| C-2 | Alternative order shorter→broader→deeper vs `filter_id` distance order | Stage 6 UX amended to owner record §3 | **Resolved** 2026-06-10 |
+| C-3 | Filter “cosmetic only” vs contour + matcher scope | Stage 6 UX clarifies engine unchanged; contour, alternatives, matcher scoped | **Resolved** 2026-06-10 |
+| C-4 | Legacy diploma enum in code vs outcome `filter_id` | **Deferred** — separate implementation phase; field currently display + legacy fit + signature only | **Open (code)** |
 
-| Document | Conflict | This record says |
-|----------|----------|------------------|
-| `route-engine-stage-6-ux.md` § «Learning depth» | Four options: *Fastest path to work*, *Balanced path*, *Broad future options*, *Highest academic depth* | Seven outcome filters in §2; different IDs and nb copy |
-| `route-engine-stage-6-ux.md` § «Behavior WITHOUT learning-depth filter» | Alternatives: shorter → broader → deeper academic | Alternatives: **different `filter_id`** with order in §3 |
-| `route-engine-stage-6-ux.md` § «Learning depth impact» | «Learning depth does not change route construction logic» | Filter affects **primary contour selection**, alternative priority, and **NAV matcher scope** |
-| `src/lib/planning/profession-fit-utils.ts` | Legacy enum: `bachelor`, `master`, `vocational_college`, … | Outcome IDs in §2 — **migration required** |
-| `edit-child-form.tsx` `EDUCATION_LEVEL_LABELS` | Diploma-level labels | Outcome labels in §2 — **migration required** |
-
-**Governance rule for conflicts:** This owner decision record is **effective for filter catalog and alternative ordering** as of 2026-06-10. Until Stage 6 UX and code are amended, treat Stage 6 § Learning depth as **superseded in intent** but not yet edited in place.
+**Code migration (C-4):** `profession-fit-utils.ts`, `edit-child-form.tsx`, and stored DB values remain on legacy enum until a dedicated migration task. No silent rename in this phase.
 
 ---
 
 ## 7. References
 
 - `route-engine-master-spec.md` — `preferred_education_level` in route input signature
-- `route-engine-stage-6-ux.md` — prior Learning depth UX (conflicts listed §6)
+- `route-engine-stage-6-ux.md` — route outcome filter UX (aligned §6 C-1…C-3)
 - `route-path-engine-production-spec.md` — alternative routes, hard filters (orthogonal)
