@@ -128,6 +128,7 @@ Chain model: **NAV → catalog profession → path family → VG1 anchor → VG2
 
 ## 7. References
 
+- `phase-4-multi-contour-truth-registry-owner-decision-record.md` — truth sources, ingest, and live rules per education layer
 - `route-engine-master-spec.md` — `preferred_education_level` in route input signature
 - `route-engine-stage-6-ux.md` — route outcome filter UX (aligned §6 C-1…C-3)
 - `route-path-engine-production-spec.md` — alternative routes, hard filters (orthogonal)
