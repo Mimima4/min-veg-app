@@ -9,6 +9,7 @@ import type {
   StudyRouteSnapshotStep,
 } from "@/lib/routes/route-types";
 import { getStudyRouteAlternatives } from "./get-study-route-alternatives";
+import { shouldShowAlternativeRoutesPanel } from "@/lib/routes/route-read-model-policy";
 import { resolveAlternativesSourceRouteId } from "./resolve-alternatives-source-route-id";
 import { getStudyRouteAvailableProfessions } from "./get-study-route-available-professions";
 import {
@@ -104,7 +105,7 @@ export async function assembleStudyRouteReadModel(
   const recomputePending = Boolean(params.recomputePending);
 
   const skipAlternatives =
-    recomputePending || params.route.status === "saved";
+    recomputePending || !shouldShowAlternativeRoutesPanel(params.route.status);
 
   const alternativesRouteId = skipAlternatives
     ? params.route.id

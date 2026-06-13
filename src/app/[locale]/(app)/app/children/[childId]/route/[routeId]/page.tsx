@@ -8,6 +8,7 @@ import RouteStepsRecomputePanel from "../route-steps-recompute-panel";
 import RouteSignalsPanel from "../route-signals-panel";
 import RouteAvailableProfessionsPanel from "../route-available-professions-panel";
 import AlternativeRoutesCollapsible from "../alternative-routes-collapsible";
+import { shouldShowAlternativeRoutesPanel } from "@/lib/routes/route-read-model-policy";
 
 export default async function StudyRouteDetailPage({
   params,
@@ -54,7 +55,7 @@ export default async function StudyRouteDetailPage({
     strategies.length > 0;
 
   const isRecomputePending = Boolean(route.recomputePending);
-  const isSavedRouteView = route.identity.status === "saved";
+  const showAlternativeRoutes = shouldShowAlternativeRoutesPanel(route.identity.status);
 
   const statusItems = [
     {
@@ -177,7 +178,7 @@ export default async function StudyRouteDetailPage({
 
           {!isRecomputePending && (
             <>
-              {!isSavedRouteView ? (
+              {showAlternativeRoutes ? (
                 <AlternativeRoutesCollapsible
                   locale={locale}
                   childId={childId}

@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createInitialStudyRoute } from "@/server/children/routes/create-initial-study-route";
+import { resolveRouteEntryTargetRouteId } from "@/lib/routes/route-read-model-policy";
 
 type RouteRow = {
   id: string;
@@ -71,9 +72,15 @@ export default async function RouteEntryResolverPage({
   });
 
   if (drafts.length > 0) {
-    // Always open the working draft. Saved routes are a separate storage contour and
-    // do not carry outcome-filter alternative variants.
-    redirect(`/${locale}/app/children/${childId}/route/${drafts[0].id}`);
+    const entryRouteId = resolveRouteEntryTargetRouteId({
+      draftRouteIds: drafts.map((route) => route.id),
+      savedRouteIds: typedRoutes
+        .filter((route) => route.status === "saved")
+        .map((route) => route.id),
+    });
+    if (entryRouteId) {
+      redirect(`/${locale}/app/children/${childId}/route/${entryRouteId}`);
+    }
   }
 
   const createdWorkingRoute = await createInitialStudyRoute({

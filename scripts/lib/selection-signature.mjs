@@ -1,13 +1,12 @@
-import { buildProgrammeSelectionOptionId } from "@/lib/losa/availability-scope";
-
-/** Keep in sync with scripts/lib/selection-signature.mjs (smoke runtime). */
-
-function normalizeJsonValue(value: unknown): unknown {
+/**
+ * Keep in sync with src/lib/routes/selection-signature.ts (smoke runtime).
+ */
+function normalizeJsonValue(value) {
   if (Array.isArray(value)) {
     return value.map((item) => normalizeJsonValue(item));
   }
   if (value && typeof value === "object") {
-    const sortedEntries = Object.entries(value as Record<string, unknown>)
+    const sortedEntries = Object.entries(value)
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([key, nestedValue]) => [key, normalizeJsonValue(nestedValue)]);
     return Object.fromEntries(sortedEntries);
@@ -15,42 +14,50 @@ function normalizeJsonValue(value: unknown): unknown {
   return value;
 }
 
-function stableStringify(value: unknown): string {
+function stableStringify(value) {
   return JSON.stringify(normalizeJsonValue(value));
 }
 
-/** Canonical signature for comparing working-route selections to saved snapshots. */
-export function buildSelectionSignatureFromPayload(selectedStepsPayload: unknown): string {
+function buildProgrammeSelectionOptionId(option, index) {
+  const institutionId = String(option.institution_id ?? "").trim();
+  const programSlug = String(option.program_slug ?? "").trim();
+  if (institutionId) {
+    if (programSlug) {
+      return `programme-${institutionId}-${programSlug}`;
+    }
+    return `programme-${institutionId}-${index}`;
+  }
+  return `programme-index-${index}`;
+}
+
+export function buildSelectionSignatureFromPayload(selectedStepsPayload) {
   if (!Array.isArray(selectedStepsPayload)) {
     return stableStringify([]);
   }
 
-  const signatureEntries: Array<{ stepKey: string; optionId: string }> = [];
+  const signatureEntries = [];
 
   selectedStepsPayload.forEach((step, index) => {
     if (!step || typeof step !== "object" || Array.isArray(step)) return;
-    const typedStep = step as Record<string, unknown>;
-    const stepType = typedStep.type;
+    const stepType = step.type;
     if (stepType !== "programme_selection" && stepType !== "apprenticeship_step") return;
 
-    const stepKey = `snap-${index}-${String(stepType)}-${String(typedStep.program_slug ?? "none")}`;
+    const stepKey = `snap-${index}-${String(stepType)}-${String(step.program_slug ?? "none")}`;
 
     if (stepType === "programme_selection") {
-      const options = Array.isArray(typedStep.options)
-        ? (typedStep.options as Array<Record<string, unknown>>)
-        : [];
+      const options = Array.isArray(step.options) ? step.options : [];
       if (options.length === 0) return;
 
       const targetSchool =
-        typeof typedStep.institution_name === "string" ? typedStep.institution_name : null;
+        typeof step.institution_name === "string" ? step.institution_name : null;
       const targetLocation =
-        typeof typedStep.institution_city === "string"
-          ? typedStep.institution_city
-          : typeof typedStep.institution_municipality === "string"
-            ? typedStep.institution_municipality
+        typeof step.institution_city === "string"
+          ? step.institution_city
+          : typeof step.institution_municipality === "string"
+            ? step.institution_municipality
             : null;
       const targetWebsite =
-        typeof typedStep.institution_website === "string" ? typedStep.institution_website : null;
+        typeof step.institution_website === "string" ? step.institution_website : null;
 
       const matchedOptionIndex = options.findIndex((option) => {
         const schoolName =
@@ -81,12 +88,12 @@ export function buildSelectionSignatureFromPayload(selectedStepsPayload: unknown
       return;
     }
 
-    const apprenticeshipOptions = Array.isArray(typedStep.apprenticeship_options)
-      ? (typedStep.apprenticeship_options as Array<Record<string, unknown>>)
+    const apprenticeshipOptions = Array.isArray(step.apprenticeship_options)
+      ? step.apprenticeship_options
       : [];
     const selectedApprenticeshipId =
-      typeof typedStep.selected_apprenticeship_option_id === "string"
-        ? typedStep.selected_apprenticeship_option_id
+      typeof step.selected_apprenticeship_option_id === "string"
+        ? step.selected_apprenticeship_option_id
         : null;
     const fallbackApprenticeshipId =
       apprenticeshipOptions[0] && typeof apprenticeshipOptions[0].option_id === "string"
