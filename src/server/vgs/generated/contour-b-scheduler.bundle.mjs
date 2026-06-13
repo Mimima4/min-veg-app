@@ -16874,6 +16874,18 @@ var VGS_PATH_DEFINITIONS = {
 function getVgsPathDefinition(professionSlug) {
   return VGS_PATH_DEFINITIONS[professionSlug] ?? null;
 }
+function shouldMaterializeExpandedProgrammeCatalog(entry) {
+  const stage = String(entry?.stage ?? "").toUpperCase();
+  if (stage !== "VG3") {
+    return true;
+  }
+  const source = String(entry?.source ?? "");
+  if (source === "apprenticeship_branch_programme") {
+    return false;
+  }
+  const schools = Array.isArray(entry?.schools) ? entry.schools : [];
+  return schools.length > 0;
+}
 function mapProgrammeToPathNode(program, pathDefinition) {
   const stage = parseStageFromProgramme(program);
   if (!stage) return null;
@@ -19590,6 +19602,9 @@ async function runVgsTruthPipeline({
   const expandedProgrammeMaterialization = [];
   const expandedProgrammesByStage = /* @__PURE__ */ new Map();
   for (const entry of expandedStageEntries) {
+    if (!shouldMaterializeExpandedProgrammeCatalog(entry)) {
+      continue;
+    }
     const identity = deterministicProgrammeIdentity({
       professionSlug,
       countySlug: countyMeta.slug,

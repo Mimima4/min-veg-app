@@ -1,20 +1,23 @@
 #!/usr/bin/env node
 /**
- * Route readiness audit:
- * - electrician VG3 PSA gaps (actionable ingest targets)
- * - mechanic VG3 catalog-only rows (informational; bedrift path expected)
+ * R-VG3-CATALOG audit: VG3 catalog vs PSA with contour-aware classification.
  *
  * Usage:
  *   node --env-file=.env.local scripts/audit-route-readiness.mjs
  *   node --env-file=.env.local scripts/audit-route-readiness.mjs --strict
+ *   node --env-file=.env.local scripts/audit-route-readiness.mjs --json
  */
 import { spawnSync } from "node:child_process";
 import { createClient } from "@supabase/supabase-js";
 
 import { COUNTY_CODE_TO_VILBLI } from "./lib/vilbli-county-meta.mjs";
 import { isMainModule } from "./lib/is-main-module.mjs";
-
-const PROFESSIONS = ["mechanic", "electrician"];
+import {
+  classifyVg3CatalogPsaStatus,
+  isStrictAuditFailureStatus,
+  statusLabel,
+} from "./lib/vg3-catalog-status.mjs";
+import { SUPPORTED_VGS_PROFESSION_SLUGS } from "./lib/contour-b-operational-eligibility.mjs";
 
 function parseArgs(argv) {
   const args = { strict: false, json: false };
@@ -37,7 +40,7 @@ async function loadVg3CoverageReport() {
   const report = [];
 
   for (const [countyCode, meta] of Object.entries(COUNTY_CODE_TO_VILBLI)) {
-    for (const profession of PROFESSIONS) {
+    for (const profession of SUPPORTED_VGS_PROFESSION_SLUGS) {
       const slugPattern = `${profession}%-${meta.slug}`;
       const { data: programs, error: programsError } = await supabase
         .from("education_programs")
@@ -69,19 +72,21 @@ async function loadVg3CoverageReport() {
         psaVg3Count = count ?? 0;
       }
 
-      const status =
-        psaVg3Count > 0
-          ? "live"
-          : vg3CatalogSlugs.length > 0
-            ? "catalog_only_gap"
-            : "no_vg3_expected";
+      const status = classifyVg3CatalogPsaStatus({
+        professionSlug: profession,
+        countyCode,
+        catalogVg3Count: vg3CatalogSlugs.length,
+        psaVg3Count,
+      });
 
       report.push({
         countyCode,
         countySlug: meta.slug,
         profession,
         status,
+        statusLabel: statusLabel(status),
         catalogVg3Count: vg3CatalogSlugs.length,
+        catalogVg3Slugs: vg3CatalogSlugs,
         psaVg3Count,
       });
     }
@@ -106,40 +111,43 @@ async function main() {
   const args = parseArgs(process.argv);
   const report = await loadVg3CoverageReport();
 
-  const electricianGaps = report.filter(
-    (row) => row.profession === "electrician" && row.status === "catalog_only_gap"
-  );
-  const mechanicCatalogOnly = report.filter(
-    (row) => row.profession === "mechanic" && row.status === "catalog_only_gap"
-  );
+  const actionableGaps = report.filter((row) => row.status === "actionable_gap");
+  const catalogOrphans = report.filter((row) => row.status === "catalog_orphan");
+  const liveRows = report.filter((row) => row.status === "live");
 
   runInvariantSmoke();
 
   const payload = {
-    electricianActionableGaps: electricianGaps,
-    mechanicCatalogOnlyInformational: mechanicCatalogOnly.length,
+    live: liveRows.length,
+    catalogOrphans,
+    actionableGaps,
     invariantSmoke: "pass",
   };
 
   if (args.json) {
-    console.log(JSON.stringify(payload, null, 2));
+    console.log(JSON.stringify({ report, ...payload }, null, 2));
   } else {
-    console.log("Route readiness audit\n");
-    console.log(`Invariant smoke: PASS`);
-    console.log(
-      `Electrician VG3 PSA gaps (actionable ingest): ${electricianGaps.length}`
-    );
-    for (const gap of electricianGaps) {
-      console.log(`  - ${gap.countySlug} (${gap.countyCode}): catalog=${gap.catalogVg3Count}, PSA=0`);
+    console.log("Route readiness audit (R-VG3-CATALOG)\n");
+    console.log("Invariant smoke: PASS");
+    console.log(`Live VG3 PSA pairs: ${liveRows.length}`);
+    console.log(`Catalog orphans (cleanup candidates): ${catalogOrphans.length}`);
+    for (const row of catalogOrphans) {
+      console.log(
+        `  - ${row.countySlug} (${row.countyCode}) / ${row.profession}: catalog=${row.catalogVg3Count}, PSA=0`
+      );
     }
-    console.log(
-      `Mechanic VG3 catalog-only rows (informational, bedrift path): ${mechanicCatalogOnly.length}`
-    );
+    console.log(`Actionable VG3 PSA gaps (ingest required): ${actionableGaps.length}`);
+    for (const gap of actionableGaps) {
+      console.log(
+        `  - ${gap.countySlug} (${gap.countyCode}) / ${gap.profession}: catalog=${gap.catalogVg3Count}, PSA=0`
+      );
+    }
   }
 
-  if (args.strict && electricianGaps.length > 0) {
+  const strictFailures = report.filter((row) => isStrictAuditFailureStatus(row.status));
+  if (args.strict && strictFailures.length > 0) {
     throw new Error(
-      `Strict audit failed: ${electricianGaps.length} electrician county(ies) missing VG3 PSA rows`
+      `Strict audit failed: ${strictFailures.length} pair(s) with actionable VG3 PSA gaps`
     );
   }
 }

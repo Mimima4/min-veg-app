@@ -1,13 +1,16 @@
 #!/usr/bin/env node
 /**
- * Read-only audit: VG3 programme_in_school PSA rows vs education_programs slugs
- * for mechanic and electrician per county.
+ * Read-only VG3 PSA vs catalog audit (R-VG3-CATALOG classification).
  */
 import { createClient } from "@supabase/supabase-js";
 
 import { COUNTY_CODE_TO_VILBLI } from "./lib/vilbli-county-meta.mjs";
-
-const PROFESSIONS = ["mechanic", "electrician"];
+import { isMainModule } from "./lib/is-main-module.mjs";
+import {
+  classifyVg3CatalogPsaStatus,
+  statusLabel,
+} from "./lib/vg3-catalog-status.mjs";
+import { SUPPORTED_VGS_PROFESSION_SLUGS } from "./lib/contour-b-operational-eligibility.mjs";
 
 function parseArgs(argv) {
   const args = { json: false };
@@ -26,15 +29,11 @@ async function main() {
   }
 
   const supabase = createClient(url, key);
-  const counties = Object.entries(COUNTY_CODE_TO_VILBLI).map(([countyCode, meta]) => [
-    countyCode,
-    meta.slug,
-  ]);
   const report = [];
 
-  for (const [countyCode, countySlug] of counties) {
-    for (const profession of PROFESSIONS) {
-      const slugPattern = `${profession}%-${countySlug}`;
+  for (const [countyCode, meta] of Object.entries(COUNTY_CODE_TO_VILBLI)) {
+    for (const profession of SUPPORTED_VGS_PROFESSION_SLUGS) {
+      const slugPattern = `${profession}%-${meta.slug}`;
       const { data: programs, error: programsError } = await supabase
         .from("education_programs")
         .select("id, slug")
@@ -75,18 +74,19 @@ async function main() {
         }
       }
 
-      const status =
-        psaVg3Rows.length > 0
-          ? "live"
-          : vg3CatalogSlugs.length > 0
-            ? "catalog_only_gap"
-            : "no_vg3_expected";
+      const status = classifyVg3CatalogPsaStatus({
+        professionSlug: profession,
+        countyCode,
+        catalogVg3Count: vg3CatalogSlugs.length,
+        psaVg3Count: psaVg3Rows.length,
+      });
 
       report.push({
         countyCode,
-        countySlug,
+        countySlug: meta.slug,
         profession,
         status,
+        statusLabel: statusLabel(status),
         catalogVg3Count: vg3CatalogSlugs.length,
         psaVg3Count: psaVg3Rows.length,
         catalogVg3Slugs: vg3CatalogSlugs,
@@ -95,34 +95,42 @@ async function main() {
     }
   }
 
-  const gaps = report.filter((row) => row.status === "catalog_only_gap");
+  const actionableGaps = report.filter((row) => row.status === "actionable_gap");
+  const catalogOrphans = report.filter((row) => row.status === "catalog_orphan");
 
   if (args.json) {
-    console.log(JSON.stringify({ report, gaps }, null, 2));
+    console.log(JSON.stringify({ report, actionableGaps, catalogOrphans }, null, 2));
     return;
   }
 
-  console.log("VG3 PSA coverage audit (mechanic + electrician)\n");
+  console.log("VG3 PSA coverage audit (R-VG3-CATALOG)\n");
   for (const row of report) {
-    if (row.status === "no_vg3_expected") continue;
+    if (row.status === "no_vg3_catalog") continue;
     console.log(
       `${row.countyCode} ${row.countySlug} / ${row.profession}: PSA=${row.psaVg3Count} catalog=${row.catalogVg3Count} [${row.status}]`
     );
     if (row.psaVg3Slugs.length > 0) {
       console.log(`  live: ${row.psaVg3Slugs.join(", ")}`);
     }
-    if (row.status === "catalog_only_gap") {
-      console.log(`  GAP slugs (no PSA): ${row.catalogVg3Slugs.slice(0, 3).join(", ")}${row.catalogVg3Slugs.length > 3 ? "…" : ""}`);
+    if (row.status === "catalog_orphan") {
+      console.log(
+        `  orphan slugs: ${row.catalogVg3Slugs.slice(0, 3).join(", ")}${row.catalogVg3Slugs.length > 3 ? "…" : ""}`
+      );
+    }
+    if (row.status === "actionable_gap") {
+      console.log(
+        `  gap slugs: ${row.catalogVg3Slugs.slice(0, 3).join(", ")}${row.catalogVg3Slugs.length > 3 ? "…" : ""}`
+      );
     }
   }
 
-  console.log(`\nCatalog-only gaps (need Contour B ingest): ${gaps.length}`);
-  for (const gap of gaps) {
-    console.log(`- ${gap.countySlug} / ${gap.profession}: ${gap.catalogVg3Count} VG3 programme slug(s), 0 PSA`);
-  }
+  console.log(`\nCatalog orphans: ${catalogOrphans.length}`);
+  console.log(`Actionable gaps: ${actionableGaps.length}`);
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+if (isMainModule(import.meta.url)) {
+  main().catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
+}

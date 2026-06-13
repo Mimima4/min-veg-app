@@ -1,6 +1,6 @@
 import fetch from "node-fetch";
 import { createClient } from "@supabase/supabase-js";
-import { getVgsPathDefinition } from "./vgs-path-definitions.mjs";
+import { getVgsPathDefinition, shouldMaterializeExpandedProgrammeCatalog } from "./vgs-path-definitions.mjs";
 import {
   extractVilbliStagesFromHtml,
   resolveStageFromVilbliKurs,
@@ -424,6 +424,9 @@ async function buildExpectedTruthSet({ supabase, professionSlug, countyCode }) {
   }
 
   for (const entry of expandedStageEntries) {
+    if (!shouldMaterializeExpandedProgrammeCatalog(entry)) {
+      continue;
+    }
     const identity = deterministicProgrammeIdentity({
       professionSlug,
       countySlug: countyMeta.slug,

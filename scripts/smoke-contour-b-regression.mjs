@@ -100,6 +100,16 @@ async function run() {
   assertCliContourBPartialRejected();
   assertOperationalIngestDryRun();
   assertRouteTruthInvariantSmoke();
+  const vg3CatalogResult = spawnSync(process.execPath, ["scripts/smoke-vg3-catalog-status.mjs"], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+    stdio: "pipe",
+  });
+  if (vg3CatalogResult.status !== 0) {
+    const combined = `${vg3CatalogResult.stdout ?? ""}${vg3CatalogResult.stderr ?? ""}`;
+    throw new Error(`VG3 catalog status smoke failed:\n${combined.slice(-800)}`);
+  }
+  console.error("[smoke] vg3-catalog status: OK");
   console.error("[smoke] contour-b regression: PASS");
 }
 

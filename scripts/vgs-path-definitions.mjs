@@ -194,6 +194,49 @@ export function getVgsPathDefinition(professionSlug) {
   return VGS_PATH_DEFINITIONS[professionSlug] ?? null;
 }
 
+/** R-VG3-CATALOG: true only when path definition requires school-based VG3 PSA writes. */
+export function expectsVg3SchoolProgrammeInContour(professionSlug) {
+  const definition = getVgsPathDefinition(professionSlug);
+  if (!definition) {
+    return false;
+  }
+  return definition.stageNodes.some(
+    (node) =>
+      node.stage === "VG3" &&
+      node.stageType === "school_programme" &&
+      node.requiredForWrite === true
+  );
+}
+
+export function getVg3StageNode(professionSlug) {
+  const definition = getVgsPathDefinition(professionSlug);
+  if (!definition) {
+    return null;
+  }
+  return definition.stageNodes.find((node) => node.stage === "VG3") ?? null;
+}
+
+/**
+ * Expanded pipeline may create education_programs only when PSA rows will follow.
+ * @param {{ stage: string, schools?: unknown[], source?: string | null }} entry
+ */
+export function shouldMaterializeExpandedProgrammeCatalog(entry) {
+  const stage = String(entry?.stage ?? "").toUpperCase();
+  if (stage !== "VG3") {
+    return true;
+  }
+
+  const source = String(entry?.source ?? "");
+  if (source === "apprenticeship_branch_programme") {
+    // Kolonne-3 bedrift branches are not programme_in_school catalog rows.
+    return false;
+  }
+
+  const schools = Array.isArray(entry?.schools) ? entry.schools : [];
+  // No school availability ⇒ no orphan VG3 catalog slug.
+  return schools.length > 0;
+}
+
 export function mapProgrammeToPathNode(program, pathDefinition) {
   const stage = parseStageFromProgramme(program);
   if (!stage) return null;

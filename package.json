@@ -18,6 +18,8 @@
     "ops:audit-institution-websites": "node scripts/audit-education-institution-websites.mjs",
     "ops:audit-vg3-psa-coverage": "node scripts/audit-vg3-psa-coverage.mjs",
     "ops:audit-route-readiness": "node scripts/audit-route-readiness.mjs",
+    "ops:deactivate-vg3-catalog-orphans": "node scripts/deactivate-vg3-catalog-orphans.mjs",
+    "smoke:vg3-catalog": "node scripts/smoke-vg3-catalog-status.mjs",
     "losa:finnmark-manifest": "node scripts/extract-losa-finnmark-manifest.mjs",
     "losa:finnmark-evidence-link": "node scripts/link-losa-finnmark-evidence.mjs",
     "losa:finnmark-publication-plan": "node scripts/plan-losa-finnmark-publication.mjs",

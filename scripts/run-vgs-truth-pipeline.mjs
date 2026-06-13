@@ -3,7 +3,7 @@ import { vilbliFetch } from "./lib/vilbli-fetch.mjs";
 import { isMainModule } from "./lib/is-main-module.mjs";
 import { classifyReadiness } from "./classify-vgs-truth-readiness.mjs";
 import { materializeVgsProgrammesFromVilbli } from "./materialize-vgs-programmes-from-vilbli.mjs";
-import { getVgsPathDefinition } from "./vgs-path-definitions.mjs";
+import { getVgsPathDefinition, shouldMaterializeExpandedProgrammeCatalog } from "./vgs-path-definitions.mjs";
 import {
   extractVilbliStagesFromHtml,
   resolveStageFromVilbliKurs,
@@ -1175,6 +1175,9 @@ export async function runVgsTruthPipeline({
   const expandedProgrammeMaterialization = [];
   const expandedProgrammesByStage = new Map();
   for (const entry of expandedStageEntries) {
+    if (!shouldMaterializeExpandedProgrammeCatalog(entry)) {
+      continue;
+    }
     const identity = deterministicProgrammeIdentity({
       professionSlug,
       countySlug: countyMeta.slug,

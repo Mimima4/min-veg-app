@@ -111,6 +111,20 @@ async function main() {
     });
   }
 
+  steps.push({
+    name: "deactivate-vg3-catalog-orphans",
+    run: () =>
+      runNodeScript("deactivate-vg3-catalog-orphans.mjs", [
+        ...(dryRun ? ["--dry-run"] : ["--apply"]),
+      ]),
+  });
+
+  steps.push({
+    name: "audit-route-readiness",
+    run: () =>
+      runNodeScript("audit-route-readiness.mjs", [...(dryRun ? [] : ["--strict"])]),
+  });
+
   if (!skipNavSnapshot) {
     steps.push({
       name: "nav-occupation-snapshot",
