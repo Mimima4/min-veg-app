@@ -51,3 +51,11 @@ Recommended frequency:
 - These routes are internal/operator infrastructure.
 - They should not be exposed in user-facing UI.
 - They are safe candidates for deployment cron jobs.
+
+## Payment contour (not live yet)
+
+Live Stripe / Vipps checkout and webhook security gates are **not** closed. See:
+
+- `docs/architecture/phase-billing-payment-contour-draft-and-security-charter.md`
+
+Do not enable public provider checkout until that charter’s **GO_LIVE_GATE** checklist passes.
