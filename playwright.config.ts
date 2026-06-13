@@ -2,7 +2,10 @@ import { defineConfig, devices } from "@playwright/test";
 
 const baseURL = process.env.E2E_BASE_URL?.trim() || "http://localhost:3000";
 const hasE2eAuth = Boolean(
-  process.env.E2E_TEST_EMAIL?.trim() && process.env.E2E_TEST_PASSWORD?.trim()
+  process.env.E2E_CHILD_ID?.trim() &&
+    process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() &&
+    process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() &&
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim()
 );
 
 export default defineConfig({
