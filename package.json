@@ -10,6 +10,7 @@
     "smoke:contour-b": "node scripts/smoke-contour-b-regression.mjs",
     "smoke:route-truth": "node scripts/smoke-route-truth-invariants.mjs",
     "smoke:route-save-flow": "node scripts/smoke-route-save-flow.mjs",
+    "verify:nav-matcher-v-gates": "node scripts/verify-nav-matcher-v-gates.mjs",
     "ops:scheduled": "node scripts/run-vgs-scheduled-ops.mjs",
     "ops:green-counties": "node scripts/run-contour-a-green-counties.mjs",
     "ops:stale-draft-batch": "node scripts/run-stale-draft-recompute-batch.mjs",
