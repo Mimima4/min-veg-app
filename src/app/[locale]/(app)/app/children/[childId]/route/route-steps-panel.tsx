@@ -471,6 +471,12 @@ export default function RouteStepsPanel({
                         }
                         className="flex h-full w-full flex-col text-left"
                         aria-expanded={isOpen}
+                        data-testid={
+                          step.type === "programme_selection" &&
+                          String(step.stage ?? "").toUpperCase() === "VG1"
+                            ? "route-vg1-step-toggle"
+                            : undefined
+                        }
                       >
                         {compact ? (
                           <div className="flex min-h-0 flex-1 flex-col">
@@ -588,7 +594,10 @@ export default function RouteStepsPanel({
                       </button>
 
                       {isOpen ? (
-                        <div className="mt-4 border-t border-stone-200 pt-3">
+                        <div
+                          className="mt-4 border-t border-stone-200 pt-3"
+                          data-testid="route-step-options"
+                        >
                           <div className="space-y-1">
                             {optionList.map((option) => (
                               <button
