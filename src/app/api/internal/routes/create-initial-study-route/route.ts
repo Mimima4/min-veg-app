@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { requireFamilyChildAccess } from "@/server/children/require-family-child-access";
 import { createInitialStudyRoute } from "@/server/children/routes/create-initial-study-route";
 import { toRouteErrorResponse } from "@/server/children/routes/route-errors";
 
@@ -18,17 +18,14 @@ export async function POST(req: Request) {
       });
     }
 
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const access = await requireFamilyChildAccess(childId);
 
     const data = await createInitialStudyRoute({
       childId,
       targetProfessionId,
       locale,
       createdByType: "parent",
-      createdByUserId: user?.id ?? null,
+      createdByUserId: access.userId,
     });
 
     return NextResponse.json({

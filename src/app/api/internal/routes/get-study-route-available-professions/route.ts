@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireFamilyChildAccessForRouteId } from "@/server/children/require-family-child-access";
 import { getStudyRouteAvailableProfessions } from "@/server/children/routes/get-study-route-available-professions";
 import { toRouteErrorResponse } from "@/server/children/routes/route-errors";
 
@@ -16,6 +17,8 @@ export async function POST(req: Request) {
         },
       });
     }
+
+    await requireFamilyChildAccessForRouteId(routeId);
 
     const data = await getStudyRouteAvailableProfessions({ routeId, locale });
 

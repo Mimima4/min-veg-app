@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { requireFamilyChildAccess } from "@/server/children/require-family-child-access";
 import { triggerStudyRouteRecompute } from "@/server/children/routes/trigger-study-route-recompute";
 import { toRouteErrorResponse } from "@/server/children/routes/route-errors";
 
@@ -21,6 +22,10 @@ export async function POST(req: Request) {
           message: "childId and routeId are required",
         },
       });
+    }
+
+    if (!hasValidInternalSecret) {
+      await requireFamilyChildAccess(childId);
     }
 
     const supabase = hasValidInternalSecret

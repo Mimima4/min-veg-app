@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireFamilyChildAccess } from "@/server/children/require-family-child-access";
 import { removeSavedProfession } from "@/server/children/routes/remove-saved-profession";
 import { toRouteErrorResponse } from "@/server/children/routes/route-errors";
 
@@ -16,6 +17,8 @@ export async function POST(req: Request) {
         },
       });
     }
+
+    await requireFamilyChildAccess(childId);
 
     const result = await removeSavedProfession({ childId, professionId });
 

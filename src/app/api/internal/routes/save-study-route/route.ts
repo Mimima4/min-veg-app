@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireFamilyChildAccess } from "@/server/children/require-family-child-access";
 import { saveStudyRoute } from "@/server/children/routes/save-study-route";
 import { toRouteErrorResponse } from "@/server/children/routes/route-errors";
 
@@ -16,6 +17,8 @@ export async function POST(req: Request) {
         },
       });
     }
+
+    await requireFamilyChildAccess(childId);
 
     const updated = await saveStudyRoute({
       childId,
