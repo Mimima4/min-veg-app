@@ -11,6 +11,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { isMainModule } from "./lib/is-main-module.mjs";
+import { assertV3FilterScopesOutcomes } from "./lib/nav-matcher-v3-fixture.mjs";
 
 const PATH_VARIANT_DIRECT_BEDRIFT = "vilbli-branch-direct-bedrift";
 const PATH_VARIANT_VG3_THEN_BEDRIFT = "vilbli-branch-vg3-then-bedrift";
@@ -135,6 +136,10 @@ export function runNavMatcherVGates(options = {}) {
     );
   });
 
+  runGate("V-3 filter change scopes outcomes via map rows", () => {
+    assertV3FilterScopesOutcomes();
+  });
+
   runGate("V-4 fagskole/long_academic hidden", () => {
     for (const filterId of ["fagskole_after_vgs", "long_academic"]) {
       const result = resolvePathVariantForFilter({
@@ -192,8 +197,8 @@ if (isMainModule(import.meta.url)) {
   try {
     runNavMatcherVGates({ skipBuild });
     const suffix = skipBuild
-      ? "V-1…V-6 PASS (V-7 browser E2E owner-held; V-8 skipped — run npm run build)"
-      : "V-1…V-6 + V-8 PASS (V-7 browser E2E still owner-held)";
+      ? "V-1…V-6 PASS (V-7 browser E2E CLOSED 2026-06-10; V-8 skipped — run npm run build)"
+      : "V-1…V-6 + V-8 PASS (V-7 browser E2E CLOSED 2026-06-10)";
     console.error(`[verify:nav-matcher] ${suffix}`);
   } catch (error) {
     console.error("[verify:nav-matcher] FAIL", error instanceof Error ? error.message : error);

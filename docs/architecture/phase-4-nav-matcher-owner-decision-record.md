@@ -3,7 +3,7 @@
 | Field | Value |
 |--------|--------|
 | **Section** | **P4-NAV-MATCHER** |
-| **Status** | **EFFECTIVE** — owner re-sign-off 2026-06-10 |
+| **Status** | **IMPLEMENTATION CLOSED** — go-live **2026-06-13** (`phase-4-nav-matcher-go-live-closure-summary.md`) |
 | **Date (UTC)** | 2026-06-10 |
 | **Scope** | NAV/STYRK matching contract for route construction, available professions, and alternatives — gated by `filter_id` and contour truth |
 | **Implementation** | **Production-first only** — see §1.1; family-facing ship after V-1…V-8, no interim or degraded surfaces |
@@ -71,14 +71,16 @@ filter_id
 | `hidden_filter_ids` | Filters with no live contour — **hidden in UI**, not stubbed |
 | `alternative_routes` | Up to K=3 **full** routes per filter record §3; each or nothing |
 
-### 3.3 Current code gaps (must close before live)
+### 3.3 Code modules (closed 2026-06-13)
 
-| Module | Problem | Required fix |
-|--------|---------|--------------|
-| `map-vilbli-outcomes-to-nav.ts` | Live fetch; title fuzzy; no `filter_id` | Read versioned snapshot; apply path_family + filter gates |
-| `build-path-variants.ts` | Variant not selected by filter | `resolvePathVariantForFilter(filter_id)` |
-| `get-study-route-available-professions.ts` | Synthetic `review-*` IDs; ignores filter | Catalog-only links; respect `hidden_filter_ids` |
-| `nav-taxonomy-adapter.ts` | Ephemeral parse | Persist snapshot + scheduled refresh (C-NAV U-1…U-6) |
+| Module | Production path |
+|--------|-----------------|
+| Path-family map + filter gates | `src/lib/nav/path-family-outcome-nav-map.ts` |
+| Variant selection | `src/server/children/routes/resolve-path-variant-for-filter.ts` |
+| NAV matches on route build | `src/server/children/routes/build-route-path-variant-nav-context.ts` |
+| Available professions | `src/server/children/routes/get-study-route-available-professions.ts` |
+| NAV snapshot read | `src/server/nav/get-nav-occupation-snapshot.ts` |
+| `/matches` | Redirect to route-scoped professions (`matches/page.tsx`) |
 
 ---
 
@@ -237,6 +239,6 @@ Phases are **implementation sequence**, not staggered product quality tiers. Cod
 
 - `phase-4-route-outcome-filter-owner-decision-record.md`
 - `phase-4-multi-contour-truth-registry-owner-decision-record.md`
-- `map-vilbli-outcomes-to-nav.ts` — **to be replaced** for production path
 - `build-path-variants.ts`
+- `phase-4-nav-matcher-go-live-closure-summary.md`
 - `route-engine-stage-6-ux.md`
