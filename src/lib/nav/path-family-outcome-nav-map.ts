@@ -51,6 +51,9 @@ const MECHANIC_KJORETOY_SOURCE =
 const ELECTRICIAN_ELEKTRO_SOURCE =
   "https://www.vilbli.no/nb/no/strukturkart/v.el/skoler-og-laerebedrifter-elektro-og-datateknologi?kurs=v.elele2----&side=p5";
 
+const CARPENTER_TOMRER_SOURCE =
+  "https://www.vilbli.no/nb/no/strukturkart/V.BA/tomrer-fag-og-timefordeling?kurs=V.BABAT1----_V.BATMF2----&side=p2";
+
 export const PATH_FAMILY_OUTCOME_NAV_MAP_ROWS: PathFamilyOutcomeNavMapRow[] = [
   // --- mechanic / mechanic-vtp-kjoretoy ---
   {
@@ -131,6 +134,19 @@ export const PATH_FAMILY_OUTCOME_NAV_MAP_ROWS: PathFamilyOutcomeNavMapRow[] = [
     navTitle: "Andre ingeniører",
     catalogProfessionSlug: "electrician",
     sourceReferenceUrl: NAV_TAXONOMY_AUTHORITY_URL,
+  },
+  // --- carpenter / carpenter-vba-tomrer ---
+  {
+    mapVersion: 1,
+    pathFamilySlug: "carpenter-vba-tomrer",
+    professionSlug: "carpenter",
+    vilbliTitleIncludes: ["tomrerfaget", "tømrerfaget", "tømrer"],
+    vilbliOutcomeUrlIncludes: ["/yrker/v.ba/"],
+    filterTags: ["laere", "fagbrev"],
+    navStyrkCode: "håndverkere.tømrer",
+    navTitle: "Tømrer",
+    catalogProfessionSlug: "carpenter",
+    sourceReferenceUrl: CARPENTER_TOMRER_SOURCE,
   },
 ];
 

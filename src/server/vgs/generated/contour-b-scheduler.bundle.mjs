@@ -16732,6 +16732,17 @@ function detectMechanicBranch(program) {
   }
   return "unspecified";
 }
+function detectCarpenterBranch(program) {
+  const title = normalizeBasic(program.title);
+  const code = normalizeBasic(program.program_code);
+  if (title.includes("tomrer") || title.includes("t\xF8mrer") || code.includes("tmf")) {
+    return "tomrerfaget";
+  }
+  if (title.includes("bygg") || title.includes("anlegg") || code.includes("bat")) {
+    return "bygg_og_anlegg";
+  }
+  return "unspecified";
+}
 function detectElectricianBranch(program) {
   const title = normalizeBasic(program.title);
   const code = normalizeBasic(program.program_code);
@@ -16807,6 +16818,72 @@ var MECHANIC_PATH_DEFINITION = {
     }
   ]
 };
+var CARPENTER_PATH_DEFINITION = {
+  professionSlug: "carpenter",
+  contour: "vgs",
+  description: "T\xF8mrer VGS path: VG1 Bygg- og anleggsteknikk, VG2 T\xF8mrerfaget, full Bygg\u2192T\xF8mrer kolonne-3/bedrift list from Vilbli.",
+  sourceModel: {
+    buildVilbliUrl(countySlug) {
+      return `https://www.vilbli.no/nb/${countySlug}/strukturkart/V.BA/bygg-og-anleggsteknikk-skoler-og-laerebedrifter?kurs=V.BABAT1----_V.BATMF2----_V.BATMF3----&side=p5`;
+    },
+    strukturkartReferenceUrl: "https://www.vilbli.no/nb/no/strukturkart/V.BA/tomrer-fag-og-timefordeling?kurs=V.BABAT1----_V.BATMF2----&side=p2"
+  },
+  stageNodes: [
+    {
+      nodeKey: "VG1_BYGG",
+      stage: "VG1",
+      stageType: "school_programme",
+      branchSpecific: false,
+      requiredForWrite: true,
+      expectedLabel: "VG1 Bygg- og anleggsteknikk",
+      programmeMatcher: {
+        includesAny: [
+          "vg1 bygg og anleggsteknikk",
+          "vg1 bygg- og anleggsteknikk",
+          "bygg- og anleggsteknikk",
+          "bygg og anlegg"
+        ]
+      }
+    },
+    {
+      nodeKey: "VG2_TOMRER",
+      stage: "VG2",
+      stageType: "school_programme",
+      branchSpecific: true,
+      requiredForWrite: true,
+      branchKey: "tomrerfaget",
+      expectedLabel: "VG2 T\xF8mrerfaget",
+      programmeMatcher: {
+        includesAny: ["vg2 tomrerfaget", "vg2 t\xF8mrerfaget", "tomrerfaget", "t\xF8mrerfaget"]
+      },
+      branchResolver: detectCarpenterBranch
+    },
+    {
+      nodeKey: "VG3_OR_BEDRIFT_SPECIALIZATIONS",
+      stage: "VG3",
+      stageType: "awareness_only",
+      branchSpecific: false,
+      requiredForWrite: false,
+      expectedLabel: "VG3 or Oppl\xE6ring i bedrift \u2014 full Bygg\u2192T\xF8mrer kolonne-3 list from Vilbli (not P\xE5bygging)"
+    },
+    {
+      nodeKey: "APPRENTICESHIP_PROGRESS",
+      stage: "APPRENTICESHIP",
+      stageType: "progression",
+      branchSpecific: true,
+      requiredForWrite: false,
+      expectedLabel: "Oppl\xE6ring i bedrift (l\xE6re / fagbrev) after VG2 or VG3 specialization choice"
+    },
+    {
+      nodeKey: "FAGBREV_OUTCOME",
+      stage: "FAGBREV",
+      stageType: "progression_outcome",
+      branchSpecific: true,
+      requiredForWrite: false,
+      expectedLabel: "Fagbrev T\xF8mrer"
+    }
+  ]
+};
 var ELECTRICIAN_PATH_DEFINITION = {
   professionSlug: "electrician",
   contour: "vgs",
@@ -16869,7 +16946,8 @@ var ELECTRICIAN_PATH_DEFINITION = {
 };
 var VGS_PATH_DEFINITIONS = {
   electrician: ELECTRICIAN_PATH_DEFINITION,
-  mechanic: MECHANIC_PATH_DEFINITION
+  mechanic: MECHANIC_PATH_DEFINITION,
+  carpenter: CARPENTER_PATH_DEFINITION
 };
 function getVgsPathDefinition(professionSlug) {
   return VGS_PATH_DEFINITIONS[professionSlug] ?? null;
@@ -16909,6 +16987,7 @@ function mapProgrammeToPathNode(program, pathDefinition) {
 // scripts/vgs-programme-materialization-planner.mjs
 var ELECTRICIAN_MATERIALIZATION_NODE_KEYS = ["VG1_ELEKTRO", "VG2_EL_BRANCH"];
 var MECHANIC_MATERIALIZATION_NODE_KEYS = ["VG1_TEKNOLOGI", "VG2_KJORETOY"];
+var CARPENTER_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_TOMRER"];
 var PROFESSION_MATERIALIZATION_CONFIG = {
   electrician: {
     nodeKeys: ELECTRICIAN_MATERIALIZATION_NODE_KEYS,
@@ -16932,6 +17011,18 @@ var PROFESSION_MATERIALIZATION_CONFIG = {
     trondelagSlugPatterns: {
       VG1: { slug: "mechanic-vg1-teknologi-trondelag", code: "MECH-VG1-TRONDELAG" },
       VG2: { slug: "mechanic-vg2-kjoretoy-trondelag", code: "MECH-VG2-TRONDELAG" }
+    }
+  },
+  carpenter: {
+    nodeKeys: CARPENTER_MATERIALIZATION_NODE_KEYS,
+    deriveIdentitySpecs: deriveCarpenterProgrammeIdentitySpecs,
+    countyScopedSlugPatterns: {
+      VG1: { slugMiddle: "vg1-bygg", codePrefix: "CARP-VG1" },
+      VG2: { slugMiddle: "vg2-tomrer", codePrefix: "CARP-VG2" }
+    },
+    trondelagSlugPatterns: {
+      VG1: { slug: "carpenter-vg1-bygg-trondelag", code: "CARP-VG1-TRONDELAG" },
+      VG2: { slug: "carpenter-vg2-tomrer-trondelag", code: "CARP-VG2-TRONDELAG" }
     }
   }
 };
@@ -17017,6 +17108,43 @@ function deriveElectricianProgrammeIdentitySpecs({ professionSlug, countyCode, c
       slug: `${professionSlug}-${patterns.VG2.slugMiddle}-${countyMeta.slug}`,
       programCode: `${patterns.VG2.codePrefix}-${countyUpper}`,
       title: "VG2 Elenergi og ekom"
+    }
+  };
+}
+function deriveCarpenterProgrammeIdentitySpecs({ professionSlug, countyCode, countyMeta }) {
+  if (professionSlug !== "carpenter") {
+    return null;
+  }
+  if (countyMeta == null || typeof countyMeta.slug !== "string" || countyMeta.slug.length === 0) {
+    return null;
+  }
+  const config = PROFESSION_MATERIALIZATION_CONFIG.carpenter;
+  if (countyCode === "50") {
+    return {
+      VG1_BYGG: {
+        slug: config.trondelagSlugPatterns.VG1.slug,
+        programCode: config.trondelagSlugPatterns.VG1.code,
+        title: "VG1 Bygg- og anleggsteknikk"
+      },
+      VG2_TOMRER: {
+        slug: config.trondelagSlugPatterns.VG2.slug,
+        programCode: config.trondelagSlugPatterns.VG2.code,
+        title: "VG2 T\xF8mrerfaget"
+      }
+    };
+  }
+  const countyUpper = countyTokenFromMeta(countyMeta);
+  const patterns = config.countyScopedSlugPatterns;
+  return {
+    VG1_BYGG: {
+      slug: `${professionSlug}-${patterns.VG1.slugMiddle}-${countyMeta.slug}`,
+      programCode: `${patterns.VG1.codePrefix}-${countyUpper}`,
+      title: "VG1 Bygg- og anleggsteknikk"
+    },
+    VG2_TOMRER: {
+      slug: `${professionSlug}-${patterns.VG2.slugMiddle}-${countyMeta.slug}`,
+      programCode: `${patterns.VG2.codePrefix}-${countyUpper}`,
+      title: "VG2 T\xF8mrerfaget"
     }
   };
 }
