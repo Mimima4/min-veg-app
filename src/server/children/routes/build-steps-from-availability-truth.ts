@@ -1,4 +1,8 @@
 import {
+  isVgsStage,
+  toStageAwareProgrammeTitle,
+} from "@/lib/vgs/stage-aware-programme-title";
+import {
   buildLosaOptionDisplayTitle,
   isLosaAvailabilityScope,
   normalizeLosaDeliverySiteLabel,
@@ -155,17 +159,22 @@ function splitOrdinaryAndLosaRows(rows: AvailabilityTruthRow[]): {
 }
 
 function mapOrdinaryProgrammeOption(row: AvailabilityTruthRow) {
+  const programmeTitle =
+    isVgsStage(row.stage) && row.programTitle
+      ? toStageAwareProgrammeTitle({ stage: row.stage, title: row.programTitle })
+      : row.programTitle;
+
   return {
     institution_id: row.institutionId,
     institution_name: row.institutionName,
     institution_city: row.institutionMunicipality,
     institution_municipality: row.institutionMunicipality,
     institution_website: row.institutionWebsite,
-    program_title: row.programTitle,
+    program_title: programmeTitle,
     program_slug: row.programSlug,
     stage: row.stage,
     duration_label: null,
-    display_title: row.programTitle,
+    display_title: programmeTitle,
     verification_status: row.verificationStatus,
     institution_is_private_school:
       row.institutionIsPrivateSchool === true
@@ -296,19 +305,6 @@ function continuityStageRows(params: {
       transportSortContext: params.transportSortContext,
     }),
   ];
-}
-
-function toStageAwareProgrammeTitle(params: {
-  stage: "VG1" | "VG2" | "VG3";
-  title: string;
-}): string {
-  if (params.stage !== "VG3") return params.title;
-  const normalized = String(params.title ?? "").trim();
-  if (!normalized) return "VG3";
-  if (/^VG3\b/i.test(normalized)) {
-    return normalized.replace(/^VG3\b\s*/i, "VG3 ").trim();
-  }
-  return `VG3 ${normalized}`;
 }
 
 function normalizeProfessionSlugTokens(professionSlug: string): string[] {

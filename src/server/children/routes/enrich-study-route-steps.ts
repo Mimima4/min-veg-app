@@ -5,6 +5,7 @@ import {
   normalizeLosaProviderLabel,
 } from "@/lib/losa/availability-scope";
 import { resolveInstitutionDisplayName } from "@/lib/i18n/institution-display-name";
+import { toStageAwareProgrammeTitleForStage } from "@/lib/vgs/stage-aware-programme-title";
 import { createClient } from "@/lib/supabase/server";
 import { selectEducationInstitutions } from "@/server/education/query-education-institutions";
 import type { StudyRouteSnapshotStep } from "@/lib/routes/route-types";
@@ -370,6 +371,9 @@ export async function enrichStudyRouteSteps(
           fallbackInstitutionName || fallbackMunicipalityName
             ? stripTrailingGeographicSuffix(normalizedProgramTitle)
             : normalizedProgramTitle;
+        const stageAwareProgramTitle =
+          toStageAwareProgrammeTitleForStage(step.stage, displayProgramTitle) ??
+          displayProgramTitle;
 
         return {
           ...step,
@@ -377,8 +381,8 @@ export async function enrichStudyRouteSteps(
           institution_city: fallbackMunicipalityName,
           institution_municipality: fallbackMunicipalityName,
           institution_website: fallbackInstitutionWebsite,
-          program_title: displayProgramTitle,
-          title: displayProgramTitle ?? step.title,
+          program_title: stageAwareProgramTitle,
+          title: stageAwareProgramTitle ?? step.title,
           duration_years: truthDuration,
           duration_label: formatDurationLabel(truthDuration),
           options: step.options?.map((option) => ({
@@ -425,6 +429,11 @@ export async function enrichStudyRouteSteps(
                 option.institution_name || optionMunicipality
                   ? stripTrailingGeographicSuffix(optionNormalizedProgramTitle)
                   : optionNormalizedProgramTitle;
+              const stageAwareOptionProgramTitle =
+                toStageAwareProgrammeTitleForStage(
+                  option.stage ?? step.stage,
+                  optionDisplayProgramTitle
+                ) ?? optionDisplayProgramTitle;
 
               const institutionId =
                 typeof option.institution_id === "string" ? option.institution_id.trim() : "";
@@ -454,10 +463,10 @@ export async function enrichStudyRouteSteps(
                   fallbackMunicipalityName,
                 institution_website:
                   option.institution_website ?? fallbackInstitutionWebsite ?? null,
-                program_title: optionDisplayProgramTitle,
+                program_title: stageAwareOptionProgramTitle,
                 stage: option.stage ?? step.stage ?? null,
                 duration_label: option.duration_label ?? formatDurationLabel(truthDuration),
-                display_title: optionDisplayProgramTitle,
+                display_title: stageAwareOptionProgramTitle,
                 institution_is_private_school: hydratedPrivate,
               };
             })(),
