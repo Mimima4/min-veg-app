@@ -56,7 +56,7 @@ Add **`carpenter`** (catalog: **Tømrer**) as the third VGS-backed profession �
 | 7 | ☑ | Pilot production ingest **18** (home IP) |
 | 8 | ☑ | Browser E2E Nordland — owner **2026-06-15** |
 | 9 | ☑ | Batch **14** remaining counties via `run-contour-b-operational-ingest` (2026-06-15) |
-| 10 | ☐ | Optional: add `carpenter` to green-county charter (`03`/`11`/`46`/`50`) |
+| 10 | ☑ | **DEFERRED** — carpenter stays **Contour B** on all 15; green A charter not required (owner 2026-06-15) |
 
 ---
 
@@ -84,7 +84,17 @@ Add **`carpenter`** (catalog: **Tømrer**) as the third VGS-backed profession �
 
 ---
 
-## 6. References
+## 6. Step 10 decision — green-county charter (2026-06-15)
+
+| Option | Decision |
+|--------|----------|
+| Add `carpenter` to `CONTOUR_A_OPERATIONAL_BY_PROFESSION` (`03`/`11`/`46`/`50`) | **No** — deferred |
+| Rationale | Contour B PSA live on all **15** fylke; Nordland + manual E2E **PASS**; adding Contour A without a product gap would switch route read path on green fylke and require Feb/Aug green refresh — no benefit vs verified Contour B truth |
+| Ops | Repeat audit: `npm run ops:audit-carpenter-expansion` |
+
+---
+
+## 7. References
 
 - `phase-4-losa-regional-delivery-models-fit-analysis.md` — Steigen / Nordland decision rule
 - `phase-2-validation-contour-data-resolution-backlog.md` — Case A (`18` Nordland)

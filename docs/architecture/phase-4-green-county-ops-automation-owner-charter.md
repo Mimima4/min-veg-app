@@ -17,7 +17,7 @@
 | `46` | Vestland | A (green) |
 | `50` | Trøndelag | A (green) |
 
-Professions: `electrician`, `mechanic` (per `CONTOUR_A_OPERATIONAL_BY_PROFESSION`).
+Professions: `electrician`, `mechanic` (per `CONTOUR_A_OPERATIONAL_BY_PROFESSION`). **`carpenter`** uses Contour B on all pipeline fylke — intentionally **not** in green A scope (`phase-0-6-contour-b-third-profession-expansion-owner-record.md` §6).
 
 Contour B Vilbli relay **must not** overwrite these counties (`use_contour_a`). Green refresh uses **`run-vgs-truth-pipeline`** (full Contour A write when readiness is green).
 
