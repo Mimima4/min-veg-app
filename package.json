@@ -19,6 +19,7 @@
     "ops:audit-vg3-psa-coverage": "node scripts/audit-vg3-psa-coverage.mjs",
     "ops:audit-route-readiness": "node scripts/audit-route-readiness.mjs",
     "ops:audit-carpenter-expansion": "node --env-file=.env.local scripts/audit-carpenter-expansion-parity.mjs",
+    "scout:nordland-regional": "node --env-file=.env.local scripts/scout-nordland-regional-delivery-vilbli.mjs",
     "ops:deactivate-vg3-catalog-orphans": "node scripts/deactivate-vg3-catalog-orphans.mjs",
     "smoke:vg3-catalog": "node scripts/smoke-vg3-catalog-status.mjs",
     "test:e2e": "node --env-file=.env.local node_modules/.bin/playwright test",

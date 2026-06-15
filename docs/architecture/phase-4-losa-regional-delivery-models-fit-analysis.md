@@ -39,7 +39,7 @@
 
 **Verdict:** **Analogous policy goal, not same technical contour.** Investigate as **Y-path / vekslingsmodell** slice, not copy-paste Finnmark LOSA pipeline.
 
-**Next analysis (no code):** Vilbli rows for Steigen area; Udir/operator docs on Steigenmodellen vs LOSA legal status.
+**Next analysis (no code):** Vilbli rows for Steigen area; Udir/operator docs on Steigenmodellen vs LOSA legal status. **Scout 2026-06-15:** `phase-4-nordland-steigen-regional-delivery-research-owner-record.md` — **0 LOSA** on elec/mech/carpenter strukturkart; **avd Steigen** absent from chains.
 
 ---
 
