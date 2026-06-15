@@ -18541,7 +18541,8 @@ var http_fetch_default = fetchFn;
 init_dist4();
 var MATERIALIZATION_NODE_KEYS_BY_PROFESSION = {
   electrician: ELECTRICIAN_MATERIALIZATION_NODE_KEYS,
-  mechanic: MECHANIC_MATERIALIZATION_NODE_KEYS
+  mechanic: MECHANIC_MATERIALIZATION_NODE_KEYS,
+  carpenter: CARPENTER_MATERIALIZATION_NODE_KEYS
 };
 var COUNTY_CODE_TO_VILBLI2 = {
   "03": { slug: "oslo", label: "Oslo" },

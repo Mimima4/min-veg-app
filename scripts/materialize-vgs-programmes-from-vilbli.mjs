@@ -5,6 +5,7 @@ import { getVgsPathDefinition } from "./vgs-path-definitions.mjs";
 import { extractVilbliStagesFromHtml } from "./vilbli-stage-extraction-helper.mjs";
 import {
   buildRequiredProgrammeSpecs,
+  CARPENTER_MATERIALIZATION_NODE_KEYS,
   ELECTRICIAN_MATERIALIZATION_NODE_KEYS,
   MECHANIC_MATERIALIZATION_NODE_KEYS,
   stagePresentInCounty,
@@ -13,6 +14,7 @@ import {
 const MATERIALIZATION_NODE_KEYS_BY_PROFESSION = {
   electrician: ELECTRICIAN_MATERIALIZATION_NODE_KEYS,
   mechanic: MECHANIC_MATERIALIZATION_NODE_KEYS,
+  carpenter: CARPENTER_MATERIALIZATION_NODE_KEYS,
 };
 
 const COUNTY_CODE_TO_VILBLI = {
