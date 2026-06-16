@@ -54,7 +54,7 @@ Variant B (pilot charter): veksling_hub_step? → apprenticeship_step (employer-
 | Gate | Requirement |
 |------|-------------|
 | T-1 | Tier 1 legal frame **signed** in parent record §8 |
-| T-2 | NFK / kommune **2025–2029** confirmation Tømrerfaget still offered on Steigenmodellen |
+| T-2 | Evidence for trade offer: NFK confirms **0+4 (Steigenmodellen)** rights for pupils from **Steigen + Hamarøy** in **2025–2029**; local Steigenmodellen operator page lists **Tømrerfaget** among available trades for the program |
 | T-3 | **No** `losa_fjern_delivery_municipality` scope |
 | T-4 | Curated evidence pack (URLs + owner-held PDF/snippet if needed) — not Vilbli HTML alone |
 | T-5 | Child eligibility rule: `home_municipality_code = 1848` (or configurable Steigen set) |
@@ -98,8 +98,8 @@ Variant B (pilot charter): veksling_hub_step? → apprenticeship_step (employer-
 | # | Decision | Status |
 |---|----------|--------|
 | C-1 | Charter scope **Steigen × carpenter** approved | **OK** — chat 2026-06-15 |
-| C-2 | Start at **P0 info card** vs **P1 path variant** | **OPEN** — recommend **P0** first |
-| C-3 | Implementation gate author | **OPEN** |
+| C-2 | Start at **P0 info card** vs **P1 path variant** | **P0 approved** — chat 2026-06-16 |
+| C-3 | Implementation gate author | **OK** — P0 shipped in app (info card on child profile, route detail, compare) |
 
 **Sign-off:** _____________ Date: _____________
 
@@ -108,6 +108,7 @@ Variant B (pilot charter): veksling_hub_step? → apprenticeship_step (employer-
 ## 9. References
 
 - [levisteigen.no — Steigenmodellen + Tømrerfaget](https://www.levisteigen.no/utdanning-i-steigen.html)
+- [Nordland fylkeskommune (NFK) — 0+4 / Steigenmodellen on nearest VGS (2025–2029)](https://www.nfk.no/aktuelt/knut-hamsun-vgs-fellesundervisning-pa-narmeste-skole.99955.aspx)
 - [Udir — vekslingsmodeller evaluering](https://www.udir.no/tall-og-forskning/finn-forskning/rapporter/evaluering-av-vekslingsmodeller-i-fag--og-yrkesopplaringen/)
 - [Udir — fleksibilitet / vekslingsmodell](https://www.udir.no/regelverkstolkninger/opplaring/Innhold-i-opplaringen/veiledning-fleksibilitet-i-fag--og-timefordeling)
 - `phase-4-route-mobile-api-contract-v1.md` — `apprenticeship_step`

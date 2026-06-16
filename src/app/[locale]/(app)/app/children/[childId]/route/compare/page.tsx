@@ -8,6 +8,12 @@ import { getLocalizedValue } from "@/lib/i18n/get-localized-value";
 import type { StudyRouteReadModel, StudyRouteReadModelStep, StudyRouteSnapshotStep } from "@/lib/routes/route-types";
 import { requireAppAccess } from "@/server/billing/require-app-access";
 import { getStudyRouteDetail } from "@/server/children/routes/get-study-route-detail";
+import SteigenVekslingInfoCard from "@/components/route/steigen-veksling-info-card";
+import { getChildPreferredMunicipalityCodes } from "@/server/children/planning/get-child-preferred-municipality-codes";
+import {
+  getSteigenCarpenterVekslingInfoCopy,
+  shouldShowSteigenCarpenterVekslingInfo,
+} from "@/lib/regional-delivery/steigen-carpenter-veksling-pilot";
 
 type SavedRouteRow = {
   id: string;
@@ -187,6 +193,20 @@ export default async function SavedRouteComparePage({
     })
   );
 
+  const preferredMunicipalityCodes = await getChildPreferredMunicipalityCodes(
+    childId,
+    supabase
+  );
+  const showSteigenVekslingInfo = routeDetails.some(({ detail }) =>
+    shouldShowSteigenCarpenterVekslingInfo({
+      professionSlug: detail.identity.targetProfessionSlug,
+      preferredMunicipalityCodes,
+    })
+  );
+  const steigenVekslingInfoCopy = showSteigenVekslingInfo
+    ? getSteigenCarpenterVekslingInfoCopy(locale)
+    : null;
+
   return (
     <LocalePageShell
       locale={locale}
@@ -198,6 +218,10 @@ export default async function SavedRouteComparePage({
       <AppPrivateNav locale={locale} currentPath="/app/family" />
 
       <div className="mt-6 space-y-6">
+        {steigenVekslingInfoCopy ? (
+          <SteigenVekslingInfoCard copy={steigenVekslingInfoCopy} />
+        ) : null}
+
         {routeDetails.map(({ route, detail }) => {
           const profession = professionMap.get(route.target_profession_id);
           const professionTitle = profession

@@ -52,6 +52,7 @@ type SavedRouteSnapshotRow = {
 
 type RouteProfessionRow = {
   id: string;
+  slug: string;
   title_i18n: Record<string, string> | null;
 };
 
@@ -83,6 +84,7 @@ export type SavedProfessionCard = {
 export type SavedStudyRouteCard = {
   savedRoute: SavedStudyRouteRow;
   professionTitle: string;
+  professionSlug: string;
   primaryInstitutionName: string | null;
   primaryInstitutionLocation: string | null;
 };
@@ -492,7 +494,7 @@ export async function getChildProfilePageData({
     savedRouteProfessionIds.length > 0
       ? await supabase
           .from("professions")
-          .select("id, title_i18n")
+          .select("id, slug, title_i18n")
           .in("id", savedRouteProfessionIds)
           .eq("is_active", true)
       : { data: [], error: null };
@@ -526,6 +528,7 @@ export async function getChildProfilePageData({
           profession.title_i18n ?? {},
           supportedLocale
         ),
+        professionSlug: profession.slug,
         primaryInstitutionName: (() => {
           const snapshot = savedRoute.current_variant_id
             ? savedRouteSnapshotByVariantId.get(savedRoute.current_variant_id)

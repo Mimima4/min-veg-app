@@ -90,7 +90,7 @@ Carpenter on `18` proves **campus programme_selection** for Bygg→Tømrer (7/5 
 
 ## 6. Fylke operator inventory — Steigenmodellen trades (2026-06-15)
 
-**Source:** [levisteigen.no](https://www.levisteigen.no/utdanning-i-steigen.html) (public; verify against NFK tilbudsstruktur before implementation).
+**Source:** [levisteigen.no](https://www.levisteigen.no/utdanning-i-steigen.html) (public) + NFK policy confirmation of the **0+4 / Steigenmodellen** alternative for pupils from **Steigen + Hamarøy** in **2025–2029**.
 
 | Trade (Norwegian) | Maps to Min Veg profession | On Vilbli strukturkart `18` (campus) | Steigenmodellen (public list) |
 |-------------------|---------------------------|--------------------------------------|-------------------------------|
@@ -108,7 +108,7 @@ Carpenter on `18` proves **campus programme_selection** for Bygg→Tømrer (7/5 
 
 **Pilot choice rationale:** **Tømrerfaget** aligns with **`carpenter`** catalog + Nordland research anchor; avoids electrician (not on Steigenmodellen list) and multi-trade scope creep.
 
-**Action before P1:** NFK operator confirm Tømrerfaget on Steigenmodellen **2025–2029** (gate T-2 in charter).
+**Action before P1:** T-2 evidence collected (NFK confirms the 0+4 / Steigenmodellen alternative; levisteigen lists **Tømrerfaget** as an eligible trade).
 
 ---
 

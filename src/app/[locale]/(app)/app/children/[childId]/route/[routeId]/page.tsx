@@ -1,9 +1,15 @@
 import { createClient } from "@/lib/supabase/server";
 import { LocalePageShell } from "@/components/layout/locale-page-shell";
 import AppPrivateNav from "@/components/layout/app-private-nav";
+import SteigenVekslingInfoCard from "@/components/route/steigen-veksling-info-card";
 import { CompetitionBadge } from "@/components/route/competition-badge";
 import { getStudyRouteDetail } from "@/server/children/routes/get-study-route-detail";
 import { getRouteStrategies } from "@/server/children/routes/route-strategy-rules";
+import { getChildPreferredMunicipalityCodes } from "@/server/children/planning/get-child-preferred-municipality-codes";
+import {
+  getSteigenCarpenterVekslingInfoCopy,
+  shouldShowSteigenCarpenterVekslingInfo,
+} from "@/lib/regional-delivery/steigen-carpenter-veksling-pilot";
 import RouteStepsRecomputePanel from "../route-steps-recompute-panel";
 import RouteSignalsPanel from "../route-signals-panel";
 import RouteAvailableProfessionsPanel from "../route-available-professions-panel";
@@ -43,6 +49,15 @@ export default async function StudyRouteDetailPage({
     locale,
     previewVariantId,
   });
+
+  const preferredMunicipalityCodes = await getChildPreferredMunicipalityCodes(childId);
+  const showSteigenVekslingInfo = shouldShowSteigenCarpenterVekslingInfo({
+    professionSlug: route.identity.targetProfessionSlug,
+    preferredMunicipalityCodes,
+  });
+  const steigenVekslingInfoCopy = showSteigenVekslingInfo
+    ? getSteigenCarpenterVekslingInfoCopy(locale)
+    : null;
 
   const isAlternativePreview = Boolean(previewVariantId);
 
@@ -135,6 +150,10 @@ export default async function StudyRouteDetailPage({
               ))}
             </dl>
           </div>
+
+          {steigenVekslingInfoCopy ? (
+            <SteigenVekslingInfoCard copy={steigenVekslingInfoCopy} />
+          ) : null}
 
           <RouteStepsRecomputePanel
             childId={childId}
