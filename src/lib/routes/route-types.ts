@@ -83,6 +83,10 @@ export type StudyRouteApprenticeshipSnapshotStep = {
     option_id: string;
     option_title: string;
     outcome_profession_ids: string[];
+    entity_type?: "employer" | "education_institution";
+    employer_municipality?: string | null;
+    employer_website?: string | null;
+    employer_source_note?: string | null;
   }>;
   current_profession_slug: string;
   source?: StudyRouteSnapshotStepSource;

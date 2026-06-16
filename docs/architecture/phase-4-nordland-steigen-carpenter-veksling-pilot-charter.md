@@ -78,8 +78,8 @@ Variant B (pilot charter): veksling_hub_step? → apprenticeship_step (employer-
 |-------|-------------|--------|
 | **P0** | Static **info card** on child profile / route detail / compare when Steigen + carpenter | **SHIPPED** — `d9be993` |
 | **P1** | Second **path variant** in route builder (read-only curated JSON, not PSA) | **SHIPPED** — curated regional alternative sync |
-| **P2** | Employer entity + `apprenticeship_options` curation table (separate from PSA) | Blocked on P1 |
-| **P3** | E2E owner checklist Steigen child × carpenter × variant B | Blocked on P1 |
+| **P2** | Employer entity + `apprenticeship_options` curation table (separate from PSA) | **SHIPPED** — curated employer table in app code |
+| **P3** | E2E owner checklist Steigen child × carpenter × variant B | **OPEN** — `phase-4-nordland-steigen-carpenter-veksling-e2e-owner-verify-checklist.md` |
 
 **Stop rule:** if Tier 2 bedrift list cannot be sourced with auditable evidence → stay at **P0 info card** only.
 

@@ -55,7 +55,14 @@ export default function AlternativeRoutesCollapsible({
             <p className="text-sm text-stone-600">{resolveEmptyAlternativesLabel(locale)}</p>
           ) : null}
           {visibleAlternatives.map((alternative) => (
-            <section key={alternative.variantId}>
+            <section
+              key={alternative.variantId}
+              data-testid={
+                alternative.curatedRegionalVariantId === STEIGEN_CARPENTER_VEKSLING_VARIANT_ID
+                  ? "steigen-veksling-alternative-route"
+                  : undefined
+              }
+            >
               <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="text-base font-semibold text-stone-900">{alternative.label}</h3>

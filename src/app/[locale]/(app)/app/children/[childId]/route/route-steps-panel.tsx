@@ -144,6 +144,7 @@ export default function RouteStepsPanel({
     meta: string | null;
     institutionIsPrivateSchool: boolean;
     isLosaDelivery: boolean;
+    sourceNote: string | null;
   };
 
   const renderLosaBadge = (isSelectedRow: boolean) => (
@@ -220,6 +221,7 @@ export default function RouteStepsPanel({
           meta: option.verification_status,
           institutionIsPrivateSchool: option.institution_is_private_school === true,
           isLosaDelivery,
+          sourceNote: null,
         };
       });
       if (mapped.length > 0) return dedupeStepOptions(mapped);
@@ -236,6 +238,7 @@ export default function RouteStepsPanel({
           meta: null,
           institutionIsPrivateSchool: false,
           isLosaDelivery: false,
+          sourceNote: null,
         },
       ];
     }
@@ -246,15 +249,22 @@ export default function RouteStepsPanel({
         return {
         id: option.option_id,
         schoolName: option.option_title,
-        location: step.institution_city ?? step.institution_municipality ?? null,
-        website: step.institution_website ?? null,
+        location:
+          option.employer_municipality ??
+          step.institution_city ??
+          step.institution_municipality ??
+          null,
+        website: option.employer_website ?? step.institution_website ?? null,
         programTitle: step.program_title ?? step.title,
         displayTitle: step.program_title ?? step.title,
         durationLabel: step.duration_label ?? null,
         fromPayload: true,
-        meta: outcomeCount > 0 ? `${outcomeCount} outcomes` : null,
+        meta:
+          option.employer_source_note ??
+          (outcomeCount > 0 ? `${outcomeCount} outcomes` : null),
         institutionIsPrivateSchool: false,
         isLosaDelivery: false,
+        sourceNote: option.employer_source_note ?? null,
       };
       });
       if (mapped.length > 0) return mapped;
@@ -271,6 +281,7 @@ export default function RouteStepsPanel({
           meta: null,
           institutionIsPrivateSchool: false,
           isLosaDelivery: false,
+          sourceNote: null,
         },
       ];
     }
@@ -288,6 +299,7 @@ export default function RouteStepsPanel({
         meta: null,
         institutionIsPrivateSchool: false,
         isLosaDelivery: false,
+        sourceNote: null,
       },
     ];
   };

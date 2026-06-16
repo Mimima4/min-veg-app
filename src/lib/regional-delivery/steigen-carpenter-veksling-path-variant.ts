@@ -5,6 +5,7 @@
 
 import type { StudyRouteSnapshotStep } from "@/lib/routes/route-types";
 import { formatCuratedRegionalVariantReason } from "./curated-regional-variant-reason";
+import { getSteigenCarpenterVekslingApprenticeshipOptions } from "./steigen-carpenter-veksling-employers";
 import {
   STEIGEN_CARPENTER_VEKSLING_BADGE,
   shouldShowSteigenCarpenterVekslingInfo,
@@ -51,7 +52,7 @@ export function buildSteigenCarpenterVekslingSteps(
       program_slug: null,
       program_title: "Tømrerfaget",
       duration_label: "ca. 2 år (år 3–4)",
-      apprenticeship_options: [],
+      apprenticeship_options: getSteigenCarpenterVekslingApprenticeshipOptions(),
       current_profession_slug: professionSlug,
       source: "curated_regional_delivery",
     },
