@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import type { StudyRouteAlternativeTeaser } from "@/lib/routes/route-types";
+import type { SteigenCarpenterVekslingInfoCopy } from "@/lib/regional-delivery/steigen-carpenter-veksling-pilot";
 import { STEIGEN_CARPENTER_VEKSLING_VARIANT_ID } from "@/lib/regional-delivery/steigen-carpenter-veksling-path-variant";
+import SteigenVekslingBadgeWithInfo from "@/components/route/steigen-veksling-badge-with-info";
 import RouteStepsPanel from "./route-steps-panel";
 import SaveRouteButton from "./[routeId]/save-route-button";
 
@@ -12,6 +14,7 @@ type Props = {
   routeId: string;
   alternatives: StudyRouteAlternativeTeaser[];
   savedSelectionSignatures?: string[];
+  steigenVekslingInfoCopy?: SteigenCarpenterVekslingInfoCopy | null;
 };
 
 function resolveEmptyAlternativesLabel(locale: string) {
@@ -27,6 +30,7 @@ export default function AlternativeRoutesCollapsible({
   routeId,
   alternatives,
   savedSelectionSignatures = [],
+  steigenVekslingInfoCopy = null,
 }: Props) {
   const visibleAlternatives = alternatives.filter(
     (alternative) => (alternative.steps?.length ?? 0) > 0
@@ -56,10 +60,8 @@ export default function AlternativeRoutesCollapsible({
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="text-base font-semibold text-stone-900">{alternative.label}</h3>
                   {alternative.curatedRegionalVariantId ===
-                  STEIGEN_CARPENTER_VEKSLING_VARIANT_ID ? (
-                    <span className="inline-flex rounded-full border border-sky-300 bg-sky-50 px-2.5 py-0.5 text-xs font-medium text-sky-900">
-                      Veksling / Steigenmodellen
-                    </span>
+                    STEIGEN_CARPENTER_VEKSLING_VARIANT_ID && steigenVekslingInfoCopy ? (
+                    <SteigenVekslingBadgeWithInfo copy={steigenVekslingInfoCopy} />
                   ) : null}
                 </div>
                 <SaveRouteButton

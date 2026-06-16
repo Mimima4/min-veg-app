@@ -8,6 +8,7 @@ import type {
   StudyRouteReadModel,
   StudyRouteReadModelStep,
 } from "@/lib/routes/route-types";
+import type { SteigenCarpenterVekslingInfoCopy } from "@/lib/regional-delivery/steigen-carpenter-veksling-pilot";
 import RouteStepsPanel from "./route-steps-panel";
 import {
   releaseClientRecomputeLock,
@@ -23,6 +24,7 @@ type Props = {
   steps: StudyRouteReadModelStep[];
   competitionLevel?: StudyRouteCompetitionLevel;
   savedSelectionSignatures?: string[];
+  steigenVekslingInfoCopy?: SteigenCarpenterVekslingInfoCopy | null;
 };
 
 const POLL_INTERVAL_MS = 2000;
@@ -63,6 +65,7 @@ export default function RouteStepsRecomputePanel({
   steps,
   competitionLevel,
   savedSelectionSignatures,
+  steigenVekslingInfoCopy = null,
 }: Props) {
   const router = useRouter();
   const [isRefreshing, startTransition] = useTransition();
@@ -219,6 +222,7 @@ export default function RouteStepsRecomputePanel({
       steps={displaySteps}
       competitionLevel={competitionLevel}
       savedSelectionSignatures={savedSelectionSignatures}
+      steigenVekslingInfoCopy={steigenVekslingInfoCopy}
     />
   );
 }

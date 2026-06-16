@@ -12,8 +12,36 @@ import {
 import type { StudyRouteSnapshotStep } from "@/lib/routes/route-types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
 function stableStringify(value: unknown): string {
-  return JSON.stringify(value);
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => stableStringify(item)).join(",")}]`;
+  }
+
+  if (!isRecord(value)) {
+    return JSON.stringify(value);
+  }
+
+  const keys = Object.keys(value).sort();
+  const serialized = keys
+    .map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`)
+    .join(",");
+  return `{${serialized}}`;
+}
+
+function snapshotPayloadMatches(
+  stored: unknown,
+  expected: StudyRouteSnapshotStep[],
+  routeInputSignature: string,
+  storedSignature: string | null | undefined
+): boolean {
+  return (
+    storedSignature === routeInputSignature &&
+    stableStringify(stored) === stableStringify(expected)
+  );
 }
 
 type CuratedRegionalVariantDefinition = {
@@ -27,6 +55,8 @@ type CuratedRegionalVariantDefinition = {
   buildSteps: (professionSlug: string) => StudyRouteSnapshotStep[];
 };
 
+const MAX_SNAPSHOT_VERSION_INSERT_RETRIES = 5;
+
 const CURATED_REGIONAL_VARIANTS: CuratedRegionalVariantDefinition[] = [
   {
     variantId: STEIGEN_CARPENTER_VEKSLING_VARIANT_ID,
@@ -36,6 +66,184 @@ const CURATED_REGIONAL_VARIANTS: CuratedRegionalVariantDefinition[] = [
     buildSteps: buildSteigenCarpenterVekslingSteps,
   },
 ];
+
+async function promoteCuratedRegionalSnapshot(params: {
+  supabase: SupabaseClient;
+  variantId: string;
+  snapshotId: string;
+}): Promise<void> {
+  const { error: unsetError } = await params.supabase
+    .from("study_route_snapshots")
+    .update({ is_current_snapshot: false })
+    .eq("route_variant_id", params.variantId)
+    .eq("is_current_snapshot", true);
+
+  if (unsetError) {
+    throw new Error(
+      `Failed to unset current curated regional snapshot: ${unsetError.message}`
+    );
+  }
+
+  const { error: promoteError } = await params.supabase
+    .from("study_route_snapshots")
+    .update({ is_current_snapshot: true })
+    .eq("id", params.snapshotId);
+
+  if (promoteError) {
+    throw new Error(
+      `Failed to promote curated regional snapshot: ${promoteError.message}`
+    );
+  }
+}
+
+async function ensureCuratedRegionalSnapshot(params: {
+  supabase: SupabaseClient;
+  variantId: string;
+  generationReason: string;
+  snapshotContext: unknown;
+  alternativeSteps: StudyRouteSnapshotStep[];
+  routeInputSignature: string;
+}): Promise<void> {
+  const { data: snapshots, error: snapshotsError } = await params.supabase
+    .from("study_route_snapshots")
+    .select(
+      "id, snapshot_version, selected_steps_payload, route_input_signature, is_current_snapshot"
+    )
+    .eq("route_variant_id", params.variantId)
+    .order("snapshot_version", { ascending: false });
+
+  if (snapshotsError) {
+    throw new Error(
+      `Failed to load curated regional snapshots: ${snapshotsError.message}`
+    );
+  }
+
+  const matchingSnapshot = (snapshots ?? []).find((snapshot) =>
+    snapshotPayloadMatches(
+      snapshot.selected_steps_payload,
+      params.alternativeSteps,
+      params.routeInputSignature,
+      snapshot.route_input_signature
+    )
+  );
+
+  if (matchingSnapshot) {
+    if (!matchingSnapshot.is_current_snapshot) {
+      await promoteCuratedRegionalSnapshot({
+        supabase: params.supabase,
+        variantId: params.variantId,
+        snapshotId: matchingSnapshot.id,
+      });
+    }
+    return;
+  }
+
+  await params.supabase
+    .from("study_route_snapshots")
+    .update({ is_current_snapshot: false })
+    .eq("route_variant_id", params.variantId)
+    .eq("is_current_snapshot", true);
+
+  await insertCuratedRegionalSnapshotWithRetry({
+    supabase: params.supabase,
+    variantId: params.variantId,
+    generationReason: params.generationReason,
+    snapshotContext: params.snapshotContext,
+    alternativeSteps: params.alternativeSteps,
+    routeInputSignature: params.routeInputSignature,
+  });
+}
+
+async function insertCuratedRegionalSnapshotWithRetry(params: {
+  supabase: SupabaseClient;
+  variantId: string;
+  generationReason: string;
+  snapshotContext: unknown;
+  alternativeSteps: StudyRouteSnapshotStep[];
+  routeInputSignature: string;
+}): Promise<void> {
+  for (
+    let attempt = 0;
+    attempt < MAX_SNAPSHOT_VERSION_INSERT_RETRIES;
+    attempt += 1
+  ) {
+    const { data: latestSnapshot, error: latestSnapshotError } = await params.supabase
+      .from("study_route_snapshots")
+      .select("snapshot_version")
+      .eq("route_variant_id", params.variantId)
+      .order("snapshot_version", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (latestSnapshotError) {
+      throw new Error(
+        `Failed to load latest curated regional snapshot version: ${latestSnapshotError.message}`
+      );
+    }
+
+    const nextSnapshotVersion =
+      typeof latestSnapshot?.snapshot_version === "number"
+        ? latestSnapshot.snapshot_version + 1
+        : 1;
+
+    const { error: snapshotError } = await params.supabase.from("study_route_snapshots").insert({
+      route_variant_id: params.variantId,
+      snapshot_version: nextSnapshotVersion,
+      snapshot_kind: "curated_regional_alternative",
+      generation_reason: params.generationReason,
+      stage_context: params.snapshotContext,
+      selected_steps_payload: params.alternativeSteps,
+      signals_payload: [],
+      available_professions_payload: [],
+      alternatives_teaser_payload: [],
+      route_input_signature: params.routeInputSignature,
+      // DB check constraint allows only availability_truth | legacy today.
+      route_source: "legacy",
+      is_current_snapshot: true,
+    });
+
+    if (!snapshotError) {
+      return;
+    }
+
+    if (snapshotError.code === "23505") {
+      continue;
+    }
+
+    throw new Error(
+      `Failed to insert curated regional alternative snapshot: ${snapshotError.message}`
+    );
+  }
+
+  const { data: currentSnapshot, error: currentSnapshotError } = await params.supabase
+    .from("study_route_snapshots")
+    .select("selected_steps_payload, route_input_signature")
+    .eq("route_variant_id", params.variantId)
+    .eq("is_current_snapshot", true)
+    .maybeSingle();
+
+  if (currentSnapshotError) {
+    throw new Error(
+      `Failed to verify concurrent curated regional snapshot after retries: ${currentSnapshotError.message}`
+    );
+  }
+
+  if (
+    currentSnapshot &&
+    snapshotPayloadMatches(
+      currentSnapshot.selected_steps_payload,
+      params.alternativeSteps,
+      params.routeInputSignature,
+      currentSnapshot.route_input_signature
+    )
+  ) {
+    return;
+  }
+
+  throw new Error(
+    "Failed to insert curated regional alternative snapshot after retries"
+  );
+}
 
 export async function syncStudyRouteCuratedRegionalAlternatives(params: {
   supabase: SupabaseClient;
@@ -91,6 +299,27 @@ export async function syncStudyRouteCuratedRegionalAlternatives(params: {
     const existing = existingByCuratedId.get(definition.variantId);
 
     let variantId = existing?.id ?? null;
+    if (variantId) {
+      const { data: currentSnapshot } = await params.supabase
+        .from("study_route_snapshots")
+        .select("selected_steps_payload, route_input_signature, is_current_snapshot")
+        .eq("route_variant_id", variantId)
+        .eq("is_current_snapshot", true)
+        .maybeSingle();
+
+      if (
+        currentSnapshot &&
+        snapshotPayloadMatches(
+          currentSnapshot.selected_steps_payload,
+          alternativeSteps,
+          params.routeInputSignature,
+          currentSnapshot.route_input_signature
+        )
+      ) {
+        continue;
+      }
+    }
+
     if (!variantId) {
       const { data: insertedVariant, error: insertVariantError } = await params.supabase
         .from("study_route_variants")
@@ -127,45 +356,18 @@ export async function syncStudyRouteCuratedRegionalAlternatives(params: {
       }
     }
 
-    await params.supabase
-      .from("study_route_snapshots")
-      .update({ is_current_snapshot: false })
-      .eq("route_variant_id", variantId)
-      .eq("is_current_snapshot", true);
-
-    const { data: latestSnapshot } = await params.supabase
-      .from("study_route_snapshots")
-      .select("snapshot_version")
-      .eq("route_variant_id", variantId)
-      .order("snapshot_version", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    const nextSnapshotVersion =
-      typeof latestSnapshot?.snapshot_version === "number"
-        ? latestSnapshot.snapshot_version + 1
-        : 1;
-
-    const { error: snapshotError } = await params.supabase.from("study_route_snapshots").insert({
-      route_variant_id: variantId,
-      snapshot_version: nextSnapshotVersion,
-      snapshot_kind: "curated_regional_alternative",
-      generation_reason: definition.variantReason,
-      stage_context: params.snapshotContext,
-      selected_steps_payload: alternativeSteps,
-      signals_payload: [],
-      available_professions_payload: [],
-      alternatives_teaser_payload: [],
-      route_input_signature: params.routeInputSignature,
-      route_source: "curated_regional_delivery",
-      is_current_snapshot: true,
-    });
-
-    if (snapshotError) {
-      throw new Error(
-        `Failed to insert curated regional alternative snapshot: ${snapshotError.message}`
-      );
+    if (!variantId) {
+      throw new Error("Curated regional variant id missing after sync setup");
     }
+
+    await ensureCuratedRegionalSnapshot({
+      supabase: params.supabase,
+      variantId,
+      generationReason: definition.variantReason,
+      snapshotContext: params.snapshotContext,
+      alternativeSteps,
+      routeInputSignature: params.routeInputSignature,
+    });
   }
 
   for (const variant of existingVariants ?? []) {

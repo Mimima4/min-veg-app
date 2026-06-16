@@ -18,6 +18,8 @@ import {
   LOSA_ROUTE_BADGE_TITLE,
 } from "@/lib/losa/availability-scope";
 import SaveRouteButton from "./[routeId]/save-route-button";
+import type { SteigenCarpenterVekslingInfoCopy } from "@/lib/regional-delivery/steigen-carpenter-veksling-pilot";
+import SteigenVekslingBadgeWithInfo from "@/components/route/steigen-veksling-badge-with-info";
 
 function isRouteSnapshotPayloadStep(
   step: StudyRouteReadModelStep
@@ -43,6 +45,7 @@ type Props = {
   savedSelectionSignatures?: string[];
   compact?: boolean;
   showHeader?: boolean;
+  steigenVekslingInfoCopy?: SteigenCarpenterVekslingInfoCopy | null;
 };
 
 function humanizeStepType(type: StudyRouteSnapshotStep["type"]): string {
@@ -102,6 +105,7 @@ export default function RouteStepsPanel({
   savedSelectionSignatures = [],
   compact = false,
   showHeader = true,
+  steigenVekslingInfoCopy = null,
 }: Props) {
   const cardWidth = compact ? "w-[200px] min-w-[200px]" : "w-[320px]";
   const cardMinHeight = compact ? "min-h-[11.5rem]" : "";
@@ -384,7 +388,12 @@ export default function RouteStepsPanel({
       {showHeader ? (
         <>
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <h2 className="text-lg font-semibold text-stone-900">Route steps</h2>
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-lg font-semibold text-stone-900">Route steps</h2>
+              {steigenVekslingInfoCopy ? (
+                <SteigenVekslingBadgeWithInfo copy={steigenVekslingInfoCopy} />
+              ) : null}
+            </div>
             <SaveRouteButton
               childId={childId}
               routeId={routeId}

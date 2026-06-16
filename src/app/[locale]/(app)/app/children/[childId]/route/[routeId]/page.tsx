@@ -1,14 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
 import { LocalePageShell } from "@/components/layout/locale-page-shell";
 import AppPrivateNav from "@/components/layout/app-private-nav";
-import SteigenVekslingInfoCard from "@/components/route/steigen-veksling-info-card";
 import { CompetitionBadge } from "@/components/route/competition-badge";
 import { getStudyRouteDetail } from "@/server/children/routes/get-study-route-detail";
 import { getRouteStrategies } from "@/server/children/routes/route-strategy-rules";
 import { getChildPreferredMunicipalityCodes } from "@/server/children/planning/get-child-preferred-municipality-codes";
 import {
   getSteigenCarpenterVekslingInfoCopy,
-  shouldShowSteigenCarpenterVekslingInfo,
+  routeStepsUseSteigenVekslingDelivery,
+  shouldShowSteigenVekslingRouteBadge,
 } from "@/lib/regional-delivery/steigen-carpenter-veksling-pilot";
 import RouteStepsRecomputePanel from "../route-steps-recompute-panel";
 import RouteSignalsPanel from "../route-signals-panel";
@@ -51,13 +51,20 @@ export default async function StudyRouteDetailPage({
   });
 
   const preferredMunicipalityCodes = await getChildPreferredMunicipalityCodes(childId);
-  const showSteigenVekslingInfo = shouldShowSteigenCarpenterVekslingInfo({
+  const showSteigenVekslingBadgeInCurrentSteps = shouldShowSteigenVekslingRouteBadge({
     professionSlug: route.identity.targetProfessionSlug,
     preferredMunicipalityCodes,
+    steps: route.steps,
   });
-  const steigenVekslingInfoCopy = showSteigenVekslingInfo
-    ? getSteigenCarpenterVekslingInfoCopy(locale)
-    : null;
+  const hasSteigenVekslingAlternative = route.alternativeRoutes.some(
+    (alternative) => alternative.curatedRegionalVariantId === "steigen-carpenter-veksling-0-4"
+  );
+  const steigenVekslingInfoCopy =
+    showSteigenVekslingBadgeInCurrentSteps || hasSteigenVekslingAlternative
+      ? getSteigenCarpenterVekslingInfoCopy(locale, {
+          includeCampusNote: !routeStepsUseSteigenVekslingDelivery(route.steps),
+        })
+      : null;
 
   const isAlternativePreview = Boolean(previewVariantId);
 
@@ -151,10 +158,6 @@ export default async function StudyRouteDetailPage({
             </dl>
           </div>
 
-          {steigenVekslingInfoCopy ? (
-            <SteigenVekslingInfoCard copy={steigenVekslingInfoCopy} />
-          ) : null}
-
           <RouteStepsRecomputePanel
             childId={childId}
             routeId={routeId}
@@ -171,6 +174,9 @@ export default async function StudyRouteDetailPage({
             steps={route.steps}
             competitionLevel={route.header.competitionLevel}
             savedSelectionSignatures={route.savedSelectionSignatures ?? []}
+            steigenVekslingInfoCopy={
+              showSteigenVekslingBadgeInCurrentSteps ? steigenVekslingInfoCopy : null
+            }
           />
 
           {showStrategyBlock && (
@@ -204,6 +210,7 @@ export default async function StudyRouteDetailPage({
                   routeId={routeId}
                   alternatives={route.alternativeRoutes}
                   savedSelectionSignatures={route.savedSelectionSignatures ?? []}
+                  steigenVekslingInfoCopy={steigenVekslingInfoCopy}
                 />
               ) : null}
               <RouteSignalsPanel signals={route.signals} />

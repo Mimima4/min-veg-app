@@ -89,6 +89,78 @@ export type SavedStudyRouteCard = {
   primaryInstitutionLocation: string | null;
 };
 
+function isRouteStepRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function readInstitutionName(step: Record<string, unknown>): string | null {
+  const direct = step.institution_name;
+  if (typeof direct === "string" && direct.trim().length > 0) {
+    return direct.trim();
+  }
+
+  if (step.type === "programme_selection" && Array.isArray(step.options)) {
+    for (const option of step.options) {
+      if (!isRouteStepRecord(option)) {
+        continue;
+      }
+      const optionName = option.institution_name;
+      if (typeof optionName === "string" && optionName.trim().length > 0) {
+        return optionName.trim();
+      }
+    }
+  }
+
+  return null;
+}
+
+function getPrimaryInstitutionStep(steps: unknown): Record<string, unknown> | null {
+  if (!Array.isArray(steps)) {
+    return null;
+  }
+
+  const records = steps.filter(isRouteStepRecord);
+  const preferredTypes = ["programme_selection", "progression_step", "outcome_step"];
+
+  for (const stepType of preferredTypes) {
+    const step = records.find((candidate) => {
+      if (candidate.type !== stepType) {
+        return false;
+      }
+      return readInstitutionName(candidate) !== null;
+    });
+    if (step) {
+      return step;
+    }
+  }
+
+  return null;
+}
+
+function getPrimaryInstitutionName(steps: unknown): string | null {
+  const step = getPrimaryInstitutionStep(steps);
+  return step ? readInstitutionName(step) : null;
+}
+
+function getPrimaryInstitutionLocation(steps: unknown): string | null {
+  const step = getPrimaryInstitutionStep(steps);
+  if (!step) {
+    return null;
+  }
+
+  const municipality = step.institution_municipality;
+  if (typeof municipality === "string" && municipality.trim().length > 0) {
+    return municipality.trim();
+  }
+
+  const city = step.institution_city;
+  if (typeof city === "string" && city.trim().length > 0) {
+    return city.trim();
+  }
+
+  return null;
+}
+
 export type ChildProfilePageData = {
   locale: string;
   supportedLocale: ContentLocale;
@@ -522,6 +594,9 @@ export async function getChildProfilePageData({
         return null;
       }
 
+      const snapshot = savedRoute.current_variant_id
+        ? savedRouteSnapshotByVariantId.get(savedRoute.current_variant_id)
+        : undefined;
       return {
         savedRoute,
         professionTitle: getLocalizedValue(
@@ -529,48 +604,10 @@ export async function getChildProfilePageData({
           supportedLocale
         ),
         professionSlug: profession.slug,
-        primaryInstitutionName: (() => {
-          const snapshot = savedRoute.current_variant_id
-            ? savedRouteSnapshotByVariantId.get(savedRoute.current_variant_id)
-            : undefined;
-          const steps = Array.isArray(snapshot?.selected_steps_payload)
-            ? (snapshot.selected_steps_payload as Array<Record<string, unknown>>)
-            : [];
-          const primaryProgrammeStep = steps.find((step) => {
-            if (!step || typeof step !== "object") return false;
-            if (step.type !== "programme_selection") return false;
-            return (
-              typeof step.institution_name === "string" &&
-              step.institution_name.trim().length > 0
-            );
-          });
-          return (primaryProgrammeStep?.institution_name as string | undefined) ?? null;
-        })(),
-        primaryInstitutionLocation: (() => {
-          const snapshot = savedRoute.current_variant_id
-            ? savedRouteSnapshotByVariantId.get(savedRoute.current_variant_id)
-            : undefined;
-          const steps = Array.isArray(snapshot?.selected_steps_payload)
-            ? (snapshot.selected_steps_payload as Array<Record<string, unknown>>)
-            : [];
-          const primaryProgrammeStep = steps.find((step) => {
-            if (!step || typeof step !== "object") return false;
-            if (step.type !== "programme_selection") return false;
-            return (
-              typeof step.institution_name === "string" &&
-              step.institution_name.trim().length > 0
-            );
-          });
-          const municipality = primaryProgrammeStep?.institution_municipality;
-          if (typeof municipality === "string" && municipality.trim().length > 0) {
-            return municipality;
-          }
-          const city = primaryProgrammeStep?.institution_city;
-          if (typeof city === "string" && city.trim().length > 0) {
-            return city;
-          }
-          return null;
-        })(),
+        primaryInstitutionName: getPrimaryInstitutionName(snapshot?.selected_steps_payload),
+        primaryInstitutionLocation: getPrimaryInstitutionLocation(
+          snapshot?.selected_steps_payload
+        ),
       };
     })
     .filter((item): item is SavedStudyRouteCard => Boolean(item));

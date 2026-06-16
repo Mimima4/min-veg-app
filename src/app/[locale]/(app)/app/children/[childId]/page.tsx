@@ -21,11 +21,6 @@ import type {
 } from "@/server/children/planning/get-child-planning-state";
 import { requireAppAccess } from "@/server/billing/require-app-access";
 import { resolveChildRouteScopedProfessionsHref } from "@/server/children/routes/build-child-route-scoped-professions-href";
-import SteigenVekslingInfoCard from "@/components/route/steigen-veksling-info-card";
-import {
-  getSteigenCarpenterVekslingInfoCopy,
-  shouldShowSteigenCarpenterVekslingInfo,
-} from "@/lib/regional-delivery/steigen-carpenter-veksling-pilot";
 
 function TagList({
   title,
@@ -118,17 +113,6 @@ export default async function ChildDetailPage({
     savedProfessions,
     savedStudyRouteCards,
   } = result.data;
-
-  const showSteigenVekslingInfo =
-    shouldShowSteigenCarpenterVekslingInfo({
-      professionSlug: "carpenter",
-      preferredMunicipalityCodes: initialPreferredMunicipalityCodes,
-    }) &&
-    (savedProfessions.some((profession) => profession.slug === "carpenter") ||
-      savedStudyRouteCards.some((route) => route.professionSlug === "carpenter"));
-  const steigenVekslingInfoCopy = showSteigenVekslingInfo
-    ? getSteigenCarpenterVekslingInfoCopy(locale)
-    : null;
 
   return (
     <LocalePageShell
@@ -393,12 +377,6 @@ export default async function ChildDetailPage({
               validRouteIds={savedStudyRouteCards.map((item) => item.savedRoute.id)}
             />
           </div>
-
-          {steigenVekslingInfoCopy ? (
-            <div className="mt-5">
-              <SteigenVekslingInfoCard copy={steigenVekslingInfoCopy} />
-            </div>
-          ) : null}
 
           {savedStudyRouteCards.length === 0 ? (
             <p className="mt-4 text-sm text-stone-600">

@@ -19,6 +19,7 @@ export const STEIGEN_CARPENTER_VEKSLING_VARIANT_REASON = formatCuratedRegionalVa
 );
 
 const HUB_INSTITUTION_NAME = "Nord-Salten vgs avd Steigen";
+/** Operator/kommune curated — see levisteigen.no + NFK; not Vilbli strukturkart PSA. */
 const HUB_MUNICIPALITY = "Steigen";
 const HUB_CITY = "Leinesfjord";
 
