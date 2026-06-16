@@ -107,7 +107,7 @@ Before any new county work:
 
 | Model | Owner decision |
 |-------|----------------|
-| Steigenmodellen (`18`) | **No reuse** — veksling/apprenticeship slice; Vilbli extract first |
+| Steigenmodellen (`18`) | **No reuse** — veksling/apprenticeship slice; research **closed** 2026-06-15 → `phase-4-nordland-steigen-carpenter-veksling-pilot-charter.md` |
 | Troms studiesentre (`55`) | **Maybe** — only after manifest + evidence on `55`; not automatic |
 | Innlandet veksling/Nettskolen (`34`) | **No reuse** — hybrid/Y-path; separate product scope |
 | Decision rule §4 | **Adopted** — manifest → legal frame → entity model → charter |

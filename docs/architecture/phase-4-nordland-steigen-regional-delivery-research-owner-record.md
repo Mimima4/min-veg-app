@@ -2,10 +2,11 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **ACTIVE** — Vilbli scout **2026-06-15**; no product code |
+| **Status** | **RESEARCH CLOSED** — Tier 1 + inventory **2026-06-15**; pilot charter **DRAFT** |
 | **Track** | **A** — Steigenmodellen / veksling (`18` Nordland) |
 | **Prerequisite** | Carpenter **15/15** closed; regional fit analysis **OWNER SIGNED** |
 | **Carpenter role** | Product precedent for **ordinary VGS chain** comparison — not Steigen delivery model |
+| **Pilot charter** | `phase-4-nordland-steigen-carpenter-veksling-pilot-charter.md` |
 
 ---
 
@@ -16,6 +17,8 @@ Close the **read-only** gap from `phase-4-losa-regional-delivery-models-fit-anal
 > Vilbli rows for Steigen area; Udir/operator docs on Steigenmodellen vs LOSA legal status.
 
 Determine whether Steigenmodellen appears on **Vilbli strukturkart** for standard VGS programme chains, and what **product contour** (not Finnmark LOSA) would be needed to represent it.
+
+**Outcome:** Research **closed**; narrow **Steigen × carpenter** veksling pilot chartered (draft).
 
 ---
 
@@ -72,34 +75,77 @@ Carpenter on `18` proves **campus programme_selection** for Bygg→Tømrer (7/5 
 
 ---
 
-## 5. Owner decisions (open)
+## 5. Owner decisions
 
 | # | Question | Status |
 |---|----------|--------|
-| R-1 | Reuse Finnmark LOSA pipeline for Steigen? | **No** — scout confirms 0 LOSA rows on `18` pilot chains |
-| R-2 | Charter **veksling / 0+4** product slice? | **OPEN** — needs scope: which trades, which kommuner (Steigen/Hamarøy/Tysfjord history) |
-| R-3 | Vilbli source for veksling truth? | **OPEN** — not on strukturkart; likely **operator / Udir / fylke** docs, not strukturkart ingest |
-| R-4 | Show Steigenmodellen in app for child home **Steigen `1848`**? | **OPEN** — UX + route step types; blocked on R-2/R-3 |
+| R-1 | Reuse Finnmark LOSA pipeline for Steigen? | **No** |
+| R-2 | Charter **veksling / 0+4** product slice? | **Yes** — pilot **Steigen × carpenter** (draft charter) |
+| R-3 | Vilbli source for veksling truth? | **No strukturkart** — operator/fylke/kommune curated evidence |
+| R-4 | Show Steigenmodellen for child home **Steigen `1848`**? | **Yes (goal)** — via parallel route variant; implementation **P0→P1** gated |
+| R-5 | Pilot profession | **carpenter** (Tømrerfaget on Steigenmodellen list) |
+| R-6 | Green-county / PSA ingest for avd Steigen? | **No** |
 
 ---
 
-## 6. Next analysis (no code)
+## 6. Fylke operator inventory — Steigenmodellen trades (2026-06-15)
 
-| Step | Action |
-|------|--------|
-| 1 | **Tier 1 legal frame** — Steigenmodellen vs LOSA vs standard lære (Udir / Opplæringsforskriften); owner-held note |
-| 2 | **Fylke operator inventory** — which trades active on Steigenmodellen 2025–2029 vs carpenter/electrician VGS chains |
-| 3 | **Product charter draft** — `apprenticeship_step` + employer entity + fellesfag school hub (Knut Hamsun / Nord-Salten avd Steigen) |
-| 4 | **Optional** — expand scout to other Nordland kommuner with `fellesundervisning på nærmeste skole` pattern |
+**Source:** [levisteigen.no](https://www.levisteigen.no/utdanning-i-steigen.html) (public; verify against NFK tilbudsstruktur before implementation).
 
-**No implementation authorized.**
+| Trade (Norwegian) | Maps to Min Veg profession | On Vilbli strukturkart `18` (campus) | Steigenmodellen (public list) |
+|-------------------|---------------------------|--------------------------------------|-------------------------------|
+| **Tømrerfaget** | **`carpenter`** | yes (other campuses) | **yes** — **pilot** |
+| Byggdrifterfaget | — (no catalog slug) | partial (bygg area) | yes |
+| Industrimekanikerfaget | `mechanic` (distant) | yes (kjøretøy chain) | yes |
+| Fiskeredskapfaget | — | — | yes |
+| Helsearbeiderfaget | — | — | yes |
+| Barne- og ungdomsarbeiderfaget | — | — | yes |
+| Salgsfaget | — | — | yes |
+| Akvakulturfaget | — | — | yes |
+| Kontor- og administrasjonsfaget | — | — | yes |
+| Renholderoperatørfaget | — | — | yes |
+| Elektro / EL | `electrician` | yes (incl. Nord-Salten slash) | **not listed** on Steigenmodellen page |
+
+**Pilot choice rationale:** **Tømrerfaget** aligns with **`carpenter`** catalog + Nordland research anchor; avoids electrician (not on Steigenmodellen list) and multi-trade scope creep.
+
+**Action before P1:** NFK operator confirm Tømrerfaget on Steigenmodellen **2025–2029** (gate T-2 in charter).
 
 ---
 
-## 7. References
+## 7. Tier 1 legal frame (owner-held summary)
 
+| Frame | Steigenmodellen | Finnmark LOSA | Ordinary 2+2 VGS |
+|-------|-----------------|---------------|------------------|
+| **Policy origin** | NFK 2014 — alternative after **LOSA offer ended** in region ([Psykologi i kommunen 2019](https://psykisk-kommune.no/samspillet-mellom-teori-og-praksis-i-vekslingsmodeller/19.118)) | Fjernundervisning til hjemkommune | Campus VG1→VG2→lære |
+| **Legal basis** | **Vekslingsmodell** / opplæring i bedrift under [opplæringslova](https://www.udir.no/regelverkstolkninger/opplaring/Innhold-i-opplaringen/veiledning-fleksibilitet-i-fag--og-timefordeling) (fleksibilitet i fag- og timefordeling) | LOSA / fjernundervisning frame | Standard VGS + læretid |
+| **Employer** | **Første dag** i bedrift (0+4) | N/A (skole/digital) | Etter ~2 år skole |
+| **School role** | **Fellesfag** hub (2 d/uke år 1, 1 d/uke år 2 per local description) | Provider + digital | Programfag + fellesfag campus |
+| **Phase 2 classification** | **`external_delivery`** / veksling — **not** `unsupported_losa` for publish | `unsupported_losa` | `phase2_resolvable` campus |
+| **Vilbli strukturkart** | **Not represented** (scout) | Separate LOSA labels (Finnmark) | Primary truth for Contour B |
+
+**Binding conclusion:** Steigenmodellen is **legally and pedagogically veksling/0+4**, **not** LOSA. Product must **not** use `losa_fjern_delivery_municipality` or LOSA UI.
+
+---
+
+## 8. Next steps (implementation — separate gate)
+
+| Priority | Step | Status |
+|----------|------|--------|
+| 1 | Owner sign pilot charter **C-2** (P0 info card vs P1 path variant) | **OPEN** — recommend **P0** |
+| 2 | NFK Tømrerfaget confirm (gate T-2) | **OPEN** |
+| 3 | **P0:** static info when `home_municipality = 1848` + carpenter | Not started |
+| 4 | **P1:** curated path variant B | Blocked on P0 + T-2 |
+
+**No code authorized by this record.**
+
+---
+
+## 9. References
+
+- `phase-4-nordland-steigen-carpenter-veksling-pilot-charter.md`
 - `phase-4-losa-regional-delivery-models-fit-analysis.md` §1
-- `phase-0-6-contour-b-third-profession-expansion-owner-record.md` — carpenter research anchor
+- `phase-0-6-contour-b-third-profession-expansion-owner-record.md`
 - `phase-2-validation-contour-data-resolution-backlog.md` — Case A (`18`)
 - [levisteigen.no — Steigenmodellen](https://www.levisteigen.no/utdanning-i-steigen.html)
 - [NFK — fellesundervisning Knut Hamsun](https://www.nfk.no/aktuelt/knut-hamsun-vgs-fellesundervisning-pa-narmeste-skole.99955.aspx)
+- [Udir — evaluering vekslingsmodeller](https://www.udir.no/tall-og-forskning/finn-forskning/rapporter/evaluering-av-vekslingsmodeller-i-fag--og-yrkesopplaringen/)

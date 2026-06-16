@@ -39,7 +39,7 @@ Finnmark isolated · RLS independent · Contour A `56` not needed · next: step 
 → `phase-4-p06-losa-code-artifact-cleanup-audit-charter.md`  
 Batch 1: `boundary.ts` deleted (C-01/C-07/C-08). C-02–C-06 **KEEP** / DOC-ONLY.
 
-## Step 7 — Nordland Steigen regional research (track A) 🔄
+## Step 7 — Nordland Steigen regional research (track A) ✅
 
-→ `phase-4-nordland-steigen-regional-delivery-research-owner-record.md`  
-Vilbli scout **2026-06-15**: Steigenmodellen **not** on strukturkart for elec/mech/carpenter; **not** LOSA-shaped. Next: Tier 1 legal frame + veksling product charter (no code).
+→ `phase-4-nordland-steigen-regional-delivery-research-owner-record.md` — **RESEARCH CLOSED** 2026-06-15  
+Vilbli scout: Steigenmodellen **not** on strukturkart; **not** LOSA. Tier 1 + inventory done. Pilot charter: `phase-4-nordland-steigen-carpenter-veksling-pilot-charter.md` (**DRAFT**).
