@@ -108,7 +108,7 @@ Carpenter on `18` proves **campus programme_selection** for Bygg→Tømrer (7/5 
 
 **Pilot choice rationale:** **Tømrerfaget** aligns with **`carpenter`** catalog + Nordland research anchor; avoids electrician (not on Steigenmodellen list) and multi-trade scope creep.
 
-**Action before P1:** T-2 evidence collected (NFK confirms the 0+4 / Steigenmodellen alternative; levisteigen lists **Tømrerfaget** as an eligible trade).
+**Action before P1:** T-2 evidence **closed** in charter §4.1 (2026-06-16). P1 design gate in charter §10. **P1 code** awaits **C-4**.
 
 ---
 
@@ -131,12 +131,13 @@ Carpenter on `18` proves **campus programme_selection** for Bygg→Tømrer (7/5 
 
 | Priority | Step | Status |
 |----------|------|--------|
-| 1 | Owner sign pilot charter **C-2** (P0 info card vs P1 path variant) | **OPEN** — recommend **P0** |
-| 2 | NFK Tømrerfaget confirm (gate T-2) | **OPEN** |
-| 3 | **P0:** static info when `home_municipality = 1848` + carpenter | Not started |
-| 4 | **P1:** curated path variant B | Blocked on P0 + T-2 |
+| 1 | Owner sign charter **C-2** (P0 vs P1 start) | **CLOSED** — **P0** approved 2026-06-16 |
+| 2 | Gate **T-2** (NFK 0+4 + Tømrerfaget evidence) | **CLOSED** — charter §4.1 2026-06-16 |
+| 3 | **P0:** static info when `1848` + carpenter | **SHIPPED** — `d9be993` |
+| 4 | **P1 design gate** (curated variant B spec) | **CLOSED** — charter §10 2026-06-16 |
+| 5 | **P1 code** (path variant in route engine) | **OPEN** — awaits charter **C-4** owner sign-off |
 
-**No code authorized by this record.**
+**Code authorization:** P0 only via charter C-2/C-3. P1 requires **C-4** after design gate §10.
 
 ---
 

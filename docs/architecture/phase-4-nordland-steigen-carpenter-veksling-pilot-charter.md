@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **DRAFT** — owner agreed 2026-06-15; **no code / no PSA / no apply** |
+| **Status** | **DRAFT** — P0 **shipped** 2026-06-16; P1 **design gate** open; no PSA / no apply |
 | **Pilot** | `carpenter` (Tømrer) × **Steigenmodellen** × home kommune **Steigen `1848`** |
 | **Parent research** | `phase-4-nordland-steigen-regional-delivery-research-owner-record.md` |
 | **Prerequisite** | Tier 1 + fylke inventory **closed** in parent record |
@@ -51,25 +51,35 @@ Variant B (pilot charter): veksling_hub_step? → apprenticeship_step (employer-
 
 ## 4. Truth & evidence gates (before any write)
 
-| Gate | Requirement |
-|------|-------------|
-| T-1 | Tier 1 legal frame **signed** in parent record §8 |
-| T-2 | Evidence for trade offer: NFK confirms **0+4 (Steigenmodellen)** rights for pupils from **Steigen + Hamarøy** in **2025–2029**; local Steigenmodellen operator page lists **Tømrerfaget** among available trades for the program |
-| T-3 | **No** `losa_fjern_delivery_municipality` scope |
-| T-4 | Curated evidence pack (URLs + owner-held PDF/snippet if needed) — not Vilbli HTML alone |
-| T-5 | Child eligibility rule: `home_municipality_code = 1848` (or configurable Steigen set) |
-| T-6 | `NOT_READY_FOR_APPLY` unchanged; no Phase 2 RLS apply |
+| Gate | Requirement | Status |
+|------|-------------|--------|
+| T-1 | Tier 1 legal frame **signed** in parent record §7 | **CLOSED** — parent record §7 |
+| T-2 | NFK **0+4** for Steigen + Hamarøy **2025–2029**; levisteigen lists **Tømrerfaget** | **CLOSED** — docs 2026-06-16 (see §4.1) |
+| T-3 | **No** `losa_fjern_delivery_municipality` scope | **CLOSED** — scout + charter |
+| T-4 | Curated evidence pack (URLs) — not Vilbli HTML alone | **CLOSED** — §9 references |
+| T-5 | Child eligibility: `preferred_municipality_codes` includes **`1848`** | **CLOSED** — P0 code |
+| T-6 | `NOT_READY_FOR_APPLY` unchanged; no Phase 2 RLS apply | **OPEN** — unchanged |
+
+### 4.1 T-2 evidence closure (2026-06-16)
+
+| Claim | Evidence | Owner note |
+|-------|----------|------------|
+| 0+4 / fellesfag on nearest VGS preserved **2025–2029** | [NFK aktuelt — Knut Hamsun / nærmeste VGS](https://www.nfk.no/aktuelt/knut-hamsun-vgs-fellesundervisning-pa-narmeste-skole.99955.aspx) | Policy frame; not per-trade bedrift list |
+| **Tømrerfaget** on Steigenmodellen public offer | [levisteigen.no — utdanning i Steigen](https://www.levisteigen.no/utdanning-i-steigen.html) | Public operator page; no auditable employer roster in v1 |
+| Not LOSA / not strukturkart | `npm run scout:nordland-regional` 2026-06-15 | 0 LOSA on elec/mech/carpenter `18` |
+
+**Stop rule (unchanged):** if Tier 2 **bedrift list** cannot be sourced with auditable evidence → P1 shows **generic** opplæringsbedrift step only; **no** named employers until P2.
 
 ---
 
-## 5. Implementation phases (future — not authorized now)
+## 5. Implementation phases
 
-| Phase | Deliverable |
-|-------|-------------|
-| **P0** | Static **info card** on child profile / route compare when Steigen + carpenter — no route engine change |
-| **P1** | Second **path variant** in route builder (read-only curated JSON, not PSA) |
-| **P2** | Employer entity + `apprenticeship_options` curation table (separate from PSA) |
-| **P3** | E2E owner checklist Steigen child × carpenter × variant B |
+| Phase | Deliverable | Status |
+|-------|-------------|--------|
+| **P0** | Static **info card** on child profile / route detail / compare when Steigen + carpenter | **SHIPPED** — `d9be993` |
+| **P1** | Second **path variant** in route builder (read-only curated JSON, not PSA) | **DESIGN GATE** — §10; code **not** authorized until **C-4** |
+| **P2** | Employer entity + `apprenticeship_options` curation table (separate from PSA) | Blocked on P1 |
+| **P3** | E2E owner checklist Steigen child × carpenter × variant B | Blocked on P1 |
 
 **Stop rule:** if Tier 2 bedrift list cannot be sourced with auditable evidence → stay at **P0 info card** only.
 
@@ -100,8 +110,83 @@ Variant B (pilot charter): veksling_hub_step? → apprenticeship_step (employer-
 | C-1 | Charter scope **Steigen × carpenter** approved | **OK** — chat 2026-06-15 |
 | C-2 | Start at **P0 info card** vs **P1 path variant** | **P0 approved** — chat 2026-06-16 |
 | C-3 | Implementation gate author | **OK** — P0 shipped in app (info card on child profile, route detail, compare) |
+| C-4 | **P1** path variant implementation authorized | **OPEN** — design gate §10 ready; await owner **«P1 — делай»** |
 
 **Sign-off:** _____________ Date: _____________
+
+---
+
+## 10. P1 design gate (2026-06-16)
+
+**Goal:** eligible children see **variant B** as a real **alternative route** (save/recompute/preview), parallel to campus **variant A**. No PSA; no Contour B ingest changes.
+
+### 10.1 Eligibility (reuse P0)
+
+| Rule | Source |
+|------|--------|
+| `professionSlug === "carpenter"` | charter §2 |
+| `preferred_municipality_codes` includes **`1848`** | `steigen-carpenter-veksling-pilot.ts` |
+
+### 10.2 Variant identity
+
+| Field | Value |
+|-------|--------|
+| `variantId` | `curated-steigen-carpenter-veksling-0-4` |
+| `variant_label` | `Veksling / Steigenmodellen` |
+| `variant_reason` | `curated:steigen-carpenter-veksling-0-4` |
+| `delivery_model` (step metadata) | `veksling_0_4` |
+| `source` (step metadata) | `curated_regional_delivery` |
+
+**Not** a `route_outcome_filter_id` variant — do **not** overload `vilbli-branch-direct-bedrift` / `vilbli-branch-vg3-then-bedrift`.
+
+### 10.3 Curated step shape (target snapshot payload)
+
+```
+Step 1 — veksling hub (fellesfag)
+  type: progression_step  (or programme_selection with delivery_model metadata)
+  institution: Nord-Salten vgs avd Steigen (Leinesfjord)
+  title: Fellesfag — Nord-Salten vgs avd Steigen
+  duration_label: år 1–2 (2 d/uke fellesfag per operator copy)
+  delivery_model: veksling_0_4
+  source: curated_regional_delivery
+
+Step 2 — employer-first apprenticeship (0+4)
+  type: apprenticeship_step
+  title: Lærling i lokal bedrift (Tømrerfaget)
+  institution_name: null  (no named bedrift in P1)
+  delivery_model: veksling_0_4
+  source: curated_regional_delivery
+  apprenticeship_options: []  (P2 fills curated list)
+```
+
+**Outcome:** NAV scope unchanged — **Tømrer** / carpenter family (same as variant A).
+
+### 10.4 Code integration points (planned)
+
+| Layer | File / hook | Change |
+|-------|-------------|--------|
+| Curated definition | `src/lib/regional-delivery/steigen-carpenter-veksling-path-variant.ts` | JSON-like constant + `buildSteigenCarpenterVekslingSteps()` |
+| Eligibility | `steigen-carpenter-veksling-pilot.ts` | reuse `shouldShowSteigenCarpenterVekslingInfo` |
+| Route create / recompute | `create-initial-study-route.ts`, `trigger-study-route-recompute.ts` | after `buildPathVariants`, if eligible → build curated variant |
+| Variant persistence | **new** `sync-study-route-curated-regional-alternatives.ts` | insert/update `study_route_variants` + snapshot (parallel to outcome-filter sync) |
+| Alternatives read | `get-study-route-alternatives.ts` | already lists non-archived variants; label from `variant_label` |
+| Route detail UI | `alternative-routes-collapsible.tsx` | show badge «Veksling / Steigenmodellen» when `variant_reason` matches |
+| Invariants | `route-truth-invariants.ts` | curated variants **exempt** from Vilbli path-variant checks |
+
+### 10.5 Explicit P1 non-goals
+
+- Named opplæringsbedrift rows (P2)
+- PSA / `availability_truth` rows for avd Steigen
+- Changing primary campus variant selection logic
+- Hamarøy `1871` eligibility (charter §2 out of scope)
+
+### 10.6 P1 done criteria
+
+- [ ] Steigen + carpenter child: **≥2** variants after create/recompute (campus + veksling)
+- [ ] Preview/switch variant B → steps match §10.3
+- [ ] Variant A recompute **unchanged** (same schools as before P1)
+- [ ] No LOSA badge; P0 info card still shown on route detail
+- [ ] `npm run build` green
 
 ---
 
