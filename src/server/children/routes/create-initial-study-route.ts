@@ -40,6 +40,7 @@ import type { PathVariant, PathVariantsResult } from "./build-path-variants";
 import type { AvailabilityTruthRow } from "./get-availability-truth";
 import type { KommuneTransportSortContext } from "@/lib/planning/kommune-transport/types";
 import { syncStudyRouteOutcomeFilterAlternatives } from "./sync-study-route-outcome-filter-alternatives";
+import { syncStudyRouteCuratedRegionalAlternatives } from "./sync-study-route-curated-regional-alternatives";
 
 type Params = {
   childId: string;
@@ -752,6 +753,29 @@ export async function createInitialStudyRoute(
       pathVariants: outcomeFilterAlternativesContext.pathVariants,
       enrichedPathVariants: outcomeFilterAlternativesContext.enrichedPathVariants,
       childContext: true,
+      snapshotContext,
+      routeInputSignature,
+      createdByType,
+      createdByUserId,
+    });
+  }
+
+  const preferredMunicipalityCodesForCurated = Array.isArray(
+    childPlanning.preferred_municipality_codes
+  )
+    ? childPlanning.preferred_municipality_codes.filter(
+        (item): item is string => typeof item === "string"
+      )
+    : [];
+
+  if (routeSource === "availability_truth") {
+    await syncStudyRouteCuratedRegionalAlternatives({
+      supabase,
+      routeId: route.id,
+      primaryVariantId: variant.id,
+      primarySteps: initialSteps,
+      professionSlug: professionRow.slug,
+      preferredMunicipalityCodes: preferredMunicipalityCodesForCurated,
       snapshotContext,
       routeInputSignature,
       createdByType,

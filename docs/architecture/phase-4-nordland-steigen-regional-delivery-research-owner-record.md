@@ -135,7 +135,7 @@ Carpenter on `18` proves **campus programme_selection** for Bygg→Tømrer (7/5 
 | 2 | Gate **T-2** (NFK 0+4 + Tømrerfaget evidence) | **CLOSED** — charter §4.1 2026-06-16 |
 | 3 | **P0:** static info when `1848` + carpenter | **SHIPPED** — `d9be993` |
 | 4 | **P1 design gate** (curated variant B spec) | **CLOSED** — charter §10 2026-06-16 |
-| 5 | **P1 code** (path variant in route engine) | **OPEN** — awaits charter **C-4** owner sign-off |
+| 5 | **P1 code** (path variant in route engine) | **SHIPPED** — curated regional alternative on create/recompute |
 
 **Code authorization:** P0 only via charter C-2/C-3. P1 requires **C-4** after design gate §10.
 

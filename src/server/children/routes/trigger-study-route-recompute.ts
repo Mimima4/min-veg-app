@@ -40,6 +40,7 @@ import type { PathVariant, PathVariantsResult } from "./build-path-variants";
 import type { AvailabilityTruthRow } from "./get-availability-truth";
 import type { KommuneTransportSortContext } from "@/lib/planning/kommune-transport/types";
 import { syncStudyRouteOutcomeFilterAlternatives } from "./sync-study-route-outcome-filter-alternatives";
+import { syncStudyRouteCuratedRegionalAlternatives } from "./sync-study-route-curated-regional-alternatives";
 
 type Params = {
   childId: string;
@@ -938,6 +939,21 @@ export async function triggerStudyRouteRecompute(params: Params) {
         });
       }
 
+      if (recomputedSteps.some((step) => step.source === "availability_truth")) {
+        await syncStudyRouteCuratedRegionalAlternatives({
+          supabase,
+          routeId: route.id,
+          primaryVariantId: route.current_variant_id,
+          primarySteps: recomputedSteps,
+          professionSlug: professionRow.slug,
+          preferredMunicipalityCodes,
+          snapshotContext,
+          routeInputSignature,
+          createdByType: triggeredByType,
+          createdByUserId: triggeredByUserId,
+        });
+      }
+
       await supabase
         .from("study_route_recompute_runs")
         .update({
@@ -997,6 +1013,21 @@ export async function triggerStudyRouteRecompute(params: Params) {
         pathVariants: outcomeFilterAlternativesContext.pathVariants,
         enrichedPathVariants: outcomeFilterAlternativesContext.enrichedPathVariants,
         childContext: true,
+        snapshotContext,
+        routeInputSignature,
+        createdByType: triggeredByType,
+        createdByUserId: triggeredByUserId,
+      });
+    }
+
+    if (routeSource === "availability_truth") {
+      await syncStudyRouteCuratedRegionalAlternatives({
+        supabase,
+        routeId: route.id,
+        primaryVariantId: route.current_variant_id,
+        primarySteps: recomputedSteps,
+        professionSlug: professionRow.slug,
+        preferredMunicipalityCodes,
         snapshotContext,
         routeInputSignature,
         createdByType: triggeredByType,

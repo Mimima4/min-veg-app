@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getRouteOutcomeFilterLabelNb } from "@/lib/nav/route-outcome-filter-labels";
 import { parseOutcomeFilterVariantReason } from "@/lib/nav/parse-outcome-filter-variant-reason";
+import { parseCuratedRegionalVariantReason } from "@/lib/regional-delivery/curated-regional-variant-reason";
 import type {
   StudyRouteAlternativeTeaser,
   StudyRouteSnapshotStep,
@@ -309,19 +310,23 @@ export async function getStudyRouteAlternatives(
       : null;
 
     const routeOutcomeFilterId = parseOutcomeFilterVariantReason(variant.variant_reason);
+    const curatedRegionalVariantId = parseCuratedRegionalVariantReason(variant.variant_reason);
 
     return {
       variantId: variant.id,
       label: resolveVariantLabel(variant),
       isCurrent: variant.is_current,
       routeOutcomeFilterId,
+      curatedRegionalVariantId,
       variantStatus: variant.status,
       mainDifference: routeOutcomeFilterId
         ? "Alternative route shaped by a different education outcome filter"
-        : variant.variant_reason ??
-          (variant.is_current
-            ? "Current active route variant"
-            : "Alternative variant for the same target profession"),
+        : curatedRegionalVariantId
+          ? "Local veksling delivery model (Steigenmodellen) — curated operator path"
+          : variant.variant_reason ??
+            (variant.is_current
+              ? "Current active route variant"
+              : "Alternative variant for the same target profession"),
       realismDelta,
       riskDelta,
       changedStepsCount: getChangedStepsCount(currentSnapshot, snapshot),
@@ -330,15 +335,15 @@ export async function getStudyRouteAlternatives(
 
   const savedSignatureSet = new Set(params.savedSelectionSignatures ?? []);
 
-  const outcomeAlternatives = teasers.filter(
+  const alternativeTeasers = teasers.filter(
     (teaser) =>
       !teaser.isCurrent &&
-      Boolean(teaser.routeOutcomeFilterId) &&
+      (Boolean(teaser.routeOutcomeFilterId) || Boolean(teaser.curatedRegionalVariantId)) &&
       (teaser.changedStepsCount ?? 0) > 0
   );
 
   return Promise.all(
-    outcomeAlternatives.map(async (teaser) => {
+    alternativeTeasers.map(async (teaser) => {
       const payload = snapshotMap.get(teaser.variantId)?.selected_steps_payload ?? null;
       const rawSteps = Array.isArray(payload) ? (payload as StudyRouteSnapshotStep[]) : [];
       const isSaved =

@@ -6,6 +6,11 @@ import type {
 import type { StudyRouteStep } from "./route-step-types";
 import type { StudyRouteSignals } from "./route-signal-types";
 
+export type StudyRouteSnapshotStepSource =
+  | "availability_truth"
+  | "legacy"
+  | "curated_regional_delivery";
+
 /** Persisted snapshot rows (programme / progression / outcome). */
 export type StudyRouteProgrammeSelectionSnapshotStep = {
   type: "programme_selection";
@@ -22,7 +27,7 @@ export type StudyRouteProgrammeSelectionSnapshotStep = {
   duration_years?: number | null;
   duration_label?: string | null;
   current_profession_slug: string;
-  source?: "availability_truth" | "legacy";
+  source?: StudyRouteSnapshotStepSource;
   stage?: string;
   options?: Array<{
     institution_id: string;
@@ -57,7 +62,7 @@ export type StudyRouteProgressionSnapshotStep = {
   duration_years?: number | null;
   duration_label?: string | null;
   current_profession_slug: string;
-  source?: "availability_truth" | "legacy";
+  source?: StudyRouteSnapshotStepSource;
 };
 
 export type StudyRouteApprenticeshipSnapshotStep = {
@@ -80,7 +85,7 @@ export type StudyRouteApprenticeshipSnapshotStep = {
     outcome_profession_ids: string[];
   }>;
   current_profession_slug: string;
-  source?: "availability_truth" | "legacy";
+  source?: StudyRouteSnapshotStepSource;
 };
 
 export type StudyRouteOutcomeSnapshotStep = {
@@ -98,7 +103,7 @@ export type StudyRouteOutcomeSnapshotStep = {
   duration_years?: number | null;
   duration_label?: string | null;
   current_profession_slug: string;
-  source?: "availability_truth" | "legacy";
+  source?: StudyRouteSnapshotStepSource;
   nav_profession_title?: string | null;
   nav_yrkeskategori?: string | null;
 };
@@ -184,6 +189,7 @@ export type StudyRouteAlternativeTeaser = {
   /** True when an equivalent saved route already exists for this variant snapshot. */
   isSaved?: boolean;
   routeOutcomeFilterId?: string | null;
+  curatedRegionalVariantId?: string | null;
   variantStatus?: string | null;
   mainDifference?: string | null;
   realismDelta?: string | null;

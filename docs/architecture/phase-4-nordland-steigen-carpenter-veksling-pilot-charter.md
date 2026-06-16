@@ -77,7 +77,7 @@ Variant B (pilot charter): veksling_hub_step? → apprenticeship_step (employer-
 | Phase | Deliverable | Status |
 |-------|-------------|--------|
 | **P0** | Static **info card** on child profile / route detail / compare when Steigen + carpenter | **SHIPPED** — `d9be993` |
-| **P1** | Second **path variant** in route builder (read-only curated JSON, not PSA) | **DESIGN GATE** — §10; code **not** authorized until **C-4** |
+| **P1** | Second **path variant** in route builder (read-only curated JSON, not PSA) | **SHIPPED** — curated regional alternative sync |
 | **P2** | Employer entity + `apprenticeship_options` curation table (separate from PSA) | Blocked on P1 |
 | **P3** | E2E owner checklist Steigen child × carpenter × variant B | Blocked on P1 |
 
@@ -110,7 +110,7 @@ Variant B (pilot charter): veksling_hub_step? → apprenticeship_step (employer-
 | C-1 | Charter scope **Steigen × carpenter** approved | **OK** — chat 2026-06-15 |
 | C-2 | Start at **P0 info card** vs **P1 path variant** | **P0 approved** — chat 2026-06-16 |
 | C-3 | Implementation gate author | **OK** — P0 shipped in app (info card on child profile, route detail, compare) |
-| C-4 | **P1** path variant implementation authorized | **OPEN** — design gate §10 ready; await owner **«P1 — делай»** |
+| C-4 | **P1** path variant implementation authorized | **OK** — chat 2026-06-16 |
 
 **Sign-off:** _____________ Date: _____________
 

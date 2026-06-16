@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { StudyRouteAlternativeTeaser } from "@/lib/routes/route-types";
+import { STEIGEN_CARPENTER_VEKSLING_VARIANT_ID } from "@/lib/regional-delivery/steigen-carpenter-veksling-path-variant";
 import RouteStepsPanel from "./route-steps-panel";
 import SaveRouteButton from "./[routeId]/save-route-button";
 
@@ -52,7 +53,15 @@ export default function AlternativeRoutesCollapsible({
           {visibleAlternatives.map((alternative) => (
             <section key={alternative.variantId}>
               <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                <h3 className="text-base font-semibold text-stone-900">{alternative.label}</h3>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-base font-semibold text-stone-900">{alternative.label}</h3>
+                  {alternative.curatedRegionalVariantId ===
+                  STEIGEN_CARPENTER_VEKSLING_VARIANT_ID ? (
+                    <span className="inline-flex rounded-full border border-sky-300 bg-sky-50 px-2.5 py-0.5 text-xs font-medium text-sky-900">
+                      Veksling / Steigenmodellen
+                    </span>
+                  ) : null}
+                </div>
                 <SaveRouteButton
                   childId={childId}
                   routeId={routeId}
