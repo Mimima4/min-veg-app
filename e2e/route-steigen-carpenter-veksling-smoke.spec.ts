@@ -70,12 +70,18 @@ test.describe("route steigen carpenter veksling smoke", () => {
     await expect(routeStepsHeader.getByTestId("steigen-veksling-badge")).toHaveCount(0);
 
     await expect(page.getByRole("button", { name: "Alternative routes" })).toBeVisible();
-    await expect(page.getByText(fixture.vekslingVariantLabel)).toBeVisible();
-    await expect(page.getByText(fixture.hubInstitutionName)).toBeVisible();
-    await expect(page.getByText(fixture.employerOptionTitle)).toBeVisible();
 
     const vekslingAlternative = page.getByTestId("steigen-veksling-alternative-route");
     await expect(vekslingAlternative).toBeVisible();
+    await expect(
+      vekslingAlternative.getByRole("heading", { name: fixture.vekslingVariantLabel })
+    ).toBeVisible();
+    await expect(
+      vekslingAlternative.getByText(fixture.hubInstitutionName).first()
+    ).toBeVisible();
+    await expect(
+      vekslingAlternative.getByText(fixture.employerOptionTitle).first()
+    ).toBeVisible();
     await expect(vekslingAlternative.getByTestId("steigen-veksling-badge")).toBeVisible();
     await expect(page.getByText("LOSA")).toHaveCount(0);
   });

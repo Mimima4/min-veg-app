@@ -16,7 +16,13 @@
 | Child `preferred_municipality_codes` includes **`1848`** | ☐ |
 | Draft **carpenter** route exists for child | ☐ |
 | Curated variant `curated:steigen-carpenter-veksling-0-4` with current snapshot | ☐ |
-| `E2E_CHILD_ID` set in `.env.local` | ☐ |
+| `E2E_CHILD_ID` set in `.env.local` (Steigen carpenter child, kommune `1848`) | ☐ |
+
+Example:
+
+```env
+E2E_CHILD_ID=fafad05c-4bf6-43c6-9142-7982262993bc
+```
 
 ---
 
