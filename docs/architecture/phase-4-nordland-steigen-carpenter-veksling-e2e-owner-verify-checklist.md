@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **OPEN** — automation added 2026-06-16 |
+| **Status** | **CLOSED** — smoke + E2E green 2026-06-18 |
 | **Pilot** | `carpenter` × Steigen `1848` × veksling variant B |
 | **Charter** | `phase-4-nordland-steigen-carpenter-veksling-pilot-charter.md` |
 | **Prerequisite** | P1 curated variant + P2 employer options shipped |
@@ -13,10 +13,10 @@
 
 | Item | Status |
 |------|--------|
-| Child `preferred_municipality_codes` includes **`1848`** | ☐ |
-| Draft **carpenter** route exists for child | ☐ |
-| Curated variant `curated:steigen-carpenter-veksling-0-4` with current snapshot | ☐ |
-| `E2E_CHILD_ID` set in `.env.local` (Steigen carpenter child, kommune `1848`) | ☐ |
+| Child `preferred_municipality_codes` includes **`1848`** | ☑ |
+| Draft **carpenter** route exists for child | ☑ |
+| Curated variant `curated:steigen-carpenter-veksling-0-4` with current snapshot | ☑ |
+| `E2E_CHILD_ID` set in `.env.local` (Steigen carpenter child, kommune `1848`) | ☑ |
 
 Example:
 
@@ -33,14 +33,16 @@ npm run smoke:steigen-carpenter-veksling
 npm run test:e2e:steigen
 ```
 
-| Check | Automation |
-|-------|------------|
-| Steigen child fixture resolves | `smoke:steigen-carpenter-veksling` |
-| Campus route has veksling alternative with hub + employer | `test:e2e:steigen` |
-| Campus route steps header has **no** veksling badge | `test:e2e:steigen` |
-| Recompute API **200** | `test:e2e:steigen` |
-| Save veksling alternative API **200** (when unsaved) | `test:e2e:steigen` |
-| Saved veksling route shows badge in Route steps | `test:e2e:steigen` (if saved route exists) |
+Result 2026-06-18: `smoke` OK; `test:e2e:steigen` **3 passed, 1 skipped** (Chromium installed for the run, then removed).
+
+| Check | Automation | Result |
+|-------|------------|--------|
+| Steigen child fixture resolves | `smoke:steigen-carpenter-veksling` | ☑ |
+| Campus route has veksling alternative with hub + employer | `test:e2e:steigen` | ☑ |
+| Campus route steps header has **no** veksling badge | `test:e2e:steigen` | ☑ |
+| Recompute API **200** | `test:e2e:steigen` | ☑ |
+| Save veksling alternative API **200** (when unsaved) | `test:e2e:steigen` | ☑ |
+| Saved veksling route shows badge in Route steps | `test:e2e:steigen` (if saved route exists) | ⏭ skipped — no saved veksling route in fixture |
 
 ---
 
@@ -53,6 +55,11 @@ npm run test:e2e:steigen
 - [ ] NAV matcher still **Tømrer** for carpenter family
 
 ---
+
+## Notes
+
+- Employer step is **generic** (`Lokal opplæringsbedrift (Steigen)`) per charter §4.1 stop rule — no named bedrift until auditable Tier 2 list.
+- Saved-veksling badge check stays skipped until a veksling alternative is saved via **Save route**; covered by manual browser verify.
 
 ## Sign-off
 

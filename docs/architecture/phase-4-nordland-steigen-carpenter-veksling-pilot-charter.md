@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **DRAFT** — P0 **shipped** 2026-06-16; P1 **design gate** open; no PSA / no apply |
+| **Status** | **CLOSED** — P0–P3 **shipped** 2026-06-18; no PSA / no apply (employer generic per §4.1) |
 | **Pilot** | `carpenter` (Tømrer) × **Steigenmodellen** × home kommune **Steigen `1848`** |
 | **Parent research** | `phase-4-nordland-steigen-regional-delivery-research-owner-record.md` |
 | **Prerequisite** | Tier 1 + fylke inventory **closed** in parent record |
@@ -79,7 +79,7 @@ Variant B (pilot charter): veksling_hub_step? → apprenticeship_step (employer-
 | **P0** | Static **info card** on child profile / route detail / compare when Steigen + carpenter | **SHIPPED** — `d9be993` |
 | **P1** | Second **path variant** in route builder (read-only curated JSON, not PSA) | **SHIPPED** — curated regional alternative sync |
 | **P2** | Employer entity + `apprenticeship_options` curation table (separate from PSA) | **SHIPPED** — curated employer table in app code |
-| **P3** | E2E owner checklist Steigen child × carpenter × variant B | **OPEN** — `phase-4-nordland-steigen-carpenter-veksling-e2e-owner-verify-checklist.md` |
+| **P3** | E2E owner checklist Steigen child × carpenter × variant B | **SHIPPED** — smoke + E2E green 2026-06-18; `phase-4-nordland-steigen-carpenter-veksling-e2e-owner-verify-checklist.md` |
 
 **Stop rule:** if Tier 2 bedrift list cannot be sourced with auditable evidence → stay at **P0 info card** only.
 
@@ -87,10 +87,10 @@ Variant B (pilot charter): veksling_hub_step? → apprenticeship_step (employer-
 
 ## 6. Success criteria (pilot closure)
 
-- [ ] Child **Steigen `1848`** sees **both** campus carpenter route (A) and Steigenmodellen path (B) with clear labels
-- [ ] No LOSA badge; no fake Vilbli school rows for avd Steigen on strukturkart
-- [ ] Owner browser E2E: save/recompute **200** for variant A unchanged; variant B per charter
-- [ ] NAV matcher still **Tømrer** for carpenter family
+- [x] Child **Steigen `1848`** sees **both** campus carpenter route (A) and Steigenmodellen path (B) with clear labels
+- [x] No LOSA badge; no fake Vilbli school rows for avd Steigen on strukturkart
+- [x] Owner browser E2E: save/recompute **200** for variant A unchanged; variant B per charter
+- [x] NAV matcher still **Tømrer** for carpenter family
 
 ---
 
