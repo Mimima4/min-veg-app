@@ -70,6 +70,8 @@ Variant B (pilot charter): veksling_hub_step? → apprenticeship_step (employer-
 
 **Stop rule (unchanged):** if Tier 2 **bedrift list** cannot be sourced with auditable evidence → P1 shows **generic** opplæringsbedrift step only; **no** named employers until P2.
 
+> **Successor (2026-06-25):** the generic placeholder is superseded by the verified-source, multi-commune employer layer — see `phase-4-verified-larebedrift-employer-layer-charter.md`. Steigen migrates to ingested godkjent rows once that layer's P1 covers it (no double truth).
+
 ---
 
 ## 5. Implementation phases
