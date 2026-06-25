@@ -42,7 +42,7 @@ Result 2026-06-18: `smoke` OK; `test:e2e:steigen` **3 passed, 1 skipped** (Chrom
 | Campus route steps header has **no** veksling badge | `test:e2e:steigen` | ☑ |
 | Recompute API **200** | `test:e2e:steigen` | ☑ |
 | Save veksling alternative API **200** (when unsaved) | `test:e2e:steigen` | ☑ |
-| Saved veksling route shows badge in Route steps | `test:e2e:steigen` (if saved route exists) | ⏭ skipped — no saved veksling route in fixture |
+| Saved veksling route shows badge in Route steps | `test:e2e:steigen` (self-provisions saved route) | ☑ |
 
 ---
 
@@ -59,7 +59,7 @@ Result 2026-06-18: `smoke` OK; `test:e2e:steigen` **3 passed, 1 skipped** (Chrom
 ## Notes
 
 - Employer step is **generic** (`Lokal opplæringsbedrift (Steigen)`) per charter §4.1 stop rule — no named bedrift until auditable Tier 2 list.
-- Saved-veksling badge check stays skipped until a veksling alternative is saved via **Save route**; covered by manual browser verify.
+- Saved-veksling badge test now **self-provisions** its precondition: if no saved veksling route exists it saves the veksling alternative via `save-study-route` (`sourceVariantId`), then asserts the badge. Saved-route detection in the fixture resolver is by **snapshot signature** (hub step + employer option), since saved variants carry a generic `User selection` reason.
 
 ## Sign-off
 

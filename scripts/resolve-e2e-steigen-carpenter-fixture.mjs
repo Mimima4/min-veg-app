@@ -31,6 +31,34 @@ function stableStringify(value) {
   return JSON.stringify(value);
 }
 
+/**
+ * A saved veksling route is detected by its snapshot signature, NOT by
+ * variant_reason: saveStudyRoute persists the copied steps under a generic
+ * "User selection" variant, so the curated reason is not present on saved rows.
+ */
+function snapshotStepsHaveVekslingSignature(steps) {
+  if (!Array.isArray(steps)) {
+    return false;
+  }
+  const hasHubStep = steps.some(
+    (step) =>
+      step &&
+      typeof step === "object" &&
+      step.type === "progression_step" &&
+      step.institution_name === HUB_INSTITUTION_NAME
+  );
+  const apprenticeshipStep = steps.find(
+    (step) => step && typeof step === "object" && step.type === "apprenticeship_step"
+  );
+  const apprenticeshipOptions = Array.isArray(apprenticeshipStep?.apprenticeship_options)
+    ? apprenticeshipStep.apprenticeship_options
+    : [];
+  const hasEmployerOption = apprenticeshipOptions.some(
+    (option) => option && option.option_id === EMPLOYER_OPTION_ID
+  );
+  return hasHubStep && hasEmployerOption;
+}
+
 async function main() {
   const childId = String(process.env.E2E_CHILD_ID ?? "").trim();
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -161,7 +189,7 @@ async function main() {
     );
   }
 
-  const { data: savedVekslingRoute } = await supabase
+  const { data: savedRoutes } = await supabase
     .from("study_routes")
     .select("id, current_variant_id")
     .eq("child_id", childId)
@@ -169,19 +197,20 @@ async function main() {
     .eq("status", "saved")
     .is("archived_at", null)
     .order("updated_at", { ascending: false })
-    .limit(5);
+    .limit(10);
 
   let savedVekslingRouteId = null;
-  for (const savedRoute of savedVekslingRoute ?? []) {
+  for (const savedRoute of savedRoutes ?? []) {
     if (!savedRoute?.current_variant_id) {
       continue;
     }
-    const { data: savedVariant } = await supabase
-      .from("study_route_variants")
-      .select("variant_reason")
-      .eq("id", savedRoute.current_variant_id)
+    const { data: savedSnapshot } = await supabase
+      .from("study_route_snapshots")
+      .select("selected_steps_payload")
+      .eq("route_variant_id", savedRoute.current_variant_id)
+      .eq("is_current_snapshot", true)
       .maybeSingle();
-    if (savedVariant?.variant_reason === VEKSLING_VARIANT_REASON) {
+    if (snapshotStepsHaveVekslingSignature(savedSnapshot?.selected_steps_payload)) {
       savedVekslingRouteId = savedRoute.id;
       break;
     }

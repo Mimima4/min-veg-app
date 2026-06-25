@@ -126,12 +126,37 @@ test.describe("route steigen carpenter veksling smoke", () => {
 
   test("saved veksling route shows badge in route steps", async ({ page }) => {
     const fixture = loadFixture();
-    test.skip(!fixture.savedVekslingRouteId, "No saved veksling carpenter route in fixture");
 
-    const routePath = `/nb/app/children/${fixture.childId}/route/${fixture.savedVekslingRouteId}`;
+    // Self-provision the precondition: persist the veksling alternative as a saved
+    // route when none exists yet, so coverage does not depend on test ordering or
+    // pre-existing DB state. saveStudyRoute copies the curated steps verbatim.
+    let savedRouteId = fixture.savedVekslingRouteId;
+    if (!savedRouteId) {
+      const saveResponse = await page.request.post(
+        "/api/internal/routes/save-study-route",
+        {
+          data: {
+            childId: fixture.childId,
+            routeId: fixture.draftRouteId,
+            locale: "nb",
+            sourceVariantId: fixture.vekslingVariantId,
+          },
+        }
+      );
+      expect(saveResponse.status()).toBe(200);
+      const savePayload = (await saveResponse.json()) as {
+        ok?: boolean;
+        result?: { routeId?: string };
+      };
+      expect(savePayload.ok).toBe(true);
+      savedRouteId = savePayload.result?.routeId ?? null;
+    }
+    expect(savedRouteId).toBeTruthy();
+
+    const routePath = `/nb/app/children/${fixture.childId}/route/${savedRouteId}`;
     await page.goto(routePath);
     await page.waitForURL(
-      new RegExp(`/nb/app/children/${fixture.childId}/route/${fixture.savedVekslingRouteId}`),
+      new RegExp(`/nb/app/children/${fixture.childId}/route/${savedRouteId}`),
       { timeout: 120_000 }
     );
 
@@ -139,6 +164,6 @@ test.describe("route steigen carpenter veksling smoke", () => {
     await expect(routeStepsHeader.getByTestId("steigen-veksling-badge")).toBeVisible({
       timeout: 120_000,
     });
-    await expect(page.getByText(fixture.employerOptionTitle)).toBeVisible();
+    await expect(page.getByText(fixture.employerOptionTitle).first()).toBeVisible();
   });
 });
