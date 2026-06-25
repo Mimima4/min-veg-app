@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **RESEARCH CLOSED** — Tier 1 + inventory **2026-06-15**; pilot charter **DRAFT** |
+| **Status** | **RESEARCH CLOSED** — Tier 1 + inventory **2026-06-15**; pilot charter **CLOSED** (P0–P3 shipped **2026-06-18**) |
 | **Track** | **A** — Steigenmodellen / veksling (`18` Nordland) |
 | **Prerequisite** | Carpenter **15/15** closed; regional fit analysis **OWNER SIGNED** |
 | **Carpenter role** | Product precedent for **ordinary VGS chain** comparison — not Steigen delivery model |
@@ -136,8 +136,10 @@ Carpenter on `18` proves **campus programme_selection** for Bygg→Tømrer (7/5 
 | 3 | **P0:** static info when `1848` + carpenter | **SHIPPED** — `d9be993` |
 | 4 | **P1 design gate** (curated variant B spec) | **CLOSED** — charter §10 2026-06-16 |
 | 5 | **P1 code** (path variant in route engine) | **SHIPPED** — curated regional alternative on create/recompute |
+| 6 | **P2 code** (employer entity + curated `apprenticeship_options`) | **SHIPPED** — `steigen-carpenter-veksling-employers.ts` 2026-06-16 |
+| 7 | **P3 verification** (smoke + E2E + owner checklist) | **SHIPPED** — green 2026-06-18; charter **CLOSED** |
 
-**Code authorization:** P0 only via charter C-2/C-3. P1 requires **C-4** after design gate §10.
+**Code authorization:** P0 only via charter C-2/C-3. P1 requires **C-4** after design gate §10. Pilot **closed** at P3 — further regional tracks need a new charter.
 
 ---
 
