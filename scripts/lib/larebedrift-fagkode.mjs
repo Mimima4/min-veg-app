@@ -22,15 +22,20 @@ function normalize(value) {
 /**
  * Canonical fag identities. `code` is our stable internal key (stored in
  * larebedrift_truth.larefag_code). `labelAliases` are normalized substrings we
- * accept from a source label; `codeAliases` are known VIGO/programområde codes.
+ * accept from a source label; `codeAliases` are known VIGO/programområde codes
+ * (incl. the Finnlærebedrift lærefag code). `apiQueryCodes` are the codes passed
+ * to the Finnlærebedrift API `fag=` filter.
  */
 const FAG_REGISTRY = [
   {
     code: "TOMRERFAGET",
     label: "Tømrerfaget",
     labelAliases: ["tomrerfaget", "tomrerfag", "tomrer"],
-    // Known VIGO programområde/lærefag codes across fagfornyelse (LK06 → LK20).
-    codeAliases: ["tomrer3----", "btomr3----", "tomrer1----"],
+    // VIGO programområde/lærefag codes (LK06 → LK20) + Finnlærebedrift lærefag
+    // code BATMF3 (Vg3 Tømrerfaget). BATMF2 is Vg2 (programområde), not the
+    // lærefag godkjenning, so it is intentionally excluded.
+    codeAliases: ["tomrer3----", "btomr3----", "tomrer1----", "batmf3"],
+    apiQueryCodes: ["BATMF3"],
   },
 ];
 
@@ -80,6 +85,19 @@ export function resolveLarefag({ code = null, label = null } = {}) {
 export function getLarefagByCode(code) {
   const fag = LOOKUP.byCode.get(normalize(code));
   return fag ? { code: fag.code, label: fag.label } : null;
+}
+
+/**
+ * Finnlærebedrift API `fag=` query codes for a canonical fag code, or [] if
+ * unknown. With no argument, returns the query codes for all supported fag.
+ */
+export function getLarefagApiQueryCodes(canonicalCode = null) {
+  if (canonicalCode == null) {
+    return FAG_REGISTRY.flatMap((fag) => fag.apiQueryCodes ?? []);
+  }
+  const norm = normalize(canonicalCode);
+  const fag = FAG_REGISTRY.find((entry) => normalize(entry.code) === norm);
+  return fag?.apiQueryCodes ?? [];
 }
 
 export const SUPPORTED_LAREFAG_CODES = FAG_REGISTRY.map((fag) => fag.code);

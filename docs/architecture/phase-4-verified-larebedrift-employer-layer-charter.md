@@ -29,8 +29,8 @@ There is **no general, auditable layer of verified (godkjent) lærebedrifter** t
 |-----------|------------------|------------------------------|
 | **Roster coverage (D-4)** | **Carpenter (Tømrerfaget) nationwide** godkjente lærebedrifter | Other fag (P5), multi-fag pilot |
 | **Route surfacing (D-1)** | **Veksling / curated-regional** `apprenticeship_step`s only | Ordinary Vilbli-derived apprenticeship tails (later phase) |
-| **Source / access (D-2, amended 2026-06-25)** | **Udir NLR API** (primary, pending free key) · **Vilbli relay** (keyless fallback) · **manual seed** · **Brønnøysund** for orgnr identity — all trace to **VIGO** | Vigo bedrift portal (closed); scraping `utdanning.no/finnlarebedrift` private SPA API; live external calls at runtime |
-| **Geography (D-3, amended 2026-06-25)** | **NLR coordinates** + registered kommune (Brønnøysund); county from kommunenummer | True worksite coordinates as a hard requirement |
+| **Source / access (D-2, amended 2026-06-29)** | **Finnlærebedrift open API** `api.utdanning.no/finnlarebedrift` (**primary, keyless**, Udir-recommended) · **Vilbli relay** / **NLR** / **manual seed** (secondary) · **Brønnøysund** for orgnr identity — all trace to **VIGO** | Vigo bedrift portal (closed); live external calls at runtime |
+| **Geography (D-3, amended 2026-06-29)** | Registered kommune + fylke from the API; county from kommunenummer; coords nullable (enrich via detail/Brønnøysund later) | True worksite coordinates as a hard requirement |
 | **UI (D-5)** | **Name in option title**; **orgnr + opplæringskontor** in expandable info/source | Inline orgnr clutter; name-only with no audit trail |
 | **Governance (D-6)** | **This standalone charter** + own ops gates | Folding into Steigen pilot charter |
 
@@ -42,11 +42,11 @@ There is **no general, auditable layer of verified (godkjent) lærebedrifter** t
 
 | Source | Role |
 |--------|------|
-| **VIGO** | Upstream **system of record** for godkjente lærebedrifter + lærekontrakter (fylkeskommune-maintained). Not accessed directly; reaches us via NLR or Vilbli (both import from VIGO). |
-| **Udir NLR API** (`data-nlr.udir.no/v4`) | **Primary ingest** once a free Udir key is granted. Open-licensed (NLOD) JSON: orgnr, kommune/fylke, **coordinates**, per-fag `Programområde`, incremental `endretetter`. Verified live: requires basic-auth key (HTTP 401 without). |
-| **Vilbli oversikt lærebedrifter/opplæringskontor** | **Keyless fallback** via our existing relay (Vilbli imports the oversikt from Vigo bedrift). SPA/feed parse; no coordinates. |
+| **VIGO** | Upstream **system of record** for godkjente lærebedrifter + lærekontrakter (fylkeskommune-maintained). Not accessed directly; reaches us via Finnlærebedrift / NLR / Vilbli (all import from VIGO). |
+| **Finnlærebedrift open API** (`api.utdanning.no/finnlarebedrift`) | **Primary ingest** — keyless (NLOD), Udir-recommended. `/bedrift` filters: `sporring_type=bedrifter_godkjente` (godkjent only, excludes potensielle), `fag` (lærefag codes, Tømrerfaget=`BATMF3`), `sted` (kommune/fylke), paginated. Returns orgnr, navn, fylke/kommune, godkjenninger. **Complete** godkjent set (incl. without a current lærekontrakt). |
+| **Udir NLR API** (`data-nlr.udir.no/v4`) | Secondary. Subset (godkjent **with** a running contract); needs a basic-auth key (HTTP 401 without). Has coordinates + per-fag `Programområde`. Not needed given the open API. |
+| **Vilbli oversikt lærebedrifter/opplæringskontor** | Secondary fallback via our existing relay (imports from Vigo bedrift). |
 | **Brønnøysundregistrene (Enhetsregisteret)** | Canonical org identity by **orgnr** (name, kommune, deletion status) — open API `data.brreg.no/enhetsregisteret/api/enheter/<orgnr>` |
-| **Utdanning.no — Finn Lærebedrift** | Human cross-check only (private SPA API — **not** an ingest path) |
 
 **Identity key:** `orgnr` (canonical). Display name from Brønnøysund/Vigo; verification = **godkjent** for the requested `lærefag` only (fagkode-aware, old + new per fagfornyelse).
 
@@ -164,8 +164,8 @@ Steigen stays on the curated single entry **until P1 ingest covers it**, then mi
 |---|----------|--------|
 | A-1 | Design-gate §8 decisions (D-1…D-6) | **RESOLVED** — chat 2026-06-25 |
 | A-2 | Standalone charter scope (§2) approved | **OK** — chat 2026-06-25 |
-| A-3 | **P1** source-agnostic foundation authorized (migration + ingest skeleton + audit; no source-specific fetcher live yet) | **OK** — chat 2026-06-25; built behind ops gate, routes do not consume it |
-| A-4 | Udir NLR key request | **SENT** 2026-06-25 (`nxr-teknisk@udir.no`); awaiting reply |
+| A-3 | **P1** source-agnostic foundation (migration + ingest skeleton + audit) | **OK** — chat 2026-06-25; built behind ops gate, routes do not consume it |
+| A-4 | Source decision | **RESOLVED** 2026-06-29 — Udir replied recommending the **open Finnlærebedrift API** (keyless, complete); NLR key **not needed**. `utdanning` source built; Steigen `1848` real ingest = **2 godkjent** rows verified. |
 
 **Sign-off:** _____________ Date: _____________
 

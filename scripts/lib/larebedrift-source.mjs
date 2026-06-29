@@ -25,15 +25,20 @@
  *   }
  *
  * Sources:
- *   - nlr    : Udir Register for lærebedrifter API (data-nlr.udir.no). PRIMARY once
- *              an Udir key is granted. Requires env NLR_API_AUTH (basic). Inert
- *              (throws a clear message) until the key exists.
- *   - file   : local JSON array of RawGodkjentEmployer — manual seed / pipeline test.
- *   - vilbli : FALLBACK (keyless via our relay). Not wired yet; throws until built.
+ *   - utdanning : Finnlærebedrift open API (api.utdanning.no). PRIMARY — keyless,
+ *                 complete godkjent set (incl. without a current lærekontrakt),
+ *                 recommended by Udir NXR. Filters: fag (lærefag codes), sted
+ *                 (kommune/fylke), sporring_type=bedrifter_godkjente.
+ *   - nlr       : Udir Register for lærebedrifter API (data-nlr.udir.no). Subset
+ *                 (only godkjent WITH a running contract); needs NLR_API_AUTH key.
+ *                 Kept as a secondary; inert until the key exists.
+ *   - file      : local JSON array of RawGodkjentEmployer — manual seed / test.
+ *   - vilbli    : FALLBACK (keyless via our relay). Not wired yet; throws.
  */
 
 import { readFile } from "node:fs/promises";
 
+const UTDANNING_BASE = "https://api.utdanning.no/finnlarebedrift";
 const NLR_BASE = "https://data-nlr.udir.no/v4";
 
 function sleep(ms) {
@@ -118,6 +123,68 @@ async function fetchNlr({ countyCode = null, fetchImpl = fetch, pageSize = 1000,
   return raws;
 }
 
+/**
+ * Finnlærebedrift open API source. One paginated query per fag code
+ * (sporring_type=bedrifter_godkjente → only godkjent, excludes potensielle),
+ * optionally scoped by `sted` (kommune 4-digit / fylke 2-digit). Emits one raw
+ * record per (bedrift, queried fag). Coordinates/website are not in the list
+ * response → left null (enrich later via --verify-brreg or the detail endpoint).
+ */
+async function fetchUtdanning({ fagCodes = [], sted = null, fetchImpl = fetch, requestDelayMs = 60 } = {}) {
+  const codes = (fagCodes ?? []).filter(Boolean);
+  if (codes.length === 0) {
+    throw new Error("utdanning source requires fag query codes (resolve --larefag first)");
+  }
+
+  const headers = { accept: "application/json" };
+  const raws = [];
+
+  for (const fagCode of codes) {
+    let page = 1;
+    let totalPages = 1;
+    do {
+      const params = new URLSearchParams({
+        sporring_type: "bedrifter_godkjente",
+        fag: fagCode,
+        page: String(page),
+      });
+      if (sted) params.set("sted", String(sted));
+
+      const res = await fetchImpl(`${UTDANNING_BASE}/bedrift?${params.toString()}`, { headers });
+      if (!res.ok) {
+        throw new Error(`Finnlærebedrift /bedrift fag=${fagCode} page=${page} → HTTP ${res.status}`);
+      }
+      const body = await res.json();
+      totalPages = body?.pagination?.total_pages ?? 1;
+      const bedrifter = Array.isArray(body?.bedrifter) ? body.bedrifter : [];
+
+      for (const b of bedrifter) {
+        raws.push({
+          orgNumber: String(b?.orgnr ?? ""),
+          legalName: b?.navn ?? null,
+          displayName: null,
+          countyCode: b?.forradrfylkenr ?? null,
+          municipalityCode: b?.forradrkommnr ?? null,
+          latitude: null,
+          longitude: null,
+          website: null,
+          larefagCodeRaw: fagCode,
+          larefagLabelRaw: null,
+          opplaringskontorName: null,
+          opplaringskontorOrg: null,
+          sourceSystem: "utdanning",
+          sourceReferenceUrl: `https://utdanning.no/finnlarebedrift/bedrift/${b?.orgnr ?? ""}/`,
+        });
+      }
+
+      page += 1;
+      if (requestDelayMs > 0 && page <= totalPages) await sleep(requestDelayMs);
+    } while (page <= totalPages);
+  }
+
+  return raws;
+}
+
 /** File source: a local JSON array of RawGodkjentEmployer (manual seed / test). */
 async function fetchFile({ filePath } = {}) {
   if (!filePath) {
@@ -147,6 +214,7 @@ async function fetchVilbli() {
 }
 
 const SOURCES = {
+  utdanning: fetchUtdanning,
   nlr: fetchNlr,
   file: fetchFile,
   vilbli: fetchVilbli,

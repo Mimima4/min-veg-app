@@ -27,7 +27,7 @@
  */
 import { createClient } from "@supabase/supabase-js";
 import { fetchGodkjentEmployers, AVAILABLE_SOURCES } from "./lib/larebedrift-source.mjs";
-import { resolveLarefag } from "./lib/larebedrift-fagkode.mjs";
+import { resolveLarefag, getLarefagApiQueryCodes } from "./lib/larebedrift-fagkode.mjs";
 import { lookupBrregEnhet, countyCodeFromKommunenummer } from "./lib/brreg-enhet.mjs";
 import { isMainModule } from "./lib/is-main-module.mjs";
 
@@ -37,6 +37,7 @@ function parseArgs(argv) {
     file: null,
     larefag: null,
     county: null,
+    sted: null,
     exportDate: null,
     verifyBrreg: false,
     softRetire: true,
@@ -50,6 +51,7 @@ function parseArgs(argv) {
     else if (token === "--file") args.file = next();
     else if (token === "--larefag") args.larefag = next();
     else if (token === "--county") args.county = next();
+    else if (token === "--sted") args.sted = next();
     else if (token === "--export-date") args.exportDate = next();
     else if (token === "--verify-brreg") args.verifyBrreg = true;
     else if (token === "--no-soft-retire") args.softRetire = false;
@@ -85,11 +87,16 @@ export async function runIngest(args) {
     throw new Error(`--larefag "${args.larefag}" did not resolve to a supported fag`);
   }
 
-  log(`source=${args.source} larefag=${targetFag?.code ?? "ALL"} county=${args.county ?? "ALL"} dryRun=${args.dryRun}`);
+  const fagCodes = getLarefagApiQueryCodes(targetFag?.code ?? null);
+  const sted = args.sted ?? args.county ?? null;
+
+  log(`source=${args.source} larefag=${targetFag?.code ?? "ALL"} county=${args.county ?? "ALL"} sted=${sted ?? "ALL"} dryRun=${args.dryRun}`);
 
   const raws = await fetchGodkjentEmployers(args.source, {
     countyCode: args.county,
     filePath: args.file,
+    fagCodes,
+    sted,
   });
   log(`source returned ${raws.length} raw record(s)`);
 

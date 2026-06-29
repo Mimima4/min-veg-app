@@ -2,13 +2,13 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **SOURCE-AGNOSTIC FOUNDATION BUILT (2026-06-25)** — migration + ingest skeleton + audit shipped behind ops gate; source fetcher pending Udir NLR key / Vilbli parser |
+| **Status** | **LIVE (2026-06-29)** — migration applied; `utdanning` primary fetcher built; Steigen (`1848`) real ingest = **2 godkjent** carpenter rows, orgnr-verified, audit green. Behind ops gate; routes do not consume it yet (P3). |
 | **Phase** | **P1** of `phase-4-verified-larebedrift-employer-layer-charter.md` |
 | **Goal** | Build `larebedrift_truth` + an **ops-gated, source-agnostic ingest** of **carpenter (Tømrerfaget) nationwide** godkjente lærebedrifter, orgnr-normalized vs Brønnøysund |
-| **Access (D-2, amended)** | **Udir NLR API** (primary, pending key) · **Vilbli relay** (fallback) · **manual seed** — all from VIGO + Brønnøysund identity. **No scraping, no live calls at runtime** |
+| **Access (D-2, amended 2026-06-29)** | **Finnlærebedrift open API** `api.utdanning.no/finnlarebedrift` (**primary, keyless**, `sporring_type=bedrifter_godkjente`) · **Vilbli relay / NLR / manual seed** (secondary) — all from VIGO + Brønnøysund identity. **No scraping, no live calls at runtime** |
 | **Ops model** | Mirrors `VGS_OPERATIONAL_RUNNERS.md` (dry-run → ingest → product proof; never on page load/deploy) |
 
-> **Amendment (2026-06-25):** the original «owner Vigo bedrift CSV» plan is dropped — Vigo bedrift is closed to non-lærebedrifter, and `data-nlr.udir.no` requires a free Udir key (verified 401), unlike keyless NSR. Source is now **pluggable** (`scripts/lib/larebedrift-source.mjs`): `nlr` (primary, inert until `NLR_API_AUTH` env exists), `vilbli` (keyless fallback, parser TBD), `file` (manual seed/test). Schema, orchestrator, audit, and future route consumption are **source-independent** — swapping sources needs no table/route change. §3 below (CSV column contract) now applies only to the optional `file` seed source.
+> **Amendment (2026-06-29):** the original «owner Vigo bedrift CSV» plan is dropped (Vigo bedrift is closed to non-lærebedrifter). Udir NXR **recommended the open Finnlærebedrift API** — keyless, godkjent-only, complete (incl. godkjent without a current lærekontrakt, which NLR omits) — so it is now **primary** over the key-gated NLR API. Source is **pluggable** (`scripts/lib/larebedrift-source.mjs`): `utdanning` (primary, live), `nlr` (secondary, inert until `NLR_API_AUTH` env exists), `vilbli` (fallback, parser TBD), `file` (manual seed/test). Schema, orchestrator, audit, and future route consumption are **source-independent** — swapping sources needs no table/route change. §3 below (CSV column contract) now applies only to the optional `file` seed source.
 
 ---
 
