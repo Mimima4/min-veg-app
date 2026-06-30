@@ -28,9 +28,13 @@ export type PsaSnapshotFreshness = {
   stale: boolean;
   activeRowCount: number;
   notified: boolean;
+  webhookConfigured: boolean;
 };
 
-function resolveThresholdDays(): number {
+function resolveThresholdDays(override?: number): number {
+  if (Number.isFinite(override) && (override as number) > 0) {
+    return override as number;
+  }
   const raw = Number.parseInt(process.env.PSA_SNAPSHOT_STALE_DAYS?.trim() ?? "", 10);
   return Number.isFinite(raw) && raw > 0 ? raw : DEFAULT_STALE_DAYS;
 }
@@ -76,9 +80,10 @@ export async function checkPsaSnapshotFreshness(params: {
   supabase?: SupabaseClient;
   notify?: boolean;
   now?: Date;
+  thresholdDaysOverride?: number;
 } = {}): Promise<PsaSnapshotFreshness> {
   const now = params.now ?? new Date();
-  const thresholdDays = resolveThresholdDays();
+  const thresholdDays = resolveThresholdDays(params.thresholdDaysOverride);
   const notify = params.notify ?? true;
 
   const supabase =
@@ -129,5 +134,6 @@ export async function checkPsaSnapshotFreshness(params: {
     stale,
     activeRowCount: count ?? 0,
     notified,
+    webhookConfigured: Boolean(process.env.OPS_ALERT_WEBHOOK_URL?.trim()),
   };
 }

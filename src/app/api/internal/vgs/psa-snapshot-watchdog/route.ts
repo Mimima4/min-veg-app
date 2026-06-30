@@ -29,8 +29,14 @@ async function handle(request: NextRequest) {
     );
   }
 
-  const notify = new URL(request.url).searchParams.get("notify") !== "false";
-  const freshness = await checkPsaSnapshotFreshness({ notify });
+  const searchParams = new URL(request.url).searchParams;
+  const notify = searchParams.get("notify") !== "false";
+  // Test-only override of the staleness threshold (e.g. `?staleDays=1`) so the
+  // reminder path can be exercised without touching env / redeploying.
+  const staleDaysRaw = Number.parseInt(searchParams.get("staleDays") ?? "", 10);
+  const thresholdDaysOverride =
+    Number.isFinite(staleDaysRaw) && staleDaysRaw > 0 ? staleDaysRaw : undefined;
+  const freshness = await checkPsaSnapshotFreshness({ notify, thresholdDaysOverride });
   return NextResponse.json({ ok: true, freshness });
 }
 
