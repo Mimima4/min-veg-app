@@ -120,6 +120,21 @@ node scripts/relay-contour-b-vilbli-to-production.mjs   # production write
 
 Load: `launchctl load ~/Library/LaunchAgents/no.minveg.contour-b-relay.plist`
 
+## Freshness watchdog (Vercel Cron — read-only reminder)
+
+The relay stays a home-IP/launchd job (above). A **separate** Vercel Cron watchdog only **reads** the snapshot age and reminds the owner if the home-IP refresh was missed. It **never** fetches Vilbli and **never** writes.
+
+| Aspect | Value |
+|--------|-------|
+| Endpoint | `GET/POST /api/internal/vgs/psa-snapshot-watchdog` (auth: `CRON_SECRET`) |
+| Cron | Weekly, `0 6 * * 1` (`vercel.json`) |
+| Reads | Latest `last_verified_at` of active `source='vilbli'` PSA rows |
+| Stale rule | age > `PSA_SNAPSHOT_STALE_DAYS` (default **210** = 6-month cadence + grace), or no snapshot |
+| Reminder | POST to `OPS_ALERT_WEBHOOK_URL` (Slack/Discord-compatible). If unset → no push, logs a warning; status JSON still returned |
+| Inspect only | append `?notify=false` |
+
+Owner setup (optional but recommended): set `OPS_ALERT_WEBHOOK_URL` in Vercel env to a Slack or Discord incoming webhook. Tune `PSA_SNAPSHOT_STALE_DAYS` if cadence changes.
+
 ## Unified scheduled ops (Contour B + green A + stale drafts)
 
 **Scripts (home IP):**

@@ -3,6 +3,10 @@
     {
       "path": "/api/internal/larebedrift/run-ingest",
       "schedule": "0 4 1 * *"
+    },
+    {
+      "path": "/api/internal/vgs/psa-snapshot-watchdog",
+      "schedule": "0 6 * * 1"
     }
   ]
 }
