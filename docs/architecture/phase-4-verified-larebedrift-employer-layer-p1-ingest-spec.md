@@ -135,7 +135,7 @@ not-in-export existing rows for this fag ──▶ is_active = false (soft-retir
 | Audit | `scripts/verify-larebedrift-truth-snapshot.mjs` | **BUILT** — godkjent-only + dup + identity/geo invariants, per-(fag,county) coverage |
 | npm scripts | `package.json` | **BUILT** — `ingest:larebedrift`, `verify:larebedrift` |
 
-**No runtime API endpoint** (unlike Contour B relay): NLR/Brønnøysund are reached only at ingest by a Node script with service-role env; runtime stays free of external calls. NLR is fetched server-side at ingest with a basic-auth key (`NLR_API_AUTH`); Vilbli fallback would use the existing home-IP relay headers.
+**Automation (amended 2026-06-30):** Finnlærebedrift + Brønnøysund are keyless and **datacenter-safe**, so the refresh is **self-sufficient from the cloud** — a **cron-only** endpoint `GET /api/internal/larebedrift/run-ingest` (auth `CRON_SECRET`), driven by **Vercel Cron monthly** (`vercel.json`: `0 4 1 * *`). Server module: `src/server/larebedrift/run-larebedrift-ingest.ts` (carpenter nationwide → Brønnøysund verify/enrich → upsert → soft-retire). This **supersedes** the original "no runtime API endpoint" rule: the endpoint is **ops/cron-only**, never hit on page load / recompute / deploy. The `scripts/ingest-larebedrift.mjs` CLI remains for manual dry-runs. Page-load runtime stays free of external calls.
 
 ---
 

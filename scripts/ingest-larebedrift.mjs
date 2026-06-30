@@ -126,6 +126,7 @@ export async function runIngest(args) {
     let legalName = raw.legalName ?? null;
     let municipalityCode = raw.municipalityCode ? String(raw.municipalityCode) : null;
     let countyCode = raw.countyCode ? String(raw.countyCode) : countyCodeFromKommunenummer(municipalityCode);
+    let website = normalizeWebsite(raw.website);
 
     if (args.verifyBrreg) {
       let brreg = brregCache.get(orgNumber);
@@ -148,6 +149,7 @@ export async function runIngest(args) {
       legalName = brreg.legalName ?? legalName;
       municipalityCode = brreg.municipalityCode ?? municipalityCode;
       countyCode = brreg.countyCode ?? countyCode;
+      website = normalizeWebsite(brreg.website) ?? website;
     }
 
     if (args.county && countyCode && String(countyCode) !== String(args.county)) {
@@ -169,6 +171,7 @@ export async function runIngest(args) {
       display_name: raw.displayName ?? null,
       county_code: String(countyCode),
       municipality_code: String(municipalityCode),
+      website: website ?? null,
       latitude: typeof raw.latitude === "number" ? raw.latitude : null,
       longitude: typeof raw.longitude === "number" ? raw.longitude : null,
       larefag_code: fag.code,

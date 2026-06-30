@@ -11,6 +11,16 @@ import {
   shouldShowSteigenCarpenterVekslingInfo,
 } from "./steigen-carpenter-veksling-pilot";
 
+/** larebedrift_truth fag code for Tømrerfaget (see scripts/lib/larebedrift-fagkode.mjs). */
+export const STEIGEN_CARPENTER_VEKSLING_LAREFAG_CODE = "TOMRERFAGET";
+
+type ApprenticeshipOption = NonNullable<
+  Extract<
+    StudyRouteSnapshotStep,
+    { type: "apprenticeship_step" }
+  >["apprenticeship_options"]
+>[number];
+
 export const STEIGEN_CARPENTER_VEKSLING_VARIANT_ID = "steigen-carpenter-veksling-0-4";
 
 export const STEIGEN_CARPENTER_VEKSLING_VARIANT_LABEL = STEIGEN_CARPENTER_VEKSLING_BADGE;
@@ -19,21 +29,26 @@ export const STEIGEN_CARPENTER_VEKSLING_VARIANT_REASON = formatCuratedRegionalVa
   STEIGEN_CARPENTER_VEKSLING_VARIANT_ID
 );
 
-const HUB_INSTITUTION_NAME = "Nord-Salten vgs avd Steigen";
+/** Canonical NSR name (orgnr 912885070, Steigen 1848); NSR carries no website. */
+const HUB_INSTITUTION_NAME = "Nord-Salten videregående skole avd Steigen";
 /** Operator/kommune curated — see levisteigen.no + NFK; not Vilbli strukturkart PSA. */
 const HUB_MUNICIPALITY = "Steigen";
 const HUB_CITY = "Leinesfjord";
+/** Official school site (Utdanningstilbud + Finn ansatte/kontakt) — curated; NSR Internettadresse is null. */
+const HUB_INSTITUTION_WEBSITE = "https://nord-salten.vgs.no/";
 
-export function buildSteigenCarpenterVekslingSteps(
-  professionSlug: string
+function buildSteigenSteps(
+  professionSlug: string,
+  apprenticeshipOptions: ApprenticeshipOption[]
 ): StudyRouteSnapshotStep[] {
   return [
     {
       type: "progression_step",
-      title: "Fellesfag — Nord-Salten vgs avd Steigen",
+      title: "Fellesfag — Nord-Salten videregående skole avd Steigen",
       institution_name: HUB_INSTITUTION_NAME,
       institution_municipality: HUB_MUNICIPALITY,
       institution_city: HUB_CITY,
+      institution_website: HUB_INSTITUTION_WEBSITE,
       education_level: "vgs",
       fit_band: "recommended",
       program_slug: null,
@@ -52,11 +67,46 @@ export function buildSteigenCarpenterVekslingSteps(
       program_slug: null,
       program_title: "Tømrerfaget",
       duration_label: "ca. 2 år (år 3–4)",
-      apprenticeship_options: getSteigenCarpenterVekslingApprenticeshipOptions(),
+      apprenticeship_options: apprenticeshipOptions,
       current_profession_slug: professionSlug,
       source: "curated_regional_delivery",
     },
   ];
+}
+
+/** Curated fallback (charter §4 stop rule): used when no verified rows exist. */
+export function buildSteigenCarpenterVekslingSteps(
+  professionSlug: string
+): StudyRouteSnapshotStep[] {
+  return buildSteigenSteps(
+    professionSlug,
+    getSteigenCarpenterVekslingApprenticeshipOptions()
+  );
+}
+
+/**
+ * P3: prefer the verified `larebedrift_truth` roster (godkjent, geography-first
+ * ordered). Falls back to the curated placeholder only when the (fag, county)
+ * cell has no auditable rows (charter §4 stop rule — never synthesize).
+ */
+export async function buildSteigenCarpenterVekslingStepsWithVerifiedEmployers(params: {
+  professionSlug: string;
+  preferredMunicipalityCodes: string[];
+  loadVerifiedOptions: (input: {
+    larefagCode: string;
+    preferredMunicipalityCodes: string[];
+  }) => Promise<ApprenticeshipOption[]>;
+}): Promise<StudyRouteSnapshotStep[]> {
+  const verifiedOptions = await params.loadVerifiedOptions({
+    larefagCode: STEIGEN_CARPENTER_VEKSLING_LAREFAG_CODE,
+    preferredMunicipalityCodes: params.preferredMunicipalityCodes,
+  });
+
+  if (verifiedOptions.length === 0) {
+    return buildSteigenCarpenterVekslingSteps(params.professionSlug);
+  }
+
+  return buildSteigenSteps(params.professionSlug, verifiedOptions);
 }
 
 export function isSteigenCarpenterVekslingPathVariantEligible(params: {

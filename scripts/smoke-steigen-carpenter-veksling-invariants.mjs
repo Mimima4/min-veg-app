@@ -35,12 +35,21 @@ export function runSteigenCarpenterVekslingSmoke() {
     "fixture must target Steigen municipality 1848"
   );
   assert(
-    fixture.hubInstitutionName === "Nord-Salten vgs avd Steigen",
-    "fixture hub institution must match curated Steigen hub"
+    fixture.hubInstitutionName === "Nord-Salten videregående skole avd Steigen",
+    "fixture hub institution must match canonical NSR Steigen hub"
   );
   assert(
-    fixture.employerOptionId === "employer-steigen-carpenter-local-bedrift",
-    "fixture employer option id must match curated employer table"
+    typeof fixture.employerOptionId === "string" &&
+      fixture.employerOptionId.startsWith("larebedrift-"),
+    "fixture employer option must be a verified larebedrift_truth row"
+  );
+  assert(
+    fixture.anchorEmployerOptionId === "larebedrift-995810166",
+    "fixture must carry the charter anchor employer (ÅLSTADØYA TRELAST AS)"
+  );
+  assert(
+    Number(fixture.verifiedEmployerCount) >= 1,
+    "fixture must expose at least one verified employer"
   );
   assert(
     fixture.vekslingVariantLabel === "Veksling / Steigenmodellen",

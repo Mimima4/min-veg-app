@@ -1,1 +1,8 @@
-{}
+{
+  "crons": [
+    {
+      "path": "/api/internal/larebedrift/run-ingest",
+      "schedule": "0 4 1 * *"
+    }
+  ]
+}

@@ -69,6 +69,7 @@ export async function lookupBrregEnhet(orgNumber, { fetchImpl = fetch } = {}) {
     legalName: raw?.navn ?? null,
     municipalityCode: kommunenummer ? String(kommunenummer) : null,
     countyCode: countyCodeFromKommunenummer(kommunenummer),
+    website: raw?.hjemmeside ? String(raw.hjemmeside) : null,
     raw,
   };
 }

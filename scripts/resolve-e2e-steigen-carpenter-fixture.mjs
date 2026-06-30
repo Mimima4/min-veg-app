@@ -13,9 +13,13 @@ import { isMainModule } from "./lib/is-main-module.mjs";
 
 const STEIGEN_MUNICIPALITY_CODE = "1848";
 const VEKSLING_VARIANT_REASON = "curated:steigen-carpenter-veksling-0-4";
-const HUB_INSTITUTION_NAME = "Nord-Salten vgs avd Steigen";
-const EMPLOYER_OPTION_ID = "employer-steigen-carpenter-local-bedrift";
-const EMPLOYER_OPTION_TITLE = "Lokal opplæringsbedrift (Steigen)";
+const HUB_INSTITUTION_NAME = "Nord-Salten videregående skole avd Steigen";
+/** Verified larebedrift_truth options use this id prefix (org-keyed). */
+const VERIFIED_OPTION_PREFIX = "larebedrift-";
+/** Retired curated placeholder — must NOT appear once verified rows exist. */
+const RETIRED_CURATED_OPTION_ID = "employer-steigen-carpenter-local-bedrift";
+/** Charter §3 worked example (ÅLSTADØYA TRELAST AS) — must be in the roster. */
+const ANCHOR_EMPLOYER_OPTION_ID = "larebedrift-995810166";
 
 function parsePreferredMunicipalityCodes(value) {
   if (!Array.isArray(value)) {
@@ -53,10 +57,13 @@ function snapshotStepsHaveVekslingSignature(steps) {
   const apprenticeshipOptions = Array.isArray(apprenticeshipStep?.apprenticeship_options)
     ? apprenticeshipStep.apprenticeship_options
     : [];
-  const hasEmployerOption = apprenticeshipOptions.some(
-    (option) => option && option.option_id === EMPLOYER_OPTION_ID
+  const hasVerifiedEmployerOption = apprenticeshipOptions.some(
+    (option) =>
+      option &&
+      typeof option.option_id === "string" &&
+      option.option_id.startsWith(VERIFIED_OPTION_PREFIX)
   );
-  return hasHubStep && hasEmployerOption;
+  return hasHubStep && hasVerifiedEmployerOption;
 }
 
 async function main() {
@@ -175,18 +182,47 @@ async function main() {
   const apprenticeshipOptions = Array.isArray(apprenticeshipStep?.apprenticeship_options)
     ? apprenticeshipStep.apprenticeship_options
     : [];
-  const employerOption = apprenticeshipOptions.find(
-    (option) => option && option.option_id === EMPLOYER_OPTION_ID
-  );
-  if (!employerOption) {
+
+  // Verified end-state (charter success criterion): the curated placeholder is
+  // replaced by godkjent larebedrift_truth rows. Assert by SHAPE (durable as the
+  // roster grows) + the charter anchor employer, not a pinned exact list.
+  if (apprenticeshipOptions.length === 0) {
     throw new Error(
-      `Veksling snapshot missing employer option ${EMPLOYER_OPTION_ID} — run npm run test:e2e:steigen or recompute the carpenter draft route`
+      `Veksling snapshot has no apprenticeship options — recompute the carpenter draft route`
     );
   }
-  if (employerOption.option_title !== EMPLOYER_OPTION_TITLE) {
+  const retiredOption = apprenticeshipOptions.find(
+    (option) => option && option.option_id === RETIRED_CURATED_OPTION_ID
+  );
+  if (retiredOption) {
     throw new Error(
-      `Unexpected employer option title: ${stableStringify(employerOption.option_title)}`
+      `Retired curated placeholder ${RETIRED_CURATED_OPTION_ID} is still present — verified ingest did not replace it`
     );
+  }
+  const nonVerified = apprenticeshipOptions.find(
+    (option) =>
+      !option ||
+      typeof option.option_id !== "string" ||
+      !option.option_id.startsWith(VERIFIED_OPTION_PREFIX)
+  );
+  if (nonVerified) {
+    throw new Error(
+      `Non-verified apprenticeship option present: ${stableStringify(nonVerified?.option_id)}`
+    );
+  }
+  const anchorOption = apprenticeshipOptions.find(
+    (option) => option && option.option_id === ANCHOR_EMPLOYER_OPTION_ID
+  );
+  if (!anchorOption) {
+    throw new Error(
+      `Charter anchor employer ${ANCHOR_EMPLOYER_OPTION_ID} missing — re-run npm run ingest:larebedrift for Steigen`
+    );
+  }
+
+  // First option is the default-selected one shown on the card (visible to E2E).
+  const selectedOption = apprenticeshipOptions[0];
+  if (!selectedOption?.option_title) {
+    throw new Error(`Selected apprenticeship option has no title`);
   }
 
   const { data: savedRoutes } = await supabase
@@ -225,8 +261,12 @@ async function main() {
       savedVekslingRouteId,
       steigenMunicipalityCode: STEIGEN_MUNICIPALITY_CODE,
       hubInstitutionName: HUB_INSTITUTION_NAME,
-      employerOptionId: EMPLOYER_OPTION_ID,
-      employerOptionTitle: EMPLOYER_OPTION_TITLE,
+      // employerOption* describe the default-selected (first) verified employer
+      // — the one rendered on the card, used by the Playwright visibility checks.
+      employerOptionId: selectedOption.option_id,
+      employerOptionTitle: selectedOption.option_title,
+      anchorEmployerOptionId: ANCHOR_EMPLOYER_OPTION_ID,
+      verifiedEmployerCount: apprenticeshipOptions.length,
       vekslingVariantLabel: vekslingVariant.variant_label,
     })
   );

@@ -3,7 +3,7 @@ import {
   parseCuratedRegionalVariantReason,
 } from "@/lib/regional-delivery/curated-regional-variant-reason";
 import {
-  buildSteigenCarpenterVekslingSteps,
+  buildSteigenCarpenterVekslingStepsWithVerifiedEmployers,
   isSteigenCarpenterVekslingPathVariantEligible,
   STEIGEN_CARPENTER_VEKSLING_VARIANT_ID,
   STEIGEN_CARPENTER_VEKSLING_VARIANT_LABEL,
@@ -11,6 +11,7 @@ import {
 } from "@/lib/regional-delivery/steigen-carpenter-veksling-path-variant";
 import type { StudyRouteSnapshotStep } from "@/lib/routes/route-types";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getVerifiedLarebedriftApprenticeshipOptions } from "./get-verified-larebedrift-options";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -44,6 +45,12 @@ function snapshotPayloadMatches(
   );
 }
 
+type BuildStepsParams = {
+  supabase: SupabaseClient;
+  professionSlug: string;
+  preferredMunicipalityCodes: string[];
+};
+
 type CuratedRegionalVariantDefinition = {
   variantId: string;
   variantLabel: string;
@@ -52,7 +59,7 @@ type CuratedRegionalVariantDefinition = {
     professionSlug: string;
     preferredMunicipalityCodes: string[];
   }) => boolean;
-  buildSteps: (professionSlug: string) => StudyRouteSnapshotStep[];
+  buildSteps: (params: BuildStepsParams) => Promise<StudyRouteSnapshotStep[]>;
 };
 
 const MAX_SNAPSHOT_VERSION_INSERT_RETRIES = 5;
@@ -63,7 +70,17 @@ const CURATED_REGIONAL_VARIANTS: CuratedRegionalVariantDefinition[] = [
     variantLabel: STEIGEN_CARPENTER_VEKSLING_VARIANT_LABEL,
     variantReason: STEIGEN_CARPENTER_VEKSLING_VARIANT_REASON,
     isEligible: isSteigenCarpenterVekslingPathVariantEligible,
-    buildSteps: buildSteigenCarpenterVekslingSteps,
+    buildSteps: ({ supabase, professionSlug, preferredMunicipalityCodes }) =>
+      buildSteigenCarpenterVekslingStepsWithVerifiedEmployers({
+        professionSlug,
+        preferredMunicipalityCodes,
+        loadVerifiedOptions: ({ larefagCode, preferredMunicipalityCodes: codes }) =>
+          getVerifiedLarebedriftApprenticeshipOptions({
+            supabase,
+            larefagCode,
+            preferredMunicipalityCodes: codes,
+          }),
+      }),
   },
 ];
 
@@ -290,7 +307,11 @@ export async function syncStudyRouteCuratedRegionalAlternatives(params: {
       continue;
     }
 
-    const alternativeSteps = definition.buildSteps(params.professionSlug);
+    const alternativeSteps = await definition.buildSteps({
+      supabase: params.supabase,
+      professionSlug: params.professionSlug,
+      preferredMunicipalityCodes: params.preferredMunicipalityCodes,
+    });
     if (stableStringify(alternativeSteps) === primaryStepsJson) {
       continue;
     }

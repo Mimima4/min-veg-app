@@ -473,9 +473,11 @@ export default function RouteStepsPanel({
                   (step.type === "programme_selection" ? step.institution_website ?? null : null);
                 const selectedDurationLabel = selectedOption.durationLabel ?? step.duration_label;
                 const selectedWebsiteLabel =
-                  selectedWebsite && step.programme_url && selectedWebsite === step.programme_url
-                    ? "Visit programme page"
-                    : "Visit school website";
+                  step.type === "apprenticeship_step"
+                    ? "About the employer"
+                    : selectedWebsite && step.programme_url && selectedWebsite === step.programme_url
+                      ? "Visit programme page"
+                      : "Visit school website";
 
                 const card = (
                     <div
@@ -527,20 +529,18 @@ export default function RouteStepsPanel({
                                   </div>
                                 )}
 
-                                {step.type === "programme_selection" ? (
-                                  selectedWebsite ? (
-                                    <a
-                                      href={selectedWebsite}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="inline-flex text-[11px] text-blue-600 hover:underline"
-                                      onClick={(event) => event.stopPropagation()}
-                                    >
-                                      {selectedWebsiteLabel}
-                                    </a>
-                                  ) : (
-                                    <span className="inline-block min-h-[1rem]" aria-hidden />
-                                  )
+                                {selectedWebsite ? (
+                                  <a
+                                    href={selectedWebsite}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex text-[11px] text-blue-600 hover:underline"
+                                    onClick={(event) => event.stopPropagation()}
+                                  >
+                                    {selectedWebsiteLabel}
+                                  </a>
+                                ) : step.type === "programme_selection" ? (
+                                  <span className="inline-block min-h-[1rem]" aria-hidden />
                                 ) : null}
                               </div>
                             </div>

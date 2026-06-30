@@ -104,7 +104,9 @@ Route read shape (unchanged contract): `apprenticeship_step.apprenticeship_optio
 3. **Outcome unchanged:** NAV fag / profession-branch scope unaffected — this layer changes **who**, not the **outcome**.
 4. **Boundary (D-1):** surfacing limited to **veksling / curated-regional** apprenticeship steps for now.
 
-> **Known prerequisite (risk):** `buildInstitutionReachability` + kommune transport sort exist **only for school institutions** today. Defaulting employers by transport requires **extending the reachability model to employers** (employer geo from D-3). This is real code under P3 and is subject to web/native parity + no-logic-regression gates.
+> **Known prerequisite (risk):** `buildInstitutionReachability` + kommune transport sort exist **only for school institutions** today. Defaulting employers by transport requires **extending the reachability model to employers** (employer kommune from D-3). This is real code under P3 and is subject to web/native parity + no-logic-regression gates.
+>
+> **P3 staging (2026-06-30):** the engine orders **by kommune**, so step 1 orders verified employers **geography-first** (kommune-centroid distance from home, deterministic orgnr tiebreak) — baked into the stored snapshot `selected_steps_payload`, so web RSC and native API read identical JSON (mobile never re-sorts; parity by construction). Extending **transport reachability** to employers (Entur kommune-hub corridors) is a separate, gated sub-step.
 
 ---
 
@@ -112,11 +114,12 @@ Route read shape (unchanged contract): `apprenticeship_step.apprenticeship_optio
 
 Mirror the Contour B model in `VGS_OPERATIONAL_RUNNERS.md`, adapted to D-2:
 
-- source = **Udir NLR API** (primary) / **Vilbli relay** (fallback) / **manual seed** — all from VIGO; **no scraping** of private SPA APIs;
+- source = **Finnlærebedrift API** (primary) / NLR / Vilbli / manual seed — all from VIGO; **no scraping** of private SPA APIs;
 - ingest (`scripts/ingest-larebedrift.mjs`) is **source-agnostic**: source → resolve fag → optional Brønnøysund verify → upsert → soft-retire;
-- ingest is **manual or scheduled**, **never** on page load / deploy;
+- ingest is **scheduled or manual**, **never** on page load / recompute / deploy;
+- **Automated refresh (amended 2026-06-30):** because Finnlærebedrift + Brønnøysund are **keyless and datacenter-safe** (unlike Vilbli), the refresh runs **self-sufficiently from the cloud** — **Vercel Cron → `GET /api/internal/larebedrift/run-ingest`** (auth `CRON_SECRET`), **monthly** (`0 4 1 * *`), carpenter nationwide + Brønnøysund verify + soft-retire. No home-IP/launchd, no human/agent. Server module `src/server/larebedrift/run-larebedrift-ingest.ts`; this **amends the P1-spec "no runtime API endpoint" note** to "a cron-only ops endpoint, still never on page load/recompute".
 - expansion-gate analog: a `(lærefag, county)` cell is only "live" after **dry-run → ingest → product E2E proof**;
-- refresh cadence: NLR `endretetter` incremental (or aligned with existing 6-month / Feb–Aug schedule);
+- refresh cadence: **monthly** cron (above); `--dry-run` via `?dryRun=true` or the CLI;
 - regression smoke (`verify:larebedrift`) after pipeline changes.
 
 ---
@@ -127,8 +130,8 @@ Mirror the Contour B model in `VGS_OPERATIONAL_RUNNERS.md`, adapted to D-2:
 |-------|-------------|------|
 | **P0** | Design gate + owner decisions (§8 RESOLVED) + **this charter** | owner sign-off (§11) |
 | **P1** | `larebedrift_truth` table + ingest from **owner Vigo CSV** (carpenter nationwide), orgnr-normalized vs Brønnøysund — spec: `phase-4-verified-larebedrift-employer-layer-p1-ingest-spec.md` | dry-run + DB snapshot; E-1…E-4 |
-| **P2** | Identity normalization (orgnr ↔ Brønnøysund) + employer geo (registered kommune + geocode) | audit script |
-| **P3** | Route default/order in **veksling/curated-regional** steps; extend transport reachability to employers | parity web/native; no logic regression |
+| **P2** | Identity normalization (orgnr ↔ Brønnøysund) + employer **kommune** geo. **Note (2026-06-30):** the route engine orders **by kommune** (geography = `municipality_geo_points` centroids; transport = kommune-hub corridors) — neither uses per-row coordinates, so kommune from P1 already satisfies ordering. Per-row lat/long + kommune-name display column **deferred** (map/UX nicety; not an ordering prerequisite). | audit script |
+| **P3** | Route default/order in **veksling/curated-regional** steps (geography-first now; transport-reachability-for-employers a later sub-step) | parity web/native; no logic regression |
 | **P4** | UI: filter shows all verified; name in title + orgnr/opplæringskontor expandable; no LOSA | E2E |
 | **P5** | Generalize beyond veksling boundary + multi-fag; scheduled refresh | ops runner + smoke |
 
