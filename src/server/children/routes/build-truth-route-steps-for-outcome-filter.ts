@@ -11,6 +11,7 @@ import {
   attachCatalogProfessionIdsToNavMatches,
   resolveCatalogProfessionIdsForNavMatches,
 } from "./resolve-catalog-profession-ids-for-nav-matches";
+import { applyVerifiedLarebedriftToApprenticeshipSteps } from "./apply-verified-larebedrift-to-apprenticeship-steps";
 export async function buildTruthRouteStepsForOutcomeFilter(params: {
   supabase: SupabaseClient;
   professionSlug: string;
@@ -21,6 +22,7 @@ export async function buildTruthRouteStepsForOutcomeFilter(params: {
   pathVariants: PathVariantsResult;
   enrichedPathVariants: PathVariant[];
   childContext: boolean;
+  preferredMunicipalityCodes: string[];
   navOccupationSnapshot?: NavOccupationSnapshot | null;
   professionIdBySlug?: Map<string, string>;
 }): Promise<{
@@ -49,14 +51,19 @@ export async function buildTruthRouteStepsForOutcomeFilter(params: {
     professionIdBySlug,
   });
 
-  const steps = buildStepsFromAvailabilityTruth({
-    rows: params.rows,
-    selectedCandidate: params.selectedCandidate,
-    transportSortContext: params.transportSortContext,
+  const steps = await applyVerifiedLarebedriftToApprenticeshipSteps({
+    supabase: params.supabase,
+    steps: buildStepsFromAvailabilityTruth({
+      rows: params.rows,
+      selectedCandidate: params.selectedCandidate,
+      transportSortContext: params.transportSortContext,
+      professionSlug: params.professionSlug,
+      pathVariants: params.enrichedPathVariants,
+      selectedPathVariantId: pathVariantNavContext.primaryPathVariantId,
+      navOutcomes: navOutcomesForSteps,
+    }),
     professionSlug: params.professionSlug,
-    pathVariants: params.enrichedPathVariants,
-    selectedPathVariantId: pathVariantNavContext.primaryPathVariantId,
-    navOutcomes: navOutcomesForSteps,
+    preferredMunicipalityCodes: params.preferredMunicipalityCodes,
   });
 
   return { steps, pathVariantNavContext };

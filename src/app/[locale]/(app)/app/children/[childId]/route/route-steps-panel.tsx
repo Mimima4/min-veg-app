@@ -192,6 +192,13 @@ export default function RouteStepsPanel({
     return option.schoolName;
   };
 
+  const resolveApprenticeshipDropdownLabel = (option: StepOption) => {
+    if (option.location) {
+      return `${option.schoolName} — ${option.location}`;
+    }
+    return option.schoolName;
+  };
+
   const buildStepOptions = (step: StudyRouteSnapshotStep) => {
     if (step.type === "programme_selection") {
       const mapped = (step.options ?? []).map((option, index) => {
@@ -643,7 +650,7 @@ export default function RouteStepsPanel({
                                   <span className="block">
                                     {step.type === "programme_selection"
                                       ? resolveProgrammeDropdownLabel(option)
-                                      : option.schoolName}
+                                      : resolveApprenticeshipDropdownLabel(option)}
                                   </span>
                                 </span>
                                 <span className="flex shrink-0 flex-wrap items-center justify-end gap-1">

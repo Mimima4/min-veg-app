@@ -11,6 +11,7 @@
     "smoke:route-truth": "node scripts/smoke-route-truth-invariants.mjs",
     "smoke:route-save-flow": "node scripts/smoke-route-save-flow.mjs",
     "smoke:steigen-carpenter-veksling": "node --env-file=.env.local scripts/smoke-steigen-carpenter-veksling-invariants.mjs",
+    "smoke:carpenter-primary-larebedrift-pilot": "node scripts/smoke-carpenter-primary-larebedrift-pilot-invariants.mjs",
     "smoke:route-snapshot-idempotency": "node --env-file=.env.local scripts/smoke-study-route-snapshot-idempotency.mjs",
     "verify:nav-matcher-v-gates": "node scripts/verify-nav-matcher-v-gates.mjs",
     "ops:scheduled": "node --env-file=.env.local scripts/run-vgs-scheduled-ops.mjs",

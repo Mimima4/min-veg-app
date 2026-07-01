@@ -1,14 +1,21 @@
-/** Dedupes client-triggered recompute across React Strict Mode remounts. */
-const inFlightRouteRecomputes = new Set<string>();
+/** Dedupes client-triggered recompute across remounts, Strict Mode, and HMR races. */
+const inFlightRouteRecomputes = new Map<string, Promise<unknown>>();
 
-export function tryAcquireClientRecomputeLock(routeKey: string): boolean {
-  if (inFlightRouteRecomputes.has(routeKey)) {
-    return false;
+export function runClientRecomputeOnce<T>(
+  routeKey: string,
+  run: () => Promise<T>
+): Promise<T> {
+  const existing = inFlightRouteRecomputes.get(routeKey);
+  if (existing) {
+    return existing as Promise<T>;
   }
-  inFlightRouteRecomputes.add(routeKey);
-  return true;
-}
 
-export function releaseClientRecomputeLock(routeKey: string): void {
-  inFlightRouteRecomputes.delete(routeKey);
+  const promise = run().finally(() => {
+    if (inFlightRouteRecomputes.get(routeKey) === promise) {
+      inFlightRouteRecomputes.delete(routeKey);
+    }
+  });
+
+  inFlightRouteRecomputes.set(routeKey, promise);
+  return promise;
 }

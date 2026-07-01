@@ -6,6 +6,7 @@ import {
   haversineDistanceKm,
   normalizeMunicipalityCode,
 } from "@/lib/planning/geo-distance";
+import { resolveMunicipalityNamesByCode } from "@/server/planning/resolve-municipality-name-nb";
 
 /**
  * Verified lærebedrift → apprenticeship_options reader (P3, geography-first).
@@ -159,15 +160,30 @@ export async function getVerifiedLarebedriftApprenticeshipOptions(params: {
     .sort((a, b) => {
       if (a.distance !== b.distance) return a.distance - b.distance;
       return a.row.org_number.localeCompare(b.row.org_number);
-    });
+    })
+    .map(({ row }) => row);
 
-  return ordered.map(({ row }) => ({
-    option_id: `larebedrift-${row.org_number}`,
-    option_title: row.display_name ?? row.legal_name,
-    outcome_profession_ids: [],
-    entity_type: "employer" as const,
-    employer_municipality: null,
-    employer_website: resolveEmployerWebsite(row),
-    employer_source_note: composeSourceNote(row),
-  }));
+  if (ordered.length === 0) {
+    return [];
+  }
+
+  const municipalityNamesByCode = await resolveMunicipalityNamesByCode(
+    ordered.map((row) => row.municipality_code)
+  );
+
+  return ordered.map((row) => {
+    const municipalityCode = normalizeMunicipalityCode(row.municipality_code);
+    const employerMunicipality =
+      (municipalityCode ? municipalityNamesByCode.get(municipalityCode) : null) ?? null;
+
+    return {
+      option_id: `larebedrift-${row.org_number}`,
+      option_title: row.display_name ?? row.legal_name,
+      outcome_profession_ids: [],
+      entity_type: "employer" as const,
+      employer_municipality: employerMunicipality,
+      employer_website: resolveEmployerWebsite(row),
+      employer_source_note: composeSourceNote(row),
+    };
+  });
 }

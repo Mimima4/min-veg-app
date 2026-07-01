@@ -10,10 +10,7 @@ import type {
 } from "@/lib/routes/route-types";
 import type { SteigenCarpenterVekslingInfoCopy } from "@/lib/regional-delivery/steigen-carpenter-veksling-pilot";
 import RouteStepsPanel from "./route-steps-panel";
-import {
-  releaseClientRecomputeLock,
-  tryAcquireClientRecomputeLock,
-} from "@/lib/routes/client-recompute-lock";
+import { runClientRecomputeOnce } from "@/lib/routes/client-recompute-lock";
 
 type Props = {
   childId: string;
@@ -56,6 +53,48 @@ async function fetchRecomputePending(params: {
   return Boolean(payload.data?.recomputePending);
 }
 
+async function triggerClientStudyRouteRecompute(params: {
+  childId: string;
+  routeId: string;
+  locale: string;
+}): Promise<StudyRouteReadModel | undefined> {
+  const triggerResponse = await fetch(
+    "/api/internal/routes/trigger-study-route-recompute",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(params),
+    }
+  );
+  const triggerPayload = (await triggerResponse.json()) as {
+    ok?: boolean;
+    updated?: StudyRouteReadModel;
+    error?: { message?: string };
+  };
+
+  if (!triggerResponse.ok || !triggerPayload.ok) {
+    throw new Error(
+      triggerPayload.error?.message ?? "Route recompute failed"
+    );
+  }
+
+  if (!triggerPayload.updated?.recomputePending) {
+    return triggerPayload.updated;
+  }
+
+  for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt += 1) {
+    const stillPending = await fetchRecomputePending(params);
+
+    if (!stillPending) {
+      return triggerPayload.updated;
+    }
+
+    await sleep(POLL_INTERVAL_MS);
+  }
+
+  throw new Error("Route recompute is taking longer than expected");
+}
+
 export default function RouteStepsRecomputePanel({
   childId,
   routeId,
@@ -68,115 +107,66 @@ export default function RouteStepsRecomputePanel({
   steigenVekslingInfoCopy = null,
 }: Props) {
   const router = useRouter();
+  const routerRef = useRef(router);
+  routerRef.current = router;
+
   const [isRefreshing, startTransition] = useTransition();
   const [pending, setPending] = useState(recomputePending);
   const [displaySteps, setDisplaySteps] = useState(steps);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
-  const runStartedRef = useRef(false);
+  const triggeredRef = useRef(false);
   const routeKeyRef = useRef(`${childId}:${routeId}`);
 
   useEffect(() => {
     const routeKey = `${childId}:${routeId}`;
     if (routeKeyRef.current !== routeKey) {
       routeKeyRef.current = routeKey;
-      runStartedRef.current = false;
+      triggeredRef.current = false;
     }
     setPending(recomputePending);
     setDisplaySteps(steps);
     setErrorMessage(null);
   }, [childId, routeId, recomputePending, steps]);
 
-  const finishRecompute = (updated?: StudyRouteReadModel) => {
-    if (updated?.steps && updated.steps.length > 0) {
-      setDisplaySteps(updated.steps);
-    }
-    setPending(false);
-    startTransition(() => {
-      router.refresh();
-    });
-  };
-
   useEffect(() => {
-    if (!pending || runStartedRef.current) {
+    if (!pending || triggeredRef.current) {
       return;
     }
 
-    runStartedRef.current = true;
+    triggeredRef.current = true;
     const lockKey = `${childId}:${routeId}`;
-    if (!tryAcquireClientRecomputeLock(lockKey)) {
-      return;
-    }
     let cancelled = false;
 
-    const run = async () => {
-      try {
-        const triggerResponse = await fetch(
-          "/api/internal/routes/trigger-study-route-recompute",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ childId, routeId, locale }),
-          }
-        );
-        const triggerPayload = (await triggerResponse.json()) as {
-          ok?: boolean;
-          updated?: StudyRouteReadModel;
-          error?: { message?: string };
-        };
-
-        if (!triggerResponse.ok || !triggerPayload.ok) {
-          throw new Error(
-            triggerPayload.error?.message ?? "Route recompute failed"
-          );
-        }
-
+    void runClientRecomputeOnce(lockKey, () =>
+      triggerClientStudyRouteRecompute({ childId, routeId, locale })
+    )
+      .then((updated) => {
         if (cancelled) {
           return;
         }
 
-        if (!triggerPayload.updated?.recomputePending) {
-          finishRecompute(triggerPayload.updated);
-          return;
+        if (updated?.steps && updated.steps.length > 0) {
+          setDisplaySteps(updated.steps);
         }
-
-        for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt += 1) {
-          const stillPending = await fetchRecomputePending({
-            childId,
-            routeId,
-            locale,
-          });
-
-          if (cancelled) {
-            return;
-          }
-
-          if (!stillPending) {
-            finishRecompute(triggerPayload.updated);
-            return;
-          }
-
-          await sleep(POLL_INTERVAL_MS);
-        }
-
-        throw new Error("Route recompute is taking longer than expected");
-      } catch (error) {
+        setPending(false);
+        startTransition(() => {
+          routerRef.current.refresh();
+        });
+      })
+      .catch((error) => {
         if (!cancelled) {
+          triggeredRef.current = false;
           setErrorMessage(
             error instanceof Error ? error.message : "Route recompute failed"
           );
         }
-      } finally {
-        releaseClientRecomputeLock(lockKey);
-      }
-    };
-
-    void run();
+      });
 
     return () => {
       cancelled = true;
     };
-  }, [pending, childId, routeId, locale, router, retryKey]);
+  }, [pending, childId, routeId, locale, retryKey]);
 
   const showLoader =
     !errorMessage &&
@@ -193,7 +183,7 @@ export default function RouteStepsRecomputePanel({
           type="button"
           className="mt-4 rounded-lg border border-red-300 bg-white px-3 py-2 text-sm font-medium text-red-800"
           onClick={() => {
-            runStartedRef.current = false;
+            triggeredRef.current = false;
             setErrorMessage(null);
             setPending(true);
             setRetryKey((value) => value + 1);

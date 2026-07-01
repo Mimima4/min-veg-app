@@ -239,6 +239,7 @@ export async function syncStudyRouteOutcomeFilterAlternatives(params: {
   pathVariants: PathVariantsResult;
   enrichedPathVariants: PathVariant[];
   childContext: boolean;
+  preferredMunicipalityCodes: string[];
   snapshotContext: unknown;
   routeInputSignature: string;
   createdByType: string;
@@ -307,6 +308,7 @@ export async function syncStudyRouteOutcomeFilterAlternatives(params: {
       pathVariants: params.pathVariants,
       enrichedPathVariants: params.enrichedPathVariants,
       childContext: params.childContext,
+      preferredMunicipalityCodes: params.preferredMunicipalityCodes,
       navOccupationSnapshot,
       professionIdBySlug,
     });

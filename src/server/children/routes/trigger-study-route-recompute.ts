@@ -41,6 +41,7 @@ import type { AvailabilityTruthRow } from "./get-availability-truth";
 import type { KommuneTransportSortContext } from "@/lib/planning/kommune-transport/types";
 import { syncStudyRouteOutcomeFilterAlternatives } from "./sync-study-route-outcome-filter-alternatives";
 import { syncStudyRouteCuratedRegionalAlternatives } from "./sync-study-route-curated-regional-alternatives";
+import { applyVerifiedLarebedriftToApprenticeshipSteps } from "./apply-verified-larebedrift-to-apprenticeship-steps";
 
 type Params = {
   childId: string;
@@ -688,6 +689,12 @@ export async function triggerStudyRouteRecompute(params: Params) {
           selectedPathVariantId: pathVariantNavContext.primaryPathVariantId,
           navOutcomes: navOutcomesForSteps,
         });
+        recomputedSteps = await applyVerifiedLarebedriftToApprenticeshipSteps({
+          supabase,
+          steps: recomputedSteps,
+          professionSlug: professionRow.slug,
+          preferredMunicipalityCodes,
+        });
 
         outcomeFilterAlternativesContext = {
           pathVariantNavContext,
@@ -932,6 +939,7 @@ export async function triggerStudyRouteRecompute(params: Params) {
           pathVariants: outcomeFilterAlternativesContext.pathVariants,
           enrichedPathVariants: outcomeFilterAlternativesContext.enrichedPathVariants,
           childContext: true,
+          preferredMunicipalityCodes,
           snapshotContext,
           routeInputSignature,
           createdByType: triggeredByType,
@@ -1013,6 +1021,7 @@ export async function triggerStudyRouteRecompute(params: Params) {
         pathVariants: outcomeFilterAlternativesContext.pathVariants,
         enrichedPathVariants: outcomeFilterAlternativesContext.enrichedPathVariants,
         childContext: true,
+        preferredMunicipalityCodes,
         snapshotContext,
         routeInputSignature,
         createdByType: triggeredByType,

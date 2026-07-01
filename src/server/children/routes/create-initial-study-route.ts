@@ -41,6 +41,7 @@ import type { AvailabilityTruthRow } from "./get-availability-truth";
 import type { KommuneTransportSortContext } from "@/lib/planning/kommune-transport/types";
 import { syncStudyRouteOutcomeFilterAlternatives } from "./sync-study-route-outcome-filter-alternatives";
 import { syncStudyRouteCuratedRegionalAlternatives } from "./sync-study-route-curated-regional-alternatives";
+import { applyVerifiedLarebedriftToApprenticeshipSteps } from "./apply-verified-larebedrift-to-apprenticeship-steps";
 
 type Params = {
   childId: string;
@@ -366,12 +367,14 @@ export async function createInitialStudyRoute(
     enrichedPathVariants: PathVariant[];
   } | null = null;
 
+  const preferredMunicipalityCodes = Array.isArray(childPlanning.preferred_municipality_codes)
+    ? childPlanning.preferred_municipality_codes.filter(
+        (item): item is string => typeof item === "string"
+      )
+    : [];
+  const relocationWillingness = childPlanning.relocation_willingness;
+
   if (typedLinks.length > 0) {
-    const preferredMunicipalityCodes = Array.isArray(childPlanning.preferred_municipality_codes)
-      ? childPlanning.preferred_municipality_codes.filter(
-          (item): item is string => typeof item === "string"
-        )
-      : [];
     const truthLookupInputs = await buildAvailabilityTruthLookupInputs({
       supabase,
       preferredMunicipalityCodes,
@@ -446,6 +449,12 @@ export async function createInitialStudyRoute(
         pathVariants: enrichedPathVariants,
         selectedPathVariantId: pathVariantNavContext.primaryPathVariantId,
         navOutcomes: navOutcomesForSteps,
+      });
+      initialSteps = await applyVerifiedLarebedriftToApprenticeshipSteps({
+        supabase,
+        steps: initialSteps,
+        professionSlug: professionRow.slug,
+        preferredMunicipalityCodes,
       });
 
       outcomeFilterAlternativesContext = {
@@ -753,20 +762,13 @@ export async function createInitialStudyRoute(
       pathVariants: outcomeFilterAlternativesContext.pathVariants,
       enrichedPathVariants: outcomeFilterAlternativesContext.enrichedPathVariants,
       childContext: true,
+      preferredMunicipalityCodes,
       snapshotContext,
       routeInputSignature,
       createdByType,
       createdByUserId,
     });
   }
-
-  const preferredMunicipalityCodesForCurated = Array.isArray(
-    childPlanning.preferred_municipality_codes
-  )
-    ? childPlanning.preferred_municipality_codes.filter(
-        (item): item is string => typeof item === "string"
-      )
-    : [];
 
   if (routeSource === "availability_truth") {
     await syncStudyRouteCuratedRegionalAlternatives({
@@ -775,7 +777,7 @@ export async function createInitialStudyRoute(
       primaryVariantId: variant.id,
       primarySteps: initialSteps,
       professionSlug: professionRow.slug,
-      preferredMunicipalityCodes: preferredMunicipalityCodesForCurated,
+      preferredMunicipalityCodes,
       snapshotContext,
       routeInputSignature,
       createdByType,
