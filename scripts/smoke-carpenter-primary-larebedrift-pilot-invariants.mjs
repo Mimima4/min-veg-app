@@ -1,14 +1,11 @@
 #!/usr/bin/env node
 /**
- * P3b Phase 1 — carpenter primary-route lærebedrift pilot invariants (no browser).
+ * P3b — carpenter primary-route lærebedrift eligibility invariants (no browser).
  *
  * Usage:
  *   npm run smoke:carpenter-primary-larebedrift-pilot
  */
 import { isMainModule } from "./lib/is-main-module.mjs";
-
-/** Keep in sync with `LAREBEDRIFT_PRIMARY_ROUTE_PILOT_COUNTY_CODES` in primary-route-larebedrift-pilot.ts */
-const PILOT_COUNTIES = new Set(["15", "55"]);
 
 function assert(condition, message) {
   if (!condition) {
@@ -28,19 +25,18 @@ function childHomeCountyCodes(preferredMunicipalityCodes) {
 
 function isPilotEligible(professionSlug, preferredMunicipalityCodes) {
   if (professionSlug !== "carpenter") return false;
-  const homeCounties = childHomeCountyCodes(preferredMunicipalityCodes);
-  if (homeCounties.length === 0) return false;
-  return homeCounties.some((code) => PILOT_COUNTIES.has(code));
+  return childHomeCountyCodes(preferredMunicipalityCodes).length > 0;
 }
 
 export function runCarpenterPrimaryLarebedriftPilotSmoke() {
-  assert(isPilotEligible("carpenter", ["1507"]), "Møre kommune 1507 must be pilot-eligible");
-  assert(isPilotEligible("carpenter", ["5501"]), "Troms kommune 5501 must be pilot-eligible");
+  assert(isPilotEligible("carpenter", ["1507"]), "Møre kommune 1507 must be eligible");
+  assert(isPilotEligible("carpenter", ["5501"]), "Troms kommune 5501 must be eligible");
   assert(
-    !isPilotEligible("carpenter", ["1848"]),
-    "Steigen 1848 (Nordland 18) must stay outside Phase 1 pilot"
+    isPilotEligible("carpenter", ["1848"]),
+    "Steigen 1848 (Nordland) must be eligible in Phase 2 nationwide rollout"
   );
-  assert(!isPilotEligible("mechanic", ["1507"]), "mechanic must not be pilot-eligible yet");
+  assert(isPilotEligible("carpenter", ["0301"]), "Oslo must be eligible");
+  assert(!isPilotEligible("mechanic", ["1507"]), "mechanic must not be eligible yet");
   assert(!isPilotEligible("carpenter", []), "missing home kommune must not be eligible");
 
   console.error("[smoke:carpenter-primary-larebedrift-pilot] pilot eligibility invariants: OK");

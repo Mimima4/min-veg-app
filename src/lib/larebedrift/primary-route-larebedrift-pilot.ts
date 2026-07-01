@@ -1,14 +1,11 @@
 /**
- * P3b Phase 1 — controlled opening of design-gate D-1 for ordinary
- * `availability_truth` apprenticeship steps (not only veksling/curated-regional).
+ * P3b — verified lærebedrift on ordinary `availability_truth` apprenticeship steps
+ * (not only veksling / curated-regional). Nationwide `larebedrift_truth` is carpenter-wide;
+ * this gate controls which professions may surface on the primary route.
  *
- * Nationwide data (`larebedrift_truth`) is already carpenter-wide; surfacing on the
- * primary route is rolled out fylke-by-fylke. Remove counties from the pilot set (or
- * delete this gate) when promoting to full automation.
+ * Phase 1 (closed): fylke 15 + 55 only.
+ * Phase 2 (current): carpenter nationwide when the child has a home kommune.
  */
-
-/** Home fylke codes (first two digits of kommunenummer) in the Phase 1 pilot. */
-export const LAREBEDRIFT_PRIMARY_ROUTE_PILOT_COUNTY_CODES = new Set(["15", "55"]);
 
 export function childHomeCountyCodes(
   preferredMunicipalityCodes: string[]
@@ -29,9 +26,5 @@ export function isPrimaryRouteLarebedriftPilotEligible(params: {
   if (params.professionSlug !== "carpenter") {
     return false;
   }
-  const homeCounties = childHomeCountyCodes(params.preferredMunicipalityCodes);
-  if (homeCounties.length === 0) {
-    return false;
-  }
-  return homeCounties.some((code) => LAREBEDRIFT_PRIMARY_ROUTE_PILOT_COUNTY_CODES.has(code));
+  return childHomeCountyCodes(params.preferredMunicipalityCodes).length > 0;
 }

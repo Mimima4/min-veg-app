@@ -11,7 +11,7 @@ import type { StudyRouteSnapshotStep } from "@/lib/routes/route-types";
 import { getVerifiedLarebedriftApprenticeshipOptions } from "./get-verified-larebedrift-options";
 
 /**
- * P3b Phase 1 — inject verified godkjent lærebedrifter into ordinary
+ * P3b — inject verified godkjent lærebedrifter into ordinary
  * `availability_truth` apprenticeship steps at snapshot build time (recompute /
  * initial route / outcome-filter alternatives). Curated-regional / veksling steps
  * are unchanged (they already load verified rows via their own builders).
