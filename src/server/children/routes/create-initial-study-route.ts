@@ -417,6 +417,9 @@ export async function createInitialStudyRoute(
         ...variant,
         nodes: variant.nodes.map((node) => {
           if (node.type !== "programme_selection") return node;
+          if (node.stage !== "VG1" && node.stage !== "VG2" && node.stage !== "VG3") {
+            return node;
+          }
           const stageIdentity = stageProgrammeIdentity.get(node.stage);
           return {
             ...node,

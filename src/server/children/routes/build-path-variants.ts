@@ -6,10 +6,15 @@ import {
 import { hasVg3SchoolProgrammeAvailability } from "@/lib/vgs/vg3-school-programme-availability";
 import { assertRouteTruthInvariants } from "@/lib/vgs/route-truth-invariants";
 
+import {
+  shouldEmitDedicatedLarefagStep,
+  LAREFAG_SELECTION_STAGE,
+} from "@/lib/vgs/larefag-selection-stage";
+
 export type PathVariantNode =
   | {
       type: "programme_selection";
-      stage: "VG1" | "VG2" | "VG3";
+      stage: "VG1" | "VG2" | "VG3" | typeof LAREFAG_SELECTION_STAGE;
       title: string;
       programSlug?: string | null;
       programTitle?: string | null;
@@ -440,7 +445,28 @@ export async function buildPathVariants(
         (node): node is Extract<PathVariantNode, { type: "programme_selection" }> =>
           node.type === "programme_selection" && node.stage !== "VG3"
       );
-      const directBedriftNodes = [...baseWithoutVg3, apprenticeshipNode];
+
+      const useDedicatedLarefagStep = shouldEmitDedicatedLarefagStep(
+        kolonne3BranchOptions?.length ?? 0
+      );
+
+      const directBedriftNodes: PathVariantNode[] = useDedicatedLarefagStep
+        ? [
+            ...baseWithoutVg3,
+            {
+              type: "programme_selection",
+              stage: LAREFAG_SELECTION_STAGE,
+              title: "Velg fag før læretid",
+              options: kolonne3BranchOptions,
+            },
+            {
+              type: "apprenticeship_step",
+              title: apprenticeshipLabel!,
+              sourceOutcomeUrl: null,
+            },
+          ]
+        : [...baseWithoutVg3, apprenticeshipNode];
+
       variants = [
         {
           variantId: "vilbli-branch-direct-bedrift",
@@ -465,7 +491,8 @@ export async function buildPathVariants(
             ...baseWithoutVg3,
             vg3Node,
             {
-              ...apprenticeshipNode,
+              type: "apprenticeship_step",
+              title: apprenticeshipLabel!,
               sourceOutcomeUrl: apprenticeshipOutcomeUrl,
             },
           ],

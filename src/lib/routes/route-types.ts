@@ -44,6 +44,7 @@ export type StudyRouteProgrammeSelectionSnapshotStep = {
     option_kind?: string | null;
     delivery_municipality_code?: string | null;
     delivery_site_label?: string | null;
+    programme_url?: string | null;
   }>;
 };
 

@@ -7,6 +7,7 @@ import {
   resolveLarefagCodeForProfession,
   resolveLarefagLabelForProfession,
 } from "@/lib/larebedrift/profession-larefag-mapping";
+import { isLarefagSelectionStage } from "@/lib/vgs/larefag-selection-stage";
 import type { StudyRouteSnapshotStep } from "@/lib/routes/route-types";
 import { getVerifiedLarebedriftApprenticeshipOptions } from "./get-verified-larebedrift-options";
 
@@ -50,23 +51,48 @@ export async function applyVerifiedLarebedriftToApprenticeshipSteps(params: {
   const larefagLabel = resolveLarefagLabelForProfession(params.professionSlug);
 
   let applied = false;
-  const nextSteps = params.steps.map((step) => {
+  const nextSteps = params.steps.map((step, index) => {
     if (step.type !== "apprenticeship_step") {
       return step;
     }
     if (step.source !== "availability_truth") {
       return step;
     }
+
+    const priorLarefagStep = params.steps
+      .slice(0, index)
+      .reverse()
+      .find(
+        (candidate) =>
+          candidate.type === "programme_selection" &&
+          isLarefagSelectionStage(candidate.stage)
+      );
+
+    const activeFagLabel =
+      priorLarefagStep?.program_title ??
+      priorLarefagStep?.title ??
+      step.program_title ??
+      larefagLabel;
+
     applied = true;
     const baseTitle = String(step.title ?? "Opplæring i bedrift").trim();
     const title =
-      larefagLabel && !baseTitle.includes(larefagLabel)
-        ? `${baseTitle} (${larefagLabel})`
+      activeFagLabel && !baseTitle.includes(activeFagLabel)
+        ? `Opplæring i bedrift (${activeFagLabel})`
         : baseTitle;
+
+    const defaultEmployer = verifiedOptions[0] ?? null;
+
     return {
       ...step,
       title,
-      program_title: larefagLabel ?? step.program_title ?? null,
+      program_title: activeFagLabel ?? step.program_title ?? null,
+      institution_name: defaultEmployer?.option_title ?? step.institution_name ?? null,
+      institution_municipality:
+        defaultEmployer?.employer_municipality ?? step.institution_municipality ?? null,
+      institution_website: defaultEmployer?.employer_website ?? step.institution_website ?? null,
+      selected_apprenticeship_option_id: defaultEmployer?.option_id ?? null,
+      selected_apprenticeship_option_title: defaultEmployer?.option_title ?? null,
       apprenticeship_options: verifiedOptions,
     };
   });

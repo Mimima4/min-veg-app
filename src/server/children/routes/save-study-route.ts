@@ -7,6 +7,7 @@ import {
   normalizeLosaDeliverySiteLabel,
   normalizeLosaProviderLabel,
 } from "@/lib/losa/availability-scope";
+import { isLarefagSelectionStage } from "@/lib/vgs/larefag-selection-stage";
 import { getStudyRouteDetail } from "./get-study-route-detail";
 import { RouteDomainError } from "./route-errors";
 
@@ -26,7 +27,7 @@ function applySelectedOptions(
 ) {
   if (!Array.isArray(steps) || !selectedOptions) return steps;
 
-  return steps.map((step, index) => {
+  const withSelections = steps.map((step, index) => {
     const stepKey = `snap-${index}-${step.type}-${step.program_slug ?? "none"}`;
     const selectedId = selectedOptions[stepKey];
 
@@ -41,6 +42,10 @@ function applySelectedOptions(
 
       return {
         ...step,
+        institution_name: selected.option_title ?? step.institution_name ?? null,
+        institution_municipality:
+          selected.employer_municipality ?? step.institution_municipality ?? null,
+        institution_website: selected.employer_website ?? step.institution_website ?? null,
         selected_apprenticeship_option_id: selected.option_id,
         selected_apprenticeship_option_title: selected.option_title,
       };
@@ -54,6 +59,26 @@ function applySelectedOptions(
     });
 
     if (!selected) return step;
+
+    if (isLarefagSelectionStage(step.stage)) {
+      const optionSlug = String(selected.institution_id ?? "")
+        .trim()
+        .replace(/^vilbli-branch:/, "");
+      const fagTitle =
+        selected.program_title ?? selected.institution_name ?? step.program_title ?? step.title;
+
+      return {
+        ...step,
+        title: "Fagvalg",
+        institution_name: selected.institution_name ?? fagTitle ?? step.institution_name,
+        institution_city: null,
+        institution_municipality: null,
+        institution_website: null,
+        program_slug: optionSlug || step.program_slug,
+        program_title: fagTitle ?? step.program_title,
+        programme_url: selected.programme_url ?? step.programme_url ?? null,
+      };
+    }
 
     const isLosa = isLosaProgrammeOption(selected);
     const institutionName = isLosa
@@ -77,6 +102,56 @@ function applySelectedOptions(
         step.institution_municipality,
       institution_website: selected.institution_website ?? step.institution_website,
       program_slug: selected.program_slug ?? step.program_slug,
+    };
+  });
+
+  return withSelections.map((step, index) => {
+    if (step.type !== "apprenticeship_step") return step;
+
+    const priorLarefagStep = withSelections
+      .slice(0, index)
+      .reverse()
+      .find(
+        (candidate) =>
+          candidate.type === "programme_selection" &&
+          isLarefagSelectionStage(candidate.stage)
+      );
+
+    if (!priorLarefagStep) return step;
+
+    const fagTitle =
+      priorLarefagStep.program_title ??
+      priorLarefagStep.institution_name ??
+      priorLarefagStep.title ??
+      null;
+    if (!fagTitle) return step;
+
+    const larefagStepIndex = withSelections.indexOf(priorLarefagStep);
+    const larefagStepKey = `snap-${larefagStepIndex}-${priorLarefagStep.type}-${priorLarefagStep.program_slug ?? "none"}`;
+    const larefagSelectionChanged = Boolean(selectedOptions[larefagStepKey]);
+    const apprenticeshipOptions = Array.isArray(step.apprenticeship_options)
+      ? step.apprenticeship_options
+      : [];
+    const defaultEmployer = apprenticeshipOptions[0] ?? null;
+
+    const title = `Opplæring i bedrift (${fagTitle})`;
+    if (!larefagSelectionChanged) {
+      return {
+        ...step,
+        title,
+        program_title: fagTitle,
+      };
+    }
+
+    return {
+      ...step,
+      title,
+      program_title: fagTitle,
+      institution_name: defaultEmployer?.option_title ?? null,
+      institution_municipality: defaultEmployer?.employer_municipality ?? null,
+      institution_website: defaultEmployer?.employer_website ?? null,
+      selected_apprenticeship_option_id: defaultEmployer?.option_id ?? null,
+      selected_apprenticeship_option_title: defaultEmployer?.option_title ?? null,
     };
   });
 }

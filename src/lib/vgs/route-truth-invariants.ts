@@ -4,6 +4,7 @@ import { PATH_VARIANT_VG3_THEN_BEDRIFT } from "@/lib/nav/route-outcome-filter-id
 import type { StudyRouteSnapshotStep } from "@/lib/routes/route-types";
 import type { AvailabilityTruthRow } from "@/server/children/routes/get-availability-truth";
 import type { PathVariant } from "@/server/children/routes/build-path-variants";
+import { isLarefagSelectionStage } from "@/lib/vgs/larefag-selection-stage";
 import { hasVg3SchoolProgrammeAvailability } from "@/lib/vgs/vg3-school-programme-availability";
 
 export type RouteTruthInvariantCode =
@@ -12,7 +13,8 @@ export type RouteTruthInvariantCode =
   | "PATH_VG3_NODE_HAS_BRANCH_OPTIONS"
   | "STEP_VG3_WITHOUT_TRUTH"
   | "STEP_VG3_FABRICATED_BRANCH_OPTIONS"
-  | "STEP_VG3_OPTIONS_MISSING_SCHOOL";
+  | "STEP_VG3_OPTIONS_MISSING_SCHOOL"
+  | "STEP_APPRENTICESHIP_HAS_KOLONNE3_FAG_OPTIONS";
 
 export type RouteTruthInvariantViolation = {
   code: RouteTruthInvariantCode;
@@ -73,6 +75,10 @@ export function collectStudyRouteStepsInvariantViolations(params: {
       .filter(Boolean)
   );
 
+  const hasLarefagStep = params.steps.some(
+    (step) => step.type === "programme_selection" && isLarefagSelectionStage(step.stage)
+  );
+
   for (const step of params.steps) {
     if (step.type !== "programme_selection" || step.stage !== "VG3") {
       continue;
@@ -121,6 +127,23 @@ export function collectStudyRouteStepsInvariantViolations(params: {
           message: "VG3 programme_selection options include institutions outside PSA VG3 truth",
         });
       }
+    }
+  }
+
+  for (const step of params.steps) {
+    if (step.type !== "apprenticeship_step") {
+      continue;
+    }
+    const options = step.apprenticeship_options ?? [];
+    if (
+      hasLarefagStep &&
+      options.some((option) => String(option.option_id ?? "").startsWith("kolonne3-"))
+    ) {
+      violations.push({
+        code: "STEP_APPRENTICESHIP_HAS_KOLONNE3_FAG_OPTIONS",
+        message:
+          "apprenticeship_step must list bedrifter only when a dedicated LAREFAG step is present",
+      });
     }
   }
 

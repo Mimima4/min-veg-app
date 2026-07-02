@@ -203,6 +203,41 @@ function run() {
     })
   );
 
+  runNegativeFixture(
+    "kolonne-3 fag mixed into apprenticeship with LAREFAG step is blocked",
+    "STEP_APPRENTICESHIP_HAS_KOLONNE3_FAG_OPTIONS",
+    () =>
+      collectStudyRouteStepsInvariantViolations({
+        truthRows: finnmarkMechanicTruthRows(),
+        steps: [
+          {
+            type: "programme_selection",
+            stage: "LAREFAG",
+            title: "Elektrikerfaget",
+            program_slug: "kolonne3-elektriker",
+            program_title: "Elektrikerfaget",
+            options: [
+              {
+                institution_id: "vilbli-branch:kolonne3-elektriker",
+                institution_name: "Elektrikerfaget",
+                program_title: "Elektrikerfaget",
+              },
+            ],
+          },
+          {
+            type: "apprenticeship_step",
+            title: "Opplæring i bedrift (Elektrikerfaget)",
+            apprenticeship_options: [
+              {
+                option_id: "kolonne3-elektriker",
+                option_title: "Elektrikerfaget",
+              },
+            ],
+          },
+        ],
+      })
+  );
+
   console.error("[smoke:route-truth] PASS");
 }
 

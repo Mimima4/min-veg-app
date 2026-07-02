@@ -17,21 +17,42 @@ export function isLegacyTruthSnapshotShape(selectedStepsPayload: unknown): boole
 
   let hasProgressionStep = false;
   let hasApprenticeshipStep = false;
+  let hasLarefagStep = false;
+  let hasKolonne3InApprenticeship = false;
 
   for (const step of selectedStepsPayload) {
     if (!step || typeof step !== "object" || Array.isArray(step)) {
       continue;
     }
-    const typedStep = step as { type?: string };
+    const typedStep = step as {
+      type?: string;
+      stage?: string;
+      apprenticeship_options?: Array<{ option_id?: string }>;
+    };
     if (typedStep.type === "progression_step") {
       hasProgressionStep = true;
     }
     if (typedStep.type === "apprenticeship_step") {
       hasApprenticeshipStep = true;
+      if (
+        (typedStep.apprenticeship_options ?? []).some((option) =>
+          String(option.option_id ?? "").startsWith("kolonne3-")
+        )
+      ) {
+        hasKolonne3InApprenticeship = true;
+      }
+    }
+    if (typedStep.type === "programme_selection" && typedStep.stage === "LAREFAG") {
+      hasLarefagStep = true;
     }
   }
 
-  return hasProgressionStep || !hasApprenticeshipStep;
+  if (hasProgressionStep || !hasApprenticeshipStep) {
+    return true;
+  }
+
+  // Pre model-B electrician snapshots mixed kolonne-3 fag into apprenticeship_options.
+  return hasKolonne3InApprenticeship && !hasLarefagStep;
 }
 
 export type StudyRouteStaleness = {

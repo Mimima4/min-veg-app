@@ -3,9 +3,14 @@
  */
 export const PATH_VARIANT_VG3_THEN_BEDRIFT = "vilbli-branch-vg3-then-bedrift";
 const LOSA_SCOPE = "losa_fjern_delivery_municipality";
+const LAREFAG_SELECTION_STAGE = "LAREFAG";
 
 function isLosaScope(scope) {
   return scope === LOSA_SCOPE;
+}
+
+function isLarefagSelectionStage(stage) {
+  return String(stage ?? "").toUpperCase() === LAREFAG_SELECTION_STAGE;
 }
 
 function hasVg3SchoolProgrammeAvailability(rows) {
@@ -60,6 +65,10 @@ export function collectStudyRouteStepsInvariantViolations({ steps, truthRows }) 
       .filter(Boolean)
   );
 
+  const hasLarefagStep = steps.some(
+    (step) => step.type === "programme_selection" && isLarefagSelectionStage(step.stage)
+  );
+
   for (const step of steps) {
     if (step.type !== "programme_selection" || step.stage !== "VG3") {
       continue;
@@ -106,6 +115,23 @@ export function collectStudyRouteStepsInvariantViolations({ steps, truthRows }) 
           message: "VG3 programme_selection options include institutions outside PSA VG3 truth",
         });
       }
+    }
+  }
+
+  for (const step of steps) {
+    if (step.type !== "apprenticeship_step") {
+      continue;
+    }
+    const options = step.apprenticeship_options ?? [];
+    if (
+      hasLarefagStep &&
+      options.some((option) => String(option.option_id ?? "").startsWith("kolonne3-"))
+    ) {
+      violations.push({
+        code: "STEP_APPRENTICESHIP_HAS_KOLONNE3_FAG_OPTIONS",
+        message:
+          "apprenticeship_step must list bedrifter only when a dedicated LAREFAG step is present",
+      });
     }
   }
 

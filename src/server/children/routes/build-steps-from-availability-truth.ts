@@ -15,6 +15,7 @@ import type { KommuneTransportSortContext } from "@/lib/planning/kommune-transpo
 import type { AvailabilityTruthRow } from "./get-availability-truth";
 import { getVilbliBranchConfig } from "@/lib/vgs/vilbli-branch-config";
 import { assertRouteTruthInvariants } from "@/lib/vgs/route-truth-invariants";
+import { isLarefagSelectionStage } from "@/lib/vgs/larefag-selection-stage";
 import type {
   PathVariant,
   PathVariantNode,
@@ -450,6 +451,9 @@ export function buildStepsFromAvailabilityTruth(params: {
       const missingProgrammeStages = (variant: PathVariant): number =>
         variant.nodes.filter((node) => {
           if (node.type !== "programme_selection") return false;
+          if (node.stage !== "VG1" && node.stage !== "VG2" && node.stage !== "VG3") {
+            return false;
+          }
           return stageRowsSorted(params.rows, node.stage).length === 0;
         }).length;
       const aMissingCount = missingProgrammeStages(a);
@@ -474,6 +478,45 @@ export function buildStepsFromAvailabilityTruth(params: {
     allPathVariants: params.pathVariants ?? [],
     professionSlug: params.professionSlug,
   });
+  const buildLarefagSelectionOptions = (
+    branchOptions: Array<{
+      optionId: string;
+      optionTitle: string;
+      sourceOutcomeUrl?: string | null;
+    }>
+  ) =>
+    branchOptions.map((branch) => ({
+      institution_id: `vilbli-branch:${branch.optionId}`,
+      institution_name: branch.optionTitle,
+      institution_city: null,
+      institution_municipality: null,
+      institution_website: null,
+      program_title: branch.optionTitle,
+      stage: "LAREFAG",
+      duration_label: null,
+      display_title: branch.optionTitle,
+      verification_status: "verified",
+      institution_is_private_school: false,
+      option_kind: "larefag",
+      programme_url: branch.sourceOutcomeUrl ?? null,
+    }));
+
+  const resolveLarefagOutcomeUrlFromStep = (
+    larefagStep: StudyRouteSnapshotStep
+  ): string | null => {
+    if (larefagStep.type !== "programme_selection" || !isLarefagSelectionStage(larefagStep.stage)) {
+      return null;
+    }
+    const selectedSlug = larefagStep.program_slug;
+    const options = larefagStep.options ?? [];
+    const matched = options.find(
+      (option) =>
+        option.institution_id === `vilbli-branch:${selectedSlug}` ||
+        option.program_title === larefagStep.program_title
+    );
+    return matched?.programme_url ?? null;
+  };
+
   const buildApprenticeshipOptionsFromKolonne3 = (
     branchOptions: Array<{
       optionId: string;
@@ -539,6 +582,36 @@ export function buildStepsFromAvailabilityTruth(params: {
     let vg1StageRowForAnchor: AvailabilityTruthRow | null = null;
     for (const node of selectedVariant.nodes) {
       if (node.type === "programme_selection") {
+        if (isLarefagSelectionStage(node.stage)) {
+          const branches = node.options ?? [];
+          const defaultBranch = branches[0];
+          if (!defaultBranch) {
+            continue;
+          }
+          steps.push({
+            type: "programme_selection",
+            title: "Fagvalg",
+            institution_name: defaultBranch.optionTitle,
+            institution_city: null,
+            institution_municipality: null,
+            institution_website: null,
+            education_level: "apprenticeship",
+            fit_band: "strong",
+            program_slug: defaultBranch.optionId,
+            program_title: defaultBranch.optionTitle,
+            duration_label: "2 years",
+            current_profession_slug: params.professionSlug,
+            source: "availability_truth",
+            stage: node.stage,
+            options: buildLarefagSelectionOptions(branches),
+          });
+          continue;
+        }
+
+        if (node.stage !== "VG1" && node.stage !== "VG2" && node.stage !== "VG3") {
+          continue;
+        }
+
         const stageAnchorRow: AvailabilityTruthRow | null =
           node.stage === "VG2"
             ? vg1StageRowForAnchor
@@ -550,7 +623,7 @@ export function buildStepsFromAvailabilityTruth(params: {
             ? regionalStageRows({ rows: params.rows, stage: "VG3" })
             : continuityStageRows({
                 rows: params.rows,
-                stage: node.stage,
+                stage: node.stage === "VG2" ? "VG2" : "VG1",
                 selectedCandidate: params.selectedCandidate ?? null,
                 stageAnchorRow,
                 transportSortContext: params.transportSortContext,
@@ -610,25 +683,45 @@ export function buildStepsFromAvailabilityTruth(params: {
         continue;
       }
 
+      const priorLarefagStep = [...steps]
+        .reverse()
+        .find(
+          (step) =>
+            step.type === "programme_selection" && isLarefagSelectionStage(step.stage)
+        );
+
       const kolonne3BranchOptions =
         node.branchOptions && node.branchOptions.length > 0 ? node.branchOptions : null;
-      const apprenticeshipOptions = kolonne3BranchOptions
-        ? buildApprenticeshipOptionsFromKolonne3(kolonne3BranchOptions)
-        : buildApprenticeshipOptionsFromYrkerUrl(
-            resolvedApprenticeshipSourceOutcomeUrl ?? node.sourceOutcomeUrl ?? null
-          );
+
+      const apprenticeshipOptions = priorLarefagStep
+        ? []
+        : kolonne3BranchOptions
+          ? buildApprenticeshipOptionsFromKolonne3(kolonne3BranchOptions)
+          : buildApprenticeshipOptionsFromYrkerUrl(
+              resolvedApprenticeshipSourceOutcomeUrl ?? node.sourceOutcomeUrl ?? null
+            );
+
+      const larefagTitle = priorLarefagStep
+        ? priorLarefagStep.program_title ?? priorLarefagStep.title
+        : null;
+
+      const apprenticeshipSourceOutcomeUrl = priorLarefagStep
+        ? resolveLarefagOutcomeUrlFromStep(priorLarefagStep)
+        : resolvedApprenticeshipSourceOutcomeUrl ?? node.sourceOutcomeUrl ?? null;
+
       steps.push({
         type: "apprenticeship_step",
-        title: node.title,
+        title: larefagTitle ? `Opplæring i bedrift (${larefagTitle})` : node.title,
         institution_name: null,
         education_level: "apprenticeship",
         fit_band: "strong",
         program_slug: null,
+        program_title: larefagTitle,
+        duration_label: "2 years",
         apprenticeship_options: apprenticeshipOptions,
         current_profession_slug: params.professionSlug,
         source: "availability_truth",
-        source_outcome_url:
-          resolvedApprenticeshipSourceOutcomeUrl ?? node.sourceOutcomeUrl ?? null,
+        source_outcome_url: apprenticeshipSourceOutcomeUrl,
       } as StudyRouteSnapshotStep);
     }
   } else {
