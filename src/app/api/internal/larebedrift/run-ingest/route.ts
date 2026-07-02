@@ -10,7 +10,7 @@ import { verifyInternalSchedulerRequest } from "@/server/vgs/verify-internal-sch
  * recompute, or deploy. POST allowed for operator tooling. Auth: CRON_SECRET.
  */
 export const runtime = "nodejs";
-export const maxDuration = 300;
+export const maxDuration = 800;
 export const dynamic = "force-dynamic";
 
 async function handle(request: NextRequest) {
@@ -29,8 +29,15 @@ async function handle(request: NextRequest) {
   }
 
   const dryRun = new URL(request.url).searchParams.get("dryRun") === "true";
-  const summary = await runLarebedriftIngest({ dryRun });
-  return NextResponse.json({ ok: true, summary });
+  const larefagCodes = new URL(request.url)
+    .searchParams.getAll("larefagCode")
+    .map((code) => code.trim())
+    .filter(Boolean);
+  const run = await runLarebedriftIngest({
+    dryRun,
+    larefagCodes: larefagCodes.length > 0 ? larefagCodes : undefined,
+  });
+  return NextResponse.json({ ok: true, ...run });
 }
 
 export async function GET(request: NextRequest) {

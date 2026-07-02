@@ -2,32 +2,22 @@ import "server-only";
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
+import {
+  SCHEDULED_LAREBEDRIFT_INGEST_FAGS,
+  type ScheduledLarebedriftIngestFag,
+} from "@/lib/larebedrift/scheduled-larebedrift-ingest-fags";
+
 /**
  * Cloud (Vercel Cron) ingest of verified lærebedrifter — self-sufficient refresh
  * of `larebedrift_truth`, no human or agent in the loop.
  *
- * Why this lives in TS (not the `scripts/*.mjs` CLI): bare-node CLI scripts and
- * the Next app cannot share modules directly. Our sources (Finnlærebedrift API +
- * Brønnøysund) are keyless and datacenter-safe (unlike Vilbli), so the refresh
- * runs from Vercel — no home-IP/launchd dependency. The `.mjs` CLI stays for
- * manual dry-runs/debugging; this module is the scheduled source of truth.
- *
- * P1 scope = carpenter (Tømrerfaget) nationwide. When P5 generalizes to more fag,
- * lift the fag mapping below into shared config.
- *
- * Flow: Finnlærebedrift (godkjent only) → Brønnøysund verify/enrich → upsert →
+ * Monthly scope: Tømrerfaget + all eleven elektro kolonne-3 lærefag (nationwide).
+ * Flow per fag: Finnlærebedrift (godkjent only) → Brønnøysund verify/enrich → upsert →
  * soft-retire rows no longer godkjent. Idempotent on (org_number, larefag_code).
  */
 
 const UTDANNING_BASE = "https://api.utdanning.no/finnlarebedrift";
 const BRREG_BASE = "https://data.brreg.no/enhetsregisteret/api/enheter";
-
-/** P1 carpenter mapping — mirrors scripts/lib/larebedrift-fagkode.mjs (TOMRERFAGET). */
-const CARPENTER = {
-  apiQueryCode: "BATMF3",
-  code: "TOMRERFAGET",
-  label: "Tømrerfaget",
-} as const;
 
 const BRREG_CONCURRENCY = 6;
 const UPSERT_BATCH = 500;
@@ -42,6 +32,20 @@ export type LarebedriftIngestSummary = {
   upserted: number;
   retired: number;
   rejections: Array<{ orgNumber: string | null; reason: string }>;
+};
+
+export type LarebedriftIngestRunSummary = {
+  dryRun: boolean;
+  fagCount: number;
+  summaries: LarebedriftIngestSummary[];
+  totals: {
+    fetched: number;
+    accepted: number;
+    rejected: number;
+    needsReview: number;
+    upserted: number;
+    retired: number;
+  };
 };
 
 type UtdanningBedrift = {
@@ -80,6 +84,18 @@ type IngestRow = {
   updated_at: string;
 };
 
+type BrregResult =
+  | {
+      status: "ok";
+      legalName: string | null;
+      municipalityCode: string | null;
+      countyCode: string | null;
+      website: string | null;
+    }
+  | { status: "not_found" }
+  | { status: "deleted"; deletedAt: string }
+  | { status: "error"; httpStatus: number };
+
 function countyCodeFromKommunenummer(kommunenummer: string | null): string | null {
   const digits = String(kommunenummer ?? "").trim();
   return /^\d{4}$/.test(digits) ? digits.slice(0, 2) : null;
@@ -102,8 +118,9 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function fetchCarpenterGodkjente(
-  fetchImpl: typeof fetch = fetch
+async function fetchGodkjenteForFag(
+  fag: ScheduledLarebedriftIngestFag,
+  fetchImpl: typeof fetch
 ): Promise<RawEmployer[]> {
   const out: RawEmployer[] = [];
   let page = 1;
@@ -111,7 +128,7 @@ async function fetchCarpenterGodkjente(
   do {
     const params = new URLSearchParams({
       sporring_type: "bedrifter_godkjente",
-      fag: CARPENTER.apiQueryCode,
+      fag: fag.apiQueryCode,
       page: String(page),
     });
     const res = await fetchImpl(`${UTDANNING_BASE}/bedrift?${params.toString()}`, {
@@ -119,7 +136,7 @@ async function fetchCarpenterGodkjente(
     });
     if (!res.ok) {
       throw new Error(
-        `Finnlærebedrift /bedrift fag=${CARPENTER.apiQueryCode} page=${page} → HTTP ${res.status}`
+        `Finnlærebedrift /bedrift fag=${fag.apiQueryCode} page=${page} → HTTP ${res.status}`
       );
     }
     const body = (await res.json()) as {
@@ -143,47 +160,55 @@ async function fetchCarpenterGodkjente(
   return out;
 }
 
-type BrregResult =
-  | {
-      status: "ok";
-      legalName: string | null;
-      municipalityCode: string | null;
-      countyCode: string | null;
-      website: string | null;
-    }
-  | { status: "not_found" }
-  | { status: "deleted"; deletedAt: string }
-  | { status: "error"; httpStatus: number };
-
 async function lookupBrreg(
   orgNumber: string,
-  fetchImpl: typeof fetch = fetch
+  fetchImpl: typeof fetch,
+  brregCache: Map<string, BrregResult>
 ): Promise<BrregResult> {
+  const cached = brregCache.get(orgNumber);
+  if (cached) return cached;
+
   let res: Response;
   try {
     res = await fetchImpl(`${BRREG_BASE}/${orgNumber}`, {
       headers: { accept: "application/json" },
     });
   } catch {
-    return { status: "error", httpStatus: 0 };
+    const result: BrregResult = { status: "error", httpStatus: 0 };
+    brregCache.set(orgNumber, result);
+    return result;
   }
-  if (res.status === 404) return { status: "not_found" };
-  if (!res.ok) return { status: "error", httpStatus: res.status };
+  if (res.status === 404) {
+    const result: BrregResult = { status: "not_found" };
+    brregCache.set(orgNumber, result);
+    return result;
+  }
+  if (!res.ok) {
+    const result: BrregResult = { status: "error", httpStatus: res.status };
+    brregCache.set(orgNumber, result);
+    return result;
+  }
   const raw = (await res.json()) as {
     navn?: string;
     slettedato?: string;
     hjemmeside?: string;
     forretningsadresse?: { kommunenummer?: string };
   };
-  if (raw?.slettedato) return { status: "deleted", deletedAt: String(raw.slettedato) };
+  if (raw?.slettedato) {
+    const result: BrregResult = { status: "deleted", deletedAt: String(raw.slettedato) };
+    brregCache.set(orgNumber, result);
+    return result;
+  }
   const kommunenummer = raw?.forretningsadresse?.kommunenummer ?? null;
-  return {
+  const result: BrregResult = {
     status: "ok",
     legalName: raw?.navn ?? null,
     municipalityCode: kommunenummer ? String(kommunenummer) : null,
     countyCode: countyCodeFromKommunenummer(kommunenummer),
     website: raw?.hjemmeside ? String(raw.hjemmeside) : null,
   };
+  brregCache.set(orgNumber, result);
+  return result;
 }
 
 async function mapWithConcurrency<T, R>(
@@ -206,15 +231,14 @@ async function mapWithConcurrency<T, R>(
   return results;
 }
 
-export async function runLarebedriftIngest(params: {
-  dryRun?: boolean;
-  fetchImpl?: typeof fetch;
-  supabase?: SupabaseClient;
-} = {}): Promise<LarebedriftIngestSummary> {
-  const dryRun = params.dryRun ?? false;
-  const fetchImpl = params.fetchImpl ?? fetch;
-
-  const raws = await fetchCarpenterGodkjente(fetchImpl);
+async function ingestScheduledFag(params: {
+  fag: ScheduledLarebedriftIngestFag;
+  dryRun: boolean;
+  fetchImpl: typeof fetch;
+  supabase: SupabaseClient | null;
+  brregCache: Map<string, BrregResult>;
+}): Promise<LarebedriftIngestSummary> {
+  const raws = await fetchGodkjenteForFag(params.fag, params.fetchImpl);
 
   const rejections: Array<{ orgNumber: string | null; reason: string }> = [];
   let needsReview = 0;
@@ -226,7 +250,7 @@ export async function runLarebedriftIngest(params: {
       rejections.push({ orgNumber: raw.orgNumber ?? null, reason: "invalid_orgnr" });
       return null;
     }
-    const brreg = await lookupBrreg(orgNumber, fetchImpl);
+    const brreg = await lookupBrreg(orgNumber, params.fetchImpl, params.brregCache);
     if (brreg.status === "not_found") {
       rejections.push({ orgNumber, reason: "brreg_not_found" });
       return null;
@@ -256,8 +280,8 @@ export async function runLarebedriftIngest(params: {
       website: normalizeWebsite(brreg.website),
       latitude: null,
       longitude: null,
-      larefag_code: CARPENTER.code,
-      larefag_label: CARPENTER.label,
+      larefag_code: params.fag.code,
+      larefag_label: params.fag.label,
       opplaringskontor_name: null,
       opplaringskontor_org: null,
       verification_status: "godkjent",
@@ -281,8 +305,8 @@ export async function runLarebedriftIngest(params: {
   }
 
   const summary: LarebedriftIngestSummary = {
-    dryRun,
-    larefagCode: CARPENTER.code,
+    dryRun: params.dryRun,
+    larefagCode: params.fag.code,
     fetched: raws.length,
     accepted: acceptedRows.length,
     rejected: rejections.length,
@@ -292,34 +316,33 @@ export async function runLarebedriftIngest(params: {
     rejections: rejections.slice(0, 50),
   };
 
-  if (dryRun) {
+  if (params.dryRun) {
     return summary;
   }
 
-  const supabase =
-    params.supabase ??
-    createClient(
-      requireEnv("NEXT_PUBLIC_SUPABASE_URL"),
-      requireEnv("SUPABASE_SERVICE_ROLE_KEY")
-    );
+  if (!params.supabase) {
+    throw new Error("supabase client is required for non-dry-run ingest");
+  }
+  const supabase = params.supabase;
 
   for (let i = 0; i < acceptedRows.length; i += UPSERT_BATCH) {
     const batch = acceptedRows.slice(i, i + UPSERT_BATCH);
     const { error } = await supabase
       .from("larebedrift_truth")
       .upsert(batch, { onConflict: "org_number,larefag_code" });
-    if (error) throw new Error(`upsert failed: ${error.message}`);
+    if (error) throw new Error(`upsert failed for ${params.fag.code}: ${error.message}`);
     summary.upserted += batch.length;
   }
 
-  // Soft-retire: carpenter rows no longer in the godkjent set (nationwide).
   const keep = new Set(acceptedRows.map((r) => r.org_number));
   const { data: existing, error: selError } = await supabase
     .from("larebedrift_truth")
     .select("id, org_number")
-    .eq("larefag_code", CARPENTER.code)
+    .eq("larefag_code", params.fag.code)
     .eq("is_active", true);
-  if (selError) throw new Error(`soft-retire select failed: ${selError.message}`);
+  if (selError) {
+    throw new Error(`soft-retire select failed for ${params.fag.code}: ${selError.message}`);
+  }
 
   const toRetire = (existing ?? [])
     .filter((r: { org_number: string }) => !keep.has(r.org_number))
@@ -329,11 +352,86 @@ export async function runLarebedriftIngest(params: {
       .from("larebedrift_truth")
       .update({ is_active: false, updated_at: new Date().toISOString() })
       .in("id", toRetire);
-    if (retireError) throw new Error(`soft-retire update failed: ${retireError.message}`);
+    if (retireError) {
+      throw new Error(`soft-retire update failed for ${params.fag.code}: ${retireError.message}`);
+    }
     summary.retired = toRetire.length;
   }
 
   return summary;
+}
+
+export async function runLarebedriftIngest(
+  params: {
+    dryRun?: boolean;
+    fetchImpl?: typeof fetch;
+    supabase?: SupabaseClient;
+    larefagCodes?: string[];
+  } = {}
+): Promise<LarebedriftIngestRunSummary> {
+  const dryRun = params.dryRun ?? false;
+  const fetchImpl = params.fetchImpl ?? fetch;
+  const filter = new Set(
+    (params.larefagCodes ?? []).map((code) => String(code).trim()).filter(Boolean)
+  );
+  const fags =
+    filter.size > 0
+      ? SCHEDULED_LAREBEDRIFT_INGEST_FAGS.filter((fag) => filter.has(fag.code))
+      : [...SCHEDULED_LAREBEDRIFT_INGEST_FAGS];
+
+  if (fags.length === 0) {
+    throw new Error("No scheduled lærebedrift fag matched larefagCodes filter");
+  }
+
+  const supabase =
+    dryRun && !params.supabase
+      ? null
+      : (params.supabase ??
+        createClient(
+          requireEnv("NEXT_PUBLIC_SUPABASE_URL"),
+          requireEnv("SUPABASE_SERVICE_ROLE_KEY")
+        ));
+
+  const brregCache = new Map<string, BrregResult>();
+  const summaries: LarebedriftIngestSummary[] = [];
+
+  for (const fag of fags) {
+    summaries.push(
+      await ingestScheduledFag({
+        fag,
+        dryRun,
+        fetchImpl,
+        supabase,
+        brregCache,
+      })
+    );
+  }
+
+  const totals = summaries.reduce(
+    (acc, summary) => ({
+      fetched: acc.fetched + summary.fetched,
+      accepted: acc.accepted + summary.accepted,
+      rejected: acc.rejected + summary.rejected,
+      needsReview: acc.needsReview + summary.needsReview,
+      upserted: acc.upserted + summary.upserted,
+      retired: acc.retired + summary.retired,
+    }),
+    {
+      fetched: 0,
+      accepted: 0,
+      rejected: 0,
+      needsReview: 0,
+      upserted: 0,
+      retired: 0,
+    }
+  );
+
+  return {
+    dryRun,
+    fagCount: summaries.length,
+    summaries,
+    totals,
+  };
 }
 
 function requireEnv(name: string): string {

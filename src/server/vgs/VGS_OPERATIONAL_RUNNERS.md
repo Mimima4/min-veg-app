@@ -271,3 +271,5 @@ Do **not** call Finnlærebedrift live in prod UI (no Brønnøysund gate, breaks 
 Canonical codes and VIGO query codes: `scripts/lib/larebedrift-fagkode.mjs` (must match `kolonne3-larefag-mapping.ts`). Writes to **Supabase `larebedrift_truth`** only (not local Mac). Idempotent upsert; `--verify-brreg` recommended. Expect ~3–5 min per fag, ~40–60 min for all 11 elektro fag nationwide.
 
 After ingest: `node --env-file=.env.local scripts/verify-larebedrift-truth-snapshot.mjs` and prod-check Fagvalg → bedrift for Elektrikerfaget + one other fag.
+
+**Monthly cron:** Vercel `GET /api/internal/larebedrift/run-ingest` (`0 4 1 * *`, auth `CRON_SECRET`) refreshes **Tømrerfaget + all eleven elektro lærefag** nationwide (`scheduled-larebedrift-ingest-fags.ts`). Dry-run: `?dryRun=true`. Single-fag filter: `?larefagCode=ELEKTRIKERFAGET` (repeat param for multiple). `maxDuration` 800s on the route.
