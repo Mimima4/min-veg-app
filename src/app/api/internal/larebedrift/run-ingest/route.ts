@@ -6,7 +6,7 @@ import { handleRunIngestRequest, respondIngestRouteError } from "./handle-run-in
  * Self-sufficient verified-lærebedrift refresh (Finnlærebedrift + Brønnøysund).
  * Manual operator entry: all scheduled fag (may exceed maxDuration — prefer `/run-ingest/[batch]`).
  * Monthly Vercel Cron uses batched routes `/run-ingest/0` … `/run-ingest/3`. Auth: CRON_SECRET.
- * On HTTP ≠ 200 pings OPS_ALERT_WEBHOOK_URL (Discord/Slack). Pass `?notify=false` to suppress.
+ * On HTTP 5xx pings OPS_ALERT_WEBHOOK_URL (Discord/Slack). Pass `?notify=false` to suppress.
  */
 export const runtime = "nodejs";
 export const maxDuration = 300;

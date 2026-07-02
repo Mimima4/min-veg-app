@@ -11,7 +11,7 @@ async function maybeNotifyIngestFailure(
   response: NextResponse
 ): Promise<NextResponse> {
   const notify = new URL(request.url).searchParams.get("notify") !== "false";
-  if (!notify || response.status === 200) {
+  if (!notify || response.status === 200 || response.status < 500) {
     return response;
   }
 

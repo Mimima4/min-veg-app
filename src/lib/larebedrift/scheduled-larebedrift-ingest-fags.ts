@@ -34,6 +34,14 @@ export const SCHEDULED_LAREBEDRIFT_INGEST_BATCHES: ReadonlyArray<
   ["TELEKOMMUNIKASJONSMONTORFAGET", "TOGELEKTRIKERFAGET", "VIKLERFAGET"],
 ];
 
+export function isScheduledLarebedriftIngestBatchIndex(batchIndex: number): boolean {
+  return (
+    Number.isInteger(batchIndex) &&
+    batchIndex >= 0 &&
+    batchIndex < SCHEDULED_LAREBEDRIFT_INGEST_BATCHES.length
+  );
+}
+
 export function getScheduledLarebedriftIngestBatchCodes(batchIndex: number): string[] {
   const batch = SCHEDULED_LAREBEDRIFT_INGEST_BATCHES[batchIndex];
   if (!batch) {
