@@ -10,6 +10,7 @@ type LarefagMapping = {
 
 const PROFESSION_TO_LAREFAG: Readonly<Record<string, LarefagMapping>> = {
   carpenter: { code: "TOMRERFAGET", label: "Tømrerfaget" },
+  electrician: { code: "ELEKTRIKERFAGET", label: "Elektrikerfaget" },
 };
 
 export function resolveLarefagForProfession(

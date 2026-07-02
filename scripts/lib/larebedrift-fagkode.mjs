@@ -4,7 +4,7 @@
  * Source data (NLR / Vilbli / manual seed) carries fag as a free-ish label and/or
  * a VIGO programområde code. We normalize both to a single canonical fag identity
  * so the same employer maps consistently regardless of source or fagfornyelse
- * (old/new fagkode). P1 ships Tømrerfaget only; add entries to FAG_REGISTRY to grow.
+ * P1 ships Tømrerfaget; electrician (Elektrikerfaget) added for P3b rollout.
  */
 
 function normalize(value) {
@@ -36,6 +36,15 @@ const FAG_REGISTRY = [
     // lærefag godkjenning, so it is intentionally excluded.
     codeAliases: ["tomrer3----", "btomr3----", "tomrer1----", "batmf3"],
     apiQueryCodes: ["BATMF3"],
+  },
+  {
+    code: "ELEKTRIKERFAGET",
+    label: "Elektrikerfaget",
+    labelAliases: ["elektrikerfaget", "elektrikerfag", "elektriker"],
+    // Finnlærebedrift lærefag code ELELE3 (Vg3 Elektrikerfaget). ELELE2 is VG2
+    // programområde, not the lærefag godkjenning filter.
+    codeAliases: ["elele3----", "belel3----", "elele3"],
+    apiQueryCodes: ["ELELE3"],
   },
 ];
 

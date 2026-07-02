@@ -5,7 +5,10 @@
  *
  * Phase 1 (closed): fylke 15 + 55 only.
  * Phase 2 (current): carpenter nationwide when the child has a home kommune.
+ * Phase 3 (current): electrician nationwide when the child has a home kommune.
  */
+
+const PRIMARY_ROUTE_LAREBEDRIFT_PROFESSIONS = new Set(["carpenter", "electrician"]);
 
 export function childHomeCountyCodes(
   preferredMunicipalityCodes: string[]
@@ -23,7 +26,8 @@ export function isPrimaryRouteLarebedriftPilotEligible(params: {
   professionSlug: string | null | undefined;
   preferredMunicipalityCodes: string[];
 }): boolean {
-  if (params.professionSlug !== "carpenter") {
+  const professionSlug = String(params.professionSlug ?? "").trim();
+  if (!PRIMARY_ROUTE_LAREBEDRIFT_PROFESSIONS.has(professionSlug)) {
     return false;
   }
   return childHomeCountyCodes(params.preferredMunicipalityCodes).length > 0;

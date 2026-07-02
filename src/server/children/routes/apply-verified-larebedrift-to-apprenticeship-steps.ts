@@ -2,6 +2,7 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { resolveLarefagFromKolonne3Selection } from "@/lib/larebedrift/kolonne3-larefag-mapping";
 import { isPrimaryRouteLarebedriftPilotEligible } from "@/lib/larebedrift/primary-route-larebedrift-pilot";
 import {
   resolveLarefagCodeForProfession,
@@ -9,7 +10,10 @@ import {
 } from "@/lib/larebedrift/profession-larefag-mapping";
 import { isLarefagSelectionStage } from "@/lib/vgs/larefag-selection-stage";
 import type { StudyRouteSnapshotStep } from "@/lib/routes/route-types";
-import { getVerifiedLarebedriftApprenticeshipOptions } from "./get-verified-larebedrift-options";
+import {
+  getVerifiedLarebedriftApprenticeshipOptions,
+  type VerifiedLarebedriftOption,
+} from "./get-verified-larebedrift-options";
 
 /**
  * P3b — inject verified godkjent lærebedrifter into ordinary
@@ -34,29 +38,30 @@ export async function applyVerifiedLarebedriftToApprenticeshipSteps(params: {
     return params.steps;
   }
 
-  const larefagCode = resolveLarefagCodeForProfession(params.professionSlug);
-  if (!larefagCode) {
-    return params.steps;
-  }
+  const professionLarefagLabel = resolveLarefagLabelForProfession(params.professionSlug);
+  const verifiedOptionsByLarefagCode = new Map<string, VerifiedLarebedriftOption[]>();
 
-  const verifiedOptions = await getVerifiedLarebedriftApprenticeshipOptions({
-    supabase: params.supabase,
-    larefagCode,
-    preferredMunicipalityCodes: params.preferredMunicipalityCodes,
-  });
-  if (verifiedOptions.length === 0) {
-    return params.steps;
-  }
+  const loadVerifiedOptions = async (larefagCode: string) => {
+    const cached = verifiedOptionsByLarefagCode.get(larefagCode);
+    if (cached) return cached;
 
-  const larefagLabel = resolveLarefagLabelForProfession(params.professionSlug);
+    const verifiedOptions = await getVerifiedLarebedriftApprenticeshipOptions({
+      supabase: params.supabase,
+      larefagCode,
+      preferredMunicipalityCodes: params.preferredMunicipalityCodes,
+    });
+    verifiedOptionsByLarefagCode.set(larefagCode, verifiedOptions);
+    return verifiedOptions;
+  };
 
   let applied = false;
-  const nextSteps = params.steps.map((step, index) => {
-    if (step.type !== "apprenticeship_step") {
-      return step;
-    }
-    if (step.source !== "availability_truth") {
-      return step;
+  const nextSteps: StudyRouteSnapshotStep[] = [];
+
+  for (let index = 0; index < params.steps.length; index += 1) {
+    const step = params.steps[index];
+    if (step.type !== "apprenticeship_step" || step.source !== "availability_truth") {
+      nextSteps.push(step);
+      continue;
     }
 
     const priorLarefagStep = params.steps
@@ -68,11 +73,33 @@ export async function applyVerifiedLarebedriftToApprenticeshipSteps(params: {
           isLarefagSelectionStage(candidate.stage)
       );
 
+    const kolonne3Larefag = priorLarefagStep
+      ? resolveLarefagFromKolonne3Selection({
+          programSlug: priorLarefagStep.program_slug,
+          programTitle: priorLarefagStep.program_title,
+          title: priorLarefagStep.title,
+        })
+      : null;
+
+    const larefagCode =
+      kolonne3Larefag?.code ?? resolveLarefagCodeForProfession(params.professionSlug);
+    if (!larefagCode) {
+      nextSteps.push(step);
+      continue;
+    }
+
+    const verifiedOptions = await loadVerifiedOptions(larefagCode);
+    if (verifiedOptions.length === 0) {
+      nextSteps.push(step);
+      continue;
+    }
+
     const activeFagLabel =
       priorLarefagStep?.program_title ??
       priorLarefagStep?.title ??
+      kolonne3Larefag?.label ??
       step.program_title ??
-      larefagLabel;
+      professionLarefagLabel;
 
     applied = true;
     const baseTitle = String(step.title ?? "Opplæring i bedrift").trim();
@@ -83,7 +110,7 @@ export async function applyVerifiedLarebedriftToApprenticeshipSteps(params: {
 
     const defaultEmployer = verifiedOptions[0] ?? null;
 
-    return {
+    nextSteps.push({
       ...step,
       title,
       program_title: activeFagLabel ?? step.program_title ?? null,
@@ -94,8 +121,8 @@ export async function applyVerifiedLarebedriftToApprenticeshipSteps(params: {
       selected_apprenticeship_option_id: defaultEmployer?.option_id ?? null,
       selected_apprenticeship_option_title: defaultEmployer?.option_title ?? null,
       apprenticeship_options: verifiedOptions,
-    };
-  });
+    } as StudyRouteSnapshotStep);
+  }
 
   return applied ? nextSteps : params.steps;
 }

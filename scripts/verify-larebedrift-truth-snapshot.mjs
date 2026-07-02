@@ -14,6 +14,10 @@
 import { createClient } from "@supabase/supabase-js";
 import { isMainModule } from "./lib/is-main-module.mjs";
 
+const PAGE_SIZE = 1000;
+const ROW_SELECT =
+  "org_number, legal_name, county_code, municipality_code, latitude, longitude, larefag_code, larefag_label, verification_status, source_reference_url, source_system, is_active";
+
 function parseArgs(argv) {
   const args = { county: null, json: false };
   const tokens = argv.slice(2);
@@ -28,6 +32,31 @@ function assert(condition, message, failures) {
   if (!condition) failures.push(message);
 }
 
+async function fetchAllLarebedriftRows(supabase, county) {
+  const rows = [];
+  let offset = 0;
+
+  while (true) {
+    let query = supabase
+      .from("larebedrift_truth")
+      .select(ROW_SELECT)
+      .order("org_number", { ascending: true })
+      .order("larefag_code", { ascending: true })
+      .range(offset, offset + PAGE_SIZE - 1);
+    if (county) query = query.eq("county_code", String(county));
+
+    const { data, error } = await query;
+    if (error) throw new Error(`select failed: ${error.message}`);
+
+    const batch = data ?? [];
+    rows.push(...batch);
+    if (batch.length < PAGE_SIZE) break;
+    offset += PAGE_SIZE;
+  }
+
+  return rows;
+}
+
 export async function runVerify(args) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -36,16 +65,7 @@ export async function runVerify(args) {
   }
   const supabase = createClient(url, serviceKey);
 
-  let query = supabase
-    .from("larebedrift_truth")
-    .select(
-      "org_number, legal_name, county_code, municipality_code, latitude, longitude, larefag_code, larefag_label, verification_status, source_reference_url, source_system, is_active"
-    );
-  if (args.county) query = query.eq("county_code", String(args.county));
-
-  const { data, error } = await query;
-  if (error) throw new Error(`select failed: ${error.message}`);
-  const rows = data ?? [];
+  const rows = await fetchAllLarebedriftRows(supabase, args.county);
   const active = rows.filter((r) => r.is_active);
 
   const failures = [];

@@ -24,7 +24,8 @@ function childHomeCountyCodes(preferredMunicipalityCodes) {
 }
 
 function isPilotEligible(professionSlug, preferredMunicipalityCodes) {
-  if (professionSlug !== "carpenter") return false;
+  const slug = String(professionSlug ?? "").trim();
+  if (!["carpenter", "electrician"].includes(slug)) return false;
   return childHomeCountyCodes(preferredMunicipalityCodes).length > 0;
 }
 
@@ -36,7 +37,10 @@ export function runCarpenterPrimaryLarebedriftPilotSmoke() {
     "Steigen 1848 (Nordland) must be eligible in Phase 2 nationwide rollout"
   );
   assert(isPilotEligible("carpenter", ["0301"]), "Oslo must be eligible");
+  assert(isPilotEligible("electrician", ["0301"]), "Oslo electrician must be eligible");
+  assert(isPilotEligible("electrician", ["5601"]), "Finnmark electrician must be eligible");
   assert(!isPilotEligible("mechanic", ["1507"]), "mechanic must not be eligible yet");
+  assert(!isPilotEligible("electrician", []), "electrician without home kommune must not be eligible");
   assert(!isPilotEligible("carpenter", []), "missing home kommune must not be eligible");
 
   console.error("[smoke:carpenter-primary-larebedrift-pilot] pilot eligibility invariants: OK");
