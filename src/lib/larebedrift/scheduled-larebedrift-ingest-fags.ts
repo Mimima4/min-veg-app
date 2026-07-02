@@ -23,3 +23,23 @@ export const SCHEDULED_LAREBEDRIFT_INGEST_FAGS: ReadonlyArray<ScheduledLarebedri
   { apiQueryCode: "ELTOG3", code: "TOGELEKTRIKERFAGET", label: "Togelektrikerfaget" },
   { apiQueryCode: "ELVIK3", code: "VIKLERFAGET", label: "Viklerfaget" },
 ];
+
+/** Cron batches — each must finish within Vercel `maxDuration` (300s on Hobby). */
+export const SCHEDULED_LAREBEDRIFT_INGEST_BATCHES: ReadonlyArray<
+  ReadonlyArray<(typeof SCHEDULED_LAREBEDRIFT_INGEST_FAGS)[number]["code"]>
+> = [
+  ["TOMRERFAGET"],
+  ["ELEKTRIKERFAGET", "MARITIM_ELEKTRIKERFAGET", "ELEKTROREPARATORFAGET", "ENERGIMONTORFAGET"],
+  ["ENERGIOPERATORFAGET", "HEISMONTORFAGET", "SIGNALMONTORFAGET", "TAVLEMONTORFAGET"],
+  ["TELEKOMMUNIKASJONSMONTORFAGET", "TOGELEKTRIKERFAGET", "VIKLERFAGET"],
+];
+
+export function getScheduledLarebedriftIngestBatchCodes(batchIndex: number): string[] {
+  const batch = SCHEDULED_LAREBEDRIFT_INGEST_BATCHES[batchIndex];
+  if (!batch) {
+    throw new Error(
+      `Invalid larebedrift ingest batch index ${batchIndex} (valid: 0-${SCHEDULED_LAREBEDRIFT_INGEST_BATCHES.length - 1})`
+    );
+  }
+  return [...batch];
+}

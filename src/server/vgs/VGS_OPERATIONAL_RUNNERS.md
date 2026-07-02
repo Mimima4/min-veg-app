@@ -272,4 +272,4 @@ Canonical codes and VIGO query codes: `scripts/lib/larebedrift-fagkode.mjs` (mus
 
 After ingest: `node --env-file=.env.local scripts/verify-larebedrift-truth-snapshot.mjs` and prod-check Fagvalg → bedrift for Elektrikerfaget + one other fag.
 
-**Monthly cron:** Vercel `GET /api/internal/larebedrift/run-ingest` (`0 4 1 * *`, auth `CRON_SECRET`) refreshes **Tømrerfaget + all eleven elektro lærefag** nationwide (`scheduled-larebedrift-ingest-fags.ts`). Dry-run: `?dryRun=true`. Single-fag filter: `?larefagCode=ELEKTRIKERFAGET` (repeat param for multiple). `maxDuration` 800s on the route.
+**Monthly cron:** Vercel runs four batched `GET /api/internal/larebedrift/run-ingest/{0..3}` jobs on the 1st (`0/10/20/30 4 * *`, auth `CRON_SECRET`) — Tømrer alone in batch 0, eleven elektro split across batches 1–3 (`scheduled-larebedrift-ingest-fags.ts`). Each route `maxDuration` 300s (Hobby/Pro safe). Manual all-fag run: `GET /run-ingest` (may timeout). Dry-run: `?dryRun=true`. Single-fag filter: `?larefagCode=ELEKTRIKERFAGET`.
