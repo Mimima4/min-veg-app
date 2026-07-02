@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getScheduledLarebedriftIngestBatchCodes } from "@/lib/larebedrift/scheduled-larebedrift-ingest-fags";
 
-import { handleRunIngestRequest } from "../handle-run-ingest";
+import { handleRunIngestRequest, respondIngestRouteError } from "../handle-run-ingest";
 
 /**
  * Batched monthly cron ingest — one batch per invocation to stay within maxDuration.
  * Vercel Cron hits `/run-ingest/0` … `/run-ingest/3` on staggered schedules.
+ * On HTTP ≠ 200 pings OPS_ALERT_WEBHOOK_URL (Discord/Slack). Pass `?notify=false` to suppress.
  */
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -20,16 +21,13 @@ export async function GET(
     const { batch } = await params;
     const batchIndex = Number(batch);
     if (!Number.isInteger(batchIndex)) {
-      return NextResponse.json(
-        { ok: false, error: `Invalid batch index: ${batch}` },
-        { status: 400 }
-      );
+      return respondIngestRouteError(request, 400, `Invalid batch index: ${batch}`);
     }
     const larefagCodes = getScheduledLarebedriftIngestBatchCodes(batchIndex);
     return await handleRunIngestRequest(request, larefagCodes);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    return NextResponse.json({ ok: false, error: message }, { status: 500 });
+    return respondIngestRouteError(request, 500, message);
   }
 }
 

@@ -2,6 +2,8 @@ import "server-only";
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
+import { isOpsAlertWebhookConfigured, sendOpsAlert } from "@/server/ops/send-ops-alert";
+
 /**
  * Cloud freshness watchdog for the Vilbli-sourced PSA snapshot.
  *
@@ -51,29 +53,7 @@ function requireEnv(name: string): string {
 }
 
 async function sendReminder(message: string): Promise<boolean> {
-  const webhookUrl = process.env.OPS_ALERT_WEBHOOK_URL?.trim();
-  if (!webhookUrl) {
-    console.warn(`[psa-watchdog] ${message} (no OPS_ALERT_WEBHOOK_URL configured)`);
-    return false;
-  }
-  try {
-    // `text` (Slack) + `content` (Discord) so one URL works for either provider.
-    const response = await fetch(webhookUrl, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ text: message, content: message }),
-    });
-    if (!response.ok) {
-      console.warn(`[psa-watchdog] webhook returned ${response.status}`);
-      return false;
-    }
-    return true;
-  } catch (error) {
-    console.warn(
-      `[psa-watchdog] webhook failed: ${error instanceof Error ? error.message : String(error)}`
-    );
-    return false;
-  }
+  return sendOpsAlert(message, "psa-watchdog");
 }
 
 export async function checkPsaSnapshotFreshness(params: {
@@ -134,6 +114,6 @@ export async function checkPsaSnapshotFreshness(params: {
     stale,
     activeRowCount: count ?? 0,
     notified,
-    webhookConfigured: Boolean(process.env.OPS_ALERT_WEBHOOK_URL?.trim()),
+    webhookConfigured: isOpsAlertWebhookConfigured(),
   };
 }

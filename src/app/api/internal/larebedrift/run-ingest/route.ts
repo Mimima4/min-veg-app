@@ -1,11 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 
-import { handleRunIngestRequest } from "./handle-run-ingest";
+import { handleRunIngestRequest, respondIngestRouteError } from "./handle-run-ingest";
 
 /**
  * Self-sufficient verified-lærebedrift refresh (Finnlærebedrift + Brønnøysund).
  * Manual operator entry: all scheduled fag (may exceed maxDuration — prefer `/run-ingest/[batch]`).
  * Monthly Vercel Cron uses batched routes `/run-ingest/0` … `/run-ingest/3`. Auth: CRON_SECRET.
+ * On HTTP ≠ 200 pings OPS_ALERT_WEBHOOK_URL (Discord/Slack). Pass `?notify=false` to suppress.
  */
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -16,7 +17,7 @@ export async function GET(request: NextRequest) {
     return await handleRunIngestRequest(request);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    return NextResponse.json({ ok: false, error: message }, { status: 500 });
+    return respondIngestRouteError(request, 500, message);
   }
 }
 
@@ -25,6 +26,6 @@ export async function POST(request: NextRequest) {
     return await handleRunIngestRequest(request);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    return NextResponse.json({ ok: false, error: message }, { status: 500 });
+    return respondIngestRouteError(request, 500, message);
   }
 }

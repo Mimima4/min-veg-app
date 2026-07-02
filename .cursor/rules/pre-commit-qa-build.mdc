@@ -1,0 +1,27 @@
+---
+description: Mandatory QA build before every git commit
+alwaysApply: true
+---
+
+# Pre-commit QA build (mandatory)
+
+Before **any** `git commit`, ALWAYS run a full QA build and confirm it passes. No exceptions.
+
+## Required command
+
+```bash
+npx tsc --noEmit && npm run build
+```
+
+`npm run build` matches the Vercel production build (`scripts/vercel-bundle/build.mjs && next build`).
+
+## Rules
+
+1. Run QA build **after** code changes are complete and **before** `git add` / `git commit`.
+2. If QA build fails — fix errors first; do **not** commit.
+3. Do not skip QA build because changes look small or "docs only" (unless the commit is truly git-only with zero file changes).
+4. Report build result to the user when committing (pass/fail, or that it was run).
+
+## Optional (when relevant)
+
+After a passing QA build, run targeted smokes if the change touches that area (e.g. `npm run smoke:route-truth`). QA build remains the hard gate; smokes are additive.
