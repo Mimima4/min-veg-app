@@ -162,6 +162,7 @@ export default async function StudyRouteDetailPage({
             childId={childId}
             routeId={routeId}
             locale={locale}
+            professionSlug={route.identity.targetProfessionSlug}
             recomputePending={isRecomputePending}
             isSavedRoute={
               route.identity.status === "saved" ||
@@ -208,6 +209,7 @@ export default async function StudyRouteDetailPage({
                   locale={locale}
                   childId={childId}
                   routeId={routeId}
+                  professionSlug={route.identity.targetProfessionSlug}
                   alternatives={route.alternativeRoutes}
                   savedSelectionSignatures={route.savedSelectionSignatures ?? []}
                   steigenVekslingInfoCopy={steigenVekslingInfoCopy}

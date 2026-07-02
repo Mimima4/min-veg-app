@@ -12,6 +12,7 @@ type Props = {
   locale: string;
   childId: string;
   routeId: string;
+  professionSlug?: string | null;
   alternatives: StudyRouteAlternativeTeaser[];
   savedSelectionSignatures?: string[];
   steigenVekslingInfoCopy?: SteigenCarpenterVekslingInfoCopy | null;
@@ -28,6 +29,7 @@ export default function AlternativeRoutesCollapsible({
   locale,
   childId,
   routeId,
+  professionSlug = null,
   alternatives,
   savedSelectionSignatures = [],
   steigenVekslingInfoCopy = null,
@@ -85,6 +87,7 @@ export default function AlternativeRoutesCollapsible({
                 childId={childId}
                 routeId={routeId}
                 locale={locale}
+                professionSlug={professionSlug}
                 isSavedRoute={false}
                 steps={alternative.steps ?? []}
                 savedSelectionSignatures={savedSelectionSignatures}

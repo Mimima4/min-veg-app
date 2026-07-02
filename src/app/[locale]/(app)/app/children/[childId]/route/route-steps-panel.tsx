@@ -5,6 +5,7 @@ import { CompetitionBadge } from "@/components/route/competition-badge";
 import type {
   StudyRouteCompetitionLevel,
   StudyRouteReadModelStep,
+  StudyRouteApprenticeshipSnapshotStep,
   StudyRouteSnapshotStep,
 } from "@/lib/routes/route-types";
 import type { StudyRouteStep } from "@/lib/routes/route-step-types";
@@ -21,6 +22,11 @@ import SaveRouteButton from "./[routeId]/save-route-button";
 import type { SteigenCarpenterVekslingInfoCopy } from "@/lib/regional-delivery/steigen-carpenter-veksling-pilot";
 import SteigenVekslingBadgeWithInfo from "@/components/route/steigen-veksling-badge-with-info";
 import { isLarefagSelectionStage } from "@/lib/vgs/larefag-selection-stage";
+
+type ApprenticeshipOptionList = NonNullable<
+  StudyRouteApprenticeshipSnapshotStep["apprenticeship_options"]
+>;
+type ApprenticeshipOptionItem = ApprenticeshipOptionList[number];
 
 function isRouteSnapshotPayloadStep(
   step: StudyRouteReadModelStep
@@ -40,6 +46,7 @@ type Props = {
   childId: string;
   routeId: string;
   locale: string;
+  professionSlug?: string | null;
   isSavedRoute: boolean;
   steps: StudyRouteReadModelStep[];
   competitionLevel?: StudyRouteCompetitionLevel;
@@ -96,6 +103,7 @@ export default function RouteStepsPanel({
   childId,
   routeId,
   locale,
+  professionSlug = null,
   isSavedRoute,
   steps,
   competitionLevel,
@@ -130,6 +138,10 @@ export default function RouteStepsPanel({
     : "max-h-72 overflow-y-auto overscroll-contain";
   const [selectedOptionByStep, setSelectedOptionByStep] = useState<Record<string, string>>({});
   const [openStepKey, setOpenStepKey] = useState<string | null>(null);
+  const [apprenticeshipOptionsOverride, setApprenticeshipOptionsOverride] = useState<
+    Record<string, ApprenticeshipOptionList>
+  >({});
+  const apprenticeshipOptionsFetchGenRef = useRef<Record<string, number>>({});
   const panelRef = useRef<HTMLDivElement | null>(null);
   const stepRefByKey = useRef<Record<string, HTMLDivElement | null>>({});
   type StepOption = {
@@ -146,6 +158,7 @@ export default function RouteStepsPanel({
     isLosaDelivery: boolean;
     sourceNote: string | null;
     fagSlug?: string | null;
+    programmeUrl?: string | null;
   };
 
   const resolveStepKey = (index: number, step: StudyRouteSnapshotStep) =>
@@ -168,6 +181,11 @@ export default function RouteStepsPanel({
       {LOSA_ROUTE_BADGE_LABEL}
     </span>
   );
+
+  useEffect(() => {
+    setApprenticeshipOptionsOverride({});
+    apprenticeshipOptionsFetchGenRef.current = {};
+  }, [steps]);
 
   useEffect(() => {
     const onPointerDown = (event: MouseEvent) => {
@@ -210,7 +228,7 @@ export default function RouteStepsPanel({
     return option.schoolName;
   };
 
-  const buildStepOptions = (step: StudyRouteSnapshotStep) => {
+  const buildStepOptions = (step: StudyRouteSnapshotStep, stepKey?: string) => {
     if (step.type === "programme_selection" && isLarefagSelectionStage(step.stage)) {
       const mapped = (step.options ?? []).map((option, index) => {
         const fagTitle =
@@ -231,6 +249,7 @@ export default function RouteStepsPanel({
           fagSlug: String(option.institution_id ?? "")
             .trim()
             .replace(/^vilbli-branch:/, "") || null,
+          programmeUrl: option.programme_url ?? null,
         };
       });
       if (mapped.length > 0) return dedupeStepOptions(mapped);
@@ -249,6 +268,7 @@ export default function RouteStepsPanel({
           isLosaDelivery: false,
           sourceNote: null,
           fagSlug: step.program_slug ?? null,
+          programmeUrl: step.programme_url ?? null,
         },
       ];
     }
@@ -304,7 +324,12 @@ export default function RouteStepsPanel({
     }
 
     if (step.type === "apprenticeship_step") {
-      const mapped = (step.apprenticeship_options ?? []).map((option) => {
+      const hasApprenticeshipOverride =
+        stepKey != null && Object.prototype.hasOwnProperty.call(apprenticeshipOptionsOverride, stepKey);
+      const optionSource = hasApprenticeshipOverride
+        ? apprenticeshipOptionsOverride[stepKey]
+        : step.apprenticeship_options;
+      const mapped = (optionSource ?? []).map((option: ApprenticeshipOptionItem) => {
         const outcomeCount = option.outcome_profession_ids?.length ?? 0;
         return {
         id: option.option_id,
@@ -328,6 +353,7 @@ export default function RouteStepsPanel({
       };
       });
       if (mapped.length > 0) return mapped;
+      if (hasApprenticeshipOverride) return [];
       return [
         {
           id: "apprenticeship-current",
@@ -481,6 +507,75 @@ export default function RouteStepsPanel({
     return null;
   };
 
+  const refreshApprenticeshipOptionsForFag = async (
+    larefagStepIndex: number,
+    option: StepOption
+  ) => {
+    if (!professionSlug) return;
+    const apprenticeshipStepKey = findApprenticeshipStepKeyAfterLarefag(larefagStepIndex);
+    if (!apprenticeshipStepKey) return;
+
+    const nextGeneration =
+      (apprenticeshipOptionsFetchGenRef.current[apprenticeshipStepKey] ?? 0) + 1;
+    apprenticeshipOptionsFetchGenRef.current[apprenticeshipStepKey] = nextGeneration;
+
+    try {
+      const response = await fetch(
+        "/api/internal/routes/get-verified-larebedrift-apprenticeship-options",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            childId,
+            professionSlug,
+            programSlug: option.fagSlug ?? extractFagSlugFromOptionId(option.id),
+            programTitle: option.displayTitle ?? option.programTitle,
+            title: option.displayTitle ?? option.programTitle,
+            programmeUrl: option.programmeUrl,
+          }),
+        }
+      );
+      const payload = (await response.json()) as {
+        ok?: boolean;
+        options?: ApprenticeshipOptionList;
+      };
+      if (
+        apprenticeshipOptionsFetchGenRef.current[apprenticeshipStepKey] !== nextGeneration
+      ) {
+        return;
+      }
+      if (!response.ok || !payload.ok || !Array.isArray(payload.options)) {
+        setApprenticeshipOptionsOverride((prev) => {
+          const { [apprenticeshipStepKey]: _removed, ...rest } = prev;
+          return rest;
+        });
+        return;
+      }
+
+      const options = payload.options ?? [];
+      setApprenticeshipOptionsOverride((prev) => ({
+        ...prev,
+        [apprenticeshipStepKey]: options,
+      }));
+      setSelectedOptionByStep((prev) => {
+        const next = { ...prev };
+        if (options.length > 0) {
+          next[apprenticeshipStepKey] = options[0].option_id;
+        } else {
+          delete next[apprenticeshipStepKey];
+        }
+        return next;
+      });
+    } catch {
+      if (apprenticeshipOptionsFetchGenRef.current[apprenticeshipStepKey] === nextGeneration) {
+        setApprenticeshipOptionsOverride((prev) => {
+          const { [apprenticeshipStepKey]: _removed, ...rest } = prev;
+          return rest;
+        });
+      }
+    }
+  };
+
   const isSelectableStep = (step: StudyRouteSnapshotStep) =>
     step.type === "programme_selection" || step.type === "apprenticeship_step";
 
@@ -488,7 +583,7 @@ export default function RouteStepsPanel({
     if (!isRouteSnapshotPayloadStep(step)) return acc;
     if (!isSelectableStep(step)) return acc;
     const stepKey = resolveStepKey(index, step);
-    const options = buildStepOptions(step);
+    const options = buildStepOptions(step, stepKey);
     const baseline = getBaselineOptionForStep(step, options);
     if (baseline) {
       acc[stepKey] = baseline.id;
@@ -563,7 +658,7 @@ export default function RouteStepsPanel({
                 const showCompetitionBadge =
                   competitionLevel === "very_high" &&
                   step.type === "programme_selection";
-                const stepOptions = buildStepOptions(step);
+                const stepOptions = buildStepOptions(step, stepKey);
                 const selectedOption = getSelectedOption(stepKey, step, stepOptions);
                 const optionList = stepOptions;
                 const isOpen = openStepKey === stepKey;
@@ -597,25 +692,35 @@ export default function RouteStepsPanel({
                     null
                   : step.type === "apprenticeship_step"
                     ? (() => {
+                        const hasOverride = Object.prototype.hasOwnProperty.call(
+                          apprenticeshipOptionsOverride,
+                          stepKey
+                        );
+                        if (hasOverride) {
+                          if (stepOptions.length === 0) return null;
+                          return selectedOption?.schoolName ?? null;
+                        }
                         const employerName = selectedOptionByStep[stepKey]
-                          ? selectedOption.schoolName
+                          ? selectedOption?.schoolName
                           : (
                               step as StudyRouteSnapshotStep & {
                                 selected_apprenticeship_option_title?: string | null;
                               }
                             ).selected_apprenticeship_option_title ??
-                            selectedOption.schoolName ??
+                            selectedOption?.schoolName ??
                             step.institution_name ??
                             null;
                         return employerName && employerName.trim().length > 0 ? employerName : null;
                       })()
                     : selectedOption.schoolName;
-                const selectedLocation = isLarefagStep ? null : selectedOption.location;
+                const selectedLocation = isLarefagStep
+                  ? null
+                  : selectedOption?.location ?? null;
                 const selectedWebsite = isLarefagStep
                   ? null
-                  : selectedOption.website ??
+                  : selectedOption?.website ??
                     (step.type === "programme_selection" ? step.institution_website ?? null : null);
-                const selectedDurationLabel = selectedOption.durationLabel ?? step.duration_label;
+                const selectedDurationLabel = selectedOption?.durationLabel ?? step.duration_label;
                 const selectedWebsiteLabel =
                   step.type === "apprenticeship_step"
                     ? "About the employer"
@@ -764,11 +869,26 @@ export default function RouteStepsPanel({
                           data-testid="route-step-options"
                         >
                           <div className={`space-y-1 ${dropdownOptionsScrollClass}`}>
+                            {optionList.length === 0 ? (
+                              <p className="px-2 py-2 text-sm text-stone-500">
+                                Ingen godkjente lærebedrifter for dette faget ennå.
+                              </p>
+                            ) : null}
                             {optionList.map((option) => (
                               <button
                                 key={option.id}
                                 type="button"
                                 onClick={() => {
+                                  if (isLarefagStep) {
+                                    const apprenticeshipStepKey =
+                                      findApprenticeshipStepKeyAfterLarefag(index);
+                                    if (apprenticeshipStepKey) {
+                                      setApprenticeshipOptionsOverride((prev) => ({
+                                        ...prev,
+                                        [apprenticeshipStepKey]: [],
+                                      }));
+                                    }
+                                  }
                                   setSelectedOptionByStep((prev) => {
                                     const next = {
                                       ...prev,
@@ -783,10 +903,13 @@ export default function RouteStepsPanel({
                                     }
                                     return next;
                                   });
+                                  if (isLarefagStep) {
+                                    void refreshApprenticeshipOptionsForFag(index, option);
+                                  }
                                   setOpenStepKey(null);
                                 }}
                                 className={`${listRowClass} ${
-                                  option.id === selectedOption.id
+                                  option.id === selectedOption?.id
                                     ? "border-stone-700 bg-stone-900 text-white"
                                     : "border-stone-200 bg-white text-stone-800 hover:bg-stone-100"
                                 }`}
@@ -800,12 +923,12 @@ export default function RouteStepsPanel({
                                 </span>
                                 <span className="flex shrink-0 flex-wrap items-center justify-end gap-1">
                                   {option.isLosaDelivery
-                                    ? renderLosaBadge(option.id === selectedOption.id)
+                                    ? renderLosaBadge(option.id === selectedOption?.id)
                                     : null}
                                   {option.institutionIsPrivateSchool ? (
                                     <span
                                       className={
-                                        option.id === selectedOption.id
+                                        option.id === selectedOption?.id
                                           ? PRIVATE_SCHOOL_BADGE_CLASSES.onDarkSelectedRow
                                           : PRIVATE_SCHOOL_BADGE_CLASSES.default
                                       }

@@ -10,6 +10,7 @@ import {
 import { isLarefagSelectionStage } from "@/lib/vgs/larefag-selection-stage";
 import { getStudyRouteDetail } from "./get-study-route-detail";
 import { RouteDomainError } from "./route-errors";
+import { refreshApprenticeshipLarebedriftForFagSteps } from "./refresh-apprenticeship-larebedrift-for-fag";
 
 type Params = {
   childId: string;
@@ -306,8 +307,41 @@ export async function saveStudyRoute(params: Params) {
     currentSnapshot?.selected_steps_payload ?? [],
     params.selectedOptions
   );
+
+  const { data: profession, error: professionError } = await supabase
+    .from("professions")
+    .select("slug")
+    .eq("id", route.target_profession_id)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  if (professionError || !profession?.slug) {
+    throw new RouteDomainError(
+      "internal_error",
+      `Failed to load route profession for save: ${professionError?.message ?? "Missing profession"}`,
+      { routeId: route.id }
+    );
+  }
+
+  const larefagSelectionChanged = Object.keys(params.selectedOptions ?? {}).some((stepKey) => {
+    const stepIndex = Number(stepKey.match(/^snap-(\d+)-/)?.[1]);
+    if (!Number.isFinite(stepIndex)) return false;
+    const step = updatedSteps[stepIndex];
+    return (
+      step?.type === "programme_selection" && isLarefagSelectionStage(step.stage)
+    );
+  });
+
+  const stepsWithLarebedrift = await refreshApprenticeshipLarebedriftForFagSteps({
+    supabase,
+    childId: route.child_id,
+    professionSlug: profession.slug,
+    steps: updatedSteps,
+    larefagSelectionChanged,
+  });
+
   const normalizedUpdatedSteps = stableStringify(
-    normalizeApprenticeshipSelectionPayload(updatedSteps)
+    normalizeApprenticeshipSelectionPayload(stepsWithLarebedrift)
   );
 
   const { data: savedRoutes, error: savedRoutesError } = await supabase
@@ -431,7 +465,7 @@ export async function saveStudyRoute(params: Params) {
     snapshot_kind: "user_saved",
     generation_reason: "user_selected_options",
     stage_context: currentSnapshot?.stage_context ?? null,
-    selected_steps_payload: updatedSteps,
+    selected_steps_payload: stepsWithLarebedrift,
     signals_payload: currentSnapshot?.signals_payload ?? null,
     available_professions_payload: currentSnapshot?.available_professions_payload ?? null,
     alternatives_teaser_payload: currentSnapshot?.alternatives_teaser_payload ?? null,

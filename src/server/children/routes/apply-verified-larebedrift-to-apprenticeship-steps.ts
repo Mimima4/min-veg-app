@@ -2,7 +2,10 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { resolveLarefagFromKolonne3Selection } from "@/lib/larebedrift/kolonne3-larefag-mapping";
+import {
+  isKolonne3ProgramSlug,
+  resolveLarefagFromKolonne3Selection,
+} from "@/lib/larebedrift/kolonne3-larefag-mapping";
 import { isPrimaryRouteLarebedriftPilotEligible } from "@/lib/larebedrift/primary-route-larebedrift-pilot";
 import {
   resolveLarefagCodeForProfession,
@@ -14,6 +17,21 @@ import {
   getVerifiedLarebedriftApprenticeshipOptions,
   type VerifiedLarebedriftOption,
 } from "./get-verified-larebedrift-options";
+
+function resolveProgrammeUrlFromLarefagStep(
+  step: Extract<StudyRouteSnapshotStep, { type: "programme_selection" }>
+): string | null {
+  if (step.programme_url) return step.programme_url;
+  const slug = String(step.program_slug ?? "").trim();
+  if (!slug) return null;
+  const matched = (step.options ?? []).find((option) => {
+    const optionSlug = String(option.institution_id ?? "")
+      .trim()
+      .replace(/^vilbli-branch:/, "");
+    return optionSlug === slug;
+  });
+  return matched?.programme_url ?? null;
+}
 
 /**
  * P3b — inject verified godkjent lærebedrifter into ordinary
@@ -73,16 +91,28 @@ export async function applyVerifiedLarebedriftToApprenticeshipSteps(params: {
           isLarefagSelectionStage(candidate.stage)
       );
 
-    const kolonne3Larefag = priorLarefagStep
-      ? resolveLarefagFromKolonne3Selection({
-          programSlug: priorLarefagStep.program_slug,
-          programTitle: priorLarefagStep.program_title,
-          title: priorLarefagStep.title,
-        })
-      : null;
+    const programmeUrl =
+      priorLarefagStep && priorLarefagStep.type === "programme_selection"
+        ? resolveProgrammeUrlFromLarefagStep(priorLarefagStep)
+        : null;
 
-    const larefagCode =
-      kolonne3Larefag?.code ?? resolveLarefagCodeForProfession(params.professionSlug);
+    const kolonne3Larefag =
+      priorLarefagStep && priorLarefagStep.type === "programme_selection"
+        ? resolveLarefagFromKolonne3Selection({
+            programSlug: priorLarefagStep.program_slug,
+            programTitle: priorLarefagStep.program_title,
+            title: priorLarefagStep.title,
+            programmeUrl,
+          })
+        : null;
+
+    const inKolonne3Context =
+      priorLarefagStep != null &&
+      priorLarefagStep.type === "programme_selection" &&
+      (isKolonne3ProgramSlug(priorLarefagStep.program_slug) || Boolean(programmeUrl));
+    const larefagCode = inKolonne3Context
+      ? kolonne3Larefag?.code ?? null
+      : kolonne3Larefag?.code ?? resolveLarefagCodeForProfession(params.professionSlug);
     if (!larefagCode) {
       nextSteps.push(step);
       continue;

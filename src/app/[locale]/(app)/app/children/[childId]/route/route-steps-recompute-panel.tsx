@@ -16,6 +16,7 @@ type Props = {
   childId: string;
   routeId: string;
   locale: string;
+  professionSlug?: string | null;
   recomputePending: boolean;
   isSavedRoute: boolean;
   steps: StudyRouteReadModelStep[];
@@ -99,6 +100,7 @@ export default function RouteStepsRecomputePanel({
   childId,
   routeId,
   locale,
+  professionSlug = null,
   recomputePending,
   isSavedRoute,
   steps,
@@ -208,6 +210,7 @@ export default function RouteStepsRecomputePanel({
       childId={childId}
       routeId={routeId}
       locale={locale}
+      professionSlug={professionSlug}
       isSavedRoute={isSavedRoute}
       steps={displaySteps}
       competitionLevel={competitionLevel}
