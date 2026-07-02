@@ -241,3 +241,33 @@ npm run smoke:contour-b
 ```
 
 Checks: CLI rejects `--contour-b-partial` on `run-vgs-truth-pipeline.mjs`; Contour B ingest dry-run for **56** exits 0.
+
+## Deferred gates (do not skip before scaling)
+
+Record for when these become blockers — **without them we cannot scale professions or bedrift UX further**.
+
+### VG2 programme selection cascade
+
+When VG2 programme options expand (new branches per profession/county), **downstream steps must recompute**, not reuse a frozen snapshot:
+
+- **Fagvalg (kolonne-3)** list comes from the active VG1→**chosen VG2** chain on Vilbli (per fylke).
+- **Bedrift** pools are per **lærefag VIGO code**, not per profession slug — changing VG2 can change which kolonne-3 fags exist and therefore which `larebedrift_truth.larefag_code` rows apply.
+
+**Ops order when adding VG2 programmes:** Contour B relay for that county/profession → route recompute E2E → ingest any **new** kolonne-3 lærefag codes into `larebedrift_truth` → prod-check Fagvalg + bedrift for 2–3 fag samples.
+
+### Bedrift UI performance (truth-preserving)
+
+Current model: read **verified** rows from `larebedrift_truth` (server DB); live fetch on Fagvalg change (~300–800 ms). Acceptable for pilot.
+
+**If this becomes a product blocker**, upgrade path without live external API:
+
+1. **Preload at recompute** — bake `apprenticeship_options` for all kolonne-3 fags in the snapshot (instant UI; heavier recompute).
+2. **Monthly cron ingest** — keep DB fresh so fetch stays fast and truthful.
+
+Do **not** call Finnlærebedrift live in prod UI (no Brønnøysund gate, breaks charter).
+
+### Electrician lærebedrift — Phase 1 ingest (nationwide)
+
+Canonical codes and VIGO query codes: `scripts/lib/larebedrift-fagkode.mjs` (must match `kolonne3-larefag-mapping.ts`). Writes to **Supabase `larebedrift_truth`** only (not local Mac). Idempotent upsert; `--verify-brreg` recommended. Expect ~3–5 min per fag, ~40–60 min for all 11 elektro fag nationwide.
+
+After ingest: `node --env-file=.env.local scripts/verify-larebedrift-truth-snapshot.mjs` and prod-check Fagvalg → bedrift for Elektrikerfaget + one other fag.
