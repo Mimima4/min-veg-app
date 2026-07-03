@@ -146,6 +146,7 @@ export default function RouteStepsPanel({
     Record<string, ApprenticeshipOptionList>
   >({});
   const apprenticeshipOptionsFetchGenRef = useRef<Record<string, number>>({});
+  const bedriftPrefetchKeyRef = useRef<string | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const stepRefByKey = useRef<Record<string, HTMLDivElement | null>>({});
   type StepOption = {
@@ -187,10 +188,10 @@ export default function RouteStepsPanel({
   );
 
   useEffect(() => {
-    setApprenticeshipOptionsOverride({});
-    apprenticeshipOptionsFetchGenRef.current = {};
-
-    if (!professionSlug) return;
+    if (!professionSlug) {
+      bedriftPrefetchKeyRef.current = null;
+      return;
+    }
 
     for (let index = 0; index < steps.length; index += 1) {
       const step = steps[index];
@@ -212,26 +213,58 @@ export default function RouteStepsPanel({
         continue;
       }
 
-      // Always fetch from larebedrift_truth — snapshot options may be stale (e.g. VG3
-      // path previously fell back to profession-default ELEKTRIKERFAGET).
+      let prefetchKey: string;
+      let selection: {
+        programSlug?: string | null;
+        programTitle?: string | null;
+        title?: string | null;
+        programmeUrl?: string | null;
+      };
+
       if (isLarefagSelectionStage(step.stage)) {
         const larefagStepKey = resolveStepKey(index, step);
         const larefagOptions = buildStepOptions(step, larefagStepKey);
         const selectedFag = getSelectedOption(larefagStepKey, step, larefagOptions);
-        void refreshApprenticeshipOptionsForFag(index, {
+        selection = {
           programSlug: selectedFag.fagSlug ?? extractFagSlugFromOptionId(selectedFag.id),
           programTitle: selectedFag.displayTitle ?? selectedFag.programTitle,
           title: selectedFag.displayTitle ?? selectedFag.programTitle,
           programmeUrl: selectedFag.programmeUrl,
-        });
+        };
       } else {
-        void refreshApprenticeshipOptionsForFag(index, {
+        selection = {
           programSlug: step.program_slug,
           programTitle: step.program_title ?? step.title,
           title: step.program_title ?? step.title,
           programmeUrl: step.programme_url ?? null,
-        });
+        };
       }
+
+      prefetchKey = [
+        childId,
+        professionSlug,
+        apprenticeshipStepKey,
+        selection.programSlug ?? "",
+        selection.programTitle ?? "",
+        selection.title ?? "",
+        selection.programmeUrl ?? "",
+      ].join("|");
+
+      if (prefetchKey === bedriftPrefetchKeyRef.current) {
+        break;
+      }
+
+      bedriftPrefetchKeyRef.current = prefetchKey;
+      setApprenticeshipOptionsOverride((prev) => {
+        if (!(apprenticeshipStepKey in prev)) {
+          return prev;
+        }
+        const next = { ...prev };
+        delete next[apprenticeshipStepKey];
+        return next;
+      });
+
+      void refreshApprenticeshipOptionsForFag(index, selection);
       break;
     }
   }, [steps, professionSlug, childId]);

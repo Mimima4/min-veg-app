@@ -27,16 +27,17 @@ type Props = {
 
 const POLL_INTERVAL_MS = 2000;
 const MAX_POLL_ATTEMPTS = 90;
+const MAX_CLIENT_RECOMPUTE_PASSES = 4;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function fetchRecomputePending(params: {
+async function fetchStudyRouteDetail(params: {
   childId: string;
   routeId: string;
   locale: string;
-}): Promise<boolean> {
+}): Promise<StudyRouteReadModel> {
   const response = await fetch("/api/internal/routes/get-study-route-detail", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -44,14 +45,15 @@ async function fetchRecomputePending(params: {
   });
   const payload = (await response.json()) as {
     ok?: boolean;
-    data?: { recomputePending?: boolean };
+    data?: StudyRouteReadModel;
+    error?: { message?: string };
   };
 
-  if (!response.ok || !payload.ok) {
-    throw new Error("Failed to check route recompute status");
+  if (!response.ok || !payload.ok || !payload.data) {
+    throw new Error(payload.error?.message ?? "Failed to load route detail");
   }
 
-  return Boolean(payload.data?.recomputePending);
+  return payload.data;
 }
 
 async function triggerClientStudyRouteRecompute(params: {
@@ -80,14 +82,14 @@ async function triggerClientStudyRouteRecompute(params: {
   }
 
   if (!triggerPayload.updated?.recomputePending) {
-    return triggerPayload.updated;
+    return fetchStudyRouteDetail(params);
   }
 
   for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt += 1) {
-    const stillPending = await fetchRecomputePending(params);
+    const detail = await fetchStudyRouteDetail(params);
 
-    if (!stillPending) {
-      return triggerPayload.updated;
+    if (!detail.recomputePending) {
+      return detail;
     }
 
     await sleep(POLL_INTERVAL_MS);
@@ -118,6 +120,7 @@ export default function RouteStepsRecomputePanel({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
   const triggeredRef = useRef(false);
+  const clientPassRef = useRef(0);
   const routeKeyRef = useRef(`${childId}:${routeId}`);
 
   useEffect(() => {
@@ -125,10 +128,16 @@ export default function RouteStepsRecomputePanel({
     if (routeKeyRef.current !== routeKey) {
       routeKeyRef.current = routeKey;
       triggeredRef.current = false;
+      clientPassRef.current = 0;
     }
     setPending(recomputePending);
-    setDisplaySteps(steps);
-    setErrorMessage(null);
+    if (steps.length > 0) {
+      setDisplaySteps(steps);
+    }
+    if (!recomputePending) {
+      triggeredRef.current = false;
+      clientPassRef.current = 0;
+    }
   }, [childId, routeId, recomputePending, steps]);
 
   useEffect(() => {
@@ -136,7 +145,15 @@ export default function RouteStepsRecomputePanel({
       return;
     }
 
+    if (clientPassRef.current >= MAX_CLIENT_RECOMPUTE_PASSES) {
+      setErrorMessage("Route recompute is taking longer than expected");
+      setPending(false);
+      triggeredRef.current = false;
+      return;
+    }
+
     triggeredRef.current = true;
+    clientPassRef.current += 1;
     const lockKey = `${childId}:${routeId}`;
     let cancelled = false;
 
@@ -151,6 +168,16 @@ export default function RouteStepsRecomputePanel({
         if (updated?.steps && updated.steps.length > 0) {
           setDisplaySteps(updated.steps);
         }
+
+        if (updated?.recomputePending) {
+          // Server still marks the draft stale — allow another pass instead of
+          // clearing pending while triggeredRef stays true (infinite loader).
+          triggeredRef.current = false;
+          setPending(true);
+          return;
+        }
+
+        clientPassRef.current = 0;
         setPending(false);
         startTransition(() => {
           routerRef.current.refresh();
@@ -186,6 +213,7 @@ export default function RouteStepsRecomputePanel({
           className="mt-4 rounded-lg border border-red-300 bg-white px-3 py-2 text-sm font-medium text-red-800"
           onClick={() => {
             triggeredRef.current = false;
+            clientPassRef.current = 0;
             setErrorMessage(null);
             setPending(true);
             setRetryKey((value) => value + 1);
