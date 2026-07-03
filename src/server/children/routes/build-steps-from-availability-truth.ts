@@ -17,6 +17,7 @@ import { getVilbliBranchConfig } from "@/lib/vgs/vilbli-branch-config";
 import { assertRouteTruthInvariants } from "@/lib/vgs/route-truth-invariants";
 import { findPriorBedriftLaerefagStep } from "@/lib/larebedrift/bedrift-laerefag-from-route";
 import { isLarefagSelectionStage } from "@/lib/vgs/larefag-selection-stage";
+import { buildVg2ProgrammeOptionsFromTruthRows } from "@/lib/vgs/vg2-programme-options";
 import type {
   PathVariant,
   PathVariantNode,
@@ -210,6 +211,7 @@ function mapLosaProgrammeOption(row: AvailabilityTruthRow) {
     institution_municipality: deliverySiteLabel,
     institution_website: row.institutionWebsite,
     program_title: row.programTitle,
+    program_slug: row.programSlug,
     stage: row.stage,
     duration_label: null,
     display_title: displayTitle,
@@ -403,6 +405,7 @@ export function buildStepsFromAvailabilityTruth(params: {
   professionSlug: string;
   rows: AvailabilityTruthRow[];
   selectedCandidate?: AvailabilityTruthRow | null;
+  selectedVg2ProgramSlug?: string | null;
   transportSortContext?: KommuneTransportSortContext | null;
   pathVariants?: PathVariant[];
   selectedPathVariantId?: string | null;
@@ -619,11 +622,24 @@ export function buildStepsFromAvailabilityTruth(params: {
             : node.stage === "VG3"
               ? null
               : params.selectedCandidate ?? null;
+
+        const vg2ProgrammeScopeRows =
+          node.stage === "VG2" && params.selectedVg2ProgramSlug
+            ? params.rows.filter(
+                (row) =>
+                  row.stage === "VG2" &&
+                  row.programSlug === params.selectedVg2ProgramSlug
+              )
+            : null;
+
         const stageRows: AvailabilityTruthRow[] =
           node.stage === "VG3"
             ? regionalStageRows({ rows: params.rows, stage: "VG3" })
             : continuityStageRows({
-                rows: params.rows,
+                rows:
+                  vg2ProgrammeScopeRows && vg2ProgrammeScopeRows.length > 0
+                    ? vg2ProgrammeScopeRows
+                    : params.rows,
                 stage: node.stage === "VG2" ? "VG2" : "VG1",
                 selectedCandidate: params.selectedCandidate ?? null,
                 stageAnchorRow,
@@ -647,6 +663,7 @@ export function buildStepsFromAvailabilityTruth(params: {
           selectedVg2RowForGate = stageRow;
         }
         const selectedProgrammeSlug =
+          (node.stage === "VG2" ? params.selectedVg2ProgramSlug : null) ??
           stageRow?.programSlug ??
           node.programSlug ??
           linkedProgrammeSlugByStage.get(node.stage) ??
@@ -679,6 +696,11 @@ export function buildStepsFromAvailabilityTruth(params: {
           current_profession_slug: params.professionSlug,
           source: "availability_truth",
           stage: node.stage,
+          ...(node.stage === "VG2"
+            ? {
+                programme_options: buildVg2ProgrammeOptionsFromTruthRows(params.rows),
+              }
+            : {}),
           options: buildProgrammeSelectionOptions(stageRows),
         });
         continue;

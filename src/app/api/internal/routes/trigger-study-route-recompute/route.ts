@@ -10,7 +10,7 @@ export const maxDuration = 300;
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { childId, routeId, locale } = body;
+    const { childId, routeId, locale, vg2ProgramSlug } = body;
     const internalSecret = req.headers.get("x-internal-secret");
     const hasValidInternalSecret =
       Boolean(process.env.BILLING_SYNC_SECRET) &&
@@ -41,6 +41,7 @@ export async function POST(req: Request) {
       childId,
       routeId,
       locale,
+      vg2ProgramSlug: vg2ProgramSlug ?? null,
       triggeredByType: hasValidInternalSecret ? "system" : "parent",
       triggeredByUserId: user?.id ?? null,
       supabase,

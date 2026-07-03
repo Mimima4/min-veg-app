@@ -29,6 +29,10 @@ export type StudyRouteProgrammeSelectionSnapshotStep = {
   current_profession_slug: string;
   source?: StudyRouteSnapshotStepSource;
   stage?: string;
+  programme_options?: Array<{
+    program_slug: string;
+    program_title: string;
+  }>;
   options?: Array<{
     institution_id: string;
     institution_name: string | null;
@@ -36,6 +40,7 @@ export type StudyRouteProgrammeSelectionSnapshotStep = {
     institution_municipality?: string | null;
     institution_website?: string | null;
     program_title?: string | null;
+    program_slug?: string | null;
     stage?: string | null;
     duration_label?: string | null;
     display_title?: string | null;

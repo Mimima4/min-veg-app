@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { CompetitionBadge } from "@/components/route/competition-badge";
+import {
+  RouteStepTypeBadge,
+  RouteStepTypeBadgeCompactRow,
+  RouteStepTypeBadgeRow,
+} from "@/components/route/route-step-type-badge";
 import type {
   StudyRouteCompetitionLevel,
   StudyRouteReadModelStep,
@@ -19,10 +25,16 @@ import {
   LOSA_ROUTE_BADGE_TITLE,
 } from "@/lib/losa/availability-scope";
 import SaveRouteButton from "./[routeId]/save-route-button";
+import Vg2RouteStepCard from "./vg2-route-step-card";
 import type { SteigenCarpenterVekslingInfoCopy } from "@/lib/regional-delivery/steigen-carpenter-veksling-pilot";
 import SteigenVekslingBadgeWithInfo from "@/components/route/steigen-veksling-badge-with-info";
 import { isBedriftLaerefagDrivingStage } from "@/lib/larebedrift/bedrift-laerefag-from-route";
 import { isLarefagSelectionStage } from "@/lib/vgs/larefag-selection-stage";
+import {
+  buildVg2ProgrammeOptionId,
+  parseVg2ProgrammeOptionId,
+  resolveVg2ProgrammeOptionsFromStep,
+} from "@/lib/vgs/vg2-programme-options";
 
 type ApprenticeshipOptionList = NonNullable<
   StudyRouteApprenticeshipSnapshotStep["apprenticeship_options"]
@@ -103,6 +115,14 @@ const LOSA_BADGE_CLASSES = {
 const VG2_OR_FAGVALG_OUTCOME_NOTE =
   "Å bytte program på VG2 eller fagvalg kan endre målprofesjonen og åpne andre ruter og muligheter.";
 
+function isVg2Stage(stage: string | null | undefined): boolean {
+  return String(stage ?? "").toUpperCase() === "VG2";
+}
+
+function vg2OpenKey(stepKey: string, zone: "programme" | "school"): string {
+  return `${stepKey}:${zone}`;
+}
+
 export default function RouteStepsPanel({
   childId,
   routeId,
@@ -116,6 +136,7 @@ export default function RouteStepsPanel({
   showHeader = true,
   steigenVekslingInfoCopy = null,
 }: Props) {
+  const router = useRouter();
   const cardWidth = compact ? "w-[200px] min-w-[200px]" : "w-[320px]";
   const cardMinHeight = compact ? "min-h-[11.5rem]" : "";
   const panelPadding = compact ? "p-3" : "p-6";
@@ -130,9 +151,6 @@ export default function RouteStepsPanel({
     : "mt-16 shrink-0 text-xl text-stone-400";
   const stepsGap = compact ? "gap-2" : "gap-3";
   const stepsRowAlign = compact ? "items-stretch" : "items-start";
-  const stepTypeBadgeClass = compact
-    ? "inline-flex max-w-full rounded-full border border-stone-300 bg-white px-2 py-0.5 text-[10px] font-medium leading-tight text-stone-700"
-    : "inline-flex rounded-full border border-stone-300 bg-white px-3 py-1 text-xs font-medium text-stone-700";
   const cardShellClass = `${cardWidth} ${cardMinHeight} flex h-full shrink-0 flex-col rounded-xl border border-stone-200 bg-stone-50 ${cardPadding}`;
   const listRowClass = compact
     ? "flex w-full items-start justify-between gap-1 rounded-md border px-2 py-1 text-left text-xs"
@@ -142,6 +160,7 @@ export default function RouteStepsPanel({
     : "max-h-72 overflow-y-auto overscroll-contain";
   const [selectedOptionByStep, setSelectedOptionByStep] = useState<Record<string, string>>({});
   const [openStepKey, setOpenStepKey] = useState<string | null>(null);
+  const [vg2RecomputingStepKey, setVg2RecomputingStepKey] = useState<string | null>(null);
   const [apprenticeshipOptionsOverride, setApprenticeshipOptionsOverride] = useState<
     Record<string, ApprenticeshipOptionList>
   >({});
@@ -164,6 +183,7 @@ export default function RouteStepsPanel({
     sourceNote: string | null;
     fagSlug?: string | null;
     programmeUrl?: string | null;
+    programSlug?: string | null;
   };
 
   const resolveStepKey = (index: number, step: StudyRouteSnapshotStep) =>
@@ -351,6 +371,7 @@ export default function RouteStepsPanel({
           sourceNote: null,
           fagSlug: step.program_slug ?? null,
           programmeUrl: step.programme_url ?? null,
+          programSlug: step.program_slug ?? null,
         },
       ];
     }
@@ -384,6 +405,10 @@ export default function RouteStepsPanel({
           institutionIsPrivateSchool: option.institution_is_private_school === true,
           isLosaDelivery,
           sourceNote: null,
+          programSlug:
+            String((option as { program_slug?: string | null }).program_slug ?? "").trim() ||
+            step.program_slug ||
+            null,
         };
       });
       if (mapped.length > 0) return dedupeStepOptions(mapped);
@@ -401,6 +426,7 @@ export default function RouteStepsPanel({
           institutionIsPrivateSchool: false,
           isLosaDelivery: false,
           sourceNote: null,
+          programSlug: step.program_slug ?? null,
         },
       ];
     }
@@ -432,6 +458,7 @@ export default function RouteStepsPanel({
         institutionIsPrivateSchool: false,
         isLosaDelivery: false,
         sourceNote: option.employer_source_note ?? null,
+        programSlug: step.program_slug ?? null,
       };
       });
       if (mapped.length > 0) return mapped;
@@ -452,6 +479,7 @@ export default function RouteStepsPanel({
           institutionIsPrivateSchool: false,
           isLosaDelivery: false,
           sourceNote: null,
+          programSlug: step.program_slug ?? null,
         },
       ];
     }
@@ -470,6 +498,7 @@ export default function RouteStepsPanel({
         institutionIsPrivateSchool: false,
         isLosaDelivery: false,
         sourceNote: null,
+        programSlug: step.program_slug ?? null,
       },
     ];
   };
@@ -599,6 +628,97 @@ export default function RouteStepsPanel({
       }
     }
     return null;
+  };
+
+  const buildVg2ProgrammeStepOptions = (
+    step: Extract<StudyRouteSnapshotStep, { type: "programme_selection" }>
+  ): StepOption[] => {
+    return resolveVg2ProgrammeOptionsFromStep(step).map((programme) => ({
+      id: buildVg2ProgrammeOptionId(programme.program_slug),
+      schoolName: programme.program_title,
+      location: null,
+      website: null,
+      programTitle: programme.program_title,
+      displayTitle: programme.program_title,
+      durationLabel: step.duration_label ?? null,
+      fromPayload: true,
+      meta: null,
+      institutionIsPrivateSchool: false,
+      isLosaDelivery: false,
+      sourceNote: null,
+      programSlug: programme.program_slug,
+    }));
+  };
+
+  const resolveSelectedVg2ProgrammeSlug = (
+    stepKey: string,
+    step: Extract<StudyRouteSnapshotStep, { type: "programme_selection" }>,
+    programmeOptions: StepOption[]
+  ): string | null => {
+    const programmeKey = vg2OpenKey(stepKey, "programme");
+    const selectedProgrammeId = selectedOptionByStep[programmeKey];
+    const fromSelection = selectedProgrammeId
+      ? parseVg2ProgrammeOptionId(selectedProgrammeId)
+      : null;
+    if (fromSelection) return fromSelection;
+
+    const stepSlug = String(step.program_slug ?? "").trim();
+    if (stepSlug) return stepSlug;
+    return programmeOptions[0]?.programSlug ?? null;
+  };
+
+  const buildVg2SchoolStepOptions = (
+    step: Extract<StudyRouteSnapshotStep, { type: "programme_selection" }>,
+    stepKey: string,
+    programmeSlug: string | null
+  ): StepOption[] => {
+    const allSchoolOptions = buildStepOptions(step, stepKey);
+    const normalizedSlug = String(programmeSlug ?? "").trim();
+    if (!normalizedSlug) return allSchoolOptions;
+
+    const filtered = allSchoolOptions.filter(
+      (option) => String(option.programSlug ?? step.program_slug ?? "").trim() === normalizedSlug
+    );
+    return filtered.length > 0 ? filtered : allSchoolOptions;
+  };
+
+  const handleVg2ProgrammeChange = async (
+    stepKey: string,
+    programmeSlug: string,
+    currentProgrammeSlug: string | null
+  ) => {
+    if (programmeSlug === currentProgrammeSlug) {
+      setOpenStepKey(null);
+      return;
+    }
+
+    setVg2RecomputingStepKey(stepKey);
+    setOpenStepKey(null);
+
+    try {
+      const response = await fetch("/api/internal/routes/trigger-study-route-recompute", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          childId,
+          routeId,
+          locale,
+          vg2ProgramSlug: programmeSlug,
+        }),
+      });
+      const payload = (await response.json()) as {
+        ok?: boolean;
+        error?: { message?: string };
+      };
+      if (!response.ok || !payload.ok) {
+        throw new Error(payload.error?.message ?? "Failed to update VG2 programme");
+      }
+      router.refresh();
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to update VG2 programme");
+    } finally {
+      setVg2RecomputingStepKey(null);
+    }
   };
 
   const refreshApprenticeshipOptionsForFag = async (
@@ -758,23 +878,61 @@ export default function RouteStepsPanel({
                 const showCompetitionBadge =
                   competitionLevel === "very_high" &&
                   step.type === "programme_selection";
-                const stepOptions = buildStepOptions(step, stepKey);
+                const isVg2Step =
+                  step.type === "programme_selection" && isVg2Stage(step.stage);
+                const vg2ProgrammeOptions =
+                  isVg2Step && step.type === "programme_selection"
+                    ? buildVg2ProgrammeStepOptions(step)
+                    : [];
+                const selectedVg2ProgrammeSlug =
+                  isVg2Step && step.type === "programme_selection"
+                    ? resolveSelectedVg2ProgrammeSlug(stepKey, step, vg2ProgrammeOptions)
+                    : null;
+                const stepOptions =
+                  isVg2Step && step.type === "programme_selection"
+                    ? buildVg2SchoolStepOptions(step, stepKey, selectedVg2ProgrammeSlug)
+                    : buildStepOptions(step, stepKey);
                 const selectedOption = getSelectedOption(stepKey, step, stepOptions);
                 const optionList = stepOptions;
-                const isOpen = openStepKey === stepKey;
+                const isOpen = !isVg2Step && openStepKey === stepKey;
+                const vg2ProgrammeOpenKey = vg2OpenKey(stepKey, "programme");
+                const vg2SchoolOpenKey = vg2OpenKey(stepKey, "school");
+                const isVg2ProgrammeOpen = isVg2Step && openStepKey === vg2ProgrammeOpenKey;
+                const isVg2SchoolOpen = isVg2Step && openStepKey === vg2SchoolOpenKey;
+                const vg2Recomputing = vg2RecomputingStepKey === stepKey;
+                const selectedVg2ProgrammeOption =
+                  isVg2Step && step.type === "programme_selection"
+                    ? (() => {
+                        const selectedId = selectedOptionByStep[vg2ProgrammeOpenKey];
+                        if (selectedId) {
+                          return (
+                            vg2ProgrammeOptions.find((option) => option.id === selectedId) ??
+                            null
+                          );
+                        }
+                        const slug = String(step.program_slug ?? "").trim();
+                        return (
+                          vg2ProgrammeOptions.find((option) => option.programSlug === slug) ??
+                          vg2ProgrammeOptions[0] ??
+                          null
+                        );
+                      })()
+                    : null;
                 const priorLarefagSelection = resolvePriorLarefagSelection(index);
                 const isLarefagStep =
                   step.type === "programme_selection" && isLarefagSelectionStage(step.stage);
                 const isBedriftFagDrivingStep =
                   step.type === "programme_selection" &&
                   isBedriftLaerefagDrivingStage(step.stage);
-                const isVg2ProgrammeStep =
-                  step.type === "programme_selection" &&
-                  String(step.stage ?? "").toUpperCase() === "VG2";
                 const showVg2OrFagvalgOutcomeNote =
-                  isOpen && (isLarefagStep || isVg2ProgrammeStep);
+                  (isOpen && isLarefagStep) || isVg2ProgrammeOpen;
                 const displayProgrammeTitle = isLarefagStep
                   ? "Fagvalg"
+                  : isVg2Step
+                    ? selectedVg2ProgrammeOption?.displayTitle ??
+                      step.program_title ??
+                      step.title ??
+                      "VG2"
                   : step.type === "apprenticeship_step" && priorLarefagSelection
                     ? `Opplæring i bedrift (${priorLarefagSelection.fagTitle})`
                     : step.type === "programme_selection"
@@ -836,7 +994,68 @@ export default function RouteStepsPanel({
                       ? "Visit programme page"
                       : "Visit school website";
 
-                const card = (
+                const card = isVg2Step ? (
+                  <Vg2RouteStepCard
+                    key={stepKey}
+                    stepKey={stepKey}
+                    cardShellClass={cardShellClass}
+                    stepTitleClass={stepTitleClass}
+                    schoolNameClass={schoolNameClass}
+                    metaClass={metaClass}
+                    listRowClass={listRowClass}
+                    dropdownOptionsScrollClass={dropdownOptionsScrollClass}
+                    programmeOpenKey={vg2ProgrammeOpenKey}
+                    schoolOpenKey={vg2SchoolOpenKey}
+                    isProgrammeOpen={isVg2ProgrammeOpen}
+                    isSchoolOpen={isVg2SchoolOpen}
+                    isRecomputing={vg2Recomputing}
+                    programmeTitle={displayProgrammeTitle}
+                    programmeOptions={vg2ProgrammeOptions}
+                    selectedProgrammeOption={selectedVg2ProgrammeOption}
+                    selectedProgrammeSlug={selectedVg2ProgrammeSlug}
+                    schoolOptions={stepOptions}
+                    selectedSchoolOption={selectedOption}
+                    competitionLevel={competitionLevel}
+                    showCompetitionBadge={showCompetitionBadge}
+                    stepTypeLabel={humanizeStepType(step)}
+                    compact={compact}
+                    onProgrammeOpenToggle={() =>
+                      setOpenStepKey((prev) =>
+                        prev === vg2ProgrammeOpenKey ? null : vg2ProgrammeOpenKey
+                      )
+                    }
+                    onSchoolOpenToggle={() =>
+                      setOpenStepKey((prev) =>
+                        prev === vg2SchoolOpenKey ? null : vg2SchoolOpenKey
+                      )
+                    }
+                    onProgrammeSelect={(programSlug) => {
+                      void handleVg2ProgrammeChange(
+                        stepKey,
+                        programSlug,
+                        selectedVg2ProgrammeSlug
+                      );
+                    }}
+                    onSchoolSelect={(optionId) => {
+                      setSelectedOptionByStep((prev) => ({
+                        ...prev,
+                        [stepKey]: optionId,
+                      }));
+                      setOpenStepKey(null);
+                    }}
+                    registerRef={(element) => {
+                      stepRefByKey.current[stepKey] = element;
+                      stepRefByKey.current[vg2ProgrammeOpenKey] = element;
+                      stepRefByKey.current[vg2SchoolOpenKey] = element;
+                    }}
+                    resolveProgrammeDropdownLabel={(option) =>
+                      resolveProgrammeDropdownLabel(option as StepOption)
+                    }
+                    resolveSchoolDropdownLabel={(option) =>
+                      resolveApprenticeshipDropdownLabel(option as StepOption)
+                    }
+                  />
+                ) : (
                     <div
                       key={stepKey}
                       className={cardShellClass}
@@ -864,12 +1083,10 @@ export default function RouteStepsPanel({
                               {displayProgrammeTitle}
                             </h4>
 
-                            <div className="mt-2 flex items-center justify-between gap-1">
-                              <span className={stepTypeBadgeClass}>
-                                {humanizeStepType(step)}
-                              </span>
-                              <span className="text-[10px] text-stone-500">{isOpen ? "▲" : "▼"}</span>
-                            </div>
+                            <RouteStepTypeBadgeCompactRow
+                              label={humanizeStepType(step)}
+                              isOpen={isOpen}
+                            />
 
                             <div className="mt-auto pt-2">
                               {selectedSchoolName ? (
@@ -961,12 +1178,7 @@ export default function RouteStepsPanel({
                               </div>
                             </div>
 
-                            <div className="flex items-center gap-2">
-                              <span className={stepTypeBadgeClass}>
-                                {humanizeStepType(step)}
-                              </span>
-                              <span className="text-xs text-stone-500">{isOpen ? "▲" : "▼"}</span>
-                            </div>
+                            <RouteStepTypeBadgeRow label={humanizeStepType(step)} isOpen={isOpen} />
                           </div>
                         )}
                       </button>
@@ -1104,7 +1316,7 @@ export default function RouteStepsPanel({
                         ) : null}
                       </div>
 
-                      <span className={stepTypeBadgeClass}>{legacy.stepType}</span>
+                      <RouteStepTypeBadge label={legacy.stepType} compact={compact} />
                     </div>
 
                     {legacy.description ? (

@@ -47,11 +47,28 @@ type Params = {
   childId: string;
   routeId: string;
   locale?: string;
+  vg2ProgramSlug?: string | null;
   triggeredByType?: string;
   triggeredByUserId?: string | null;
   triggerReason?: string;
   supabase?: SupabaseClient;
 };
+
+function resolveSelectedVg2ProgramSlug(params: {
+  explicitSlug?: string | null;
+  previousSteps: StudyRouteSnapshotStep[];
+}): string | null {
+  const explicit = String(params.explicitSlug ?? "").trim();
+  if (explicit) return explicit;
+
+  const vg2Step = params.previousSteps.find(
+    (step) =>
+      step.type === "programme_selection" && String(step.stage ?? "").toUpperCase() === "VG2"
+  );
+  if (vg2Step?.type !== "programme_selection") return null;
+  const slug = String(vg2Step.program_slug ?? "").trim();
+  return slug || null;
+}
 
 type ProfessionRow = {
   id: string;
@@ -683,9 +700,14 @@ export async function triggerStudyRouteRecompute(params: Params) {
           navMatches: pathVariantNavContext.navMatches,
           professionIdBySlug,
         });
+        const selectedVg2ProgramSlug = resolveSelectedVg2ProgramSlug({
+          explicitSlug: params.vg2ProgramSlug,
+          previousSteps,
+        });
         recomputedSteps = buildStepsFromAvailabilityTruth({
           rows: truth.rows,
           selectedCandidate: selectedTruthCandidate,
+          selectedVg2ProgramSlug,
           transportSortContext,
           professionSlug: professionRow.slug,
           pathVariants: enrichedPathVariants,
