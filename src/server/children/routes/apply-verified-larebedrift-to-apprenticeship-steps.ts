@@ -3,35 +3,18 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import {
-  isKolonne3ProgramSlug,
-  resolveLarefagFromKolonne3Selection,
-} from "@/lib/larebedrift/kolonne3-larefag-mapping";
+  findPriorBedriftLaerefagStep,
+  resolveBedriftLaerefagFromPriorStep,
+  resolveProgrammeUrlFromFagSelectionStep,
+} from "@/lib/larebedrift/bedrift-laerefag-from-route";
+import { resolveLarefagFromKolonne3Selection } from "@/lib/larebedrift/kolonne3-larefag-mapping";
 import { isPrimaryRouteLarebedriftPilotEligible } from "@/lib/larebedrift/primary-route-larebedrift-pilot";
-import {
-  resolveLarefagCodeForProfession,
-  resolveLarefagLabelForProfession,
-} from "@/lib/larebedrift/profession-larefag-mapping";
-import { isLarefagSelectionStage } from "@/lib/vgs/larefag-selection-stage";
+import { resolveLarefagLabelForProfession } from "@/lib/larebedrift/profession-larefag-mapping";
 import type { StudyRouteSnapshotStep } from "@/lib/routes/route-types";
 import {
   getVerifiedLarebedriftApprenticeshipOptions,
   type VerifiedLarebedriftOption,
 } from "./get-verified-larebedrift-options";
-
-function resolveProgrammeUrlFromLarefagStep(
-  step: Extract<StudyRouteSnapshotStep, { type: "programme_selection" }>
-): string | null {
-  if (step.programme_url) return step.programme_url;
-  const slug = String(step.program_slug ?? "").trim();
-  if (!slug) return null;
-  const matched = (step.options ?? []).find((option) => {
-    const optionSlug = String(option.institution_id ?? "")
-      .trim()
-      .replace(/^vilbli-branch:/, "");
-    return optionSlug === slug;
-  });
-  return matched?.programme_url ?? null;
-}
 
 /**
  * P3b — inject verified godkjent lærebedrifter into ordinary
@@ -82,37 +65,27 @@ export async function applyVerifiedLarebedriftToApprenticeshipSteps(params: {
       continue;
     }
 
-    const priorLarefagStep = params.steps
-      .slice(0, index)
-      .reverse()
-      .find(
-        (candidate) =>
-          candidate.type === "programme_selection" &&
-          isLarefagSelectionStage(candidate.stage)
-      );
+    const priorFagStep = findPriorBedriftLaerefagStep(params.steps, index);
 
     const programmeUrl =
-      priorLarefagStep && priorLarefagStep.type === "programme_selection"
-        ? resolveProgrammeUrlFromLarefagStep(priorLarefagStep)
-        : null;
+      priorFagStep != null ? resolveProgrammeUrlFromFagSelectionStep(priorFagStep) : null;
+
+    const bedriftLaerefag = resolveBedriftLaerefagFromPriorStep({
+      professionSlug: params.professionSlug,
+      priorFagStep,
+    });
 
     const kolonne3Larefag =
-      priorLarefagStep && priorLarefagStep.type === "programme_selection"
+      priorFagStep != null
         ? resolveLarefagFromKolonne3Selection({
-            programSlug: priorLarefagStep.program_slug,
-            programTitle: priorLarefagStep.program_title,
-            title: priorLarefagStep.title,
+            programSlug: priorFagStep.program_slug,
+            programTitle: priorFagStep.program_title,
+            title: priorFagStep.title,
             programmeUrl,
           })
         : null;
 
-    const inKolonne3Context =
-      priorLarefagStep != null &&
-      priorLarefagStep.type === "programme_selection" &&
-      (isKolonne3ProgramSlug(priorLarefagStep.program_slug) || Boolean(programmeUrl));
-    const larefagCode = inKolonne3Context
-      ? kolonne3Larefag?.code ?? null
-      : kolonne3Larefag?.code ?? resolveLarefagCodeForProfession(params.professionSlug);
+    const larefagCode = bedriftLaerefag?.code ?? null;
     if (!larefagCode) {
       nextSteps.push(step);
       continue;
@@ -125,9 +98,10 @@ export async function applyVerifiedLarebedriftToApprenticeshipSteps(params: {
     }
 
     const activeFagLabel =
-      priorLarefagStep?.program_title ??
-      priorLarefagStep?.title ??
+      priorFagStep?.program_title ??
+      priorFagStep?.title ??
       kolonne3Larefag?.label ??
+      bedriftLaerefag?.label ??
       step.program_title ??
       professionLarefagLabel;
 

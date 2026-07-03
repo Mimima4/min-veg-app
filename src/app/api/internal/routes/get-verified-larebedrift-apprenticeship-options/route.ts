@@ -7,7 +7,8 @@ import { resolveVerifiedLarebedriftOptionsForFagSelection } from "@/server/child
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { childId, professionSlug, programSlug, programTitle, title, programmeUrl } = body;
+    const { childId, professionSlug, programSlug, programTitle, title, programmeUrl, explicitFagStep } =
+      body;
 
     if (!childId || !professionSlug) {
       return NextResponse.json({
@@ -30,6 +31,7 @@ export async function POST(req: Request) {
       programTitle: programTitle ?? null,
       title: title ?? null,
       programmeUrl: programmeUrl ?? null,
+      explicitFagStep: Boolean(explicitFagStep),
     });
 
     return NextResponse.json({

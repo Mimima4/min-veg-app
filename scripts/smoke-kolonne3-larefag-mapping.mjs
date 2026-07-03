@@ -75,6 +75,20 @@ if (withoutUrl?.code !== "ELEKTROREPARATORFAGET") {
   console.log(`OK slug-only Elektroreparatørfaget -> ${withoutUrl.code}`);
 }
 
+const vg3Maritim = resolveLarefagFromKolonne3Selection({
+  programSlug: "electrician-vg3-maritim-elektriker-vestland",
+  programTitle: "VG3 Maritim elektriker",
+  title: "VG3 Maritim elektriker",
+});
+if (vg3Maritim?.code !== "MARITIM_ELEKTRIKERFAGET") {
+  failed += 1;
+  console.error(
+    `FAIL VG3 Maritim elektriker slug: expected MARITIM_ELEKTRIKERFAGET, got ${vg3Maritim?.code ?? "null"}`
+  );
+} else {
+  console.log(`OK VG3 Maritim elektriker -> ${vg3Maritim.code}`);
+}
+
 const MECHANIC_KJORETOY_FAG = [
   {
     title: "Motormekanikerfaget",

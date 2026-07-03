@@ -15,6 +15,7 @@ import type { KommuneTransportSortContext } from "@/lib/planning/kommune-transpo
 import type { AvailabilityTruthRow } from "./get-availability-truth";
 import { getVilbliBranchConfig } from "@/lib/vgs/vilbli-branch-config";
 import { assertRouteTruthInvariants } from "@/lib/vgs/route-truth-invariants";
+import { findPriorBedriftLaerefagStep } from "@/lib/larebedrift/bedrift-laerefag-from-route";
 import { isLarefagSelectionStage } from "@/lib/vgs/larefag-selection-stage";
 import type {
   PathVariant,
@@ -683,12 +684,7 @@ export function buildStepsFromAvailabilityTruth(params: {
         continue;
       }
 
-      const priorLarefagStep = [...steps]
-        .reverse()
-        .find(
-          (step) =>
-            step.type === "programme_selection" && isLarefagSelectionStage(step.stage)
-        );
+      const priorLarefagStep = findPriorBedriftLaerefagStep(steps, steps.length);
 
       const kolonne3BranchOptions =
         node.branchOptions && node.branchOptions.length > 0 ? node.branchOptions : null;

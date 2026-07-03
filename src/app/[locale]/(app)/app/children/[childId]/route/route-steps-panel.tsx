@@ -21,6 +21,7 @@ import {
 import SaveRouteButton from "./[routeId]/save-route-button";
 import type { SteigenCarpenterVekslingInfoCopy } from "@/lib/regional-delivery/steigen-carpenter-veksling-pilot";
 import SteigenVekslingBadgeWithInfo from "@/components/route/steigen-veksling-badge-with-info";
+import { isBedriftLaerefagDrivingStage } from "@/lib/larebedrift/bedrift-laerefag-from-route";
 import { isLarefagSelectionStage } from "@/lib/vgs/larefag-selection-stage";
 
 type ApprenticeshipOptionList = NonNullable<
@@ -194,7 +195,7 @@ export default function RouteStepsPanel({
     for (let index = 0; index < steps.length; index += 1) {
       const step = steps[index];
       if (!isRouteSnapshotPayloadStep(step)) continue;
-      if (step.type !== "programme_selection" || !isLarefagSelectionStage(step.stage)) {
+      if (step.type !== "programme_selection" || !isBedriftLaerefagDrivingStage(step.stage)) {
         continue;
       }
 
@@ -207,18 +208,30 @@ export default function RouteStepsPanel({
           (candidate): candidate is StudyRouteSnapshotStep =>
             isRouteSnapshotPayloadStep(candidate) && candidate.type === "apprenticeship_step"
         );
-      if (
-        !apprenticeshipStep ||
-        apprenticeshipStep.type !== "apprenticeship_step" ||
-        (apprenticeshipStep.apprenticeship_options ?? []).length > 0
-      ) {
+      if (!apprenticeshipStep || apprenticeshipStep.type !== "apprenticeship_step") {
         continue;
       }
 
-      const larefagStepKey = resolveStepKey(index, step);
-      const larefagOptions = buildStepOptions(step, larefagStepKey);
-      const selectedFag = getSelectedOption(larefagStepKey, step, larefagOptions);
-      void refreshApprenticeshipOptionsForFag(index, selectedFag);
+      // Always fetch from larebedrift_truth — snapshot options may be stale (e.g. VG3
+      // path previously fell back to profession-default ELEKTRIKERFAGET).
+      if (isLarefagSelectionStage(step.stage)) {
+        const larefagStepKey = resolveStepKey(index, step);
+        const larefagOptions = buildStepOptions(step, larefagStepKey);
+        const selectedFag = getSelectedOption(larefagStepKey, step, larefagOptions);
+        void refreshApprenticeshipOptionsForFag(index, {
+          programSlug: selectedFag.fagSlug ?? extractFagSlugFromOptionId(selectedFag.id),
+          programTitle: selectedFag.displayTitle ?? selectedFag.programTitle,
+          title: selectedFag.displayTitle ?? selectedFag.programTitle,
+          programmeUrl: selectedFag.programmeUrl,
+        });
+      } else {
+        void refreshApprenticeshipOptionsForFag(index, {
+          programSlug: step.program_slug,
+          programTitle: step.program_title ?? step.title,
+          title: step.program_title ?? step.title,
+          programmeUrl: step.programme_url ?? null,
+        });
+      }
       break;
     }
   }, [steps, professionSlug, childId]);
@@ -510,23 +523,33 @@ export default function RouteStepsPanel({
       }
       if (
         priorStep.type === "programme_selection" &&
-        isLarefagSelectionStage(priorStep.stage)
+        isBedriftLaerefagDrivingStage(priorStep.stage)
       ) {
         const larefagStepKey = resolveStepKey(index, priorStep);
-        const options = buildStepOptions(priorStep);
-        const selected = getSelectedOption(larefagStepKey, priorStep, options);
+        if (isLarefagSelectionStage(priorStep.stage)) {
+          const options = buildStepOptions(priorStep);
+          const selected = getSelectedOption(larefagStepKey, priorStep, options);
+          return {
+            fagTitle:
+              selected.displayTitle ??
+              selected.programTitle ??
+              priorStep.program_title ??
+              priorStep.title ??
+              "Unknown fag",
+            fagSlug:
+              selected.fagSlug ??
+              extractFagSlugFromOptionId(selected.id) ??
+              priorStep.program_slug ??
+              null,
+            larefagStepKey,
+          };
+        }
         return {
           fagTitle:
-            selected.displayTitle ??
-            selected.programTitle ??
             priorStep.program_title ??
             priorStep.title ??
             "Unknown fag",
-          fagSlug:
-            selected.fagSlug ??
-            extractFagSlugFromOptionId(selected.id) ??
-            priorStep.program_slug ??
-            null,
+          fagSlug: priorStep.program_slug ?? null,
           larefagStepKey,
         };
       }
@@ -546,11 +569,16 @@ export default function RouteStepsPanel({
   };
 
   const refreshApprenticeshipOptionsForFag = async (
-    larefagStepIndex: number,
-    option: StepOption
+    fagStepIndex: number,
+    selection: {
+      programSlug?: string | null;
+      programTitle?: string | null;
+      title?: string | null;
+      programmeUrl?: string | null;
+    }
   ) => {
     if (!professionSlug) return;
-    const apprenticeshipStepKey = findApprenticeshipStepKeyAfterLarefag(larefagStepIndex);
+    const apprenticeshipStepKey = findApprenticeshipStepKeyAfterLarefag(fagStepIndex);
     if (!apprenticeshipStepKey) return;
 
     const nextGeneration =
@@ -566,10 +594,11 @@ export default function RouteStepsPanel({
           body: JSON.stringify({
             childId,
             professionSlug,
-            programSlug: option.fagSlug ?? extractFagSlugFromOptionId(option.id),
-            programTitle: option.displayTitle ?? option.programTitle,
-            title: option.displayTitle ?? option.programTitle,
-            programmeUrl: option.programmeUrl,
+            programSlug: selection.programSlug,
+            programTitle: selection.programTitle,
+            title: selection.title,
+            programmeUrl: selection.programmeUrl,
+            explicitFagStep: true,
           }),
         }
       );
@@ -703,6 +732,9 @@ export default function RouteStepsPanel({
                 const priorLarefagSelection = resolvePriorLarefagSelection(index);
                 const isLarefagStep =
                   step.type === "programme_selection" && isLarefagSelectionStage(step.stage);
+                const isBedriftFagDrivingStep =
+                  step.type === "programme_selection" &&
+                  isBedriftLaerefagDrivingStage(step.stage);
                 const isVg2ProgrammeStep =
                   step.type === "programme_selection" &&
                   String(step.stage ?? "").toUpperCase() === "VG2";
@@ -927,7 +959,7 @@ export default function RouteStepsPanel({
                                 key={option.id}
                                 type="button"
                                 onClick={() => {
-                                  if (isLarefagStep) {
+                                  if (isBedriftFagDrivingStep) {
                                     const apprenticeshipStepKey =
                                       findApprenticeshipStepKeyAfterLarefag(index);
                                     if (apprenticeshipStepKey) {
@@ -942,7 +974,7 @@ export default function RouteStepsPanel({
                                       ...prev,
                                       [stepKey]: option.id,
                                     };
-                                    if (isLarefagStep) {
+                                    if (isBedriftFagDrivingStep) {
                                       const apprenticeshipStepKey =
                                         findApprenticeshipStepKeyAfterLarefag(index);
                                       if (apprenticeshipStepKey) {
@@ -952,7 +984,17 @@ export default function RouteStepsPanel({
                                     return next;
                                   });
                                   if (isLarefagStep) {
-                                    void refreshApprenticeshipOptionsForFag(index, option);
+                                    const larefagOption = option as StepOption;
+                                    void refreshApprenticeshipOptionsForFag(index, {
+                                      programSlug:
+                                        larefagOption.fagSlug ??
+                                        extractFagSlugFromOptionId(larefagOption.id),
+                                      programTitle:
+                                        larefagOption.displayTitle ?? larefagOption.programTitle,
+                                      title:
+                                        larefagOption.displayTitle ?? larefagOption.programTitle,
+                                      programmeUrl: larefagOption.programmeUrl,
+                                    });
                                   }
                                   setOpenStepKey(null);
                                 }}

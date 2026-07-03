@@ -3,33 +3,19 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import {
-  isKolonne3ProgramSlug,
-  resolveLarefagFromKolonne3Selection,
-} from "@/lib/larebedrift/kolonne3-larefag-mapping";
+  findPriorBedriftLaerefagStep,
+  resolveBedriftLaerefagFromPriorStep,
+  resolveBedriftLaerefagFromSelection,
+  resolveProgrammeUrlFromFagSelectionStep,
+} from "@/lib/larebedrift/bedrift-laerefag-from-route";
+import { resolveLarefagFromKolonne3Selection } from "@/lib/larebedrift/kolonne3-larefag-mapping";
 import { isPrimaryRouteLarebedriftPilotEligible } from "@/lib/larebedrift/primary-route-larebedrift-pilot";
-import { resolveLarefagCodeForProfession } from "@/lib/larebedrift/profession-larefag-mapping";
-import { isLarefagSelectionStage } from "@/lib/vgs/larefag-selection-stage";
 import { getChildPreferredMunicipalityCodes } from "@/server/children/planning/get-child-preferred-municipality-codes";
 import type { StudyRouteSnapshotStep } from "@/lib/routes/route-types";
 import {
   getVerifiedLarebedriftApprenticeshipOptions,
   type VerifiedLarebedriftOption,
 } from "./get-verified-larebedrift-options";
-
-function resolveProgrammeUrlFromLarefagStep(
-  step: Extract<StudyRouteSnapshotStep, { type: "programme_selection" }>
-): string | null {
-  if (step.programme_url) return step.programme_url;
-  const slug = String(step.program_slug ?? "").trim();
-  if (!slug) return null;
-  const matched = (step.options ?? []).find((option) => {
-    const optionSlug = String(option.institution_id ?? "")
-      .trim()
-      .replace(/^vilbli-branch:/, "");
-    return optionSlug === slug;
-  });
-  return matched?.programme_url ?? null;
-}
 
 export async function loadChildPreferredMunicipalityCodes(
   supabase: SupabaseClient,
@@ -46,6 +32,7 @@ export async function resolveVerifiedLarebedriftOptionsForFagSelection(params: {
   programTitle?: string | null;
   title?: string | null;
   programmeUrl?: string | null;
+  explicitFagStep?: boolean;
 }): Promise<VerifiedLarebedriftOption[]> {
   const preferredMunicipalityCodes = await loadChildPreferredMunicipalityCodes(
     params.supabase,
@@ -61,17 +48,15 @@ export async function resolveVerifiedLarebedriftOptionsForFagSelection(params: {
     return [];
   }
 
-  const kolonne3Larefag = resolveLarefagFromKolonne3Selection({
-    programSlug: params.programSlug,
-    programTitle: params.programTitle,
-    title: params.title,
-    programmeUrl: params.programmeUrl,
-  });
-  const inKolonne3Context =
-    isKolonne3ProgramSlug(params.programSlug) || Boolean(params.programmeUrl?.trim());
-  const larefagCode = inKolonne3Context
-    ? kolonne3Larefag?.code ?? null
-    : kolonne3Larefag?.code ?? resolveLarefagCodeForProfession(params.professionSlug);
+  const larefagCode =
+    resolveBedriftLaerefagFromSelection({
+      professionSlug: params.professionSlug,
+      programSlug: params.programSlug,
+      programTitle: params.programTitle,
+      title: params.title,
+      programmeUrl: params.programmeUrl,
+      explicitFagStep: params.explicitFagStep,
+    })?.code ?? null;
   if (!larefagCode) return [];
 
   return getVerifiedLarebedriftApprenticeshipOptions({
@@ -98,43 +83,43 @@ export async function refreshApprenticeshipLarebedriftForFagSteps(params: {
       continue;
     }
 
-    const priorLarefagStep = params.steps
-      .slice(0, index)
-      .reverse()
-      .find(
-        (candidate) =>
-          candidate.type === "programme_selection" &&
-          isLarefagSelectionStage(candidate.stage)
-      );
+    const priorFagStep = findPriorBedriftLaerefagStep(params.steps, index);
 
-    if (!priorLarefagStep || priorLarefagStep.type !== "programme_selection") {
+    if (!priorFagStep) {
       nextSteps.push(step);
       continue;
     }
 
-    const programmeUrl = resolveProgrammeUrlFromLarefagStep(priorLarefagStep);
+    const programmeUrl = resolveProgrammeUrlFromFagSelectionStep(priorFagStep);
 
     const verifiedOptions = await resolveVerifiedLarebedriftOptionsForFagSelection({
       supabase: params.supabase,
       childId: params.childId,
       professionSlug: params.professionSlug,
-      programSlug: priorLarefagStep.program_slug,
-      programTitle: priorLarefagStep.program_title,
-      title: priorLarefagStep.title,
+      programSlug: priorFagStep.program_slug,
+      programTitle: priorFagStep.program_title,
+      title: priorFagStep.title,
       programmeUrl,
+      explicitFagStep: true,
     });
 
     const kolonne3Larefag = resolveLarefagFromKolonne3Selection({
-      programSlug: priorLarefagStep.program_slug,
-      programTitle: priorLarefagStep.program_title,
-      title: priorLarefagStep.title,
+      programSlug: priorFagStep.program_slug,
+      programTitle: priorFagStep.program_title,
+      title: priorFagStep.title,
       programmeUrl,
     });
 
+    const bedriftLaerefag = resolveBedriftLaerefagFromPriorStep({
+      professionSlug: params.professionSlug,
+      priorFagStep,
+    });
+
     const fagTitle =
-      priorLarefagStep.program_title ??
-      priorLarefagStep.title ??
+      priorFagStep.program_title ??
+      priorFagStep.title ??
       kolonne3Larefag?.label ??
+      bedriftLaerefag?.label ??
       step.program_title ??
       null;
 

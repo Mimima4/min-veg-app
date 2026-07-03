@@ -7,6 +7,7 @@ import {
   normalizeLosaDeliverySiteLabel,
   normalizeLosaProviderLabel,
 } from "@/lib/losa/availability-scope";
+import { isBedriftLaerefagDrivingStage, findPriorBedriftLaerefagStep } from "@/lib/larebedrift/bedrift-laerefag-from-route";
 import { isLarefagSelectionStage } from "@/lib/vgs/larefag-selection-stage";
 import { getStudyRouteDetail } from "./get-study-route-detail";
 import { RouteDomainError } from "./route-errors";
@@ -109,34 +110,27 @@ function applySelectedOptions(
   return withSelections.map((step, index) => {
     if (step.type !== "apprenticeship_step") return step;
 
-    const priorLarefagStep = withSelections
-      .slice(0, index)
-      .reverse()
-      .find(
-        (candidate) =>
-          candidate.type === "programme_selection" &&
-          isLarefagSelectionStage(candidate.stage)
-      );
+    const priorFagStep = findPriorBedriftLaerefagStep(withSelections, index);
 
-    if (!priorLarefagStep) return step;
+    if (!priorFagStep) return step;
 
     const fagTitle =
-      priorLarefagStep.program_title ??
-      priorLarefagStep.institution_name ??
-      priorLarefagStep.title ??
+      priorFagStep.program_title ??
+      priorFagStep.institution_name ??
+      priorFagStep.title ??
       null;
     if (!fagTitle) return step;
 
-    const larefagStepIndex = withSelections.indexOf(priorLarefagStep);
-    const larefagStepKey = `snap-${larefagStepIndex}-${priorLarefagStep.type}-${priorLarefagStep.program_slug ?? "none"}`;
-    const larefagSelectionChanged = Boolean(selectedOptions[larefagStepKey]);
+    const fagStepIndex = withSelections.indexOf(priorFagStep);
+    const fagStepKey = `snap-${fagStepIndex}-${priorFagStep.type}-${priorFagStep.program_slug ?? "none"}`;
+    const fagSelectionChanged = Boolean(selectedOptions[fagStepKey]);
     const apprenticeshipOptions = Array.isArray(step.apprenticeship_options)
       ? step.apprenticeship_options
       : [];
     const defaultEmployer = apprenticeshipOptions[0] ?? null;
 
     const title = `Opplæring i bedrift (${fagTitle})`;
-    if (!larefagSelectionChanged) {
+    if (!fagSelectionChanged) {
       return {
         ...step,
         title,
@@ -328,7 +322,7 @@ export async function saveStudyRoute(params: Params) {
     if (!Number.isFinite(stepIndex)) return false;
     const step = updatedSteps[stepIndex];
     return (
-      step?.type === "programme_selection" && isLarefagSelectionStage(step.stage)
+      step?.type === "programme_selection" && isBedriftLaerefagDrivingStage(step.stage)
     );
   });
 
