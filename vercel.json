@@ -17,6 +17,18 @@
       "schedule": "30 4 1 * *"
     },
     {
+      "path": "/api/internal/larebedrift/run-ingest/4",
+      "schedule": "40 4 1 * *"
+    },
+    {
+      "path": "/api/internal/larebedrift/run-ingest/5",
+      "schedule": "50 4 1 * *"
+    },
+    {
+      "path": "/api/internal/larebedrift/run-ingest/6",
+      "schedule": "0 5 1 * *"
+    },
+    {
       "path": "/api/internal/vgs/psa-snapshot-watchdog",
       "schedule": "0 6 * * 1"
     }

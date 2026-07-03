@@ -10,7 +10,7 @@ import { handleRunIngestRequest, respondIngestRouteError } from "../handle-run-i
 
 /**
  * Batched monthly cron ingest — one batch per invocation to stay within maxDuration.
- * Vercel Cron hits `/run-ingest/0` … `/run-ingest/3` on staggered schedules.
+ * Vercel Cron hits `/run-ingest/0` … `/run-ingest/6` on staggered schedules.
  * HTTP 5xx pings OPS_ALERT_WEBHOOK_URL (Discord/Slack). Pass `?notify=false` to suppress.
  */
 export const runtime = "nodejs";

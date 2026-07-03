@@ -22,6 +22,16 @@ export const SCHEDULED_LAREBEDRIFT_INGEST_FAGS: ReadonlyArray<ScheduledLarebedri
   { apiQueryCode: "ELTEL3", code: "TELEKOMMUNIKASJONSMONTORFAGET", label: "Telekommunikasjonsmontørfaget" },
   { apiQueryCode: "ELTOG3", code: "TOGELEKTRIKERFAGET", label: "Togelektrikerfaget" },
   { apiQueryCode: "ELVIK3", code: "VIKLERFAGET", label: "Viklerfaget" },
+  { apiQueryCode: "TPBDK3", code: "BILFAGET_DEMONTERING_KJORETOY", label: "Bilfaget, demontering av kjøretøy" },
+  { apiQueryCode: "TPBMK3", code: "BILFAGET_LETTE_KJORETOY", label: "Bilfaget, lette kjøretøy" },
+  { apiQueryCode: "TPBTK3", code: "BILFAGET_TUNGE_KJORETOY", label: "Bilfaget, tunge kjøretøy" },
+  { apiQueryCode: "TPHJU3", code: "HJULUTRUSTNINGSFAGET", label: "Hjulutrustningsfaget" },
+  { apiQueryCode: "TPLMM3", code: "LANDBRUKMASKINMEKANIKERFAGET", label: "Landbruksmaskinmekanikerfaget" },
+  { apiQueryCode: "TPMME3", code: "MOTORMEKANIKERFAGET", label: "Motormekanikerfaget" },
+  { apiQueryCode: "TPMSY3", code: "MOTORSYKKELFAGET", label: "Motorsykkelfaget" },
+  { apiQueryCode: "TPRSD3", code: "RESERVEDELSFAGET", label: "Reservedelsfaget" },
+  { apiQueryCode: "TPSYM3", code: "SYKKELMEKANIKERFAGET", label: "Sykkelmekanikerfaget" },
+  { apiQueryCode: "TPTLM3", code: "TRUCK_OG_LIFTMEKANIKERFAGET", label: "Truck- og liftmekanikerfaget" },
 ];
 
 /** Cron batches — each must finish within Vercel `maxDuration` (300s on Hobby). */
@@ -32,6 +42,16 @@ export const SCHEDULED_LAREBEDRIFT_INGEST_BATCHES: ReadonlyArray<
   ["ELEKTRIKERFAGET", "MARITIM_ELEKTRIKERFAGET", "ELEKTROREPARATORFAGET", "ENERGIMONTORFAGET"],
   ["ENERGIOPERATORFAGET", "HEISMONTORFAGET", "SIGNALMONTORFAGET", "TAVLEMONTORFAGET"],
   ["TELEKOMMUNIKASJONSMONTORFAGET", "TOGELEKTRIKERFAGET", "VIKLERFAGET"],
+  ["BILFAGET_LETTE_KJORETOY"],
+  ["RESERVEDELSFAGET", "BILFAGET_TUNGE_KJORETOY", "MOTORMEKANIKERFAGET"],
+  [
+    "LANDBRUKMASKINMEKANIKERFAGET",
+    "HJULUTRUSTNINGSFAGET",
+    "MOTORSYKKELFAGET",
+    "TRUCK_OG_LIFTMEKANIKERFAGET",
+    "BILFAGET_DEMONTERING_KJORETOY",
+    "SYKKELMEKANIKERFAGET",
+  ],
 ];
 
 export function isScheduledLarebedriftIngestBatchIndex(batchIndex: number): boolean {
