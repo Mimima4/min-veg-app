@@ -75,6 +75,45 @@ if (withoutUrl?.code !== "ELEKTROREPARATORFAGET") {
   console.log(`OK slug-only Elektroreparatørfaget -> ${withoutUrl.code}`);
 }
 
+const MECHANIC_KJORETOY_FAG = [
+  {
+    title: "Motormekanikerfaget",
+    programmeUrl:
+      "/nb/vestland/yrker/v.tp/kjoretoy?kurs=v.tptip1----_v.tpkjt2----_v.tpmme3----_",
+    expectedCode: "MOTORMEKANIKERFAGET",
+  },
+  {
+    title: "Bilfaget, lette kjøretøy",
+    programmeUrl:
+      "/nb/vestland/yrker/v.tp/bilfaget-lette-kjoretoy?kurs=v.tptip1----_v.tpkjt2----_v.tpbmk3----_",
+    expectedCode: "BILFAGET_LETTE_KJORETOY",
+  },
+  {
+    title: "Truck- og liftmekanikerfaget",
+    programmeUrl:
+      "/nb/vestland/yrker/v.tp/truck-og-liftmekanikerfaget?kurs=v.tptip1----_v.tpkjt2----_v.tptlm3----_",
+    expectedCode: "TRUCK_OG_LIFTMEKANIKERFAGET",
+  },
+];
+
+for (const fixture of MECHANIC_KJORETOY_FAG) {
+  const programSlug = `kolonne3-${slugify(fixture.title)}`;
+  const resolved = resolveLarefagFromKolonne3Selection({
+    programSlug,
+    programTitle: fixture.title,
+    title: fixture.title,
+    programmeUrl: fixture.programmeUrl,
+  });
+  if (resolved?.code !== fixture.expectedCode) {
+    failed += 1;
+    console.error(
+      `FAIL ${fixture.title}: expected ${fixture.expectedCode}, got ${resolved?.code ?? "null"}`
+    );
+  } else {
+    console.log(`OK ${fixture.title} -> ${resolved.code}`);
+  }
+}
+
 if (failed > 0) {
   process.exit(1);
 }

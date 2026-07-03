@@ -1,6 +1,6 @@
 /**
  * Maps product profession slugs to canonical `larebedrift_truth.larefag_code` values.
- * Extend when adding fag (P5 / mechanic Kolonne3 branches).
+ * Extend when adding fag for new professions / kolonne-3 branches.
  */
 
 type LarefagMapping = {
@@ -11,6 +11,7 @@ type LarefagMapping = {
 const PROFESSION_TO_LAREFAG: Readonly<Record<string, LarefagMapping>> = {
   carpenter: { code: "TOMRERFAGET", label: "Tømrerfaget" },
   electrician: { code: "ELEKTRIKERFAGET", label: "Elektrikerfaget" },
+  mechanic: { code: "MOTORMEKANIKERFAGET", label: "Motormekanikerfaget" },
 };
 
 export function resolveLarefagForProfession(

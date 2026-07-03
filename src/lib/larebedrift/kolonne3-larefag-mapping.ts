@@ -51,12 +51,97 @@ const VIGO_QUERY_CODE_TO_LAREFAG: Readonly<Record<string, LarefagIdentity>> = {
     code: "PRODUKSJONSELEKTRIKERFAGET",
     label: "Produksjonselektronikerfaget",
   },
+  TPBDK3: {
+    code: "BILFAGET_DEMONTERING_KJORETOY",
+    label: "Bilfaget, demontering av kjøretøy",
+  },
+  TPBMK3: { code: "BILFAGET_LETTE_KJORETOY", label: "Bilfaget, lette kjøretøy" },
+  TPBTK3: { code: "BILFAGET_TUNGE_KJORETOY", label: "Bilfaget, tunge kjøretøy" },
+  TPHJU3: { code: "HJULUTRUSTNINGSFAGET", label: "Hjulutrustningsfaget" },
+  TPLMM3: {
+    code: "LANDBRUKMASKINMEKANIKERFAGET",
+    label: "Landbruksmaskinmekanikerfaget",
+  },
+  TPMME3: { code: "MOTORMEKANIKERFAGET", label: "Motormekanikerfaget" },
+  TPMSY3: { code: "MOTORSYKKELFAGET", label: "Motorsykkelfaget" },
+  TPRSD3: { code: "RESERVEDELSFAGET", label: "Reservedelsfaget" },
+  TPSYM3: { code: "SYKKELMEKANIKERFAGET", label: "Sykkelmekanikerfaget" },
+  TPTLM3: {
+    code: "TRUCK_OG_LIFTMEKANIKERFAGET",
+    label: "Truck- og liftmekanikerfaget",
+  },
 };
 
 const KOLONNE3_TITLE_MATCHERS: ReadonlyArray<{
   match: (haystacks: { slugHaystack: string; titleHaystack: string }) => boolean;
   identity: LarefagIdentity;
 }> = [
+  {
+    match: ({ slugHaystack, titleHaystack }) =>
+      slugHaystack.includes("truck") ||
+      slugHaystack.includes("liftmekaniker") ||
+      titleHaystack.includes("truck") ||
+      titleHaystack.includes("liftmekaniker"),
+    identity: {
+      code: "TRUCK_OG_LIFTMEKANIKERFAGET",
+      label: "Truck- og liftmekanikerfaget",
+    },
+  },
+  {
+    match: ({ slugHaystack, titleHaystack }) =>
+      slugHaystack.includes("landbruksmaskin") || titleHaystack.includes("landbruksmaskin"),
+    identity: {
+      code: "LANDBRUKMASKINMEKANIKERFAGET",
+      label: "Landbruksmaskinmekanikerfaget",
+    },
+  },
+  {
+    match: ({ slugHaystack, titleHaystack }) =>
+      slugHaystack.includes("demontering") || titleHaystack.includes("demontering"),
+    identity: {
+      code: "BILFAGET_DEMONTERING_KJORETOY",
+      label: "Bilfaget, demontering av kjøretøy",
+    },
+  },
+  {
+    match: ({ slugHaystack, titleHaystack }) =>
+      slugHaystack.includes("tunge") ||
+      titleHaystack.includes("tunge kjoretoy") ||
+      titleHaystack.includes("tunge kjøretøy"),
+    identity: { code: "BILFAGET_TUNGE_KJORETOY", label: "Bilfaget, tunge kjøretøy" },
+  },
+  {
+    match: ({ slugHaystack, titleHaystack }) =>
+      slugHaystack.includes("lette") ||
+      titleHaystack.includes("lette kjoretoy") ||
+      titleHaystack.includes("lette kjøretøy"),
+    identity: { code: "BILFAGET_LETTE_KJORETOY", label: "Bilfaget, lette kjøretøy" },
+  },
+  {
+    match: ({ slugHaystack, titleHaystack }) =>
+      slugHaystack.includes("motormekaniker") || titleHaystack.includes("motormekaniker"),
+    identity: { code: "MOTORMEKANIKERFAGET", label: "Motormekanikerfaget" },
+  },
+  {
+    match: ({ slugHaystack, titleHaystack }) =>
+      slugHaystack.includes("motorsykkel") || titleHaystack.includes("motorsykkel"),
+    identity: { code: "MOTORSYKKELFAGET", label: "Motorsykkelfaget" },
+  },
+  {
+    match: ({ slugHaystack, titleHaystack }) =>
+      slugHaystack.includes("sykkelmekaniker") || titleHaystack.includes("sykkelmekaniker"),
+    identity: { code: "SYKKELMEKANIKERFAGET", label: "Sykkelmekanikerfaget" },
+  },
+  {
+    match: ({ slugHaystack, titleHaystack }) =>
+      slugHaystack.includes("hjulutrustning") || titleHaystack.includes("hjulutrustning"),
+    identity: { code: "HJULUTRUSTNINGSFAGET", label: "Hjulutrustningsfaget" },
+  },
+  {
+    match: ({ slugHaystack, titleHaystack }) =>
+      slugHaystack.includes("reservedel") || titleHaystack.includes("reservedel"),
+    identity: { code: "RESERVEDELSFAGET", label: "Reservedelsfaget" },
+  },
   {
     match: ({ slugHaystack, titleHaystack }) =>
       slugHaystack.includes("produksjonselektroniker") ||

@@ -25,7 +25,7 @@ function childHomeCountyCodes(preferredMunicipalityCodes) {
 
 function isPilotEligible(professionSlug, preferredMunicipalityCodes) {
   const slug = String(professionSlug ?? "").trim();
-  if (!["carpenter", "electrician"].includes(slug)) return false;
+  if (!["carpenter", "electrician", "mechanic"].includes(slug)) return false;
   return childHomeCountyCodes(preferredMunicipalityCodes).length > 0;
 }
 
@@ -39,7 +39,9 @@ export function runCarpenterPrimaryLarebedriftPilotSmoke() {
   assert(isPilotEligible("carpenter", ["0301"]), "Oslo must be eligible");
   assert(isPilotEligible("electrician", ["0301"]), "Oslo electrician must be eligible");
   assert(isPilotEligible("electrician", ["5601"]), "Finnmark electrician must be eligible");
-  assert(!isPilotEligible("mechanic", ["1507"]), "mechanic must not be eligible yet");
+  assert(isPilotEligible("mechanic", ["4601"]), "Vestland mechanic must be eligible");
+  assert(isPilotEligible("mechanic", ["0301"]), "Oslo mechanic must be eligible");
+  assert(!isPilotEligible("mechanic", []), "mechanic without home kommune must not be eligible");
   assert(!isPilotEligible("electrician", []), "electrician without home kommune must not be eligible");
   assert(!isPilotEligible("carpenter", []), "missing home kommune must not be eligible");
 

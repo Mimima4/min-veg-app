@@ -6,9 +6,14 @@
  * Phase 1 (closed): fylke 15 + 55 only.
  * Phase 2 (current): carpenter nationwide when the child has a home kommune.
  * Phase 3 (current): electrician nationwide when the child has a home kommune.
+ * Phase 4 (current): mechanic nationwide when the child has a home kommune.
  */
 
-const PRIMARY_ROUTE_LAREBEDRIFT_PROFESSIONS = new Set(["carpenter", "electrician"]);
+const PRIMARY_ROUTE_LAREBEDRIFT_PROFESSIONS = new Set([
+  "carpenter",
+  "electrician",
+  "mechanic",
+]);
 
 export function childHomeCountyCodes(
   preferredMunicipalityCodes: string[]
