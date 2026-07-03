@@ -128,6 +128,45 @@ for (const fixture of MECHANIC_KJORETOY_FAG) {
   }
 }
 
+const PLUMBER_RORLEGGER_FAG = {
+  title: "Rørleggerfaget",
+  programmeUrl:
+    "/nb/vestland/yrker/v.ba/bygg-og-anleggsteknikk?kurs=v.babat1----_v.barlf2----_v.barlf3----_",
+  expectedCode: "RORLEGGERFAGET",
+};
+
+{
+  const programSlug = `kolonne3-${slugify(PLUMBER_RORLEGGER_FAG.title)}`;
+  const resolved = resolveLarefagFromKolonne3Selection({
+    programSlug,
+    programTitle: PLUMBER_RORLEGGER_FAG.title,
+    title: PLUMBER_RORLEGGER_FAG.title,
+    programmeUrl: PLUMBER_RORLEGGER_FAG.programmeUrl,
+  });
+  if (resolved?.code !== PLUMBER_RORLEGGER_FAG.expectedCode) {
+    failed += 1;
+    console.error(
+      `FAIL ${PLUMBER_RORLEGGER_FAG.title}: expected ${PLUMBER_RORLEGGER_FAG.expectedCode}, got ${resolved?.code ?? "null"}`
+    );
+  } else {
+    console.log(`OK ${PLUMBER_RORLEGGER_FAG.title} -> ${resolved.code}`);
+  }
+}
+
+const plumberProfessionDefault = resolveLarefagFromKolonne3Selection({
+  programSlug: "plumber-vg3-rorleggerfaget-vestland",
+  programTitle: "VG3 Rørleggerfaget",
+  title: "Rørleggerfaget",
+});
+if (plumberProfessionDefault?.code !== "RORLEGGERFAGET") {
+  failed += 1;
+  console.error(
+    `FAIL plumber VG3 slug: expected RORLEGGERFAGET, got ${plumberProfessionDefault?.code ?? "null"}`
+  );
+} else {
+  console.log(`OK plumber VG3 slug -> ${plumberProfessionDefault.code}`);
+}
+
 if (failed > 0) {
   process.exit(1);
 }

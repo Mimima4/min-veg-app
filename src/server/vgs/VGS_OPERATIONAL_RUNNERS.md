@@ -297,18 +297,11 @@ Reference: owner screenshots — collapsed two-part card; programme open = hint 
 
 **Why plumber first:** Rørleggerfaget contour live before programme-level cross-profession switch is wired.
 
-### Plumber (`plumber` / rørlegger) — 4th profession expansion (next)
+### Plumber (`plumber` / rørlegger) — bedrift ingest (live 2026-07-03)
 
-Mirror mechanic/carpenter gate (`§ Expansion gate` above):
+`Rørleggerfaget` registered in `larebedrift-fagkode.mjs`, `kolonne3-larefag-mapping.ts` (`BARLF3`), `profession-larefag-mapping.ts`, and cron batch 0 (`scheduled-larebedrift-ingest-fags.ts`). Pilot gate: `primary-route-larebedrift-pilot.ts` (nationwide when child has home kommune). **Nationwide ingest verified** — ~902 active `RORLEGGERFAGET` rows in `larebedrift_truth` (2026-07-03 `verify-larebedrift-truth-snapshot.mjs` PASS); prod-check Fagvalg → bedrift on plumber route.
 
-| Step | Artifact |
-|------|----------|
-| Path | `vgs-path-definitions.mjs` — `V.BABAT1` → `V.BARLF2` → kolonne-3 Rørleggerfaget |
-| Slug | `plumber` in `SUPPORTED_VGS_PROFESSION_SLUGS` + catalog row |
-| Catalog card | `scripts/sql/seed-profession-*-catalog.sql` — **full** shape like electrician/mechanic (`avg_salary_nok`, `key_skills`, tag arrays, `nb`/`nn`/`en`); not title/summary only |
-| Lærefag | `RØRLEGGERFAGET` in `larebedrift-fagkode.mjs` + `profession-larefag-mapping.ts` |
-| Pilot | `primary-route-larebedrift-pilot.ts` + cron batch |
-| Ops | relay dry-run → production → nationwide ingest → prod-check Fagvalg → bedrift |
+Contour B / catalog expansion checklist (if adding counties): `§ Expansion gate` above — relay dry-run → production → route E2E.
 
 ### Bedrift UI performance (truth-preserving)
 
@@ -331,4 +324,4 @@ After ingest: `node --env-file=.env.local scripts/verify-larebedrift-truth-snaps
 
 Ten kjøretøy kolonne-3 lærefag registered in `larebedrift-fagkode.mjs` + `kolonne3-larefag-mapping.ts` (VIGO `TP*` codes). Default profession slug `mechanic` → `MOTORMEKANIKERFAGET`. Pilot gate: `primary-route-larebedrift-pilot.ts` (nationwide when child has home kommune). **Nationwide ingest done (2026-07-03)** — ~1777 mechanic rows, ~6494 total active in `larebedrift_truth`; prod-check Vestland Fagvalg → bedrift.
 
-**Monthly cron:** Vercel runs seven batched `GET /api/internal/larebedrift/run-ingest/{0..6}` jobs on the 1st (`0/10/20/30/40/50 4 * *` + `0 5 1 * *`, auth `CRON_SECRET`) — batch 0 Tømrer, 1–3 eleven elektro, 4–6 ten kjøretøy (`scheduled-larebedrift-ingest-fags.ts`). Each route `maxDuration` 300s (Hobby/Pro safe). Manual all-fag run: `GET /run-ingest` (may timeout). Dry-run: `?dryRun=true`. Single-fag filter: `?larefagCode=ELEKTRIKERFAGET`. **Alerts:** HTTP 5xx posts to `OPS_ALERT_WEBHOOK_URL` (Discord/Slack); 4xx (e.g. invalid batch) are silent; suppress with `?notify=false`.
+**Monthly cron:** Vercel runs seven batched `GET /api/internal/larebedrift/run-ingest/{0..6}` jobs on the 1st (`0/10/20/30/40/50 4 * *` + `0 5 1 * *`, auth `CRON_SECRET`) — batch 0 Tømrer + Rørlegger, 1–3 eleven elektro, 4–6 ten kjøretøy (`scheduled-larebedrift-ingest-fags.ts`). Each route `maxDuration` 300s (Hobby/Pro safe). Manual all-fag run: `GET /run-ingest` (may timeout). Dry-run: `?dryRun=true`. Single-fag filter: `?larefagCode=RORLEGGERFAGET`. **Alerts:** HTTP 5xx posts to `OPS_ALERT_WEBHOOK_URL` (Discord/Slack); 4xx (e.g. invalid batch) are silent; suppress with `?notify=false`.

@@ -11,7 +11,7 @@ import {
  * Cloud (Vercel Cron) ingest of verified lærebedrifter — self-sufficient refresh
  * of `larebedrift_truth`, no human or agent in the loop.
  *
- * Monthly scope: Tømrerfaget + all eleven elektro kolonne-3 lærefag (nationwide).
+ * Monthly scope: Tømrerfaget + Rørleggerfaget + eleven elektro + ten kjøretøy kolonne-3 (nationwide).
  * Flow per fag: Finnlærebedrift (godkjent only) → Brønnøysund verify/enrich → upsert →
  * soft-retire rows no longer godkjent. Idempotent on (org_number, larefag_code).
  */

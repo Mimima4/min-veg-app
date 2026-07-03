@@ -5,8 +5,7 @@
  * a VIGO programområde code. We normalize both to a single canonical fag identity
  * so the same employer maps consistently regardless of source or fagfornyelse.
  *
- * Registry: Tømrerfaget (P1) + eleven elektro kolonne-3 + ten kjøretøy kolonne-3 (P3b).
- * Next: Rørleggerfaget with `plumber` profession (then V.BA VG2 cross-profession gate).
+ * Registry: Tømrerfaget + Rørleggerfaget + eleven elektro kolonne-3 + ten kjøretøy kolonne-3 (P3b).
  */
 
 function normalize(value) {

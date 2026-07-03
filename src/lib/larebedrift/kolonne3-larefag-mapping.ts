@@ -47,6 +47,8 @@ const VIGO_QUERY_CODE_TO_LAREFAG: Readonly<Record<string, LarefagIdentity>> = {
   ELTEL3: { code: "TELEKOMMUNIKASJONSMONTORFAGET", label: "Telekommunikasjonsmontørfaget" },
   ELTOG3: { code: "TOGELEKTRIKERFAGET", label: "Togelektrikerfaget" },
   ELVIK3: { code: "VIKLERFAGET", label: "Viklerfaget" },
+  BARLF3: { code: "RORLEGGERFAGET", label: "Rørleggerfaget" },
+  BATMF3: { code: "TOMRERFAGET", label: "Tømrerfaget" },
   ELPRO3: {
     code: "PRODUKSJONSELEKTRIKERFAGET",
     label: "Produksjonselektronikerfaget",
@@ -76,6 +78,16 @@ const KOLONNE3_TITLE_MATCHERS: ReadonlyArray<{
   match: (haystacks: { slugHaystack: string; titleHaystack: string }) => boolean;
   identity: LarefagIdentity;
 }> = [
+  {
+    match: ({ slugHaystack, titleHaystack }) =>
+      slugHaystack.includes("rorlegger") || titleHaystack.includes("rorlegger"),
+    identity: { code: "RORLEGGERFAGET", label: "Rørleggerfaget" },
+  },
+  {
+    match: ({ slugHaystack, titleHaystack }) =>
+      slugHaystack.includes("tomrer") || titleHaystack.includes("tomrer"),
+    identity: { code: "TOMRERFAGET", label: "Tømrerfaget" },
+  },
   {
     match: ({ slugHaystack, titleHaystack }) =>
       slugHaystack.includes("truck") ||
