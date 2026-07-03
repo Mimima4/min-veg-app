@@ -305,6 +305,7 @@ Mirror mechanic/carpenter gate (`§ Expansion gate` above):
 |------|----------|
 | Path | `vgs-path-definitions.mjs` — `V.BABAT1` → `V.BARLF2` → kolonne-3 Rørleggerfaget |
 | Slug | `plumber` in `SUPPORTED_VGS_PROFESSION_SLUGS` + catalog row |
+| Catalog card | `scripts/sql/seed-profession-*-catalog.sql` — **full** shape like electrician/mechanic (`avg_salary_nok`, `key_skills`, tag arrays, `nb`/`nn`/`en`); not title/summary only |
 | Lærefag | `RØRLEGGERFAGET` in `larebedrift-fagkode.mjs` + `profession-larefag-mapping.ts` |
 | Pilot | `primary-route-larebedrift-pilot.ts` + cron batch |
 | Ops | relay dry-run → production → nationwide ingest → prod-check Fagvalg → bedrift |

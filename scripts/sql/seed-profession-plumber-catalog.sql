@@ -1,5 +1,6 @@
 -- Min Veg — plumber (Rørlegger) catalog profession seed
 -- Charter: docs/architecture/phase-0-6-contour-b-plumber-vilbli-branch-owner-record.md
+-- Catalog shape: mirror electrician/mechanic rows (tags, salary, nb/nn/en i18n).
 -- Scope: one professions row only; no PSA / programme links (pipeline materializes those).
 
 begin;
@@ -22,19 +23,19 @@ insert into professions (
 )
 select
   'plumber',
-  '{"nb":"Rørlegger","no":"Rørlegger","en":"Plumber"}'::jsonb,
-  '{"nb":"Installerer og vedlikeholder rør, sanitær og varmeanlegg. Vanlig løp: VGS bygg og anlegg, læretid, fagbrev.","en":"Installs and maintains pipes, plumbing and heating systems. Typical path: upper secondary building trades, apprenticeship, trade certificate."}'::jsonb,
-  '{"nb":"VGS: Bygg- og anleggsteknikk → Rørleggerfaget. Deretter lære og fagbrev.","en":"Upper secondary: Building and construction → Plumbing. Then apprenticeship and trade certificate."}'::jsonb,
+  '{"nb":"Rørlegger","nn":"Røyrleggjar","en":"Plumber"}'::jsonb,
+  '{"nb":"Installerer og vedlikeholder rør, sanitær og varmeanlegg.","nn":"Installerer og vedlikeheld rør, sanitær og varmeanlegg.","en":"Installs and maintains pipes, plumbing and heating systems."}'::jsonb,
+  '{"nb":"VGS: Bygg- og anleggsteknikk → Rørleggerfaget. Deretter lære og fagbrev.","nn":"VGS: Bygg- og anleggsteknikk → Røyrleggjarfaget. Deretter lære og fagbrev.","en":"Upper secondary: Building and construction → Plumbing. Then apprenticeship and trade certificate."}'::jsonb,
   'vocational',
   'onsite',
   'medium',
   true,
-  '[]'::jsonb,
-  '[]'::jsonb,
-  '[]'::jsonb,
-  '[]'::jsonb,
-  '[]'::jsonb,
-  null
+  '["building","technology","nature"]'::jsonb,
+  '["practical_precision","structured_work","persistence"]'::jsonb,
+  '["safety_awareness","technical_routines","fault_finding"]'::jsonb,
+  '["mathematics","technology","science"]'::jsonb,
+  '["pipe installation","troubleshooting","practical work","safety awareness"]'::jsonb,
+  575000
 where not exists (
   select 1
   from professions p

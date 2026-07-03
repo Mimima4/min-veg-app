@@ -1,5 +1,6 @@
 -- Min Veg — carpenter (Tømrer) catalog profession seed
 -- Charter: docs/architecture/phase-0-6-contour-b-third-profession-expansion-owner-record.md
+-- Catalog shape: mirror electrician/mechanic rows (tags, salary, nb/nn/en i18n).
 -- Scope: one professions row only; no PSA / programme links (pipeline materializes those).
 
 begin;
@@ -22,19 +23,19 @@ insert into professions (
 )
 select
   'carpenter',
-  '{"nb":"Tømrer","no":"Tømrer","en":"Carpenter"}'::jsonb,
-  '{"nb":"Bygger og monterer trekonstruksjoner — fra bolig til innredning. Vanlig løp: VGS bygg og anlegg, læretid, fagbrev.","en":"Builds and installs timber structures — from housing to interiors. Typical path: upper secondary building trades, apprenticeship, trade certificate."}'::jsonb,
-  '{"nb":"VGS: Bygg- og anleggsteknikk → Tømrerfaget. Deretter lære og fagbrev.","en":"Upper secondary: Building and construction → Carpentry. Then apprenticeship and trade certificate."}'::jsonb,
+  '{"nb":"Tømrer","nn":"Tømrar","en":"Carpenter"}'::jsonb,
+  '{"nb":"Bygger og monterer trekonstruksjoner — fra bolig til innredning.","nn":"Byggjer og monterer trekkonstruksjonar — frå bustad til innreiing.","en":"Builds and installs timber structures — from housing to interiors."}'::jsonb,
+  '{"nb":"VGS: Bygg- og anleggsteknikk → Tømrerfaget. Deretter lære og fagbrev.","nn":"VGS: Bygg- og anleggsteknikk → Tømrarfaget. Deretter lære og fagbrev.","en":"Upper secondary: Building and construction → Carpentry. Then apprenticeship and trade certificate."}'::jsonb,
   'vocational',
   'onsite',
   'medium',
   true,
-  '[]'::jsonb,
-  '[]'::jsonb,
-  '[]'::jsonb,
-  '[]'::jsonb,
-  '[]'::jsonb,
-  null
+  '["building","technology","nature"]'::jsonb,
+  '["practical_precision","structured_work","persistence"]'::jsonb,
+  '["safety_awareness","manual_precision","tool_confidence"]'::jsonb,
+  '["mathematics","technology","science"]'::jsonb,
+  '["timber construction","manual skills","attention to detail","problem solving"]'::jsonb,
+  555000
 where not exists (
   select 1
   from professions p
