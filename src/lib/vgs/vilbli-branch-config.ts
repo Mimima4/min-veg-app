@@ -35,6 +35,11 @@ export const VILBLI_BRANCH_CONFIG_BY_PROFESSION: Record<string, VilbliBranchProf
       preferVg3OptionOrdering: false,
       preferredYrkerPathPattern: /\/yrker\/v\.ba\//i,
     },
+    plumber: {
+      branchSkolerUrlPattern: /bygg-og-anleggsteknikk-skoler-og-laerebedrifter/i,
+      preferVg3OptionOrdering: false,
+      preferredYrkerPathPattern: /\/yrker\/v\.ba\//i,
+    },
   };
 
 export function getVilbliBranchConfig(professionSlug: string): VilbliBranchProfessionConfig | null {

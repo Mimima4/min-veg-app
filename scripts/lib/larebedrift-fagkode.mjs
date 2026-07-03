@@ -40,6 +40,13 @@ const FAG_REGISTRY = [
     apiQueryCodes: ["BATMF3"],
   },
   {
+    code: "RORLEGGERFAGET",
+    label: "Rørleggerfaget",
+    labelAliases: ["rorleggerfaget", "rorleggerfag", "rorlegger"],
+    codeAliases: ["rorlegger3----", "barlf3", "barlf3----"],
+    apiQueryCodes: ["BARLF3"],
+  },
+  {
     code: "ELEKTRIKERFAGET",
     label: "Elektrikerfaget",
     labelAliases: ["elektrikerfaget", "elektrikerfag", "elektriker"],

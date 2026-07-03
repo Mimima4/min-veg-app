@@ -54,6 +54,9 @@ const ELECTRICIAN_ELEKTRO_SOURCE =
 const CARPENTER_TOMRER_SOURCE =
   "https://www.vilbli.no/nb/no/strukturkart/V.BA/tomrer-fag-og-timefordeling?kurs=V.BABAT1----_V.BATMF2----&side=p2";
 
+const PLUMBER_RORLEGGER_SOURCE =
+  "https://www.vilbli.no/nb/no/strukturkart/V.BA/rorlegger-fag-og-timefordeling?kurs=V.BABAT1----_V.BARLF2----&side=p2";
+
 export const PATH_FAMILY_OUTCOME_NAV_MAP_ROWS: PathFamilyOutcomeNavMapRow[] = [
   // --- mechanic / mechanic-vtp-kjoretoy ---
   {
@@ -147,6 +150,19 @@ export const PATH_FAMILY_OUTCOME_NAV_MAP_ROWS: PathFamilyOutcomeNavMapRow[] = [
     navTitle: "Tømrer",
     catalogProfessionSlug: "carpenter",
     sourceReferenceUrl: CARPENTER_TOMRER_SOURCE,
+  },
+  // --- plumber / plumber-vba-rorlegger ---
+  {
+    mapVersion: 1,
+    pathFamilySlug: "plumber-vba-rorlegger",
+    professionSlug: "plumber",
+    vilbliTitleIncludes: ["rorleggerfaget", "rørleggerfaget", "rørlegger"],
+    vilbliOutcomeUrlIncludes: ["/yrker/v.ba/"],
+    filterTags: ["laere", "fagbrev"],
+    navStyrkCode: "håndverkere.rørlegger",
+    navTitle: "Rørlegger",
+    catalogProfessionSlug: "plumber",
+    sourceReferenceUrl: PLUMBER_RORLEGGER_SOURCE,
   },
 ];
 

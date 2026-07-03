@@ -11,6 +11,7 @@ export type ScheduledLarebedriftIngestFag = {
 
 export const SCHEDULED_LAREBEDRIFT_INGEST_FAGS: ReadonlyArray<ScheduledLarebedriftIngestFag> = [
   { apiQueryCode: "BATMF3", code: "TOMRERFAGET", label: "Tømrerfaget" },
+  { apiQueryCode: "BARLF3", code: "RORLEGGERFAGET", label: "Rørleggerfaget" },
   { apiQueryCode: "ELELE3", code: "ELEKTRIKERFAGET", label: "Elektrikerfaget" },
   { apiQueryCode: "ELMEL3", code: "MARITIM_ELEKTRIKERFAGET", label: "Maritim elektrikerfaget" },
   { apiQueryCode: "ELERF3", code: "ELEKTROREPARATORFAGET", label: "Elektroreparatørfaget" },
@@ -38,7 +39,7 @@ export const SCHEDULED_LAREBEDRIFT_INGEST_FAGS: ReadonlyArray<ScheduledLarebedri
 export const SCHEDULED_LAREBEDRIFT_INGEST_BATCHES: ReadonlyArray<
   ReadonlyArray<(typeof SCHEDULED_LAREBEDRIFT_INGEST_FAGS)[number]["code"]>
 > = [
-  ["TOMRERFAGET"],
+  ["TOMRERFAGET", "RORLEGGERFAGET"],
   ["ELEKTRIKERFAGET", "MARITIM_ELEKTRIKERFAGET", "ELEKTROREPARATORFAGET", "ENERGIMONTORFAGET"],
   ["ENERGIOPERATORFAGET", "HEISMONTORFAGET", "SIGNALMONTORFAGET", "TAVLEMONTORFAGET"],
   ["TELEKOMMUNIKASJONSMONTORFAGET", "TOGELEKTRIKERFAGET", "VIKLERFAGET"],
