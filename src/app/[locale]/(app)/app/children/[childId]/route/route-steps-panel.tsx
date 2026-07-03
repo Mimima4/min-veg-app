@@ -99,6 +99,9 @@ const LOSA_BADGE_CLASSES = {
     "inline-flex shrink-0 rounded-full border border-sky-300 bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-950",
 };
 
+const VG2_OR_FAGVALG_OUTCOME_NOTE =
+  "Å bytte program på VG2 eller fagvalg kan endre målprofesjonen og åpne andre ruter og muligheter.";
+
 export default function RouteStepsPanel({
   childId,
   routeId,
@@ -185,7 +188,40 @@ export default function RouteStepsPanel({
   useEffect(() => {
     setApprenticeshipOptionsOverride({});
     apprenticeshipOptionsFetchGenRef.current = {};
-  }, [steps]);
+
+    if (!professionSlug) return;
+
+    for (let index = 0; index < steps.length; index += 1) {
+      const step = steps[index];
+      if (!isRouteSnapshotPayloadStep(step)) continue;
+      if (step.type !== "programme_selection" || !isLarefagSelectionStage(step.stage)) {
+        continue;
+      }
+
+      const apprenticeshipStepKey = findApprenticeshipStepKeyAfterLarefag(index);
+      if (!apprenticeshipStepKey) continue;
+
+      const apprenticeshipStep = steps
+        .slice(index + 1)
+        .find(
+          (candidate): candidate is StudyRouteSnapshotStep =>
+            isRouteSnapshotPayloadStep(candidate) && candidate.type === "apprenticeship_step"
+        );
+      if (
+        !apprenticeshipStep ||
+        apprenticeshipStep.type !== "apprenticeship_step" ||
+        (apprenticeshipStep.apprenticeship_options ?? []).length > 0
+      ) {
+        continue;
+      }
+
+      const larefagStepKey = resolveStepKey(index, step);
+      const larefagOptions = buildStepOptions(step, larefagStepKey);
+      const selectedFag = getSelectedOption(larefagStepKey, step, larefagOptions);
+      void refreshApprenticeshipOptionsForFag(index, selectedFag);
+      break;
+    }
+  }, [steps, professionSlug, childId]);
 
   useEffect(() => {
     const onPointerDown = (event: MouseEvent) => {
@@ -354,10 +390,12 @@ export default function RouteStepsPanel({
       });
       if (mapped.length > 0) return mapped;
       if (hasApprenticeshipOverride) return [];
+      const institutionName = String(step.institution_name ?? "").trim();
+      if (!institutionName) return [];
       return [
         {
           id: "apprenticeship-current",
-          schoolName: step.institution_name ?? "",
+          schoolName: institutionName,
           location: step.institution_city ?? step.institution_municipality ?? null,
           website: step.institution_website ?? null,
           programTitle: step.program_title ?? step.title,
@@ -665,6 +703,11 @@ export default function RouteStepsPanel({
                 const priorLarefagSelection = resolvePriorLarefagSelection(index);
                 const isLarefagStep =
                   step.type === "programme_selection" && isLarefagSelectionStage(step.stage);
+                const isVg2ProgrammeStep =
+                  step.type === "programme_selection" &&
+                  String(step.stage ?? "").toUpperCase() === "VG2";
+                const showVg2OrFagvalgOutcomeNote =
+                  isOpen && (isLarefagStep || isVg2ProgrammeStep);
                 const displayProgrammeTitle = isLarefagStep
                   ? "Fagvalg"
                   : step.type === "apprenticeship_step" && priorLarefagSelection
@@ -868,6 +911,11 @@ export default function RouteStepsPanel({
                           className="mt-4 border-t border-stone-200 pt-3"
                           data-testid="route-step-options"
                         >
+                          {showVg2OrFagvalgOutcomeNote ? (
+                            <p className="mb-3 px-2 text-xs leading-relaxed text-stone-500">
+                              {VG2_OR_FAGVALG_OUTCOME_NOTE}
+                            </p>
+                          ) : null}
                           <div className={`space-y-1 ${dropdownOptionsScrollClass}`}>
                             {optionList.length === 0 ? (
                               <p className="px-2 py-2 text-sm text-stone-500">

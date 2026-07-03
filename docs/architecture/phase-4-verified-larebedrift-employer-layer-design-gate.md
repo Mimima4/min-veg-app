@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **DESIGN GATE — DECISIONS RESOLVED (2026-06-25)** (no code yet; §8 decided, P1 may be scoped) |
+| **Status** | **DESIGN GATE — DECISIONS RESOLVED (2026-06-25)** · **P3b amendment (2026-07-03)** — see § Live status |
 | **Scope** | Generalize apprenticeship employer selection from a single curated Steigen entry to a **verified-source, all-commune** layer |
 | **Supersedes (partially)** | Steigen curated single employer in `src/lib/regional-delivery/steigen-carpenter-veksling-employers.ts` |
 | **Parents** | `phase-4-nordland-steigen-carpenter-veksling-pilot-charter.md`, `route-engine-master-spec.md`, `phase-4-route-mobile-api-contract-v1.md` |
@@ -10,7 +10,17 @@
 
 ---
 
-## 1. Problem statement
+## Live status (2026-07-03) — amends D-1 × D-4 reconciliation
+
+| Decision | Original (2026-06-25) | **Amended (2026-07-03)** |
+|----------|-------------------------|---------------------------|
+| **D-1** | Verified employers only on veksling / curated-regional steps | **Also** on ordinary `apprenticeship_step` for `carpenter`, `electrician`, `mechanic` when `isPrimaryRouteLarebedriftPilotEligible` (nationwide + child home kommune) |
+| **D-4** | Roster ingest carpenter nationwide only | Roster now includes **11 elektro + 10 kjøretøy** kolonne-3 fag; cron batches 0–6 |
+| **P3** | Deferred | **Partially live** — snapshot apply at recompute + Fagvalg live fetch; transport reachability for employers still deferred |
+
+Steigen veksling (`curated:steigen-carpenter-veksling`) remains a **separate** curated variant; do not conflate with primary-route P3b.
+
+---
 
 Apprenticeship (`apprenticeship_step`) employer identity is currently either:
 
@@ -90,7 +100,7 @@ Route read shape (unchanged contract, filled from truth): `apprenticeship_step.a
 1. **Filter / constructor list:** `apprenticeship_options[]` = **all** `godkjent` employers in the resolved geography scope (per relocation willingness), server-provided.
 2. **Default + order:** server applies geography-first + travel realism + transport reachability (extended to employers) at **recompute/create**; default = top-ranked. Identical for web RSC and native API.
 3. **Outcome scope unchanged:** NAV fag / profession-branch (master spec NAV/Vilbli boundary) — employer layer changes **who**, not the **outcome**.
-4. **Boundary (DECIDED D-1):** verified-employer surfacing applies to **veksling / curated-regional** apprenticeship steps only for now. Ordinary availability-truth (Vilbli-derived) apprenticeship tails are **not** affected until a later phase explicitly opens that boundary.
+4. **Boundary (DECIDED D-1, amended 2026-07-03):** verified-employer surfacing applies to **veksling / curated-regional** apprenticeship steps **and**, for pilot professions, **ordinary availability-truth** primary-route apprenticeship steps (`primary-route-larebedrift-pilot.ts`). Further professions require explicit pilot gate + ingest mapping.
 
 ---
 
@@ -135,7 +145,7 @@ Steigen stays on the curated single entry **until P1 ingest covers it**, then is
 | D-5 | UI display | **Name in title; orgnr + opplæringskontor in expandable info/source** | Clean option title; orgnr + opplæringskontor revealed in expandable source panel for transparency/auditability. |
 | D-6 | Charter | **New standalone charter for the employer layer** | Scope exceeds Steigen pilot; gets its own charter + ops gates (this design gate is its P0). |
 
-**Reconciliation (D-1 × D-4):** the **roster** (ingest + `larebedrift_truth`) is built **carpenter nationwide** (D-4), but **route-engine integration** (filter/default/order in routes) is initially limited to **veksling / curated-regional** apprenticeship steps (D-1). Ordinary apprenticeship tails remain Vilbli-derived until a later phase explicitly opens that boundary.
+**Reconciliation (D-1 × D-4, amended 2026-07-03):** the **roster** (`larebedrift_truth`) covers **carpenter + elektro + kjøretøy** fag nationwide; **route-engine integration** is live for **three** pilot professions on primary routes (D-1 amendment). Next: **`plumber` as isolated 4th profession**, then **V.BA VG2 cross-profession gate** (`VGS_OPERATIONAL_RUNNERS.md`).
 
 ---
 

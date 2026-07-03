@@ -252,8 +252,62 @@ When VG2 programme options expand (new branches per profession/county), **downst
 
 - **Fagvalg (kolonne-3)** list comes from the active VG1→**chosen VG2** chain on Vilbli (per fylke).
 - **Bedrift** pools are per **lærefag VIGO code**, not per profession slug — changing VG2 can change which kolonne-3 fags exist and therefore which `larebedrift_truth.larefag_code` rows apply.
+- **Product note:** Changing **VG2 programme** or **Fagvalg** (kolonne-3) can change the **target outcome profession** (fagbrev / NAV-linked outcome), not only which employers appear. After recompute the child may see **different route shapes, alternatives, and saved-profession options** than before — this is expected when exploring fags within the same catalogue profession (e.g. elektro kolonne-3 branches, kjøretøy fag).
 
 **Ops order when adding VG2 programmes:** Contour B relay for that county/profession → route recompute E2E → ingest any **new** kolonne-3 lærefag codes into `larebedrift_truth` → prod-check Fagvalg + bedrift for 2–3 fag samples.
+
+### V.BA shared VG1 — multi-profession VG2 gate (deferred; after `plumber`)
+
+**Owner order (2026-07-03):** add **`plumber` as isolated 4th profession first** (mirror `carpenter`). **Then** VG2 gate below.
+
+**Hard rule — no cross-profession schools in one dropdown:** a **carpenter** route lists **only** carpenter VG2 **schools** under the school picker. A **plumber** route lists **only** plumber schools. Never mix rørlegger institutions into the carpenter school list.
+
+**Program vs school are separate interactions (VG2 `programme_selection` card UX — owner mockup 2026-07-03):**
+
+The VG2 step card is **two stacked zones** (each dynamic height; no clipping):
+
+| Zone | Collapsed shows | Click opens | Dropdown contents | Outcome hint |
+|------|-----------------|-------------|-------------------|--------------|
+| **Top — programme** | VG2 programme title (e.g. `VG2 Elenergi og ekom`) + step badge + ▼ | **Programme** picker | Distinct VG2 **programmes** for this step (within-profession branches; gate later adds sibling-profession programmes that trigger a full route switch — **not** schools) | **Yes** — `VG2_OR_FAGVALG_OUTCOME_NOTE` above programme list |
+| **Bottom — school** | Selected school name, location, study time, website link | **School** picker | Schools for the **currently selected programme** (existing behaviour) | **No** hint |
+
+Reference: owner screenshots — collapsed two-part card; programme open = hint + programme list; school open = school list only.
+
+**Backend when programme changes (gate):**
+
+1. If new programme maps to **same** `target_profession_id` → full **recompute** of this working draft (geography, transport, Fagvalg, bedrift downstream).
+2. If new programme maps to **another** catalogue profession (e.g. V.BA Rørlegger while on carpenter entry) → **new working route** for that profession — full `createInitialStudyRoute` / `triggerStudyRouteRecompute` cycle; optional VG1 school carry-over if PSA-valid; do **not** mutate the source saved route row in place.
+
+**Backend when school changes (unchanged):** selection within current programme; refresh ranking only; save = new saved row if ≥1 step differs.
+
+**Save semantics:** any change to ≥1 step vs last saved snapshot → **new** `study_routes` saved row (`save-study-route.ts`).
+
+**Display / saved professions (with gate):** saving a route for profession X auto-upserts `child_profession_interests` for X if missing, so hub drafts materialize and multiple saved routes (e.g. tømrer + rørlegger) stay comparable in profile.
+
+**Implementation target:** `route-steps-panel.tsx` — split VG2 card into `openStepKey` modes e.g. `{stepKey}:programme` vs `{stepKey}:school` (not one toggle for the whole card). Fagvalg keeps single-zone + hint (kolonne-3 outcome change).
+
+**Fagvalg scope vs VG2 school (Vilbli — owner check 2026-07-03):**
+
+| Question | Vilbli answer | Product rule (now + gate) |
+|----------|---------------|---------------------------|
+| Does kolonne-3 / Fagvalg list **vary per selected VG2 school** (same programme, different school)? | **No** — on the county `skoler-og-laerebedrifter` chain page (`side=p5`, `kurs=VG1_VG2_…`), kolonne-3 is **one list for the active VG1→VG2 programme chain in that fylke**, not per-school sub-lists (`parseVg3BranchingOptions` in `build-path-variants.ts`; mechanic/carpenter owner records). | **Keep** county+chain-scoped Fagvalg; **do not** re-filter kolonne-3 when only the VG2 **school** changes. |
+| When does Fagvalg change? | Different **VG2 programme** (branch) or different **fylke** / chain URL — not school pick alone. | Recompute Fagvalg on **programme** change (gate); school change → transport/geo only. |
+
+**Gate deferral:** no school-specific Fagvalg work planned unless a future Vilbli/school-approval audit shows otherwise (e.g. per-school VG3 school programmes — separate from bedrift lærefag list).
+
+**Why plumber first:** Rørleggerfaget contour live before programme-level cross-profession switch is wired.
+
+### Plumber (`plumber` / rørlegger) — 4th profession expansion (next)
+
+Mirror mechanic/carpenter gate (`§ Expansion gate` above):
+
+| Step | Artifact |
+|------|----------|
+| Path | `vgs-path-definitions.mjs` — `V.BABAT1` → `V.BARLF2` → kolonne-3 Rørleggerfaget |
+| Slug | `plumber` in `SUPPORTED_VGS_PROFESSION_SLUGS` + catalog row |
+| Lærefag | `RØRLEGGERFAGET` in `larebedrift-fagkode.mjs` + `profession-larefag-mapping.ts` |
+| Pilot | `primary-route-larebedrift-pilot.ts` + cron batch |
+| Ops | relay dry-run → production → nationwide ingest → prod-check Fagvalg → bedrift |
 
 ### Bedrift UI performance (truth-preserving)
 
@@ -272,8 +326,8 @@ Canonical codes and VIGO query codes: `scripts/lib/larebedrift-fagkode.mjs` (mus
 
 After ingest: `node --env-file=.env.local scripts/verify-larebedrift-truth-snapshot.mjs` and prod-check Fagvalg → bedrift for Elektrikerfaget + one other fag.
 
-### Mechanic lærebedrift — mapping (ingest pending)
+### Mechanic lærebedrift — mapping + ingest (live 2026-07-03)
 
-Ten kjøretøy kolonne-3 lærefag registered in `larebedrift-fagkode.mjs` + `kolonne3-larefag-mapping.ts` (VIGO `TP*` codes). Default profession slug `mechanic` → `MOTORMEKANIKERFAGET`. Pilot gate: `primary-route-larebedrift-pilot.ts` (nationwide when child has home kommune). Nationwide ingest done (2026-07-03); prod-check Vestland Fagvalg → bedrift.
+Ten kjøretøy kolonne-3 lærefag registered in `larebedrift-fagkode.mjs` + `kolonne3-larefag-mapping.ts` (VIGO `TP*` codes). Default profession slug `mechanic` → `MOTORMEKANIKERFAGET`. Pilot gate: `primary-route-larebedrift-pilot.ts` (nationwide when child has home kommune). **Nationwide ingest done (2026-07-03)** — ~1777 mechanic rows, ~6494 total active in `larebedrift_truth`; prod-check Vestland Fagvalg → bedrift.
 
 **Monthly cron:** Vercel runs seven batched `GET /api/internal/larebedrift/run-ingest/{0..6}` jobs on the 1st (`0/10/20/30/40/50 4 * *` + `0 5 1 * *`, auth `CRON_SECRET`) — batch 0 Tømrer, 1–3 eleven elektro, 4–6 ten kjøretøy (`scheduled-larebedrift-ingest-fags.ts`). Each route `maxDuration` 300s (Hobby/Pro safe). Manual all-fag run: `GET /run-ingest` (may timeout). Dry-run: `?dryRun=true`. Single-fag filter: `?larefagCode=ELEKTRIKERFAGET`. **Alerts:** HTTP 5xx posts to `OPS_ALERT_WEBHOOK_URL` (Discord/Slack); 4xx (e.g. invalid batch) are silent; suppress with `?notify=false`.

@@ -32,7 +32,7 @@ Same policy as mechanic: show **all** kolonne-3 / bedrift continuations Vilbli l
 
 Catalog profession: **Tømrer**. Route truth is **programme-path-scoped** (carpenter contour), not “every bygg job in Norway”.
 
-**Regional research note:** Steigenmodellen (veksling / lære from day 1) is **not** modelled by this contour — see regional fit analysis. Carpenter path is the **ordinary VGS → lære → fagbrev** precedent for comparing school sets and identity semantics per fylke.
+Reference for **4th profession sequencing (owner 2026-07-03):** Rørlegger is a **separate** catalogue profession (`plumber`) — add **before** V.BA VG2 cross-profession gate. See `VGS_OPERATIONAL_RUNNERS.md`.
 
 ---
 

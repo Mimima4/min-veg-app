@@ -2,15 +2,27 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **DRAFT** — owner decisions resolved 2026-06-25; P1 authorized to scope, no code yet |
-| **Scope** | A **verified-source, multi-commune** layer of **godkjente lærebedrifter** for `apprenticeship_step`, surfaced first in **veksling / curated-regional** routes |
+| **Status** | **PARTIALLY LIVE (2026-07-03)** — P1 ingest + P3b primary-route consumption for `carpenter` / `electrician` / `mechanic`; see **§ Live status** |
+| **Scope** | Verified **godkjente lærebedrifter** for `apprenticeship_step` on primary routes (pilot professions) and veksling / curated-regional routes |
 | **Design gate (P0)** | `phase-4-verified-larebedrift-employer-layer-design-gate.md` (§8 decisions RESOLVED) |
 | **Parents** | `route-engine-master-spec.md`, `phase-4-route-mobile-api-contract-v1.md`, `phase-4-nordland-steigen-carpenter-veksling-pilot-charter.md` (partially superseded) |
 | **Ops authority** | `src/server/vgs/VGS_OPERATIONAL_RUNNERS.md` (ingest is **not** auto on page load / deploy) |
 
 ---
 
-## 1. Problem statement
+## Live status (2026-07-03)
+
+| Phase | Status |
+|-------|--------|
+| **P1** ingest + `larebedrift_truth` | **LIVE** — carpenter + 11 elektro + 10 kjøretøy fag; monthly batched cron |
+| **P3b** primary-route apply | **LIVE** — `carpenter`, `electrician`, `mechanic` (`primary-route-larebedrift-pilot.ts`) |
+| **P3** transport reachability for employers | **Deferred** — kommune ordering only |
+| **P4** UI | **Partial** — Fagvalg/bedrift dropdown + outcome hint; expandable orgnr panel TBD |
+| **P5** next profession | **`plumber`** as isolated 4th profession; **V.BA VG2 gate** deferred after (`VGS_OPERATIONAL_RUNNERS.md`) |
+
+**D-1 amendment:** ordinary Vilbli-derived apprenticeship tails **do** surface verified employers for the three pilot professions above. Steigen veksling remains curated-variant scoped.
+
+---
 
 Apprenticeship employer identity in routes is today either:
 
@@ -27,14 +39,14 @@ There is **no general, auditable layer of verified (godkjent) lærebedrifter** t
 
 | Dimension | In scope (P1–P4) | Out of scope (this charter) |
 |-----------|------------------|------------------------------|
-| **Roster coverage (D-4)** | **Carpenter (Tømrerfaget) nationwide** godkjente lærebedrifter | Other fag (P5), multi-fag pilot |
-| **Route surfacing (D-1)** | **Veksling / curated-regional** `apprenticeship_step`s only | Ordinary Vilbli-derived apprenticeship tails (later phase) |
+| **Roster coverage (D-4)** | **Multi-fag nationwide** (carpenter + elektro + kjøretøy kolonne-3); extend per profession gate | Unmapped fag (e.g. `plumber` until ingest) |
+| **Route surfacing (D-1)** | **Primary-route pilot** (`carpenter`, `electrician`, `mechanic`) + **veksling / curated-regional** | Other catalogue professions until explicit gate |
 | **Source / access (D-2, amended 2026-06-29)** | **Finnlærebedrift open API** `api.utdanning.no/finnlarebedrift` (**primary, keyless**, Udir-recommended) · **Vilbli relay** / **NLR** / **manual seed** (secondary) · **Brønnøysund** for orgnr identity — all trace to **VIGO** | Vigo bedrift portal (closed); live external calls at runtime |
 | **Geography (D-3, amended 2026-06-29)** | Registered kommune + fylke from the API; county from kommunenummer; coords nullable (enrich via detail/Brønnøysund later) | True worksite coordinates as a hard requirement |
 | **UI (D-5)** | **Name in option title**; **orgnr + opplæringskontor** in expandable info/source | Inline orgnr clutter; name-only with no audit trail |
 | **Governance (D-6)** | **This standalone charter** + own ops gates | Folding into Steigen pilot charter |
 
-**Reconciliation (D-1 × D-4):** the **roster** (ingest + `larebedrift_truth`) is built **carpenter nationwide**; **route-engine surfacing** is initially limited to **veksling / curated-regional** steps. Ordinary apprenticeship tails stay Vilbli-derived until a later phase explicitly opens that boundary.
+**Reconciliation (D-1 × D-4, amended 2026-07-03):** roster is **multi-fag**; primary-route surfacing is live for **three** pilot professions. **`plumber` next** (isolated path, mirror carpenter); **V.BA VG2 cross-profession switch** after both `carpenter` + `plumber` are live.
 
 ---
 
@@ -102,7 +114,7 @@ Route read shape (unchanged contract): `apprenticeship_step.apprenticeship_optio
 1. **Filter / constructor list:** `apprenticeship_options[]` = **all** `godkjent` employers in resolved geography scope (per relocation willingness), server-provided.
 2. **Default + order:** server applies geography-first + travel realism + **transport reachability (extended to employers)** at **recompute/create**; default = top-ranked. Identical JSON for web RSC and native API (mobile must **not** re-sort / call Entur).
 3. **Outcome unchanged:** NAV fag / profession-branch scope unaffected — this layer changes **who**, not the **outcome**.
-4. **Boundary (D-1):** surfacing limited to **veksling / curated-regional** apprenticeship steps for now.
+4. **Boundary (D-1, amended 2026-07-03):** surfacing on **primary routes** for pilot professions (`primary-route-larebedrift-pilot.ts`) plus **veksling / curated-regional** steps.
 
 > **Known prerequisite (risk):** `buildInstitutionReachability` + kommune transport sort exist **only for school institutions** today. Defaulting employers by transport requires **extending the reachability model to employers** (employer kommune from D-3). This is real code under P3 and is subject to web/native parity + no-logic-regression gates.
 >
@@ -117,7 +129,7 @@ Mirror the Contour B model in `VGS_OPERATIONAL_RUNNERS.md`, adapted to D-2:
 - source = **Finnlærebedrift API** (primary) / NLR / Vilbli / manual seed — all from VIGO; **no scraping** of private SPA APIs;
 - ingest (`scripts/ingest-larebedrift.mjs`) is **source-agnostic**: source → resolve fag → optional Brønnøysund verify → upsert → soft-retire;
 - ingest is **scheduled or manual**, **never** on page load / recompute / deploy;
-- **Automated refresh (amended 2026-06-30):** because Finnlærebedrift + Brønnøysund are **keyless and datacenter-safe** (unlike Vilbli), the refresh runs **self-sufficiently from the cloud** — **Vercel Cron → `GET /api/internal/larebedrift/run-ingest`** (auth `CRON_SECRET`), **monthly** (`0 4 1 * *`), carpenter nationwide + Brønnøysund verify + soft-retire. No home-IP/launchd, no human/agent. Server module `src/server/larebedrift/run-larebedrift-ingest.ts`; this **amends the P1-spec "no runtime API endpoint" note** to "a cron-only ops endpoint, still never on page load/recompute".
+- **Automated refresh (amended 2026-07-03):** **Vercel Cron** — seven batched `GET /api/internal/larebedrift/run-ingest/{0..6}` on the 1st (`scheduled-larebedrift-ingest-fags.ts`); batch 0 tømrer, 1–3 eleven elektro, 4–6 ten kjøretøy. Manual all-fag: `GET /run-ingest`. Still **never** on page load / recompute.
 - expansion-gate analog: a `(lærefag, county)` cell is only "live" after **dry-run → ingest → product E2E proof**;
 - refresh cadence: **monthly** cron (above); `--dry-run` via `?dryRun=true` or the CLI;
 - regression smoke (`verify:larebedrift`) after pipeline changes.
@@ -131,9 +143,9 @@ Mirror the Contour B model in `VGS_OPERATIONAL_RUNNERS.md`, adapted to D-2:
 | **P0** | Design gate + owner decisions (§8 RESOLVED) + **this charter** | owner sign-off (§11) |
 | **P1** | `larebedrift_truth` table + ingest from **owner Vigo CSV** (carpenter nationwide), orgnr-normalized vs Brønnøysund — spec: `phase-4-verified-larebedrift-employer-layer-p1-ingest-spec.md` | dry-run + DB snapshot; E-1…E-4 |
 | **P2** | Identity normalization (orgnr ↔ Brønnøysund) + employer **kommune** geo. **Note (2026-06-30):** the route engine orders **by kommune** (geography = `municipality_geo_points` centroids; transport = kommune-hub corridors) — neither uses per-row coordinates, so kommune from P1 already satisfies ordering. Per-row lat/long + kommune-name display column **deferred** (map/UX nicety; not an ordering prerequisite). | audit script |
-| **P3** | Route default/order in **veksling/curated-regional** steps (geography-first now; transport-reachability-for-employers a later sub-step) | parity web/native; no logic regression |
-| **P4** | UI: filter shows all verified; name in title + orgnr/opplæringskontor expandable; no LOSA | E2E |
-| **P5** | Generalize beyond veksling boundary + multi-fag; scheduled refresh | ops runner + smoke |
+| **P3** | Route default/order on primary + veksling steps (kommune ordering live; transport-reachability-for-employers deferred) | parity web/native |
+| **P4** | UI: Fagvalg/bedrift filter (live); name in title + orgnr/opplæringskontor expandable (partial) | E2E |
+| **P5** | **`plumber`** isolated profession + ingest; V.BA VG2 gate (deferred) | ops runner + smoke |
 
 Steigen stays on the curated single entry **until P1 ingest covers it**, then migrated (no double truth).
 
@@ -157,7 +169,7 @@ Steigen stays on the curated single entry **until P1 ingest covers it**, then mi
 - Replacing the NAV/Vilbli **outcome** scope
 - Mixing employer truth into `programme_school_availability`
 - Auto-ingest on page load / deploy
-- Surfacing verified employers in **ordinary** Vilbli apprenticeship tails (deferred past D-1 boundary)
+- Surfacing verified employers for **non-pilot** catalogue professions (deferred)
 
 ---
 
@@ -167,7 +179,7 @@ Steigen stays on the curated single entry **until P1 ingest covers it**, then mi
 |---|----------|--------|
 | A-1 | Design-gate §8 decisions (D-1…D-6) | **RESOLVED** — chat 2026-06-25 |
 | A-2 | Standalone charter scope (§2) approved | **OK** — chat 2026-06-25 |
-| A-3 | **P1** source-agnostic foundation (migration + ingest skeleton + audit) | **OK** — chat 2026-06-25; built behind ops gate, routes do not consume it |
+| A-3 | **P1** source-agnostic foundation + **P3b** primary-route consumption | **LIVE** — three pilot professions; see § Live status |
 | A-4 | Source decision | **RESOLVED** 2026-06-29 — Udir replied recommending the **open Finnlærebedrift API** (keyless, complete); NLR key **not needed**. `utdanning` source built; Steigen `1848` real ingest = **2 godkjent** rows verified. |
 
 **Sign-off:** _____________ Date: _____________

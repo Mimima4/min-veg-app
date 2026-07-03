@@ -2,9 +2,9 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **LIVE (2026-06-29)** — migration applied; `utdanning` primary fetcher built; Steigen (`1848`) real ingest = **2 godkjent** carpenter rows, orgnr-verified, audit green. Behind ops gate; routes do not consume it yet (P3). |
+| **Status** | **LIVE (2026-07-03)** — see **§ Live status** below; original P1 scope closed; P3b primary-route consumption live for `carpenter` / `electrician` / `mechanic` |
 | **Phase** | **P1** of `phase-4-verified-larebedrift-employer-layer-charter.md` |
-| **Goal** | Build `larebedrift_truth` + an **ops-gated, source-agnostic ingest** of **carpenter (Tømrerfaget) nationwide** godkjente lærebedrifter, orgnr-normalized vs Brønnøysund |
+| **Goal** | Build `larebedrift_truth` + an **ops-gated, source-agnostic ingest** of **godkjente lærebedrifter** (started carpenter; now multi-fag), orgnr-normalized vs Brønnøysund |
 | **Access (D-2, amended 2026-06-29)** | **Finnlærebedrift open API** `api.utdanning.no/finnlarebedrift` (**primary, keyless**, `sporring_type=bedrifter_godkjente`) · **Vilbli relay / NLR / manual seed** (secondary) — all from VIGO + Brønnøysund identity. **No scraping, no live calls at runtime** |
 | **Ops model** | Mirrors `VGS_OPERATIONAL_RUNNERS.md` (dry-run → ingest → product proof; never on page load/deploy) |
 
@@ -12,12 +12,26 @@
 
 ---
 
+## Live status (2026-07-03)
+
+| Area | Was (P1 draft) | Now |
+|------|----------------|-----|
+| **Roster** | Carpenter only | **Carpenter + 11 elektro + 10 kjøretøy** fag in `larebedrift_truth` (nationwide ingest; ~6494 active rows after mechanic batch) |
+| **Route consumption** | P3 deferred; routes unchanged | **P3b live** — `apply-verified-larebedrift-to-apprenticeship-steps.ts` + Fagvalg live fetch on primary routes for `carpenter` / `electrician` / `mechanic` (`primary-route-larebedrift-pilot.ts`) |
+| **D-1 boundary** | Veksling / curated-regional only | **Opened** for pilot professions on ordinary `apprenticeship_step` (Steigen veksling still uses curated variant separately) |
+| **Cron** | Carpenter nationwide monthly | **Seven batched** `run-ingest/{0..6}` jobs (`scheduled-larebedrift-ingest-fags.ts`); see `VGS_OPERATIONAL_RUNNERS.md` |
+| **UI** | P4 deferred | Fagvalg → bedrift dropdown + mount prefetch (`route-steps-panel.tsx`); VG2/Fagvalg outcome hint |
+
+**Still accurate from P1:** schema, ingest idempotency, no live external calls on page load, soft-retire, Brønnøysund gate.
+
+---
+
 ## 1. Scope of P1
 
-In: schema + ingest + normalization + audit + dry-run gate, for **`larefag_code = Tømrerfaget`, all counties**.
-Out: route-engine surfacing (P3), geocoding default order (P2/P3), UI (P4), other fag (P5).
+In: schema + ingest + normalization + audit + dry-run gate, for **`larefag_code` roster(s)**, all counties (started **Tømrerfaget**; extended per P3b/P5).
+Out: transport reachability sort for employers (P2/P3 sub-step), full multi-fag without per-profession gate.
 
-**Done = `larebedrift_truth` populated with godkjent-only carpenter rows, every row orgnr-verified against Brønnøysund, dry-run + DB snapshot green.** Routes do **not** consume the table yet (P3).
+**Done (P1 foundation):** `larebedrift_truth` populated, godkjent-only, orgnr-verified, dry-run + snapshot green. **Route consumption** is live for pilot professions via P3b (not limited to this spec’s original “P3 deferred” wording).
 
 ---
 
@@ -135,7 +149,7 @@ not-in-export existing rows for this fag ──▶ is_active = false (soft-retir
 | Audit | `scripts/verify-larebedrift-truth-snapshot.mjs` | **BUILT** — godkjent-only + dup + identity/geo invariants, per-(fag,county) coverage |
 | npm scripts | `package.json` | **BUILT** — `ingest:larebedrift`, `verify:larebedrift` |
 
-**Automation (amended 2026-06-30):** Finnlærebedrift + Brønnøysund are keyless and **datacenter-safe**, so the refresh is **self-sufficient from the cloud** — a **cron-only** endpoint `GET /api/internal/larebedrift/run-ingest` (auth `CRON_SECRET`), driven by **Vercel Cron monthly** (`vercel.json`: `0 4 1 * *`). Server module: `src/server/larebedrift/run-larebedrift-ingest.ts` (carpenter nationwide → Brønnøysund verify/enrich → upsert → soft-retire). This **supersedes** the original "no runtime API endpoint" rule: the endpoint is **ops/cron-only**, never hit on page load / recompute / deploy. The `scripts/ingest-larebedrift.mjs` CLI remains for manual dry-runs. Page-load runtime stays free of external calls.
+| **Automation (amended 2026-07-03):** Finnlærebedrift + Brønnøysund are keyless and **datacenter-safe**. **Seven batched** Vercel Cron jobs (`run-ingest/0..6`, `scheduled-larebedrift-ingest-fags.ts`) refresh all registered fag monthly. Server module: `src/server/larebedrift/run-larebedrift-ingest.ts`. **Ops/cron-only** — never on page load / recompute / deploy. CLI `scripts/ingest-larebedrift.mjs` for manual dry-runs.
 
 ---
 
@@ -163,7 +177,7 @@ not-in-export existing rows for this fag ──▶ is_active = false (soft-retir
 - [ ] Re-running same export = idempotent (no spurious `updated_at` churn); removed employers soft-retired (`is_active=false`)
 - [ ] `npm run verify:larebedrift` green; `npm run build` green
 - [ ] **Steigen `1848`** carpenter employer(s) (e.g. `995810166` ÅLSTADØYA TRELAST AS) present as godkjent rows — ready for P3 migration off the curated placeholder
-- [ ] Routes still behave exactly as before (no consumption of the new table in P1)
+- [x] Routes consume verified employers on **primary** apprenticeship steps for pilot professions (`carpenter`, `electrician`, `mechanic`) — P3b; veksling curated path unchanged
 
 ---
 
@@ -172,7 +186,7 @@ not-in-export existing rows for this fag ──▶ is_active = false (soft-retir
 - Route-engine consumption / default / order (P3)
 - Geocoding lat/long (P2)
 - UI changes (P4)
-- Non-carpenter fag (P5)
+- Non-carpenter fag without ingest mapping (next: `plumber` / Rørleggerfaget — see `VGS_OPERATIONAL_RUNNERS.md` § Plumber expansion)
 - Live external calls at runtime (master-spec invariant)
 - Hard deletes (soft-retire only)
 

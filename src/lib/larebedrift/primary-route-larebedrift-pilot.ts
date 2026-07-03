@@ -1,12 +1,14 @@
 /**
  * P3b — verified lærebedrift on ordinary `availability_truth` apprenticeship steps
- * (not only veksling / curated-regional). Nationwide `larebedrift_truth` is carpenter-wide;
- * this gate controls which professions may surface on the primary route.
+ * (not only veksling / curated-regional). Nationwide `larebedrift_truth` covers
+ * carpenter + eleven elektro + ten kjøretøy fag; this gate controls which
+ * **catalogue profession slugs** may surface verified employers on the primary route.
  *
  * Phase 1 (closed): fylke 15 + 55 only.
- * Phase 2 (current): carpenter nationwide when the child has a home kommune.
- * Phase 3 (current): electrician nationwide when the child has a home kommune.
+ * Phase 2 (closed): carpenter nationwide when the child has a home kommune.
+ * Phase 3 (closed): electrician nationwide when the child has a home kommune.
  * Phase 4 (current): mechanic nationwide when the child has a home kommune.
+ * Next: `plumber` as 4th isolated profession (then V.BA VG2 gate — `VGS_OPERATIONAL_RUNNERS.md`).
  */
 
 const PRIMARY_ROUTE_LAREBEDRIFT_PROFESSIONS = new Set([

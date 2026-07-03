@@ -1,10 +1,12 @@
 /**
- * Lærefag resolver for the verified lærebedrift layer (P1 scope: carpenter).
+ * Lærefag resolver for the verified lærebedrift layer.
  *
  * Source data (NLR / Vilbli / manual seed) carries fag as a free-ish label and/or
  * a VIGO programområde code. We normalize both to a single canonical fag identity
- * so the same employer maps consistently regardless of source or fagfornyelse
- * P1 ships Tømrerfaget; electrician (Elektrikerfaget) added for P3b rollout.
+ * so the same employer maps consistently regardless of source or fagfornyelse.
+ *
+ * Registry: Tømrerfaget (P1) + eleven elektro kolonne-3 + ten kjøretøy kolonne-3 (P3b).
+ * Next: Rørleggerfaget with `plumber` profession (then V.BA VG2 cross-profession gate).
  */
 
 function normalize(value) {
