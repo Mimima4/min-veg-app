@@ -3,6 +3,8 @@ import type { StudyRouteSnapshotStep } from "@/lib/routes/route-types";
 export type Vg2ProgrammeOption = {
   program_slug: string;
   program_title: string;
+  /** Catalogue profession that owns this VG2 programme (defaults to route profession). */
+  profession_slug?: string;
 };
 
 export function buildVg2ProgrammeOptionId(programSlug: string): string {

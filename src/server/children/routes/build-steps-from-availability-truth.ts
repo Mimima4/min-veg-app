@@ -18,6 +18,7 @@ import { assertRouteTruthInvariants } from "@/lib/vgs/route-truth-invariants";
 import { findPriorBedriftLaerefagStep } from "@/lib/larebedrift/bedrift-laerefag-from-route";
 import { isLarefagSelectionStage } from "@/lib/vgs/larefag-selection-stage";
 import { buildVg2ProgrammeOptionsFromTruthRows } from "@/lib/vgs/vg2-programme-options";
+import type { Vg2ProgrammeOption } from "@/lib/vgs/vg2-programme-options";
 import type {
   PathVariant,
   PathVariantNode,
@@ -406,6 +407,7 @@ export function buildStepsFromAvailabilityTruth(params: {
   rows: AvailabilityTruthRow[];
   selectedCandidate?: AvailabilityTruthRow | null;
   selectedVg2ProgramSlug?: string | null;
+  vg2ProgrammeOptions?: Vg2ProgrammeOption[] | null;
   transportSortContext?: KommuneTransportSortContext | null;
   pathVariants?: PathVariant[];
   selectedPathVariantId?: string | null;
@@ -698,7 +700,10 @@ export function buildStepsFromAvailabilityTruth(params: {
           stage: node.stage,
           ...(node.stage === "VG2"
             ? {
-                programme_options: buildVg2ProgrammeOptionsFromTruthRows(params.rows),
+                programme_options:
+                  params.vg2ProgrammeOptions && params.vg2ProgrammeOptions.length > 0
+                    ? params.vg2ProgrammeOptions
+                    : buildVg2ProgrammeOptionsFromTruthRows(params.rows),
               }
             : {}),
           options: buildProgrammeSelectionOptions(stageRows),

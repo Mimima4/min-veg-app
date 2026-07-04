@@ -32,6 +32,7 @@ export type StudyRouteProgrammeSelectionSnapshotStep = {
   programme_options?: Array<{
     program_slug: string;
     program_title: string;
+    profession_slug?: string;
   }>;
   options?: Array<{
     institution_id: string;

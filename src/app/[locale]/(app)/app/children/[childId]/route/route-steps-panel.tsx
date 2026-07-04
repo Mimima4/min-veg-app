@@ -708,13 +708,26 @@ export default function RouteStepsPanel({
       });
       const payload = (await response.json()) as {
         ok?: boolean;
+        result?: { routeId?: string };
         error?: { message?: string };
       };
       if (!response.ok || !payload.ok) {
         throw new Error(payload.error?.message ?? "Failed to update VG2 programme");
       }
+      const nextRouteId = payload.result?.routeId;
+      if (nextRouteId && nextRouteId !== routeId) {
+        setVg2RecomputingStepKey(null);
+        router.replace(`/${locale}/app/children/${childId}/route/${nextRouteId}`);
+        return;
+      }
       router.refresh();
     } catch (error) {
+      setSelectedOptionByStep((prev) => {
+        const next = { ...prev };
+        delete next[vg2OpenKey(stepKey, "programme")];
+        return next;
+      });
+      router.refresh();
       alert(error instanceof Error ? error.message : "Failed to update VG2 programme");
     } finally {
       setVg2RecomputingStepKey(null);
@@ -1030,6 +1043,10 @@ export default function RouteStepsPanel({
                       )
                     }
                     onProgrammeSelect={(programSlug) => {
+                      setSelectedOptionByStep((prev) => ({
+                        ...prev,
+                        [vg2ProgrammeOpenKey]: buildVg2ProgrammeOptionId(programSlug),
+                      }));
                       void handleVg2ProgrammeChange(
                         stepKey,
                         programSlug,

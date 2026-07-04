@@ -42,6 +42,12 @@ import type { KommuneTransportSortContext } from "@/lib/planning/kommune-transpo
 import { syncStudyRouteOutcomeFilterAlternatives } from "./sync-study-route-outcome-filter-alternatives";
 import { syncStudyRouteCuratedRegionalAlternatives } from "./sync-study-route-curated-regional-alternatives";
 import { applyVerifiedLarebedriftToApprenticeshipSteps } from "./apply-verified-larebedrift-to-apprenticeship-steps";
+import {
+  isVbaSharedVg1CrossProfessionSwitch,
+  resolveProfessionSlugFromProgramSlug,
+} from "@/lib/vgs/vg2-cross-profession";
+import { resolveVbaSharedVg2ProgrammeOptions } from "./resolve-vba-shared-vg2-programme-options";
+import { switchStudyRouteForVg2Programme } from "./switch-study-route-for-vg2-programme";
 
 type Params = {
   childId: string;
@@ -52,6 +58,8 @@ type Params = {
   triggeredByUserId?: string | null;
   triggerReason?: string;
   supabase?: SupabaseClient;
+  /** Internal guard — set when switchStudyRouteForVg2Programme already created the target route. */
+  skipCrossProfessionVg2Switch?: boolean;
 };
 
 function resolveSelectedVg2ProgramSlug(params: {
@@ -481,6 +489,32 @@ export async function triggerStudyRouteRecompute(params: Params) {
 
   const professionRow = profession as ProfessionRow;
 
+  if (
+    params.vg2ProgramSlug &&
+    !params.skipCrossProfessionVg2Switch
+  ) {
+    const targetProfessionSlug = resolveProfessionSlugFromProgramSlug(params.vg2ProgramSlug);
+    if (
+      targetProfessionSlug &&
+      isVbaSharedVg1CrossProfessionSwitch({
+        fromProfessionSlug: professionRow.slug,
+        toProfessionSlug: targetProfessionSlug,
+      })
+    ) {
+      return switchStudyRouteForVg2Programme({
+        supabase,
+        childId: params.childId,
+        sourceRouteId: route.id,
+        sourceProfessionSlug: professionRow.slug,
+        targetProfessionSlug,
+        vg2ProgramSlug: params.vg2ProgramSlug,
+        locale,
+        triggeredByType,
+        triggeredByUserId,
+      });
+    }
+  }
+
   const { data: recomputeRun, error: recomputeRunError } = await supabase
     .from("study_route_recompute_runs")
     .insert({
@@ -704,10 +738,16 @@ export async function triggerStudyRouteRecompute(params: Params) {
           explicitSlug: params.vg2ProgramSlug,
           previousSteps,
         });
+        const vg2ProgrammeOptions = await resolveVbaSharedVg2ProgrammeOptions({
+          supabase,
+          professionSlug: professionRow.slug,
+          truthRows: truth.rows,
+        });
         recomputedSteps = buildStepsFromAvailabilityTruth({
           rows: truth.rows,
           selectedCandidate: selectedTruthCandidate,
           selectedVg2ProgramSlug,
+          vg2ProgrammeOptions,
           transportSortContext,
           professionSlug: professionRow.slug,
           pathVariants: enrichedPathVariants,

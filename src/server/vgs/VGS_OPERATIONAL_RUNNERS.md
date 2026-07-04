@@ -256,9 +256,7 @@ When VG2 programme options expand (new branches per profession/county), **downst
 
 **Ops order when adding VG2 programmes:** Contour B relay for that county/profession → route recompute E2E → ingest any **new** kolonne-3 lærefag codes into `larebedrift_truth` → prod-check Fagvalg + bedrift for 2–3 fag samples.
 
-### V.BA shared VG1 — multi-profession VG2 gate (deferred; after `plumber`)
-
-**Owner order (2026-07-03):** add **`plumber` as isolated 4th profession first** (mirror `carpenter`). **Then** VG2 gate below.
+### V.BA shared VG1 — multi-profession VG2 gate (live 2026-07-03)
 
 **Hard rule — no cross-profession schools in one dropdown:** a **carpenter** route lists **only** carpenter VG2 **schools** under the school picker. A **plumber** route lists **only** plumber schools. Never mix rørlegger institutions into the carpenter school list.
 
@@ -273,10 +271,12 @@ The VG2 step card is **two stacked zones** (each dynamic height; no clipping):
 
 Reference: owner screenshots — collapsed two-part card; programme open = hint + programme list; school open = school list only.
 
-**Backend when programme changes (gate):**
+**Backend when programme changes (gate — live):**
 
 1. If new programme maps to **same** `target_profession_id` → full **recompute** of this working draft (geography, transport, Fagvalg, bedrift downstream).
-2. If new programme maps to **another** catalogue profession (e.g. V.BA Rørlegger while on carpenter entry) → **new working route** for that profession — full `createInitialStudyRoute` / `triggerStudyRouteRecompute` cycle; optional VG1 school carry-over if PSA-valid; do **not** mutate the source saved route row in place.
+2. If new programme maps to **another** V.BA catalogue profession (carpenter ↔ plumber) → **new working route** for that profession (`switch-study-route-for-vg2-programme.ts`); auto-upserts `child_profession_interests`; client navigates to the new route; source saved route is not mutated in place.
+
+**Still deferred:** VG1 school carry-over on cross-profession switch; `child_profession_interests` auto-upsert on **save route** (not programme switch).
 
 **Backend when school changes (unchanged):** selection within current programme; refresh ranking only; save = new saved row if ≥1 step differs.
 

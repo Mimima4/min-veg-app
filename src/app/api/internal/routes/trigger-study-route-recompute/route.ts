@@ -53,6 +53,8 @@ export async function POST(req: Request) {
         routeId: updated.identity.routeId,
         routeVariantId: updated.identity.routeVariantId,
         recomputed: true,
+        professionSwitched: updated.identity.routeId !== routeId,
+        previousRouteId: updated.identity.routeId !== routeId ? routeId : null,
       },
       updated,
       meta: {

@@ -42,6 +42,7 @@ import type { KommuneTransportSortContext } from "@/lib/planning/kommune-transpo
 import { syncStudyRouteOutcomeFilterAlternatives } from "./sync-study-route-outcome-filter-alternatives";
 import { syncStudyRouteCuratedRegionalAlternatives } from "./sync-study-route-curated-regional-alternatives";
 import { applyVerifiedLarebedriftToApprenticeshipSteps } from "./apply-verified-larebedrift-to-apprenticeship-steps";
+import { resolveVbaSharedVg2ProgrammeOptions } from "./resolve-vba-shared-vg2-programme-options";
 
 type Params = {
   childId: string;
@@ -444,9 +445,15 @@ export async function createInitialStudyRoute(
         navMatches: pathVariantNavContext.navMatches,
         professionIdBySlug,
       });
+      const vg2ProgrammeOptions = await resolveVbaSharedVg2ProgrammeOptions({
+        supabase,
+        professionSlug: professionRow.slug,
+        truthRows: truth.rows,
+      });
       initialSteps = buildStepsFromAvailabilityTruth({
         rows: truth.rows,
         selectedCandidate: selectedTruthCandidate,
+        vg2ProgrammeOptions,
         transportSortContext,
         professionSlug: professionRow.slug,
         pathVariants: enrichedPathVariants,
