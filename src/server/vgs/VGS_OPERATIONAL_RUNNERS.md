@@ -274,15 +274,15 @@ Reference: owner screenshots — collapsed two-part card; programme open = hint 
 **Backend when programme changes (gate — live):**
 
 1. If new programme maps to **same** `target_profession_id` → full **recompute** of this working draft (geography, transport, Fagvalg, bedrift downstream).
-2. If new programme maps to **another** V.BA catalogue profession (carpenter ↔ plumber) → **new working route** for that profession (`switch-study-route-for-vg2-programme.ts`); auto-upserts `child_profession_interests`; client navigates to the new route; source saved route is not mutated in place.
+2. If new programme maps to **another** V.BA catalogue profession (carpenter ↔ plumber) → **new working route** for that profession (`switch-study-route-for-vg2-programme.ts`); auto-upserts `child_profession_interests` for the **target** profession; full `createInitialStudyRoute` + `triggerStudyRouteRecompute` (standard PSA/transport/school ranking — **no** VG1 school carry-over from the source route); client navigates to the new route; source saved route is not mutated in place.
 
-**Still deferred:** VG1 school carry-over on cross-profession switch; `child_profession_interests` auto-upsert on **save route** (not programme switch).
+**Owner policy (2026-07-04):** do **not** add VG1 school carry-over on cross-profession switch. The new profession route must be built only by existing route rules (`selectTruthCandidateForRoute`, transport, relocation, PSA truth). If VG1 school differs from the source route, that is correct.
+
+**Profession hub visibility:** `child_profession_interests` is upserted on **cross-profession programme switch** (not in `save-study-route.ts`). Saving the route then materializes the `study_routes` saved row; hub/compare shows the profession because the interest row already exists from the switch.
 
 **Backend when school changes (unchanged):** selection within current programme; refresh ranking only; save = new saved row if ≥1 step differs.
 
 **Save semantics:** any change to ≥1 step vs last saved snapshot → **new** `study_routes` saved row (`save-study-route.ts`).
-
-**Display / saved professions (with gate):** saving a route for profession X auto-upserts `child_profession_interests` for X if missing, so hub drafts materialize and multiple saved routes (e.g. tømrer + rørlegger) stay comparable in profile.
 
 **Implementation target:** `route-steps-panel.tsx` — split VG2 card into `openStepKey` modes e.g. `{stepKey}:programme` vs `{stepKey}:school` (not one toggle for the whole card). Fagvalg keeps single-zone + hint (kolonne-3 outcome change).
 
