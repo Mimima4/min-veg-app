@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **CLOSED** — family-facing matcher live on production **2026-06-13** |
+| **Status** | **MATCHER WIRING CLOSED** — family-facing matcher live on production **2026-06-13**. **P4-MCT-1 phase remains open** until all VGS catalogue professions and kolonne-3 fag are prod-live (`phase-4-multi-contour-truth-registry-owner-decision-record.md` §5). |
 | **Date (UTC)** | 2026-06-13 |
 | **Authority** | `phase-4-nav-matcher-owner-decision-record.md` |
 | **Out of scope** | P4-NM-D post-VGS contours (hidden until respective registry gates pass) |

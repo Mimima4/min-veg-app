@@ -8,8 +8,8 @@
  * Phase 2 (closed): carpenter nationwide when the child has a home kommune.
  * Phase 3 (closed): electrician nationwide when the child has a home kommune.
  * Phase 4 (closed): mechanic nationwide when the child has a home kommune.
- * Phase 5 (current): plumber nationwide when the child has a home kommune.
- * Next: V.BA VG2 gate — `VGS_OPERATIONAL_RUNNERS.md`.
+ * Phase 5 (closed 2026-07-04): plumber nationwide when the child has a home kommune.
+ * V.BA VG2 cross-profession programme switch (carpenter ↔ plumber) — closed; see `VGS_OPERATIONAL_RUNNERS.md`.
  */
 
 const PRIMARY_ROUTE_LAREBEDRIFT_PROFESSIONS = new Set([

@@ -107,6 +107,16 @@ When only one VGS variant exists, use it; hide `vg3_before_apprenticeship` if VG
 
 **Outcome scoping:** `sourceOutcomeUrl` from nodes of the **variant tied to the active `filter_id`** (primary or alternative).
 
+### 4.1 Same profession, multiple VG1 entries (owner rule 2026-07-07)
+
+If one profession is reachable by more than one materialized VGS chain that starts at different VG1 programmes, those chains must be modeled as **alternative route variants** for that profession:
+
+- keep one `profession_slug`
+- expose one primary + optional `alternative_routes[]`
+- never split into synthetic extra professions only because VG1 entry differs
+
+**Example shape (illustrative):** for one profession, route alternatives can be `VG1 Bygg- og anleggsteknikk -> VG2 X -> ...` and `VG1 Teknologi- og industrifag -> VG2 Y -> ...`, both shown as alternatives under the same profession when both chains are in truth.
+
 ---
 
 ## 5. NAV match and filter gates (production rules)
@@ -187,6 +197,18 @@ No contour truth → hide filter, omit alternative, **no matcher call** — not 
 | Alt 3 | `long_academic` | **Hidden** until C-HOYSKOLE gate passed; then full høyskole steps (separate kontur) |
 
 Same VG1; VG2+ and post-VGS contours diverge per map rows.
+
+### 7.1 Kolonne-3 fag vs NAV vacancy catalog (owner binding 2026-07-04)
+
+Within one VGS catalogue profession (e.g. `mechanic`, `electrician`):
+
+| Layer | Granularity | Rationale |
+|-------|-------------|-----------|
+| **VG1 / VG2** | Shared school path for the family | Same foundation before specialization |
+| **Fagvalg (kolonne-3)** | Per fag from Vilbli chain | Honest route + godkjent bedrift pool per lærefag |
+| **NAV matcher / catalog** | **One** NAV vacancy-catalog profession per catalogue slug (e.g. Mekaniker, Elektriker) | Matches post-graduation job search on NAV/Finn — specialization appears in ad text, not separate STYRK per kjøretøy/elektro fag |
+
+**Forbidden:** treating missing per-fag STYRK rows as P4-MCT-1 blockers for mechanic/electrician families already mapped at catalog level.
 
 ---
 

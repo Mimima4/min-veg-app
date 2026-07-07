@@ -242,6 +242,31 @@ npm run smoke:contour-b
 
 Checks: CLI rejects `--contour-b-partial` on `run-vgs-truth-pipeline.mjs`; Contour B ingest dry-run for **56** exits 0.
 
+## Product position (2026-07-04)
+
+**Global plan authority:** `docs/architecture/phase-4-multi-contour-truth-registry-owner-decision-record.md` (contours + phased order P4-MCT-1…5). **Route engine:** `docs/architecture/route-engine-master-spec.md`.
+
+**Current phase: P4-MCT-1 — IN PROGRESS.** Matcher wiring went live 2026-06-13; that does **not** close the phase. Close when **all** planned VGS professions are in pipeline and every kolonne-3 fag Vilbli lists appears in routes — with godkjent-only bedrift and NAV catalog-level matcher as below.
+
+### Truth policies (owner binding 2026-07-04)
+
+| Topic | Rule |
+|-------|------|
+| **Bedrift empty list** | **Not a defect.** We publish **godkjent-only** employers. No godkjent rows → empty dropdown + existing copy «Ingen godkjente lærebedrifter for dette faget ennå.» (`route-steps-panel.tsx`). Never invent placeholders or potensielle. |
+| **NAV / mechanic & electrician** | VG1+VG2 are **shared** within the catalogue profession; kolonne-3 fag shape the route and bedrift pool. **NAV matcher** uses **vacancy-catalog level** (e.g. Mekaniker, Elektriker) — same as post-graduation search on NAV/Finn where specialization is mostly in ad text. **Not** separate STYRK per kjøretøy/elektro fag. |
+| **Roster expansion** | Adding a lærefag to monthly ingest is **ops hygiene** when owner wants refreshed godkjent snapshot — not “closing a hole” if national godkjent count is zero. |
+
+| Layer | Status |
+|-------|--------|
+| **C-VGS-YRKESFAG** | **4 professions** in pipeline (`electrician`, `mechanic`, `carpenter`, `plumber`); VG2 gate + V.BA switch live; **more catalogue professions remain** |
+| **C-NAV-OCCUPATION** | Matcher wired at **catalog profession / NAV vacancy level** |
+| **Verified bedrift** | P3b for 4 professions; ingest roster = tømrer + rørlegger + 11 elektro + 10 kjøretøy; **empty bedrift when no godkjent = OK** |
+| **C-TRANSPORT-KOMMUNE** | Live nationwide overlay |
+| **C-LOSA-FJERN** | Live Finnmark (56) electrician charter |
+| **C-FAGSKOLE / C-HOYSKOLE / C-PROFESJONSSTUDIER / C-PABYGGING** | **Out of scope for P4-MCT-1** — filters hidden until respective MCT phases |
+
+**Fylke note:** `VGS_PIPELINE_COUNTY_CODES` = all **15** Norwegian fylke. No new counties to add; ops = relay refresh (6-month cadence) + per-pair quality.
+
 ## Deferred gates (do not skip before scaling)
 
 Record for when these become blockers — **without them we cannot scale professions or bedrift UX further**.
@@ -295,8 +320,6 @@ Reference: owner screenshots — collapsed two-part card; programme open = hint 
 
 **Gate deferral:** no school-specific Fagvalg work planned unless a future Vilbli/school-approval audit shows otherwise (e.g. per-school VG3 school programmes — separate from bedrift lærefag list).
 
-**Why plumber first:** Rørleggerfaget contour live before programme-level cross-profession switch is wired.
-
 ### Plumber (`plumber` / rørlegger) — bedrift ingest (live 2026-07-03)
 
 `Rørleggerfaget` registered in `larebedrift-fagkode.mjs`, `kolonne3-larefag-mapping.ts` (`BARLF3`), `profession-larefag-mapping.ts`, and cron batch 0 (`scheduled-larebedrift-ingest-fags.ts`). Pilot gate: `primary-route-larebedrift-pilot.ts` (nationwide when child has home kommune). **Nationwide ingest verified** — ~902 active `RORLEGGERFAGET` rows in `larebedrift_truth` (2026-07-03 `verify-larebedrift-truth-snapshot.mjs` PASS); prod-check Fagvalg → bedrift on plumber route.
@@ -314,11 +337,9 @@ Current model: read **verified** rows from `larebedrift_truth` (server DB); live
 
 Do **not** call Finnlærebedrift live in prod UI (no Brønnøysund gate, breaks charter).
 
-### Electrician lærebedrift — Phase 1 ingest (nationwide)
+### Electrician lærebedrift — nationwide (live)
 
-Canonical codes and VIGO query codes: `scripts/lib/larebedrift-fagkode.mjs` (must match `kolonne3-larefag-mapping.ts`). Writes to **Supabase `larebedrift_truth`** only (not local Mac). Idempotent upsert; `--verify-brreg` recommended. Expect ~3–5 min per fag, ~40–60 min for all 11 elektro fag nationwide.
-
-After ingest: `node --env-file=.env.local scripts/verify-larebedrift-truth-snapshot.mjs` and prod-check Fagvalg → bedrift for Elektrikerfaget + one other fag.
+Eleven elektro kolonne-3 lærefag in `larebedrift-fagkode.mjs` + `kolonne3-larefag-mapping.ts`; cron batches 1–3. Owner-verified on prod (2026-07-04). Manual refresh: `?larefagCode=ELEKTRIKERFAGET` or full cron batch.
 
 ### Mechanic lærebedrift — mapping + ingest (live 2026-07-03)
 

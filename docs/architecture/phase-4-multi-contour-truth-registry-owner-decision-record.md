@@ -46,8 +46,8 @@ Every contour in this registry MUST implement:
 
 | Contour ID | Stage type(s) | `filter_id`(s) | Ops status | Product live rule |
 |------------|---------------|----------------|------------|-------------------|
-| **C-VGS-YRKESFAG** | `UPPER_SECONDARY`, `APPRENTICESHIP` | `open`, `fast_to_work`, `vg3_before_apprenticeship`, `flexible` | **LIVE** (A green + B partial) | Full step routes per Block C / county charters |
-| **C-NAV-OCCUPATION** | (matcher only) | all filters (scope gate) | **PARTIAL** | Title-match STYRK; filter gates not wired |
+| **C-VGS-YRKESFAG** | `UPPER_SECONDARY`, `APPRENTICESHIP` | `open`, `fast_to_work`, `vg3_before_apprenticeship`, `flexible` | **IN PROGRESS** | 4 of N catalogue professions live; VG2 gate + V.BA cross-profession switch done for carpenter↔plumber; **phase not closed** until every planned profession **and** every kolonne-3 fag has prod truth (PSA relay + bedrift + matcher) |
+| **C-NAV-OCCUPATION** | (matcher only) | all filters (scope gate) | **IN PROGRESS (on VGS)** | Matcher wired (P4-NM go-live 2026-06-13); links Vilbli outcomes to **NAV vacancy-catalog profession level** (e.g. one Mekaniker / one Elektriker family — kolonne-3 fag differentiate route/bedrift, not separate NAV job families) |
 | **C-FAGSKOLE** | `VOCATIONAL_COLLEGE` / `FAGSKOLE` | `fagskole_after_vgs` | **NOT STARTED** | Omit Alt 2 or neste-steg text only until gate passed |
 | **C-HOYSKOLE-BACHELOR** | `HIGHER_EDUCATION` / `BACHELOR` | `long_academic` (subset) | **NOT STARTED** | Omit `long_academic` alt or show honest “ikke tilgjengelig ennå” |
 | **C-PROFESJONSSTUDIER** | `HIGHER_EDUCATION` (+ multi-stage) | `long_academic` (subset) | **NOT STARTED** | Separate path families (medisin, jus, …); never merge with fagbrev chain |
@@ -68,7 +68,7 @@ Every contour in this registry MUST implement:
 | **Route shape** | Shared **VG1 anchor**; VG2+ branches; full horizontal steps (not shorthand labels) |
 | **Matcher role** | Vilbli outcomes → NAV; filter picks path variant (`direct-bedrift` vs `vg3-then-bedrift`) |
 | **Ops doc** | `src/server/vgs/VGS_OPERATIONAL_RUNNERS.md` |
-| **Expansion** | New profession/county → 10-step gate before product claim |
+| **Expansion** | New **profession** → 10-step gate before product claim. **Fylke:** pipeline already covers all **15** Norwegian fylke (post-reform); no additional counties exist to add — only data refresh / relay quality per pair. |
 
 ---
 
@@ -153,19 +153,36 @@ filter_id  →  eligible contour(s)  →  path variant (VGS) or post-VGS chain  
 | `pabygging_studiekompetanse` | **C-PABYGGING** | Hidden for barn |
 | `open` / `flexible` | Best available contour per slot in §3 ordering | Omit slot, don’t stub |
 
-**VG1 rule (locked):** one VG1 anchor per path family; VG2 and beyond vary by variant/options. Post-VGS contours attach **after** the VGS step sequence, not as a one-line substitute.
+**VG1 rule (locked):**
+
+- If a profession has one valid VG1 entry chain, keep one VG1 anchor for that path family.
+- If the **same profession** has multiple valid entry chains starting from different VG1 paths, treat each chain as an **alternative route variant** under the same profession selection (not a new profession card).
+- Post-VGS contours attach **after** the VGS step sequence, not as a one-line substitute.
+
+**Example format (rule illustration):** one profession can expose alternatives like `VG1 A -> VG2 A -> ...` and `VG1 B -> VG2 B -> ...` as `alternative_routes[]` for that same profession when both chains are materialized truth.
 
 ---
 
 ## 5. Phased delivery order
 
-| Phase | Deliverable | Contours |
-|-------|-------------|----------|
-| **P4-MCT-1** | NAV matcher owner record + wire on VGS | C-VGS, C-NAV — see `phase-4-nav-matcher-owner-decision-record.md` |
-| **P4-MCT-2** | Fagskole authority proof + ingest charter + pilot county/profession | C-FAGSKOLE |
-| **P4-MCT-3** | Høyskole bachelor pilot (one path family, e.g. maskiningeniør) | C-HOYSKOLE-BACHELOR |
-| **P4-MCT-4** | One lang profesjonsløp charter (e.g. lege) | C-PROFESJONSSTUDIER |
-| **P4-MCT-5** | Påbygging etter-VGS surface | C-PABYGGING |
+**P4-MCT-1 exit rule (owner binding, 2026-07-04):** phase **stays open** until **every** planned VGS catalogue profession **and** **every** kolonne-3 fag Vilbli lists on those chains is live in production with:
+
+| Layer | “Done” means | **Not** a blocker |
+|-------|----------------|-------------------|
+| **VGS route (PSA)** | Fag appears in Fagvalg when Vilbli lists it for that fylke chain | — |
+| **Verified bedrift** | Ingest roster covers the fag **and** we surface **godkjent-only** rows from `larebedrift_truth` | **Empty bedrift dropdown** when no godkjent employers exist — **honest truth**, not a defect |
+| **NAV matcher** | Outcomes link to **NAV vacancy-catalog level** for the catalogue profession (shared VG1/VG2 base; post-VGS job search via NAV/Finn — specialization mostly in ad text, not separate STYRK per kolonne-3 fag) | Per-fag STYRK split inside one mechanic/electrician family |
+| **E2E** | Family-facing proof per profession slice | — |
+
+**P4-NM go-live (2026-06-13) closed matcher wiring only** — not P4-MCT-1.
+
+| Phase | Deliverable | Contours | Status (2026-07-04) |
+|-------|-------------|----------|---------------------|
+| **P4-MCT-1** | NAV matcher + **full VGS depth** (all professions + all fag) | C-VGS, C-NAV | **IN PROGRESS** — 4 professions live; depth work continues |
+| **P4-MCT-2** | Fagskole authority proof + ingest charter + pilot county/profession | C-FAGSKOLE | **Blocked on P4-MCT-1** — do not start product claim until owner closes MCT-1 |
+| **P4-MCT-3** | Høyskole bachelor pilot (one path family, e.g. maskiningeniør) | C-HOYSKOLE-BACHELOR | Not started |
+| **P4-MCT-4** | One lang profesjonsløp charter (e.g. lege) | C-PROFESJONSSTUDIER | Not started |
+| **P4-MCT-5** | Påbygging etter-VGS surface | C-PABYGGING | Not started |
 
 Each phase requires its own expansion gate + E2E checklist before **NOT_READY_FOR_APPLY** clearance for that slice.
 

@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **PARTIALLY LIVE (2026-07-03)** — P1 ingest + P3b primary-route consumption for `carpenter` / `electrician` / `mechanic`; see **§ Live status** |
+| **Status** | **LIVE (2026-07-04)** — P1 ingest + P3b for all four VGS catalogue professions; see **§ Live status** |
 | **Scope** | Verified **godkjente lærebedrifter** for `apprenticeship_step` on primary routes (pilot professions) and veksling / curated-regional routes |
 | **Design gate (P0)** | `phase-4-verified-larebedrift-employer-layer-design-gate.md` (§8 decisions RESOLVED) |
 | **Parents** | `route-engine-master-spec.md`, `phase-4-route-mobile-api-contract-v1.md`, `phase-4-nordland-steigen-carpenter-veksling-pilot-charter.md` (partially superseded) |
@@ -10,17 +10,25 @@
 
 ---
 
-## Live status (2026-07-03)
+## Live status (2026-07-04)
 
 | Phase | Status |
 |-------|--------|
-| **P1** ingest + `larebedrift_truth` | **LIVE** — carpenter + 11 elektro + 10 kjøretøy fag; monthly batched cron |
-| **P3b** primary-route apply | **LIVE** — `carpenter`, `electrician`, `mechanic` (`primary-route-larebedrift-pilot.ts`) |
+| **P1** ingest + `larebedrift_truth` | **LIVE** — tømrer + rørlegger + 11 elektro + 10 kjøretøy fag; monthly batched cron; owner-verified nationwide |
+| **P3b** primary-route apply | **LIVE** — `carpenter`, `electrician`, `mechanic`, `plumber` (`primary-route-larebedrift-pilot.ts`) |
 | **P3** transport reachability for employers | **Deferred** — kommune ordering only |
 | **P4** UI | **Partial** — Fagvalg/bedrift dropdown + outcome hint; expandable orgnr panel TBD |
-| **P5** next profession | **`plumber`** as isolated 4th profession; **V.BA VG2 gate** deferred after (`VGS_OPERATIONAL_RUNNERS.md`) |
+| **P5** fourth VGS profession + V.BA VG2 gate | **CLOSED (2026-07-04)** — `plumber` live; V.BA cross-profession programme switch (carpenter ↔ plumber) live on prod |
 
-**D-1 amendment:** ordinary Vilbli-derived apprenticeship tails **do** surface verified employers for the three pilot professions above. Steigen veksling remains curated-variant scoped.
+**D-1 amendment:** ordinary Vilbli-derived apprenticeship tails surface **godkjent-only** verified employers for all four pilot professions. **Empty employer list = honest truth** when Finnlærebedrift has no godkjent rows for that lærefag (never pad with potensielle or placeholders). Steigen veksling remains curated-variant scoped.
+
+### Empty bedrift list (owner binding 2026-07-04)
+
+| Situation | Product behaviour | Classification |
+|-----------|-------------------|----------------|
+| Fag in Fagvalg; **zero** godkjent lærebedrifter in `larebedrift_truth` for that `larefag_code` | Show **empty** bedrift selection with copy **«Ingen godkjente lærebedrifter for dette faget ennå.»** (`route-steps-panel.tsx`) | **Truth** — we publish only godkjent |
+| Fag not yet in ingest roster but godkjent employers exist nationally | Ops may add fag to roster + run ingest — **optional hygiene**, not P4-MCT-1 “hole closure” | Roster expansion gate |
+| Potensielle / unverified employers in source | **Exclude** — never surface | Invariant (§3) |
 
 ---
 
@@ -39,14 +47,14 @@ There is **no general, auditable layer of verified (godkjent) lærebedrifter** t
 
 | Dimension | In scope (P1–P4) | Out of scope (this charter) |
 |-----------|------------------|------------------------------|
-| **Roster coverage (D-4)** | **Multi-fag nationwide** (carpenter + elektro + kjøretøy kolonne-3); extend per profession gate | Unmapped fag (e.g. `plumber` until ingest) |
-| **Route surfacing (D-1)** | **Primary-route pilot** (`carpenter`, `electrician`, `mechanic`) + **veksling / curated-regional** | Other catalogue professions until explicit gate |
+| **Roster coverage (D-4)** | **Multi-fag nationwide** (tømrer + rørlegger + eleven elektro + ten kjøretøy kolonne-3) | Potensielle employers; **mandatory** bedrift rows when godkjent count is zero |
+| **Route surfacing (D-1)** | **Primary-route pilot** — all four VGS catalogue professions + veksling / curated-regional | Fifth+ catalogue profession until explicit gate |
 | **Source / access (D-2, amended 2026-06-29)** | **Finnlærebedrift open API** `api.utdanning.no/finnlarebedrift` (**primary, keyless**, Udir-recommended) · **Vilbli relay** / **NLR** / **manual seed** (secondary) · **Brønnøysund** for orgnr identity — all trace to **VIGO** | Vigo bedrift portal (closed); live external calls at runtime |
 | **Geography (D-3, amended 2026-06-29)** | Registered kommune + fylke from the API; county from kommunenummer; coords nullable (enrich via detail/Brønnøysund later) | True worksite coordinates as a hard requirement |
 | **UI (D-5)** | **Name in option title**; **orgnr + opplæringskontor** in expandable info/source | Inline orgnr clutter; name-only with no audit trail |
 | **Governance (D-6)** | **This standalone charter** + own ops gates | Folding into Steigen pilot charter |
 
-**Reconciliation (D-1 × D-4, amended 2026-07-03):** roster is **multi-fag**; primary-route surfacing is live for **three** pilot professions. **`plumber` next** (isolated path, mirror carpenter); **V.BA VG2 cross-profession switch** after both `carpenter` + `plumber` are live.
+**Reconciliation (D-1 × D-4, amended 2026-07-04):** roster is multi-fag nationwide; primary-route surfacing is live for **four** VGS catalogue professions. **V.BA VG2 cross-profession programme switch** (carpenter ↔ plumber) closed 2026-07-04 — see `VGS_OPERATIONAL_RUNNERS.md`.
 
 ---
 

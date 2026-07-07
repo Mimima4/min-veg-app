@@ -196,6 +196,12 @@ export async function getAvailabilityTruth({
     }
 
     for (const row of (countyLosaRows ?? []) as typeof availabilityRows) {
+      // Guardrail: never borrow LOSA rows from another profession chain.
+      // This keeps "show truth only" intact when a county has LOSA for one
+      // profession (e.g. electrician) but not for the currently requested one.
+      if (!programById.has(row.education_program_id)) {
+        continue;
+      }
       const key = [
         row.institution_id,
         row.municipality_code ?? "",
