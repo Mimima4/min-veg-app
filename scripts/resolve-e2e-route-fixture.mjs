@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 /**
- * Resolve Playwright route smoke fixture (mechanic profession id).
+ * Resolve Playwright route smoke fixture for a profession slug.
  *
  * Usage:
  *   node --env-file=.env.local scripts/resolve-e2e-route-fixture.mjs
+ *   E2E_PROFESSION_SLUG=painter node --env-file=.env.local scripts/resolve-e2e-route-fixture.mjs
  *
  * Env:
  *   E2E_CHILD_ID — child UUID for route smoke (family user resolved via service role)
+ *   E2E_PROFESSION_SLUG — defaults to `mechanic`
  *   NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY — already in .env.local
  */
 import { createClient } from "@supabase/supabase-js";
@@ -14,6 +16,7 @@ import { isMainModule } from "./lib/is-main-module.mjs";
 
 async function main() {
   const childId = String(process.env.E2E_CHILD_ID ?? "").trim();
+  const professionSlug = String(process.env.E2E_PROFESSION_SLUG ?? "mechanic").trim();
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -28,7 +31,7 @@ async function main() {
   const { data: profession, error } = await supabase
     .from("professions")
     .select("id, slug")
-    .eq("slug", "mechanic")
+    .eq("slug", professionSlug)
     .eq("is_active", true)
     .maybeSingle();
 
@@ -36,7 +39,7 @@ async function main() {
     throw new Error(`professions: ${error.message}`);
   }
   if (!profession?.id) {
-    throw new Error("Active mechanic profession not found");
+    throw new Error(`Active ${professionSlug} profession not found`);
   }
 
   const { data: route, error: routeError } = await supabase
@@ -52,7 +55,7 @@ async function main() {
     throw new Error(`study_routes: ${routeError.message}`);
   }
   if (!route?.id) {
-    throw new Error(`No draft mechanic route for child ${childId}`);
+    throw new Error(`No draft ${professionSlug} route for child ${childId}`);
   }
 
   const minVg1Options = Number(process.env.E2E_MIN_VG1_OPTIONS ?? "3");
@@ -60,6 +63,8 @@ async function main() {
   console.log(
     JSON.stringify({
       childId,
+      professionSlug,
+      professionId: profession.id,
       mechanicProfessionId: profession.id,
       routeId: route.id,
       minVg1Options: Number.isFinite(minVg1Options) ? minVg1Options : 3,

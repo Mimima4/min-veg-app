@@ -93,3 +93,41 @@ County-scoped Vilbli extract (2026-07-09): Troms `55` and Finnmark `56` have **V
 | `03,11,18,31,46,50` | Eligible when full chain in PSA | `verification_ready_after_write` |
 | `55,56,…` (no local VG2) | **Not available** (R-2) | Pipeline **must not** partial-write; `missing_programme_rows` / ingest abort expected |
 | Neighboring fylke with VG2 | **Alternative only** (P-7, planned automation) | Separate county PSA |
+
+---
+
+## Classify matrix (2026-07-09, post primary gate `e0098e3`)
+
+| County | `status` | Primary route | Notes |
+|--------|----------|---------------|-------|
+| `03` Oslo | `verification_ready_after_write` | Yes | Relay dry-run pending per county |
+| `11` Rogaland | `verification_ready_after_write` | Yes | |
+| `18` Nordland | `verification_ready_after_write` | Yes | |
+| `31` Østfold | `verification_ready_after_write` | Yes | Pilot county for bedrift E2E |
+| `46` Vestland | `verification_ready_after_write` | Yes | Relay dry-run **OK** (`contour_b_partial`) |
+| `50` Trøndelag | `verification_ready_after_write` | Yes | |
+| `15` Møre og Romsdal | `missing_programme_rows` | After materialize | Programme rows not yet in catalog |
+| `32` Akershus | `missing_programme_rows` | After materialize | |
+| `33` Buskerud | `missing_programme_rows` | After materialize | |
+| `39` Vestfold | `missing_programme_rows` | After materialize | |
+| `40` Telemark | `missing_programme_rows` | After materialize | |
+| `34` Innlandet | `canonical_matching_review` | Blocked until review | Expected Contour B partial |
+| `42` Agder | `canonical_matching_review` | Blocked until review | Expected Contour B partial |
+| `55` Troms | `missing_programme_rows` | **No** (VG2=0 local) | Pipeline abort + runtime gate |
+| `56` Finnmark | `missing_programme_rows` | **No** (VG2=0 local) | Pipeline abort + runtime gate |
+
+**Runtime gate (P-6):** `home-county-primary-route-completeness.ts` — no VG1-only primary steps when home fylke PSA lacks VG1+VG2.
+
+---
+
+## Closure checklist (remaining)
+
+| Step | Status |
+|------|--------|
+| Code scaffolding + bedrift pilot | **Done** (`617e62d`) |
+| Primary completeness gate | **Done** (`e0098e3`) |
+| Classify green counties | **Done** (6× `verification_ready_after_write`) |
+| Relay dry-run (all green counties) | **Done** (`03,11,18,31,46,50` → `dry_run_ok`) |
+| Production relay (full matrix) | **Pending owner** — `VGS_OPERATIONAL_RUNNERS.md` |
+| Browser E2E (Fagvalg → bedrift, green fylke) | **VG1 smoke PASS** (`npm run test:e2e:painter`, 2026-07-09) |
+| Cross-fylke alternatives | **Deferred** (P-7) |

@@ -29,6 +29,7 @@
     "smoke:vg3-catalog": "node scripts/smoke-vg3-catalog-status.mjs",
     "test:e2e": "node --env-file=.env.local node_modules/.bin/playwright test",
     "test:e2e:route": "node --env-file=.env.local node_modules/.bin/playwright test e2e/route-mechanic-smoke.spec.ts",
+    "test:e2e:painter": "node --env-file=.env.local node_modules/.bin/playwright test e2e/route-painter-smoke.spec.ts",
     "test:e2e:steigen": "node --env-file=.env.local node_modules/.bin/playwright test e2e/route-steigen-carpenter-veksling-smoke.spec.ts",
     "losa:finnmark-manifest": "node scripts/extract-losa-finnmark-manifest.mjs",
     "losa:finnmark-evidence-link": "node scripts/link-losa-finnmark-evidence.mjs",
