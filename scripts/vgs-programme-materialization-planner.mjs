@@ -5,6 +5,7 @@ export const ELECTRICIAN_MATERIALIZATION_NODE_KEYS = ["VG1_ELEKTRO", "VG2_EL_BRA
 export const MECHANIC_MATERIALIZATION_NODE_KEYS = ["VG1_TEKNOLOGI", "VG2_KJORETOY"];
 export const CARPENTER_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_TOMRER"];
 export const PLUMBER_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_RORLEGGER"];
+export const PAINTER_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_OVERFLATETEKNIKK"];
 
 const PROFESSION_MATERIALIZATION_CONFIG = {
   electrician: {
@@ -53,6 +54,18 @@ const PROFESSION_MATERIALIZATION_CONFIG = {
     trondelagSlugPatterns: {
       VG1: { slug: "plumber-vg1-bygg-trondelag", code: "PLUMB-VG1-TRONDELAG" },
       VG2: { slug: "plumber-vg2-rorlegger-trondelag", code: "PLUMB-VG2-TRONDELAG" },
+    },
+  },
+  painter: {
+    nodeKeys: PAINTER_MATERIALIZATION_NODE_KEYS,
+    deriveIdentitySpecs: derivePainterProgrammeIdentitySpecs,
+    countyScopedSlugPatterns: {
+      VG1: { slugMiddle: "vg1-bygg", codePrefix: "PAINT-VG1" },
+      VG2: { slugMiddle: "vg2-overflateteknikk", codePrefix: "PAINT-VG2" },
+    },
+    trondelagSlugPatterns: {
+      VG1: { slug: "painter-vg1-bygg-trondelag", code: "PAINT-VG1-TRONDELAG" },
+      VG2: { slug: "painter-vg2-overflateteknikk-trondelag", code: "PAINT-VG2-TRONDELAG" },
     },
   },
 };
@@ -266,6 +279,50 @@ function derivePlumberProgrammeIdentitySpecs({ professionSlug, countyCode, count
       slug: `${professionSlug}-${patterns.VG2.slugMiddle}-${countyMeta.slug}`,
       programCode: `${patterns.VG2.codePrefix}-${countyUpper}`,
       title: "VG2 Rørleggerfaget",
+    },
+  };
+}
+
+/** @internal */
+function derivePainterProgrammeIdentitySpecs({ professionSlug, countyCode, countyMeta }) {
+  if (professionSlug !== "painter") {
+    return null;
+  }
+
+  if (countyMeta == null || typeof countyMeta.slug !== "string" || countyMeta.slug.length === 0) {
+    return null;
+  }
+
+  const config = PROFESSION_MATERIALIZATION_CONFIG.painter;
+
+  if (countyCode === "50") {
+    return {
+      VG1_BYGG: {
+        slug: config.trondelagSlugPatterns.VG1.slug,
+        programCode: config.trondelagSlugPatterns.VG1.code,
+        title: "VG1 Bygg- og anleggsteknikk",
+      },
+      VG2_OVERFLATETEKNIKK: {
+        slug: config.trondelagSlugPatterns.VG2.slug,
+        programCode: config.trondelagSlugPatterns.VG2.code,
+        title: "VG2 Overflateteknikk",
+      },
+    };
+  }
+
+  const countyUpper = countyTokenFromMeta(countyMeta);
+  const patterns = config.countyScopedSlugPatterns;
+
+  return {
+    VG1_BYGG: {
+      slug: `${professionSlug}-${patterns.VG1.slugMiddle}-${countyMeta.slug}`,
+      programCode: `${patterns.VG1.codePrefix}-${countyUpper}`,
+      title: "VG1 Bygg- og anleggsteknikk",
+    },
+    VG2_OVERFLATETEKNIKK: {
+      slug: `${professionSlug}-${patterns.VG2.slugMiddle}-${countyMeta.slug}`,
+      programCode: `${patterns.VG2.codePrefix}-${countyUpper}`,
+      title: "VG2 Overflateteknikk",
     },
   };
 }

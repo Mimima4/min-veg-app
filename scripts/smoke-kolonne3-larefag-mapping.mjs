@@ -167,6 +167,53 @@ if (plumberProfessionDefault?.code !== "RORLEGGERFAGET") {
   console.log(`OK plumber VG3 slug -> ${plumberProfessionDefault.code}`);
 }
 
+const PAINTER_FAG = [
+  {
+    title: "Industrimalerfaget",
+    programmeUrl:
+      "/nb/ostfold/yrker/v.ba/bygg-og-anleggsteknikk?kurs=v.babat1----_v.baoft2----_v.baimf3----_",
+    expectedCode: "INDUSTRIMALERFAGET",
+  },
+  {
+    title: "Maler- og overflateteknikkfaget",
+    programmeUrl:
+      "/nb/ostfold/yrker/v.ba/bygg-og-anleggsteknikk?kurs=v.babat1----_v.baoft2----_v.bamot3----_",
+    expectedCode: "MALER_OG_OVERFLATETEKNIKKFAGET",
+  },
+];
+
+for (const fixture of PAINTER_FAG) {
+  const programSlug = `kolonne3-${slugify(fixture.title)}`;
+  const resolved = resolveLarefagFromKolonne3Selection({
+    programSlug,
+    programTitle: fixture.title,
+    title: fixture.title,
+    programmeUrl: fixture.programmeUrl,
+  });
+  if (resolved?.code !== fixture.expectedCode) {
+    failed += 1;
+    console.error(
+      `FAIL ${fixture.title}: expected ${fixture.expectedCode}, got ${resolved?.code ?? "null"}`
+    );
+  } else {
+    console.log(`OK ${fixture.title} -> ${resolved.code}`);
+  }
+}
+
+const industrimalerTitleOnly = resolveLarefagFromKolonne3Selection({
+  programSlug: "kolonne3-industrimalerfaget",
+  programTitle: "Industrimalerfaget",
+  title: "Industrimalerfaget",
+});
+if (industrimalerTitleOnly?.code !== "INDUSTRIMALERFAGET") {
+  failed += 1;
+  console.error(
+    `FAIL title-only Industrimalerfaget: expected INDUSTRIMALERFAGET, got ${industrimalerTitleOnly?.code ?? "null"}`
+  );
+} else {
+  console.log(`OK title-only Industrimalerfaget -> ${industrimalerTitleOnly.code}`);
+}
+
 if (failed > 0) {
   process.exit(1);
 }

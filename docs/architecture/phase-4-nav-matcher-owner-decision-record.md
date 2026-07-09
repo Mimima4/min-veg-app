@@ -71,6 +71,8 @@ filter_id
 | `hidden_filter_ids` | Filters with no live contour — **hidden in UI**, not stubbed |
 | `alternative_routes` | Up to K=3 **full** routes per filter record §3; each or nothing |
 
+**County-local primary (2026-07-09):** alternatives may include routes whose **school chain PSA** lives in another fylke (relocation / neighboring county), but those routes **never** populate the home-fylke primary school pickers. Primary in home fylke requires full required chain locally — see `phase-4-county-local-primary-route-completeness-owner-policy.md`.
+
 ### 3.3 Code modules (closed 2026-06-13)
 
 | Module | Production path |

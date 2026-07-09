@@ -9,7 +9,8 @@
  * Phase 3 (closed): electrician nationwide when the child has a home kommune.
  * Phase 4 (closed): mechanic nationwide when the child has a home kommune.
  * Phase 5 (closed 2026-07-04): plumber nationwide when the child has a home kommune.
- * V.BA VG2 cross-profession programme switch (carpenter ↔ plumber) — closed; see `VGS_OPERATIONAL_RUNNERS.md`.
+ * Phase 6 (painter): maler nationwide when the child has a home kommune.
+ * V.BA VG2 cross-profession programme switch (carpenter ↔ plumber ↔ painter) — see `VGS_OPERATIONAL_RUNNERS.md`.
  */
 
 const PRIMARY_ROUTE_LAREBEDRIFT_PROFESSIONS = new Set([
@@ -17,6 +18,7 @@ const PRIMARY_ROUTE_LAREBEDRIFT_PROFESSIONS = new Set([
   "electrician",
   "mechanic",
   "plumber",
+  "painter",
 ]);
 
 export function childHomeCountyCodes(

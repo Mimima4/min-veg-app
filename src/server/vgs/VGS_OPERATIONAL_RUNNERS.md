@@ -253,6 +253,7 @@ Checks: CLI rejects `--contour-b-partial` on `run-vgs-truth-pipeline.mjs`; Conto
 | Topic | Rule |
 |-------|------|
 | **Bedrift empty list** | **Not a defect.** We publish **godkjent-only** employers. No godkjent rows → empty dropdown + existing copy «Ingen godkjente lærebedrifter for dette faget ennå.» (`route-steps-panel.tsx`). Never invent placeholders or potensielle. |
+| **County-local primary route** | **No patching.** Primary route in home fylke only when the full required school chain (per `vgs-path-definitions.mjs` `requiredForWrite`) exists in **county-scoped PSA**. Missing local VG2 (or any required stage) → **no primary route** — not VG1-only, not cross-fylke schools in primary picker. Neighboring-fylke Vilbli continuations → **`alternative_routes[]` only** (PSA-backed, labeled). Charter: `docs/architecture/phase-4-county-local-primary-route-completeness-owner-policy.md`. **Do not** relax pipeline `ABORT` on missing required Vilbli stages into partial PSA writes. |
 | **NAV / mechanic & electrician** | VG1+VG2 are **shared** within the catalogue profession; kolonne-3 fag shape the route and bedrift pool. **NAV matcher** uses **vacancy-catalog level** (e.g. Mekaniker, Elektriker) — same as post-graduation search on NAV/Finn where specialization is mostly in ad text. **Not** separate STYRK per kjøretøy/elektro fag. |
 | **Roster expansion** | Adding a lærefag to monthly ingest is **ops hygiene** when owner wants refreshed godkjent snapshot — not “closing a hole” if national godkjent count is zero. |
 

@@ -31,8 +31,12 @@ function kolonne3SlugHaystack(programSlug: string | null | undefined): string {
 export function parseVigoLaerefagQueryCodeFromUrl(
   url: string | null | undefined
 ): string | null {
-  const match = String(url ?? "").match(/_v\.([a-z0-9]+)----/i);
-  return match?.[1]?.toUpperCase() ?? null;
+  const haystack = String(url ?? "");
+  const chainMatches = [...haystack.matchAll(/(?:^|_)v\.([a-z0-9]+)----/gi)];
+  if (chainMatches.length > 0) {
+    return chainMatches[chainMatches.length - 1]?.[1]?.toUpperCase() ?? null;
+  }
+  return null;
 }
 
 const VIGO_QUERY_CODE_TO_LAREFAG: Readonly<Record<string, LarefagIdentity>> = {
@@ -49,6 +53,8 @@ const VIGO_QUERY_CODE_TO_LAREFAG: Readonly<Record<string, LarefagIdentity>> = {
   ELVIK3: { code: "VIKLERFAGET", label: "Viklerfaget" },
   BARLF3: { code: "RORLEGGERFAGET", label: "Rørleggerfaget" },
   BATMF3: { code: "TOMRERFAGET", label: "Tømrerfaget" },
+  BAMOT3: { code: "MALER_OG_OVERFLATETEKNIKKFAGET", label: "Maler- og overflateteknikkfaget" },
+  BAIMF3: { code: "INDUSTRIMALERFAGET", label: "Industrimalerfaget" },
   ELPRO3: {
     code: "PRODUKSJONSELEKTRIKERFAGET",
     label: "Produksjonselektronikerfaget",
@@ -87,6 +93,23 @@ const KOLONNE3_TITLE_MATCHERS: ReadonlyArray<{
     match: ({ slugHaystack, titleHaystack }) =>
       slugHaystack.includes("tomrer") || titleHaystack.includes("tomrer"),
     identity: { code: "TOMRERFAGET", label: "Tømrerfaget" },
+  },
+  {
+    match: ({ slugHaystack, titleHaystack }) =>
+      slugHaystack.includes("industrimaler") || titleHaystack.includes("industrimaler"),
+    identity: { code: "INDUSTRIMALERFAGET", label: "Industrimalerfaget" },
+  },
+  {
+    match: ({ slugHaystack, titleHaystack }) =>
+      slugHaystack.includes("overflateteknikk") ||
+      titleHaystack.includes("overflateteknikk") ||
+      ((slugHaystack.includes("maler") || titleHaystack.includes("maler")) &&
+        !slugHaystack.includes("industrimaler") &&
+        !titleHaystack.includes("industrimaler")),
+    identity: {
+      code: "MALER_OG_OVERFLATETEKNIKKFAGET",
+      label: "Maler- og overflateteknikkfaget",
+    },
   },
   {
     match: ({ slugHaystack, titleHaystack }) =>

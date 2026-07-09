@@ -30,6 +30,7 @@ import type { SteigenCarpenterVekslingInfoCopy } from "@/lib/regional-delivery/s
 import SteigenVekslingBadgeWithInfo from "@/components/route/steigen-veksling-badge-with-info";
 import { isBedriftLaerefagDrivingStage } from "@/lib/larebedrift/bedrift-laerefag-from-route";
 import { isLarefagSelectionStage } from "@/lib/vgs/larefag-selection-stage";
+import { toStageAwareProgrammeTitleForStage } from "@/lib/vgs/stage-aware-programme-title";
 import {
   buildVg2ProgrammeOptionId,
   parseVg2ProgrammeOptionId,
@@ -630,16 +631,20 @@ export default function RouteStepsPanel({
     return null;
   };
 
+  const toVg2AwareProgrammeTitle = (title: string | null | undefined): string =>
+    toStageAwareProgrammeTitleForStage("VG2", title) ??
+    (String(title ?? "").trim() || "VG2");
+
   const buildVg2ProgrammeStepOptions = (
     step: Extract<StudyRouteSnapshotStep, { type: "programme_selection" }>
   ): StepOption[] => {
     return resolveVg2ProgrammeOptionsFromStep(step).map((programme) => ({
       id: buildVg2ProgrammeOptionId(programme.program_slug),
-      schoolName: programme.program_title,
+      schoolName: toVg2AwareProgrammeTitle(programme.program_title),
       location: null,
       website: null,
       programTitle: programme.program_title,
-      displayTitle: programme.program_title,
+      displayTitle: toVg2AwareProgrammeTitle(programme.program_title),
       durationLabel: step.duration_label ?? null,
       fromPayload: true,
       meta: null,
@@ -942,10 +947,12 @@ export default function RouteStepsPanel({
                 const displayProgrammeTitle = isLarefagStep
                   ? "Fagvalg"
                   : isVg2Step
-                    ? selectedVg2ProgrammeOption?.displayTitle ??
-                      step.program_title ??
-                      step.title ??
-                      "VG2"
+                    ? toVg2AwareProgrammeTitle(
+                        selectedVg2ProgrammeOption?.displayTitle ??
+                          step.program_title ??
+                          step.title ??
+                          "VG2"
+                      )
                   : step.type === "apprenticeship_step" && priorLarefagSelection
                     ? `Opplæring i bedrift (${priorLarefagSelection.fagTitle})`
                     : step.type === "programme_selection"

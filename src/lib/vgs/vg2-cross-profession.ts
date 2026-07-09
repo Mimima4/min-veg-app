@@ -3,7 +3,11 @@
  * offer sibling-profession programmes that trigger a route switch (not school mixing).
  */
 
-export const VBA_SHARED_VG1_PROFESSION_SLUGS = ["carpenter", "plumber"] as const;
+export const VBA_SHARED_VG1_PROFESSION_SLUGS = [
+  "carpenter",
+  "plumber",
+  "painter",
+] as const;
 
 export type VbaSharedVg1ProfessionSlug = (typeof VBA_SHARED_VG1_PROFESSION_SLUGS)[number];
 

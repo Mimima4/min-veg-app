@@ -57,6 +57,9 @@ const CARPENTER_TOMRER_SOURCE =
 const PLUMBER_RORLEGGER_SOURCE =
   "https://www.vilbli.no/nb/no/strukturkart/V.BA/rorlegger-fag-og-timefordeling?kurs=V.BABAT1----_V.BARLF2----&side=p2";
 
+const PAINTER_OVERFLATETEKNIKK_SOURCE =
+  "https://www.vilbli.no/nb/no/strukturkart/V.BA/overflateteknikk?kurs=V.BAOFT2----&side=p2";
+
 export const PATH_FAMILY_OUTCOME_NAV_MAP_ROWS: PathFamilyOutcomeNavMapRow[] = [
   // --- mechanic / mechanic-vtp-kjoretoy ---
   {
@@ -163,6 +166,24 @@ export const PATH_FAMILY_OUTCOME_NAV_MAP_ROWS: PathFamilyOutcomeNavMapRow[] = [
     navTitle: "Rørlegger",
     catalogProfessionSlug: "plumber",
     sourceReferenceUrl: PLUMBER_RORLEGGER_SOURCE,
+  },
+  // --- painter / painter-vba-overflateteknikk ---
+  {
+    mapVersion: 1,
+    pathFamilySlug: "painter-vba-overflateteknikk",
+    professionSlug: "painter",
+    vilbliTitleIncludes: [
+      "maler",
+      "overflateteknikk",
+      "maler og overflateteknikk",
+      "industrimaler",
+    ],
+    vilbliOutcomeUrlIncludes: ["/yrker/v.ba/"],
+    filterTags: ["laere", "fagbrev"],
+    navStyrkCode: "håndverkere.maler",
+    navTitle: "Maler",
+    catalogProfessionSlug: "painter",
+    sourceReferenceUrl: PAINTER_OVERFLATETEKNIKK_SOURCE,
   },
 ];
 

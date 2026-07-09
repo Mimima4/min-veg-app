@@ -8,6 +8,7 @@ const PATH_FAMILY_SLUG_BY_PROFESSION: Record<string, string> = {
   electrician: "electrician-vel-elenergi",
   carpenter: "carpenter-vba-tomrer",
   plumber: "plumber-vba-rorlegger",
+  painter: "painter-vba-overflateteknikk",
 };
 
 export function resolvePathFamilySlug(professionSlug: string): string | null {

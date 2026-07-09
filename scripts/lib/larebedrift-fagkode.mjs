@@ -46,6 +46,25 @@ const FAG_REGISTRY = [
     apiQueryCodes: ["BARLF3"],
   },
   {
+    code: "MALER_OG_OVERFLATETEKNIKKFAGET",
+    label: "Maler- og overflateteknikkfaget",
+    labelAliases: [
+      "maler og overflateteknikk",
+      "malerfaget",
+      "overflateteknikk",
+      "maler",
+    ],
+    codeAliases: ["bamot3----", "bamot3"],
+    apiQueryCodes: ["BAMOT3"],
+  },
+  {
+    code: "INDUSTRIMALERFAGET",
+    label: "Industrimalerfaget",
+    labelAliases: ["industrimaler", "industrimalerfaget"],
+    codeAliases: ["baimf3----", "baimf3"],
+    apiQueryCodes: ["BAIMF3"],
+  },
+  {
     code: "ELEKTRIKERFAGET",
     label: "Elektrikerfaget",
     labelAliases: ["elektrikerfaget", "elektrikerfag", "elektriker"],
