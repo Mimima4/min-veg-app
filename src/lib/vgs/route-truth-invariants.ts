@@ -6,6 +6,7 @@ import type { AvailabilityTruthRow } from "@/server/children/routes/get-availabi
 import type { PathVariant } from "@/server/children/routes/build-path-variants";
 import { isLarefagSelectionStage } from "@/lib/vgs/larefag-selection-stage";
 import { hasVg3SchoolProgrammeAvailability } from "@/lib/vgs/vg3-school-programme-availability";
+import { collectPrimaryRouteCompletenessViolations } from "@/lib/vgs/home-county-primary-route-completeness";
 
 export type RouteTruthInvariantCode =
   | "PATH_VG3_VARIANT_WITHOUT_TRUTH"
@@ -14,7 +15,8 @@ export type RouteTruthInvariantCode =
   | "STEP_VG3_WITHOUT_TRUTH"
   | "STEP_VG3_FABRICATED_BRANCH_OPTIONS"
   | "STEP_VG3_OPTIONS_MISSING_SCHOOL"
-  | "STEP_APPRENTICESHIP_HAS_KOLONNE3_FAG_OPTIONS";
+  | "STEP_APPRENTICESHIP_HAS_KOLONNE3_FAG_OPTIONS"
+  | "PRIMARY_ROUTE_INCOMPLETE_HOME_COUNTY";
 
 export type RouteTruthInvariantViolation = {
   code: RouteTruthInvariantCode;
@@ -161,6 +163,10 @@ export function collectRouteTruthInvariantViolations(params: {
       truthRows: params.truthRows,
     }),
     ...collectStudyRouteStepsInvariantViolations({
+      steps: params.steps,
+      truthRows: params.truthRows,
+    }),
+    ...collectPrimaryRouteCompletenessViolations({
       steps: params.steps,
       truthRows: params.truthRows,
     }),

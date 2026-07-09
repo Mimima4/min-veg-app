@@ -109,7 +109,7 @@ Alternatives block: existing **Alternative routes** collapsible — never the ma
 |-------|--------|-------|
 | PSA ingest abort on missing required Vilbli stage | **Live** | Correct — do not relax |
 | Classify `missing_programme_rows` | **Live** | Honest readiness |
-| Primary completeness check before serving steps | **Planned** | Gate `build-steps-from-availability-truth` / route create — invariant `PRIMARY_ROUTE_INCOMPLETE_HOME_COUNTY` |
+| Primary completeness check before serving steps | **Live** | `home-county-primary-route-completeness.ts`; `build-steps-from-availability-truth`; `build-path-variants`; invariant `PRIMARY_ROUTE_INCOMPLETE_HOME_COUNTY` |
 | Neighboring-fylke **alternative** builder | **Planned** | Candidate fylke must pass **both** Vilbli county-scoped chain extract **and** full PSA for required stages; transport overlay; Steigen-style labeling |
 | Smoke / audit | **Planned** | Extend `smoke-route-truth-invariants` + `ops:audit-route-readiness` |
 

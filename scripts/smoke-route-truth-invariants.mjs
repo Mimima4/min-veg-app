@@ -9,6 +9,8 @@ import { isMainModule } from "./lib/is-main-module.mjs";
 import {
   collectPathVariantInvariantViolations,
   collectStudyRouteStepsInvariantViolations,
+  collectPrimaryRouteCompletenessViolations,
+  isHomeCountyPrimarySchoolChainComplete,
 } from "./lib/route-truth-invariants.mjs";
 
 function assert(condition, message) {
@@ -237,6 +239,47 @@ function run() {
         ],
       })
   );
+
+  runNegativeFixture(
+    "VG1-only primary steps without home-fylke VG2 PSA are blocked",
+    "PRIMARY_ROUTE_INCOMPLETE_HOME_COUNTY",
+    () =>
+      collectPrimaryRouteCompletenessViolations({
+        truthRows: [
+          {
+            stage: "VG1",
+            institutionId: "school-a",
+            institutionName: "Alta vgs",
+            availabilityScope: "programme_in_school",
+            programSlug: "painter-vg1-bygg-finnmark",
+          },
+        ],
+        steps: [
+          {
+            type: "programme_selection",
+            stage: "VG1",
+            title: "VG1 Bygg",
+            program_slug: "painter-vg1-bygg-finnmark",
+            options: [{ institution_name: "Alta vgs" }],
+          },
+        ],
+      })
+  );
+
+  assert(
+    isHomeCountyPrimarySchoolChainComplete(finnmarkMechanicTruthRows()),
+    "finnmark mechanic VG1+VG2 truth must be primary-complete"
+  );
+  assert(
+    !isHomeCountyPrimarySchoolChainComplete([
+      {
+        stage: "VG1",
+        availabilityScope: "programme_in_school",
+      },
+    ]),
+    "VG1-only truth must not be primary-complete"
+  );
+  console.error("[smoke:route-truth] primary home-fylke chain gate: OK");
 
   console.error("[smoke:route-truth] PASS");
 }

@@ -3,6 +3,7 @@ import {
   getVilbliBranchConfig,
   type VilbliBranchProfessionConfig,
 } from "@/lib/vgs/vilbli-branch-config";
+import { isHomeCountyPrimarySchoolChainComplete } from "@/lib/vgs/home-county-primary-route-completeness";
 import { hasVg3SchoolProgrammeAvailability } from "@/lib/vgs/vg3-school-programme-availability";
 import { assertRouteTruthInvariants } from "@/lib/vgs/route-truth-invariants";
 
@@ -436,6 +437,18 @@ export async function buildPathVariants(
     )
     .filter((stage) => stage !== "VG3" || hasVg3SchoolTruth)
     .sort((a, b) => stageOrder(a) - stageOrder(b));
+
+  if (!isHomeCountyPrimarySchoolChainComplete(truthRows)) {
+    return {
+      sourceUrl,
+      yrkerUrl: directYrkerUrl ?? null,
+      stages: orderedStages,
+      hasApprenticeship: false,
+      hasVg3SchoolProgrammeAvailability: hasVg3SchoolTruth,
+      variants: [],
+      outcomes: [],
+    };
+  }
 
   const baseProgrammeNodes: PathVariantNode[] = orderedStages.map((stage) => {
     const stageRow = selectStageRow(truthRows, stage);

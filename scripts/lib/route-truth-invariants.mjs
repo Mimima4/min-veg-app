@@ -137,3 +137,42 @@ export function collectStudyRouteStepsInvariantViolations({ steps, truthRows }) 
 
   return violations;
 }
+
+const PRIMARY_REQUIRED_SCHOOL_STAGES = ["VG1", "VG2"];
+
+function listMissingPrimarySchoolChainStages(truthRows) {
+  const schoolRows = truthRows.filter((row) => !isLosaScope(row.availabilityScope));
+  return PRIMARY_REQUIRED_SCHOOL_STAGES.filter(
+    (stage) => !schoolRows.some((row) => row.stage === stage)
+  );
+}
+
+function isHomeCountyPrimarySchoolChainComplete(truthRows) {
+  return listMissingPrimarySchoolChainStages(truthRows).length === 0;
+}
+
+export { isHomeCountyPrimarySchoolChainComplete };
+
+export function collectPrimaryRouteCompletenessViolations({ steps, truthRows }) {
+  if (steps.length === 0) {
+    return [];
+  }
+  if (isHomeCountyPrimarySchoolChainComplete(truthRows)) {
+    return [];
+  }
+  const missingStages = listMissingPrimarySchoolChainStages(truthRows);
+  const hasPartialSchoolSteps = steps.some(
+    (step) =>
+      step.type === "programme_selection" &&
+      (step.stage === "VG1" || step.stage === "VG2" || step.stage === "VG3")
+  );
+  if (!hasPartialSchoolSteps) {
+    return [];
+  }
+  return [
+    {
+      code: "PRIMARY_ROUTE_INCOMPLETE_HOME_COUNTY",
+      message: `Primary route emitted school steps without full home-fylke chain (missing PSA: ${missingStages.join(", ")})`,
+    },
+  ];
+}

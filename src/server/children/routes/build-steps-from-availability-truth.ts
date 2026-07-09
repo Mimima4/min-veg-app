@@ -14,6 +14,10 @@ import { compareInstitutionTransportRank } from "@/lib/planning/kommune-transpor
 import type { KommuneTransportSortContext } from "@/lib/planning/kommune-transport/types";
 import type { AvailabilityTruthRow } from "./get-availability-truth";
 import { getVilbliBranchConfig } from "@/lib/vgs/vilbli-branch-config";
+import {
+  isHomeCountyPrimarySchoolChainComplete,
+  primaryRouteStepsIncludeRequiredSchoolChain,
+} from "@/lib/vgs/home-county-primary-route-completeness";
 import { assertRouteTruthInvariants } from "@/lib/vgs/route-truth-invariants";
 import { findPriorBedriftLaerefagStep } from "@/lib/larebedrift/bedrift-laerefag-from-route";
 import { isLarefagSelectionStage } from "@/lib/vgs/larefag-selection-stage";
@@ -423,6 +427,10 @@ export function buildStepsFromAvailabilityTruth(params: {
     return [];
   }
 
+  if (!isHomeCountyPrimarySchoolChainComplete(params.rows)) {
+    return [];
+  }
+
   const defaultRow = [...params.rows].sort((a, b) => {
     const aAnchor =
       params.selectedCandidate &&
@@ -765,6 +773,10 @@ export function buildStepsFromAvailabilityTruth(params: {
       stage: defaultRow.stage,
       options: buildProgrammeSelectionOptions([defaultRow]),
     });
+  }
+
+  if (steps.length > 0 && !primaryRouteStepsIncludeRequiredSchoolChain(steps)) {
+    return [];
   }
 
   assertRouteTruthInvariants({
