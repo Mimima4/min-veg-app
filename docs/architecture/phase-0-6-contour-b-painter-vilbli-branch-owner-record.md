@@ -2,8 +2,8 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **PILOT IN PROGRESS** |
-| **Date (UTC)** | 2026-07-09 |
+| **Status** | **PILOT CLOSED** (prod UI verified 2026-07-10) |
+| **Date (UTC)** | 2026-07-10 |
 | **Profession slug** | `painter` (catalog: Maler) |
 | **Parent gate** | `VGS_OPERATIONAL_RUNNERS.md` § Expansion gate |
 
@@ -106,13 +106,13 @@ County-scoped Vilbli extract (2026-07-09): Troms `55` and Finnmark `56` have **V
 | `31` Østfold | `verification_ready_after_write` | Yes | Pilot county for bedrift E2E |
 | `46` Vestland | `verification_ready_after_write` | Yes | Relay dry-run **OK** (`contour_b_partial`) |
 | `50` Trøndelag | `verification_ready_after_write` | Yes | |
-| `15` Møre og Romsdal | `missing_programme_rows` | After materialize | Programme rows not yet in catalog |
-| `32` Akershus | `missing_programme_rows` | After materialize | |
-| `33` Buskerud | `missing_programme_rows` | After materialize | |
-| `39` Vestfold | `missing_programme_rows` | After materialize | |
-| `40` Telemark | `missing_programme_rows` | After materialize | |
-| `34` Innlandet | `canonical_matching_review` | Blocked until review | Expected Contour B partial |
-| `42` Agder | `canonical_matching_review` | Blocked until review | Expected Contour B partial |
+| `15` Møre og Romsdal | `missing_programme_rows` | **No** (Vilbli VG2=0) | Relay ABORT by design; not north P-7 |
+| `32` Akershus | `missing_programme_rows` | **No** (Vilbli VG2=0) | Relay ABORT by design |
+| `33` Buskerud | `missing_programme_rows` | **No** (Vilbli VG2=0) | Relay ABORT by design |
+| `39` Vestfold | `missing_programme_rows` | **No** (Vilbli VG2=0) | Relay ABORT by design |
+| `40` Telemark | `missing_programme_rows` | **No** (Vilbli VG2=0) | Relay ABORT by design |
+| `34` Innlandet | `canonical_matching_review` → relay `dry_run_ok` | After prod relay | Vilbli VG1=12, VG2=2 (2026-07-10) |
+| `42` Agder | `canonical_matching_review` → relay `dry_run_ok` | After prod relay | Vilbli VG1=15, VG2=1 (2026-07-10) |
 | `55` Troms | `missing_programme_rows` | **No** (VG2=0 local) | Pipeline abort + runtime gate |
 | `56` Finnmark | `missing_programme_rows` | **No** (VG2=0 local) | Pipeline abort + runtime gate |
 
@@ -120,14 +120,26 @@ County-scoped Vilbli extract (2026-07-09): Troms `55` and Finnmark `56` have **V
 
 ---
 
-## Closure checklist (remaining)
+## Closure checklist
 
 | Step | Status |
 |------|--------|
 | Code scaffolding + bedrift pilot | **Done** (`617e62d`) |
-| Primary completeness gate | **Done** (`e0098e3`) |
+| Primary completeness gate (P-6) | **Done** (`e0098e3`, `1fe01f8`) |
 | Classify green counties | **Done** (6× `verification_ready_after_write`) |
-| Relay dry-run (all green counties) | **Done** (`03,11,18,31,46,50` → `dry_run_ok`) |
-| Production relay (full matrix) | **Pending owner** — `VGS_OPERATIONAL_RUNNERS.md` |
-| Browser E2E (Fagvalg → bedrift, green fylke) | **VG1 smoke PASS** (`npm run test:e2e:painter`, 2026-07-09) |
-| Cross-fylke alternatives | **Live (P-7)** — Nordland `18` + Trøndelag `50` via curated regional sync |
+| Relay dry-run (green counties) | **Done** (`03,11,18,31,46,50`) |
+| Production relay (green matrix) | **Done** (owner sign-off 2026-07-10) |
+| P-7 north alternatives (VG1 home + VG2 neighbor) | **Done** (`1fe01f8`; UI verified Troms/Finnmark) |
+| Browser E2E (green fylke) | **PASS** (`npm run test:e2e:painter`, 2026-07-09) |
+| Prod UI spot-check | **Done** (owner 2026-07-10) |
+
+### Post-closure expansion (not blocking pilot)
+
+| Fylke | Vilbli extract (painter) | Relay | Product |
+|-------|---------------------------|-------|---------|
+| `34` Innlandet | VG1+VG2 | `dry_run_ok` 2026-07-10 | Primary after prod relay |
+| `42` Agder | VG1+VG2 | `dry_run_ok` 2026-07-10 | Primary after prod relay |
+| `15,32,33,39,40` | VG1 only, VG2=0 | **ABORT** (correct) | No primary; no P-7 (not `55`/`56`) |
+| `55,56` | VG1 only, VG2=0 | **ABORT** (correct) | P-7 alternatives only; VG1 PSA via shared `carpenter-vg1-bygg-*` until painter catalog rows exist |
+
+**North VG1 slug note:** `painter-vg1-bygg-troms/finnmark` catalogue rows are **not** materialized — Contour B ingest ABORTs without local VG2. Runtime reads home VG1 through **V.BA shared VG1** (`painterHomeVg1ProgrammeSlugsForFylke`). Not a hack; matches owner P-6/P-7 policy.
