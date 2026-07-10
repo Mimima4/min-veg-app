@@ -16765,6 +16765,17 @@ function detectPainterBranch(program) {
   }
   return "unspecified";
 }
+function detectAnleggsteknikkBranch(program) {
+  const title = normalizeBasic(program.title);
+  const code = normalizeBasic(program.program_code);
+  if (title.includes("anleggsteknikk") || title.includes("anleggsmaskinforer") || title.includes("veg og anlegg") || code.includes("baanl")) {
+    return "anleggsteknikfaget";
+  }
+  if (title.includes("bygg") || title.includes("anlegg") || code.includes("bat")) {
+    return "bygg_og_anlegg";
+  }
+  return "unspecified";
+}
 function detectElectricianBranch(program) {
   const title = normalizeBasic(program.title);
   const code = normalizeBasic(program.program_code);
@@ -16977,6 +16988,78 @@ var PAINTER_PATH_DEFINITION = {
     }
   ]
 };
+var ANLEGSTEKNIKK_PATH_DEFINITION = {
+  professionSlug: "anleggsteknikk",
+  contour: "vgs",
+  description: "Anleggsteknikk VGS path: VG1 Bygg- og anleggsteknikk, VG2 Anleggsteknikfaget, kolonne-3/bedrift list from Vilbli.",
+  sourceModel: {
+    buildVilbliUrl(countySlug) {
+      return `https://www.vilbli.no/nb/${countySlug}/strukturkart/V.BA/bygg-og-anleggsteknikk-skoler-og-laerebedrifter?kurs=V.BABAT1----_V.BAANL2----&side=p5`;
+    },
+    strukturkartReferenceUrl: "https://www.vilbli.no/nb/no/strukturkart/V.BA/anleggsteknikk-fag-og-timefordeling?kurs=V.BABAT1----_V.BAANL2----&side=p2"
+  },
+  stageNodes: [
+    {
+      nodeKey: "VG1_BYGG",
+      stage: "VG1",
+      stageType: "school_programme",
+      branchSpecific: false,
+      requiredForWrite: true,
+      expectedLabel: "VG1 Bygg- og anleggsteknikk",
+      programmeMatcher: {
+        includesAny: [
+          "vg1 bygg og anleggsteknikk",
+          "vg1 bygg- og anleggsteknikk",
+          "bygg- og anleggsteknikk",
+          "bygg og anlegg"
+        ]
+      }
+    },
+    {
+      nodeKey: "VG2_ANLEGSTEKNIKK",
+      stage: "VG2",
+      stageType: "school_programme",
+      branchSpecific: true,
+      requiredForWrite: true,
+      branchKey: "anleggsteknikfaget",
+      expectedLabel: "VG2 Anleggsteknikfaget",
+      programmeMatcher: {
+        includesAny: [
+          "vg2 anleggsteknikfaget",
+          "anleggsteknikfaget",
+          "anleggsteknikk",
+          "anleggsmaskinforer",
+          "veg og anlegg"
+        ]
+      },
+      branchResolver: detectAnleggsteknikkBranch
+    },
+    {
+      nodeKey: "VG3_OR_BEDRIFT_SPECIALIZATIONS",
+      stage: "VG3",
+      stageType: "awareness_only",
+      branchSpecific: false,
+      requiredForWrite: false,
+      expectedLabel: "VG3 or Oppl\xE6ring i bedrift \u2014 kolonne-3 list from Vilbli for Bygg\u2192Anleggsteknikfaget chain (not P\xE5bygging)"
+    },
+    {
+      nodeKey: "APPRENTICESHIP_PROGRESS",
+      stage: "APPRENTICESHIP",
+      stageType: "progression",
+      branchSpecific: true,
+      requiredForWrite: false,
+      expectedLabel: "Oppl\xE6ring i bedrift (l\xE6re / fagbrev) after VG2 or VG3 specialization choice"
+    },
+    {
+      nodeKey: "FAGBREV_OUTCOME",
+      stage: "FAGBREV",
+      stageType: "progression_outcome",
+      branchSpecific: true,
+      requiredForWrite: false,
+      expectedLabel: "Fagbrev Anleggsmaskinf\xF8rer"
+    }
+  ]
+};
 var PLUMBER_PATH_DEFINITION = {
   professionSlug: "plumber",
   contour: "vgs",
@@ -17113,7 +17196,8 @@ var VGS_PATH_DEFINITIONS = {
   mechanic: MECHANIC_PATH_DEFINITION,
   carpenter: CARPENTER_PATH_DEFINITION,
   plumber: PLUMBER_PATH_DEFINITION,
-  painter: PAINTER_PATH_DEFINITION
+  painter: PAINTER_PATH_DEFINITION,
+  anleggsteknikk: ANLEGSTEKNIKK_PATH_DEFINITION
 };
 function getVgsPathDefinition(professionSlug) {
   return VGS_PATH_DEFINITIONS[professionSlug] ?? null;
@@ -17156,6 +17240,7 @@ var MECHANIC_MATERIALIZATION_NODE_KEYS = ["VG1_TEKNOLOGI", "VG2_KJORETOY"];
 var CARPENTER_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_TOMRER"];
 var PLUMBER_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_RORLEGGER"];
 var PAINTER_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_OVERFLATETEKNIKK"];
+var ANLEGSTEKNIKK_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_ANLEGSTEKNIKK"];
 var PROFESSION_MATERIALIZATION_CONFIG = {
   electrician: {
     nodeKeys: ELECTRICIAN_MATERIALIZATION_NODE_KEYS,
@@ -17215,6 +17300,21 @@ var PROFESSION_MATERIALIZATION_CONFIG = {
     trondelagSlugPatterns: {
       VG1: { slug: "painter-vg1-bygg-trondelag", code: "PAINT-VG1-TRONDELAG" },
       VG2: { slug: "painter-vg2-overflateteknikk-trondelag", code: "PAINT-VG2-TRONDELAG" }
+    }
+  },
+  anleggsteknikk: {
+    nodeKeys: ANLEGSTEKNIKK_MATERIALIZATION_NODE_KEYS,
+    deriveIdentitySpecs: deriveAnleggsteknikkProgrammeIdentitySpecs,
+    countyScopedSlugPatterns: {
+      VG1: { slugMiddle: "vg1-bygg", codePrefix: "ANLEG-VG1" },
+      VG2: { slugMiddle: "vg2-anleggsteknikk", codePrefix: "ANLEG-VG2" }
+    },
+    trondelagSlugPatterns: {
+      VG1: { slug: "anleggsteknikk-vg1-bygg-trondelag", code: "ANLEG-VG1-TRONDELAG" },
+      VG2: {
+        slug: "anleggsteknikk-vg2-anleggsteknikk-trondelag",
+        code: "ANLEG-VG2-TRONDELAG"
+      }
     }
   }
 };
@@ -17411,6 +17511,43 @@ function derivePainterProgrammeIdentitySpecs({ professionSlug, countyCode, count
       slug: `${professionSlug}-${patterns.VG2.slugMiddle}-${countyMeta.slug}`,
       programCode: `${patterns.VG2.codePrefix}-${countyUpper}`,
       title: "VG2 Overflateteknikk"
+    }
+  };
+}
+function deriveAnleggsteknikkProgrammeIdentitySpecs({ professionSlug, countyCode, countyMeta }) {
+  if (professionSlug !== "anleggsteknikk") {
+    return null;
+  }
+  if (countyMeta == null || typeof countyMeta.slug !== "string" || countyMeta.slug.length === 0) {
+    return null;
+  }
+  const config = PROFESSION_MATERIALIZATION_CONFIG.anleggsteknikk;
+  if (countyCode === "50") {
+    return {
+      VG1_BYGG: {
+        slug: config.trondelagSlugPatterns.VG1.slug,
+        programCode: config.trondelagSlugPatterns.VG1.code,
+        title: "VG1 Bygg- og anleggsteknikk"
+      },
+      VG2_ANLEGSTEKNIKK: {
+        slug: config.trondelagSlugPatterns.VG2.slug,
+        programCode: config.trondelagSlugPatterns.VG2.code,
+        title: "VG2 Anleggsteknikfaget"
+      }
+    };
+  }
+  const countyUpper = countyTokenFromMeta(countyMeta);
+  const patterns = config.countyScopedSlugPatterns;
+  return {
+    VG1_BYGG: {
+      slug: `${professionSlug}-${patterns.VG1.slugMiddle}-${countyMeta.slug}`,
+      programCode: `${patterns.VG1.codePrefix}-${countyUpper}`,
+      title: "VG1 Bygg- og anleggsteknikk"
+    },
+    VG2_ANLEGSTEKNIKK: {
+      slug: `${professionSlug}-${patterns.VG2.slugMiddle}-${countyMeta.slug}`,
+      programCode: `${patterns.VG2.codePrefix}-${countyUpper}`,
+      title: "VG2 Anleggsteknikfaget"
     }
   };
 }
@@ -18810,7 +18947,8 @@ var MATERIALIZATION_NODE_KEYS_BY_PROFESSION = {
   mechanic: MECHANIC_MATERIALIZATION_NODE_KEYS,
   carpenter: CARPENTER_MATERIALIZATION_NODE_KEYS,
   plumber: PLUMBER_MATERIALIZATION_NODE_KEYS,
-  painter: PAINTER_MATERIALIZATION_NODE_KEYS
+  painter: PAINTER_MATERIALIZATION_NODE_KEYS,
+  anleggsteknikk: ANLEGSTEKNIKK_MATERIALIZATION_NODE_KEYS
 };
 var COUNTY_CODE_TO_VILBLI2 = {
   "03": { slug: "oslo", label: "Oslo" },

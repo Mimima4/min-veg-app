@@ -146,7 +146,7 @@ Source: `src/lib/i18n/route-steps-empty-copy.ts`. Signal: `PRIMARY_ROUTE_INCOMPL
 
 ### 4.5 V.BA shared VG1 — multi-profession VG2 switch
 
-| When | `carpenter`, `plumber`, `painter` (Bygg VG1) |
+| When | `carpenter`, `plumber`, `painter`, `anleggsteknikk` (Bygg VG1) |
 |------|-----------------------------------------------|
 | UX | Two-zone VG2 card: programme picker → school picker |
 | Cross-profession switch | `switch-study-route-for-vg2-programme.ts` — new working route, no VG1 carry-over |

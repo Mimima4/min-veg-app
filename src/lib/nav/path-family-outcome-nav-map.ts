@@ -60,6 +60,9 @@ const PLUMBER_RORLEGGER_SOURCE =
 const PAINTER_OVERFLATETEKNIKK_SOURCE =
   "https://www.vilbli.no/nb/no/strukturkart/V.BA/overflateteknikk?kurs=V.BAOFT2----&side=p2";
 
+const ANLEGSTEKNIKK_SOURCE =
+  "https://www.vilbli.no/nb/no/strukturkart/V.BA/anleggsteknikk-fag-og-timefordeling?kurs=V.BABAT1----_V.BAANL2----&side=p2";
+
 export const PATH_FAMILY_OUTCOME_NAV_MAP_ROWS: PathFamilyOutcomeNavMapRow[] = [
   // --- mechanic / mechanic-vtp-kjoretoy ---
   {
@@ -184,6 +187,24 @@ export const PATH_FAMILY_OUTCOME_NAV_MAP_ROWS: PathFamilyOutcomeNavMapRow[] = [
     navTitle: "Maler",
     catalogProfessionSlug: "painter",
     sourceReferenceUrl: PAINTER_OVERFLATETEKNIKK_SOURCE,
+  },
+  // --- anleggsteknikk / anleggsteknikk-vba-anleggsteknikk ---
+  {
+    mapVersion: 1,
+    pathFamilySlug: "anleggsteknikk-vba-anleggsteknikk",
+    professionSlug: "anleggsteknikk",
+    vilbliTitleIncludes: [
+      "anleggsteknikk",
+      "anleggsteknikfaget",
+      "anleggsmaskinforer",
+      "veg og anlegg",
+    ],
+    vilbliOutcomeUrlIncludes: ["/yrker/v.ba/"],
+    filterTags: ["laere", "fagbrev"],
+    navStyrkCode: "håndverkere.anleggsmaskinør",
+    navTitle: "Anleggsmaskinfører",
+    catalogProfessionSlug: "anleggsteknikk",
+    sourceReferenceUrl: ANLEGSTEKNIKK_SOURCE,
   },
 ];
 

@@ -261,7 +261,7 @@ Checks: CLI rejects `--contour-b-partial` on `run-vgs-truth-pipeline.mjs`; Conto
 
 | Layer | Status |
 |-------|--------|
-| **C-VGS-YRKESFAG** | **5 professions** in pipeline (`electrician`, `mechanic`, `carpenter`, `plumber`, `painter`); VG2 gate + V.BA switch live; **more catalogue professions remain** |
+| **C-VGS-YRKESFAG** | **5 professions live** (`electrician`, `mechanic`, `carpenter`, `plumber`, `painter`); **`anleggsteknikk` scaffolding** (2026-07-10, relay pending); VG2 gate + V.BA switch; **more catalogue professions remain** |
 | **C-NAV-OCCUPATION** | Matcher wired at **catalog profession / NAV vacancy level** |
 | **Verified bedrift** | P3b for 5 professions; ingest roster = tømrer + rørlegger + maler kolonne-3 + 11 elektro + 10 kjøretøy; **empty bedrift when no godkjent = OK** |
 | **C-TRANSPORT-KOMMUNE** | Live nationwide overlay |
@@ -328,6 +328,19 @@ Reference: owner screenshots — collapsed two-part card; programme open = hint 
 `Rørleggerfaget` registered in `larebedrift-fagkode.mjs`, `kolonne3-larefag-mapping.ts` (`BARLF3`), `profession-larefag-mapping.ts`, and cron batch 0 (`scheduled-larebedrift-ingest-fags.ts`). Pilot gate: `primary-route-larebedrift-pilot.ts` (nationwide when child has home kommune). **Nationwide ingest verified** — ~902 active `RORLEGGERFAGET` rows in `larebedrift_truth` (2026-07-03 `verify-larebedrift-truth-snapshot.mjs` PASS); prod-check Fagvalg → bedrift on plumber route.
 
 Contour B / catalog expansion checklist (if adding counties): `§ Expansion gate` above — relay dry-run → production → route E2E.
+
+### Anleggsteknikk (`anleggsteknikk` / Anleggsmaskinfører) — scaffolding (2026-07-10)
+
+**Code only — not live in prod until relay + catalog seed.** Vilbli chain: VG1 `V.BABAT1----` → VG2 `V.BAANL2----` → kolonne-3 `V.BAANL3----` (verify on pilot extract). Charter: `phase-0-6-contour-b-anleggsteknikk-vilbli-branch-owner-record.md`.
+
+| Layer | Status |
+|-------|--------|
+| Path definition + materialization | ☑ `vgs-path-definitions.mjs`, planner |
+| V.BA VG2 switch | ☑ extends carpenter/plumber/painter gate |
+| Catalog seed | `scripts/sql/seed-profession-anleggsteknikk-catalog.sql` — **applied** prod DB 2026-07-10 |
+| NAV map | ☑ `anleggsteknikk-vba-anleggsteknikk` (`håndverkere.anleggsmaskinør` — confirm) |
+| Bedrift ingest | **Deferred** — kolonne-3 `larefag_code` / cron roster TBD after Vestland (`46`) extract |
+| Pilot | Vestland (`46`) — relay dry-run next |
 
 ### Bedrift UI performance (truth-preserving)
 
