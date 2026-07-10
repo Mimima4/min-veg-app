@@ -32,6 +32,8 @@ Skipping this when product information was updated is a **process defect**, not 
 
 ### Expansion gate (code + ops — all required)
 
+**Full checklist:** `docs/architecture/phase-0-6-contour-b-vgs-profession-addition-template.md` (reference instance: `painter`). Per-profession branch records copy §7 closure checklist from the template.
+
 Before production relay for a **new** `(professionSlug, countyCode)`:
 
 | Step | Artifact | Required action |
@@ -259,9 +261,9 @@ Checks: CLI rejects `--contour-b-partial` on `run-vgs-truth-pipeline.mjs`; Conto
 
 | Layer | Status |
 |-------|--------|
-| **C-VGS-YRKESFAG** | **4 professions** in pipeline (`electrician`, `mechanic`, `carpenter`, `plumber`); VG2 gate + V.BA switch live; **more catalogue professions remain** |
+| **C-VGS-YRKESFAG** | **5 professions** in pipeline (`electrician`, `mechanic`, `carpenter`, `plumber`, `painter`); VG2 gate + V.BA switch live; **more catalogue professions remain** |
 | **C-NAV-OCCUPATION** | Matcher wired at **catalog profession / NAV vacancy level** |
-| **Verified bedrift** | P3b for 4 professions; ingest roster = tømrer + rørlegger + 11 elektro + 10 kjøretøy; **empty bedrift when no godkjent = OK** |
+| **Verified bedrift** | P3b for 5 professions; ingest roster = tømrer + rørlegger + maler kolonne-3 + 11 elektro + 10 kjøretøy; **empty bedrift when no godkjent = OK** |
 | **C-TRANSPORT-KOMMUNE** | Live nationwide overlay |
 | **C-LOSA-FJERN** | Live Finnmark (56) electrician charter |
 | **C-FAGSKOLE / C-HOYSKOLE / C-PROFESJONSSTUDIER / C-PABYGGING** | **Out of scope for P4-MCT-1** — filters hidden until respective MCT phases |

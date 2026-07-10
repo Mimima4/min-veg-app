@@ -648,6 +648,7 @@ export async function triggerStudyRouteRecompute(params: Params) {
 
     let recomputedSteps: StudyRouteSnapshotStep[] = [];
     let contourBTruthPathUsed = false;
+    let primaryRouteIncompleteHomeCounty = false;
     let admissionRealismRecord = null;
     let outcomeFilterAlternativesContext: {
       pathVariantNavContext: RoutePathVariantNavContext;
@@ -693,6 +694,7 @@ export async function triggerStudyRouteRecompute(params: Params) {
 
         if (!primaryEligibility.eligible) {
           // Contour B handoff: incomplete home-fylke chain → no primary steps.
+          primaryRouteIncompleteHomeCounty = true;
           recomputedSteps = [];
         } else {
         const transportSortContext = await buildKommuneTransportSortContext({
@@ -923,6 +925,7 @@ export async function triggerStudyRouteRecompute(params: Params) {
       selectedProgramExists: Boolean(selectedProgram),
       mode: "recompute",
       admissionRealismRecord,
+      primaryRouteIncompleteHomeCounty,
     });
 
     recomputedSteps = protectLockedSteps({

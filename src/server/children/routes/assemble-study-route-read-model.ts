@@ -20,6 +20,7 @@ import {
 import { getRouteAdmissionRealism } from "./get-route-admission-realism";
 import { resolveStudyRouteState } from "./resolve-study-route-state";
 import { enrichStudyRouteSteps } from "./enrich-study-route-steps";
+import { resolvePrimaryRouteEmptyStateFromWarnings } from "@/lib/vgs/primary-route-empty-state-copy";
 
 type AssembleParams = {
   locale?: string;
@@ -248,6 +249,22 @@ export async function assembleStudyRouteReadModel(
       }
     : null;
 
+  const resolvedSignals = recomputePending
+    ? {
+        warnings: [],
+        improvementGuidance: [],
+        evidenceComposition: {
+          hasParentInput: false,
+          hasSchoolEvidence: false,
+          hasDerivedSignals: false,
+        },
+      }
+    : resolvedState.signals;
+
+  const primaryRouteEmptyState = recomputePending
+    ? null
+    : resolvePrimaryRouteEmptyStateFromWarnings(supportedLocale, resolvedSignals.warnings);
+
   return {
     identity: {
       routeId: params.route.id,
@@ -281,17 +298,8 @@ export async function assembleStudyRouteReadModel(
       newRouteAvailable: resolvedState.headerSummary.newRouteAvailable,
     },
     steps: presentationSteps,
-    signals: recomputePending
-      ? {
-          warnings: [],
-          improvementGuidance: [],
-          evidenceComposition: {
-            hasParentInput: false,
-            hasSchoolEvidence: false,
-            hasDerivedSignals: false,
-          },
-        }
-      : resolvedState.signals,
+    signals: resolvedSignals,
+    primaryRouteEmptyState,
     availableProfessions: {
       ...availableProfessions,
       items: availableProfessionsWithBuckets,

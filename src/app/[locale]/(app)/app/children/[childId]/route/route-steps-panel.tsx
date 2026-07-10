@@ -27,6 +27,7 @@ import {
 import SaveRouteButton from "./[routeId]/save-route-button";
 import Vg2RouteStepCard from "./vg2-route-step-card";
 import type { SteigenCarpenterVekslingInfoCopy } from "@/lib/regional-delivery/steigen-carpenter-veksling-pilot";
+import type { StudyRoutePrimaryRouteEmptyState } from "@/lib/routes/route-types";
 import SteigenVekslingBadgeWithInfo from "@/components/route/steigen-veksling-badge-with-info";
 import { isBedriftLaerefagDrivingStage } from "@/lib/larebedrift/bedrift-laerefag-from-route";
 import { isLarefagSelectionStage } from "@/lib/vgs/larefag-selection-stage";
@@ -36,6 +37,7 @@ import {
   parseVg2ProgrammeOptionId,
   resolveVg2ProgrammeOptionsFromStep,
 } from "@/lib/vgs/vg2-programme-options";
+import { getRouteStepsEmptyMessage } from "@/lib/i18n/route-steps-empty-copy";
 
 type ApprenticeshipOptionList = NonNullable<
   StudyRouteApprenticeshipSnapshotStep["apprenticeship_options"]
@@ -68,6 +70,7 @@ type Props = {
   compact?: boolean;
   showHeader?: boolean;
   steigenVekslingInfoCopy?: SteigenCarpenterVekslingInfoCopy | null;
+  primaryRouteEmptyState?: StudyRoutePrimaryRouteEmptyState | null;
 };
 
 function humanizeStepType(step: StudyRouteSnapshotStep): string {
@@ -136,6 +139,7 @@ export default function RouteStepsPanel({
   compact = false,
   showHeader = true,
   steigenVekslingInfoCopy = null,
+  primaryRouteEmptyState = null,
 }: Props) {
   const router = useRouter();
   const cardWidth = compact ? "w-[200px] min-w-[200px]" : "w-[320px]";
@@ -885,7 +889,7 @@ export default function RouteStepsPanel({
         <div
           className={`${showHeader ? "mt-5" : "mt-0"} rounded-xl border border-stone-200 bg-stone-50 ${cardPadding} ${compact ? "text-xs" : "text-sm"} text-stone-600`}
         >
-          No route steps are available yet.
+          {primaryRouteEmptyState?.message ?? getRouteStepsEmptyMessage(locale)}
         </div>
       ) : (
         <div className={`${showHeader ? "mt-5" : "mt-0"} overflow-x-auto pb-2`}>

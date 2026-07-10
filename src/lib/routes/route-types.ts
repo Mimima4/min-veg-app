@@ -246,11 +246,18 @@ export type StudyRouteSnapshotContext = {
   planning: StudyRouteSnapshotPlanningSlice;
 };
 
+export type StudyRoutePrimaryRouteEmptyState = {
+  code: "PRIMARY_ROUTE_INCOMPLETE_HOME_COUNTY";
+  message: string;
+};
+
 export type StudyRouteReadModel = {
   identity: StudyRouteIdentity;
   header: StudyRouteHeaderSummary;
   steps: StudyRouteReadModelStep[];
   signals: StudyRouteSignals;
+  /** Honest empty primary when home fylke lacks full school chain (psa_to_primary gate). */
+  primaryRouteEmptyState?: StudyRoutePrimaryRouteEmptyState | null;
   availableProfessions: StudyRouteAvailableProfessionsBlock;
   alternativeRoutes: StudyRouteAlternativeTeaser[];
   savedSelectionSignatures?: string[];

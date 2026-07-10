@@ -5,7 +5,7 @@
 | **Status** | **PILOT CLOSED** (prod UI verified 2026-07-10) |
 | **Date (UTC)** | 2026-07-10 |
 | **Profession slug** | `painter` (catalog: Maler) |
-| **Parent gate** | `VGS_OPERATIONAL_RUNNERS.md` § Expansion gate |
+| **Parent gate** | `phase-0-6-contour-b-vgs-profession-addition-template.md` (this record = reference instance) |
 
 ---
 

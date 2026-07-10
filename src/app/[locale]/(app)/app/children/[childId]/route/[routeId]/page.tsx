@@ -178,6 +178,7 @@ export default async function StudyRouteDetailPage({
             steigenVekslingInfoCopy={
               showSteigenVekslingBadgeInCurrentSteps ? steigenVekslingInfoCopy : null
             }
+            primaryRouteEmptyState={route.primaryRouteEmptyState ?? null}
           />
 
           {showStrategyBlock && (

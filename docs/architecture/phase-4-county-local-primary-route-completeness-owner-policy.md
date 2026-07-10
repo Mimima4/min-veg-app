@@ -92,12 +92,15 @@ Electrician Finnmark has local VG2 on `V.EL` — different Vilbli branch; partia
 
 ---
 
-## UX copy (target)
+## UX copy
 
-| Locale | Primary unavailable |
-|--------|---------------------|
-| nb | «Det finnes ingen fullstendig skolevei for dette yrket i barnets heimfylke.» |
-| en | «There is no complete school pathway for this trade in the child’s home county.» |
+| Locale | Primary unavailable (incomplete home-fylke chain) |
+|--------|-----------------------------------------------------|
+| nb | «Ingen rutetrinn er tilgjengelige ennå.» |
+| nn | «Ingen rutetrinn er tilgjengelige enno.» |
+| en | «No route steps are available yet.» |
+
+**Status:** **Live** — `src/lib/i18n/route-steps-empty-copy.ts`, `route-steps-panel.tsx`; signal `PRIMARY_ROUTE_INCOMPLETE_HOME_COUNTY` in `signals_payload.warnings`.
 
 Alternatives block: existing **Alternative routes** collapsible — never the main card.
 

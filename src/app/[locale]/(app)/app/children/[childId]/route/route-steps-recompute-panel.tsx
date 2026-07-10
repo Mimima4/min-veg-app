@@ -9,6 +9,7 @@ import type {
   StudyRouteReadModelStep,
 } from "@/lib/routes/route-types";
 import type { SteigenCarpenterVekslingInfoCopy } from "@/lib/regional-delivery/steigen-carpenter-veksling-pilot";
+import type { StudyRoutePrimaryRouteEmptyState } from "@/lib/routes/route-types";
 import RouteStepsPanel from "./route-steps-panel";
 import { runClientRecomputeOnce } from "@/lib/routes/client-recompute-lock";
 
@@ -23,6 +24,7 @@ type Props = {
   competitionLevel?: StudyRouteCompetitionLevel;
   savedSelectionSignatures?: string[];
   steigenVekslingInfoCopy?: SteigenCarpenterVekslingInfoCopy | null;
+  primaryRouteEmptyState?: StudyRoutePrimaryRouteEmptyState | null;
 };
 
 const POLL_INTERVAL_MS = 2000;
@@ -109,6 +111,7 @@ export default function RouteStepsRecomputePanel({
   competitionLevel,
   savedSelectionSignatures,
   steigenVekslingInfoCopy = null,
+  primaryRouteEmptyState = null,
 }: Props) {
   const router = useRouter();
   const routerRef = useRef(router);
@@ -117,6 +120,8 @@ export default function RouteStepsRecomputePanel({
   const [isRefreshing, startTransition] = useTransition();
   const [pending, setPending] = useState(recomputePending);
   const [displaySteps, setDisplaySteps] = useState(steps);
+  const [displayPrimaryRouteEmptyState, setDisplayPrimaryRouteEmptyState] =
+    useState(primaryRouteEmptyState);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
   const triggeredRef = useRef(false);
@@ -131,14 +136,13 @@ export default function RouteStepsRecomputePanel({
       clientPassRef.current = 0;
     }
     setPending(recomputePending);
-    if (steps.length > 0) {
-      setDisplaySteps(steps);
-    }
+    setDisplaySteps(steps);
+    setDisplayPrimaryRouteEmptyState(primaryRouteEmptyState);
     if (!recomputePending) {
       triggeredRef.current = false;
       clientPassRef.current = 0;
     }
-  }, [childId, routeId, recomputePending, steps]);
+  }, [childId, routeId, recomputePending, steps, primaryRouteEmptyState]);
 
   useEffect(() => {
     if (!pending || triggeredRef.current) {
@@ -165,8 +169,9 @@ export default function RouteStepsRecomputePanel({
           return;
         }
 
-        if (updated?.steps && updated.steps.length > 0) {
-          setDisplaySteps(updated.steps);
+        if (updated) {
+          setDisplaySteps(updated.steps ?? []);
+          setDisplayPrimaryRouteEmptyState(updated.primaryRouteEmptyState ?? null);
         }
 
         if (updated?.recomputePending) {
@@ -244,6 +249,7 @@ export default function RouteStepsRecomputePanel({
       competitionLevel={competitionLevel}
       savedSelectionSignatures={savedSelectionSignatures}
       steigenVekslingInfoCopy={steigenVekslingInfoCopy}
+      primaryRouteEmptyState={displayPrimaryRouteEmptyState}
     />
   );
 }

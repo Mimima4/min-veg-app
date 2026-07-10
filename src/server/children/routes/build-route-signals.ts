@@ -2,6 +2,10 @@ import type { StudyRouteSignals } from "@/lib/routes/route-signal-types";
 import type { StudyRouteSnapshotContext } from "@/lib/routes/route-types";
 import type { RouteAdmissionRealismRecord } from "@/lib/routes/route-admission-realism-types";
 import { getRouteRequirementsRule } from "./route-requirements-rules";
+import {
+  getPrimaryRouteIncompleteHomeCountyCopy,
+  PRIMARY_ROUTE_INCOMPLETE_HOME_COUNTY_CODE,
+} from "@/lib/vgs/primary-route-empty-state-copy";
 
 type BuildRouteSignalsInput = {
   snapshotContext: StudyRouteSnapshotContext;
@@ -9,6 +13,7 @@ type BuildRouteSignalsInput = {
   selectedProgramExists: boolean;
   mode: "initial" | "recompute";
   admissionRealismRecord: RouteAdmissionRealismRecord | null;
+  primaryRouteIncompleteHomeCounty?: boolean;
 };
 
 function toRecord(value: unknown): Record<string, unknown> | null {
@@ -97,6 +102,15 @@ export function buildRouteSignals(input: BuildRouteSignalsInput): StudyRouteSign
 
   const warnings: StudyRouteSignals["warnings"] = [];
   const improvementGuidance: StudyRouteSignals["improvementGuidance"] = [];
+
+  if (input.primaryRouteIncompleteHomeCounty) {
+    const locale = input.snapshotContext.locale;
+    warnings.push({
+      code: PRIMARY_ROUTE_INCOMPLETE_HOME_COUNTY_CODE,
+      label: getPrimaryRouteIncompleteHomeCountyCopy(locale),
+      severity: "medium",
+    });
+  }
 
   if (!hasInterests) {
     warnings.push({

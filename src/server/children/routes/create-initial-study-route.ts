@@ -363,6 +363,7 @@ export async function createInitialStudyRoute(
 
   let initialSteps: StudyRouteSnapshotStep[] = [];
   let contourBTruthPathUsed = false;
+  let primaryRouteIncompleteHomeCounty = false;
   let admissionRealismRecord = null;
   let outcomeFilterAlternativesContext: {
     pathVariantNavContext: RoutePathVariantNavContext;
@@ -405,6 +406,7 @@ export async function createInitialStudyRoute(
       if (!primaryEligibility.eligible) {
         // Contour B handoff: incomplete home-fylke chain → no primary steps.
         // Steigen / curated regional alternatives sync only after truth-backed primary.
+        primaryRouteIncompleteHomeCounty = true;
         initialSteps = [];
       } else {
       const transportSortContext = await buildKommuneTransportSortContext({
@@ -638,6 +640,7 @@ export async function createInitialStudyRoute(
     selectedProgramExists: Boolean(selectedProgram),
     mode: "initial",
     admissionRealismRecord,
+    primaryRouteIncompleteHomeCounty,
   });
 
   // SAFE FIX: saved route must not block working route creation.
