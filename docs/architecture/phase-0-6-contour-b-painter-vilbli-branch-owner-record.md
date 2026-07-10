@@ -66,7 +66,7 @@ VG3/bedrift: expanded from Vilbli bedrift links (`painter-vg3-{title}-{countySlu
 | Primary `larefag_code` | `MALER_OG_OVERFLATETEKNIKKFAGET` |
 | VIGO api query | `BAMOT3` |
 | Sibling on chain | `INDUSTRIMALERFAGET` / `BAIMF3` (kolonne-3 selection) |
-| Cron batch | TBD (after nationwide ingest charter) |
+| Cron batch | Batch 0 (`MALER_OG_OVERFLATETEKNIKKFAGET`, `INDUSTRIMALERFAGET`) — `scheduled-larebedrift-ingest-fags.ts` |
 
 ---
 
@@ -111,8 +111,8 @@ County-scoped Vilbli extract (2026-07-09): Troms `55` and Finnmark `56` have **V
 | `33` Buskerud | `missing_programme_rows` | **No** (Vilbli VG2=0) | Relay ABORT by design |
 | `39` Vestfold | `missing_programme_rows` | **No** (Vilbli VG2=0) | Relay ABORT by design |
 | `40` Telemark | `missing_programme_rows` | **No** (Vilbli VG2=0) | Relay ABORT by design |
-| `34` Innlandet | `canonical_matching_review` → relay `dry_run_ok` | After prod relay | Vilbli VG1=12, VG2=2 (2026-07-10) |
-| `42` Agder | `canonical_matching_review` → relay `dry_run_ok` | After prod relay | Vilbli VG1=15, VG2=1 (2026-07-10) |
+| `34` Innlandet | `canonical_matching_review` | PSA ingested; matching review | Prod relay ingested 2026-07-10; programmes materialized |
+| `42` Agder | `canonical_matching_review` | PSA ingested; matching review | Prod relay ingested 2026-07-10; programmes materialized |
 | `55` Troms | `missing_programme_rows` | **No** (VG2=0 local) | Pipeline abort + runtime gate |
 | `56` Finnmark | `missing_programme_rows` | **No** (VG2=0 local) | Pipeline abort + runtime gate |
 
@@ -137,8 +137,8 @@ County-scoped Vilbli extract (2026-07-09): Troms `55` and Finnmark `56` have **V
 
 | Fylke | Vilbli extract (painter) | Relay | Product |
 |-------|---------------------------|-------|---------|
-| `34` Innlandet | VG1+VG2 | `dry_run_ok` 2026-07-10 | Primary after prod relay |
-| `42` Agder | VG1+VG2 | `dry_run_ok` 2026-07-10 | Primary after prod relay |
+| `34` Innlandet | VG1+VG2 | **ingested** 2026-07-10 | Classify still `canonical_matching_review` — route may work after review |
+| `42` Agder | VG1+VG2 | **ingested** 2026-07-10 | Classify still `canonical_matching_review` — route may work after review |
 | `15,32,33,39,40` | VG1 only, VG2=0 | **ABORT** (correct) | No primary; no P-7 (not `55`/`56`) |
 | `55,56` | VG1 only, VG2=0 | **ABORT** (correct) | P-7 alternatives only; VG1 PSA via shared `carpenter-vg1-bygg-*` until painter catalog rows exist |
 
