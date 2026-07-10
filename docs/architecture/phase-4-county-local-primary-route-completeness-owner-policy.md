@@ -103,15 +103,35 @@ Alternatives block: existing **Alternative routes** collapsible — never the ma
 
 ---
 
+## Integration layer (where the gate lives)
+
+**Gate id:** `psa_to_primary` — `assessHomeCountyPrimaryRouteEligibility()` in `home-county-primary-route-completeness.ts`.
+
+| Layer | Role |
+|-------|------|
+| Contour B ingest / classify / relay | Writes PSA or stops (`ABORT`, `missing_programme_rows`). **Not modified** by this policy. |
+| `get-availability-truth` | Reads PSA rows (incl. LOSA scope). **Not a gate.** |
+| **`psa_to_primary` gate** | Before primary steps: county-scoped school rows (LOSA **excluded**) must cover VG1+VG2. |
+| `create-initial-study-route` / `trigger-study-route-recompute` | Explicit handoff call before path-variant build. |
+| `build-path-variants` / `build-steps-from-availability-truth` | Defense-in-depth at truth→steps transform. |
+| `sync-study-route-curated-regional-alternatives` (Steigen) | **After** primary snapshot — **never** gated here. |
+| `get-study-route-alternatives` | Read-time teasers — **not** primary correctness. |
+| P-7 cross-fylke (planned) | Same family as Steigen — neighbor fylke PSA + Vilbli, **alternative only**. |
+
+**Contour B runtime handoff:** product does not call classify on page load; it reads PSA. Empty or incomplete school chain → `contourBHandoff: primary_steps_blocked` → no VG1-only primary steps.
+
+---
+
 ## Implementation status (systemic / automatic)
 
 | Piece | Status | Notes |
 |-------|--------|-------|
 | PSA ingest abort on missing required Vilbli stage | **Live** | Correct — do not relax |
 | Classify `missing_programme_rows` | **Live** | Honest readiness |
-| Primary completeness check before serving steps | **Live** | `home-county-primary-route-completeness.ts`; `build-steps-from-availability-truth`; `build-path-variants`; invariant `PRIMARY_ROUTE_INCOMPLETE_HOME_COUNTY` |
-| Neighboring-fylke **alternative** builder | **Planned** | Candidate fylke must pass **both** Vilbli county-scoped chain extract **and** full PSA for required stages; transport overlay; Steigen-style labeling |
-| Smoke / audit | **Planned** | Extend `smoke-route-truth-invariants` + `ops:audit-route-readiness` |
+| `psa_to_primary` eligibility contract | **Live** | `assessHomeCountyPrimaryRouteEligibility`; create + recompute + builders |
+| Primary completeness invariant | **Live** | `PRIMARY_ROUTE_INCOMPLETE_HOME_COUNTY` in smoke |
+| Neighboring-fylke **alternative** builder | **Live (P-7)** | `painter-north-cross-fylke-*` curated variants; neighbor PSA + `psa_to_primary` gate |
+| Smoke / audit | **Live** (partial) | `smoke-route-truth-invariants`; LOSA exclusion case |
 
 **Non-regression:** Green counties and professions with local full chains (carpenter, plumber, electrician, mechanic in fylke where VG2 PSA exists) must behave **unchanged** when the completeness gate ships.
 

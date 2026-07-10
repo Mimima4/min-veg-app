@@ -29,6 +29,7 @@ export async function applyVerifiedLarebedriftToApprenticeshipSteps(params: {
   steps: StudyRouteSnapshotStep[];
   professionSlug: string;
   preferredMunicipalityCodes: string[];
+  countyCodesForEmployerScope?: string[];
 }): Promise<StudyRouteSnapshotStep[]> {
   if (
     !isPrimaryRouteLarebedriftPilotEligible({
@@ -50,6 +51,7 @@ export async function applyVerifiedLarebedriftToApprenticeshipSteps(params: {
       supabase: params.supabase,
       larefagCode,
       preferredMunicipalityCodes: params.preferredMunicipalityCodes,
+      countyCodesForEmployerScope: params.countyCodesForEmployerScope,
     });
     verifiedOptionsByLarefagCode.set(larefagCode, verifiedOptions);
     return verifiedOptions;

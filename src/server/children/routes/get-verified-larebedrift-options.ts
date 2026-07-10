@@ -78,6 +78,7 @@ export async function getVerifiedLarebedriftApprenticeshipOptions(params: {
   supabase: SupabaseClient;
   larefagCode: string;
   preferredMunicipalityCodes: string[];
+  countyCodesForEmployerScope?: string[];
 }): Promise<VerifiedLarebedriftOption[]> {
   const homeCodes = Array.from(
     new Set(
@@ -90,9 +91,16 @@ export async function getVerifiedLarebedriftApprenticeshipOptions(params: {
     return [];
   }
 
-  const homeCounties = Array.from(
-    new Set(homeCodes.map((code) => code.slice(0, 2)))
-  );
+  const homeCounties =
+    params.countyCodesForEmployerScope && params.countyCodesForEmployerScope.length > 0
+      ? Array.from(
+          new Set(
+            params.countyCodesForEmployerScope
+              .map((code) => String(code ?? "").trim())
+              .filter((code) => /^\d{2}$/.test(code))
+          )
+        )
+      : Array.from(new Set(homeCodes.map((code) => code.slice(0, 2))));
 
   const { data, error } = await params.supabase
     .from("larebedrift_truth")

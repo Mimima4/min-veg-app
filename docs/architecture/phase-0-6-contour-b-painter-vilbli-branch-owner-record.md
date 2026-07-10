@@ -80,7 +80,7 @@ VG3/bedrift: expanded from Vilbli bedrift links (`painter-vg3-{title}-{countySlu
 | P-4 | V.BA VG2 switch | **OK — sibling switch with carpenter/plumber** |
 | P-5 | Empty bedrift | **OK — godkjent-only truth** |
 | P-6 | Northern fylke (VG2=0 local) | **OK — no primary route in home fylke; no VG1-only patch** (`phase-4-county-local-primary-route-completeness-owner-policy.md`) |
-| P-7 | Cross-fylke Vilbli schools | **OK — alternative routes only** when **Vilbli county extract + PSA** agree on full chain in neighbor fylke; labeled alternative, never primary |
+| P-7 | Cross-fylke Vilbli schools | **OK — alternative routes only** when home has VG1 PSA and neighbor has VG2+ PSA (Vilbli split: VG1 home, VG2 neighbor); never primary |
 
 ---
 
@@ -130,4 +130,4 @@ County-scoped Vilbli extract (2026-07-09): Troms `55` and Finnmark `56` have **V
 | Relay dry-run (all green counties) | **Done** (`03,11,18,31,46,50` → `dry_run_ok`) |
 | Production relay (full matrix) | **Pending owner** — `VGS_OPERATIONAL_RUNNERS.md` |
 | Browser E2E (Fagvalg → bedrift, green fylke) | **VG1 smoke PASS** (`npm run test:e2e:painter`, 2026-07-09) |
-| Cross-fylke alternatives | **Deferred** (P-7) |
+| Cross-fylke alternatives | **Live (P-7)** — Nordland `18` + Trøndelag `50` via curated regional sync |

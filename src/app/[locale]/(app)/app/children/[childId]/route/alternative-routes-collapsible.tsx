@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { StudyRouteAlternativeTeaser } from "@/lib/routes/route-types";
 import type { SteigenCarpenterVekslingInfoCopy } from "@/lib/regional-delivery/steigen-carpenter-veksling-pilot";
 import { STEIGEN_CARPENTER_VEKSLING_VARIANT_ID } from "@/lib/regional-delivery/steigen-carpenter-veksling-path-variant";
+import { painterNorthCrossFylkeVariantId } from "@/lib/regional-delivery/painter-north-cross-fylke-pilot";
 import SteigenVekslingBadgeWithInfo from "@/components/route/steigen-veksling-badge-with-info";
 import RouteStepsPanel from "./route-steps-panel";
 import SaveRouteButton from "./[routeId]/save-route-button";
@@ -62,7 +63,12 @@ export default function AlternativeRoutesCollapsible({
               data-testid={
                 alternative.curatedRegionalVariantId === STEIGEN_CARPENTER_VEKSLING_VARIANT_ID
                   ? "steigen-veksling-alternative-route"
-                  : undefined
+                  : alternative.curatedRegionalVariantId ===
+                      painterNorthCrossFylkeVariantId("18") ||
+                    alternative.curatedRegionalVariantId ===
+                      painterNorthCrossFylkeVariantId("50")
+                    ? "painter-north-cross-fylke-alternative-route"
+                    : undefined
               }
             >
               <div className="mb-3 flex flex-wrap items-center justify-between gap-3">

@@ -11,6 +11,7 @@ import {
   collectStudyRouteStepsInvariantViolations,
   collectPrimaryRouteCompletenessViolations,
   isHomeCountyPrimarySchoolChainComplete,
+  assessHomeCountyPrimaryRouteEligibility,
 } from "./lib/route-truth-invariants.mjs";
 
 function assert(condition, message) {
@@ -278,6 +279,22 @@ function run() {
       },
     ]),
     "VG1-only truth must not be primary-complete"
+  );
+  const losaOnlyVg2 = assessHomeCountyPrimaryRouteEligibility({
+    truthRows: [
+      { stage: "VG1", availabilityScope: "programme_in_school" },
+      { stage: "VG2", availabilityScope: "losa_fjern_delivery_municipality" },
+    ],
+  });
+  assert(!losaOnlyVg2.eligible, "LOSA VG2 must not satisfy primary chain");
+  assert(
+    losaOnlyVg2.contourBHandoff === "primary_steps_blocked",
+    "LOSA-only VG2 must block primary handoff"
+  );
+  assert(
+    assessHomeCountyPrimaryRouteEligibility({ truthRows: finnmarkMechanicTruthRows() }).gate ===
+      "psa_to_primary",
+    "primary eligibility gate id must be psa_to_primary"
   );
   console.error("[smoke:route-truth] primary home-fylke chain gate: OK");
 

@@ -139,6 +139,7 @@ export function collectStudyRouteStepsInvariantViolations({ steps, truthRows }) 
 }
 
 const PRIMARY_REQUIRED_SCHOOL_STAGES = ["VG1", "VG2"];
+const PRIMARY_ROUTE_ELIGIBILITY_GATE_ID = "psa_to_primary";
 
 function listMissingPrimarySchoolChainStages(truthRows) {
   const schoolRows = truthRows.filter((row) => !isLosaScope(row.availabilityScope));
@@ -147,8 +148,37 @@ function listMissingPrimarySchoolChainStages(truthRows) {
   );
 }
 
+export function assessHomeCountyPrimaryRouteEligibility({ truthRows }) {
+  if (truthRows.length === 0) {
+    return {
+      gate: PRIMARY_ROUTE_ELIGIBILITY_GATE_ID,
+      eligible: false,
+      reason: "NO_TRUTH_ROWS",
+      missingStages: [...PRIMARY_REQUIRED_SCHOOL_STAGES],
+      contourBHandoff: "primary_steps_blocked",
+    };
+  }
+  const missingStages = listMissingPrimarySchoolChainStages(truthRows);
+  if (missingStages.length === 0) {
+    return {
+      gate: PRIMARY_ROUTE_ELIGIBILITY_GATE_ID,
+      eligible: true,
+      reason: "PRIMARY_ROUTE_COMPLETE",
+      missingStages: [],
+      contourBHandoff: "primary_steps_allowed",
+    };
+  }
+  return {
+    gate: PRIMARY_ROUTE_ELIGIBILITY_GATE_ID,
+    eligible: false,
+    reason: "PRIMARY_ROUTE_INCOMPLETE_HOME_COUNTY",
+    missingStages,
+    contourBHandoff: "primary_steps_blocked",
+  };
+}
+
 function isHomeCountyPrimarySchoolChainComplete(truthRows) {
-  return listMissingPrimarySchoolChainStages(truthRows).length === 0;
+  return assessHomeCountyPrimaryRouteEligibility({ truthRows }).eligible;
 }
 
 export { isHomeCountyPrimarySchoolChainComplete };
@@ -157,10 +187,10 @@ export function collectPrimaryRouteCompletenessViolations({ steps, truthRows }) 
   if (steps.length === 0) {
     return [];
   }
-  if (isHomeCountyPrimarySchoolChainComplete(truthRows)) {
+  const eligibility = assessHomeCountyPrimaryRouteEligibility({ truthRows });
+  if (eligibility.eligible) {
     return [];
   }
-  const missingStages = listMissingPrimarySchoolChainStages(truthRows);
   const hasPartialSchoolSteps = steps.some(
     (step) =>
       step.type === "programme_selection" &&
@@ -172,7 +202,7 @@ export function collectPrimaryRouteCompletenessViolations({ steps, truthRows }) 
   return [
     {
       code: "PRIMARY_ROUTE_INCOMPLETE_HOME_COUNTY",
-      message: `Primary route emitted school steps without full home-fylke chain (missing PSA: ${missingStages.join(", ")})`,
+      message: `Primary route emitted school steps without full home-fylke chain (missing PSA: ${eligibility.missingStages.join(", ")})`,
     },
   ];
 }

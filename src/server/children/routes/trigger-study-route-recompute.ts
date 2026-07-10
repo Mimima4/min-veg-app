@@ -40,13 +40,17 @@ import type { PathVariant, PathVariantsResult } from "./build-path-variants";
 import type { AvailabilityTruthRow } from "./get-availability-truth";
 import type { KommuneTransportSortContext } from "@/lib/planning/kommune-transport/types";
 import { syncStudyRouteOutcomeFilterAlternatives } from "./sync-study-route-outcome-filter-alternatives";
-import { syncStudyRouteCuratedRegionalAlternatives } from "./sync-study-route-curated-regional-alternatives";
+import {
+  shouldSyncStudyRouteCuratedRegionalAlternatives,
+  syncStudyRouteCuratedRegionalAlternatives,
+} from "./sync-study-route-curated-regional-alternatives";
 import { applyVerifiedLarebedriftToApprenticeshipSteps } from "./apply-verified-larebedrift-to-apprenticeship-steps";
 import {
   isVbaSharedVg1CrossProfessionSwitch,
   resolveProfessionSlugFromProgramSlug,
 } from "@/lib/vgs/vg2-cross-profession";
 import { resolveVbaSharedVg2ProgrammeOptions } from "./resolve-vba-shared-vg2-programme-options";
+import { assessHomeCountyPrimaryRouteEligibility } from "@/lib/vgs/home-county-primary-route-completeness";
 import { switchStudyRouteForVg2Programme } from "./switch-study-route-for-vg2-programme";
 
 type Params = {
@@ -643,6 +647,7 @@ export async function triggerStudyRouteRecompute(params: Params) {
     const typedLinks = (programLinks ?? []) as RouteProgramLink[];
 
     let recomputedSteps: StudyRouteSnapshotStep[] = [];
+    let contourBTruthPathUsed = false;
     let admissionRealismRecord = null;
     let outcomeFilterAlternativesContext: {
       pathVariantNavContext: RoutePathVariantNavContext;
@@ -680,6 +685,16 @@ export async function triggerStudyRouteRecompute(params: Params) {
         : { useTruth: false, truth: { hasTruth: false, rows: [] } };
 
       if (useTruth) {
+        contourBTruthPathUsed = true;
+        const primaryEligibility = assessHomeCountyPrimaryRouteEligibility({
+          truthRows: truth.rows,
+          professionSlug: professionRow.slug,
+        });
+
+        if (!primaryEligibility.eligible) {
+          // Contour B handoff: incomplete home-fylke chain → no primary steps.
+          recomputedSteps = [];
+        } else {
         const transportSortContext = await buildKommuneTransportSortContext({
           rows: truth.rows,
           homeMunicipalityCodes: preferredMunicipalityCodes,
@@ -792,6 +807,7 @@ export async function triggerStudyRouteRecompute(params: Params) {
             programSlug: selectedTruthCandidate.programSlug,
             institutionId: selectedTruthCandidate.institutionId,
           });
+        }
         }
       } else {
       const linkProgramSlugs = typedLinks.map((link) => link.program_slug);
@@ -914,6 +930,14 @@ export async function triggerStudyRouteRecompute(params: Params) {
       candidate: recomputedSteps,
     });
 
+    const shouldSyncCuratedRegionalAlternatives =
+      shouldSyncStudyRouteCuratedRegionalAlternatives({
+        hasContourBProfessionLinks: typedLinks.length > 0,
+        contourBTruthPathUsed,
+        professionSlug: professionRow.slug,
+        preferredMunicipalityCodes,
+      });
+
     const hasUserLockedSteps = hasLockedSteps(previousSteps);
     const materialRouteShift = isMaterialRouteShift({
       previousSteps,
@@ -1012,7 +1036,7 @@ export async function triggerStudyRouteRecompute(params: Params) {
         });
       }
 
-      if (recomputedSteps.some((step) => step.source === "availability_truth")) {
+      if (shouldSyncCuratedRegionalAlternatives) {
         await syncStudyRouteCuratedRegionalAlternatives({
           supabase,
           routeId: route.id,
@@ -1094,7 +1118,7 @@ export async function triggerStudyRouteRecompute(params: Params) {
       });
     }
 
-    if (routeSource === "availability_truth") {
+    if (shouldSyncCuratedRegionalAlternatives) {
       await syncStudyRouteCuratedRegionalAlternatives({
         supabase,
         routeId: route.id,

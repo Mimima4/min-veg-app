@@ -3,7 +3,7 @@ import {
   getVilbliBranchConfig,
   type VilbliBranchProfessionConfig,
 } from "@/lib/vgs/vilbli-branch-config";
-import { isHomeCountyPrimarySchoolChainComplete } from "@/lib/vgs/home-county-primary-route-completeness";
+import { assessHomeCountyPrimaryRouteEligibility } from "@/lib/vgs/home-county-primary-route-completeness";
 import { hasVg3SchoolProgrammeAvailability } from "@/lib/vgs/vg3-school-programme-availability";
 import { assertRouteTruthInvariants } from "@/lib/vgs/route-truth-invariants";
 
@@ -438,7 +438,12 @@ export async function buildPathVariants(
     .filter((stage) => stage !== "VG3" || hasVg3SchoolTruth)
     .sort((a, b) => stageOrder(a) - stageOrder(b));
 
-  if (!isHomeCountyPrimarySchoolChainComplete(truthRows)) {
+  // psa_to_primary gate — Contour B handoff; Steigen/LOSA/alternatives run after primary build
+  const primaryEligibility = assessHomeCountyPrimaryRouteEligibility({
+    truthRows,
+    professionSlug: professionSlug ?? undefined,
+  });
+  if (!primaryEligibility.eligible) {
     return {
       sourceUrl,
       yrkerUrl: directYrkerUrl ?? null,

@@ -40,9 +40,13 @@ import type { PathVariant, PathVariantsResult } from "./build-path-variants";
 import type { AvailabilityTruthRow } from "./get-availability-truth";
 import type { KommuneTransportSortContext } from "@/lib/planning/kommune-transport/types";
 import { syncStudyRouteOutcomeFilterAlternatives } from "./sync-study-route-outcome-filter-alternatives";
-import { syncStudyRouteCuratedRegionalAlternatives } from "./sync-study-route-curated-regional-alternatives";
+import {
+  shouldSyncStudyRouteCuratedRegionalAlternatives,
+  syncStudyRouteCuratedRegionalAlternatives,
+} from "./sync-study-route-curated-regional-alternatives";
 import { applyVerifiedLarebedriftToApprenticeshipSteps } from "./apply-verified-larebedrift-to-apprenticeship-steps";
 import { resolveVbaSharedVg2ProgrammeOptions } from "./resolve-vba-shared-vg2-programme-options";
+import { assessHomeCountyPrimaryRouteEligibility } from "@/lib/vgs/home-county-primary-route-completeness";
 
 type Params = {
   childId: string;
@@ -358,6 +362,7 @@ export async function createInitialStudyRoute(
   }
 
   let initialSteps: StudyRouteSnapshotStep[] = [];
+  let contourBTruthPathUsed = false;
   let admissionRealismRecord = null;
   let outcomeFilterAlternativesContext: {
     pathVariantNavContext: RoutePathVariantNavContext;
@@ -391,6 +396,17 @@ export async function createInitialStudyRoute(
       : { useTruth: false, truth: { hasTruth: false, rows: [] } };
 
     if (useTruth) {
+      contourBTruthPathUsed = true;
+      const primaryEligibility = assessHomeCountyPrimaryRouteEligibility({
+        truthRows: truth.rows,
+        professionSlug: professionRow.slug,
+      });
+
+      if (!primaryEligibility.eligible) {
+        // Contour B handoff: incomplete home-fylke chain → no primary steps.
+        // Steigen / curated regional alternatives sync only after truth-backed primary.
+        initialSteps = [];
+      } else {
       const transportSortContext = await buildKommuneTransportSortContext({
         rows: truth.rows,
         homeMunicipalityCodes: preferredMunicipalityCodes,
@@ -498,6 +514,7 @@ export async function createInitialStudyRoute(
           programSlug: selectedTruthCandidate.programSlug,
           institutionId: selectedTruthCandidate.institutionId,
         });
+      }
       }
     } else {
     const linkProgramSlugs = typedLinks.map((link) => link.program_slug);
@@ -780,7 +797,14 @@ export async function createInitialStudyRoute(
     });
   }
 
-  if (routeSource === "availability_truth") {
+  if (
+    shouldSyncStudyRouteCuratedRegionalAlternatives({
+      hasContourBProfessionLinks: typedLinks.length > 0,
+      contourBTruthPathUsed,
+      professionSlug: professionRow.slug,
+      preferredMunicipalityCodes,
+    })
+  ) {
     await syncStudyRouteCuratedRegionalAlternatives({
       supabase,
       routeId: route.id,

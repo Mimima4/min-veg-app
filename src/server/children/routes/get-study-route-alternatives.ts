@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getRouteOutcomeFilterLabelNb } from "@/lib/nav/route-outcome-filter-labels";
 import { parseOutcomeFilterVariantReason } from "@/lib/nav/parse-outcome-filter-variant-reason";
+import { resolveCuratedRegionalAlternativeMainDifference } from "@/lib/regional-delivery/curated-regional-alternative-copy";
 import { parseCuratedRegionalVariantReason } from "@/lib/regional-delivery/curated-regional-variant-reason";
 import type {
   StudyRouteAlternativeTeaser,
@@ -322,7 +323,7 @@ export async function getStudyRouteAlternatives(
       mainDifference: routeOutcomeFilterId
         ? "Alternative route shaped by a different education outcome filter"
         : curatedRegionalVariantId
-          ? "Local veksling delivery model (Steigenmodellen) — curated operator path"
+          ? resolveCuratedRegionalAlternativeMainDifference(curatedRegionalVariantId)
           : variant.variant_reason ??
             (variant.is_current
               ? "Current active route variant"

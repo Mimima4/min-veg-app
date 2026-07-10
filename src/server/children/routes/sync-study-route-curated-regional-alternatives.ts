@@ -9,8 +9,21 @@ import {
   STEIGEN_CARPENTER_VEKSLING_VARIANT_LABEL,
   STEIGEN_CARPENTER_VEKSLING_VARIANT_REASON,
 } from "@/lib/regional-delivery/steigen-carpenter-veksling-path-variant";
+import {
+  PAINTER_NORTH_CROSS_FYLKE_NEIGHBOR_CONFIGS,
+  childHomeFylkeCodes,
+  isPainterNorthHomeFylke,
+} from "@/lib/regional-delivery/painter-north-cross-fylke-pilot";
+import {
+  buildPainterNorthCrossFylkeAlternativeSteps,
+  buildPainterNorthCrossFylkeVariantLabel,
+  buildPainterNorthCrossFylkeVariantReason,
+  isPainterNorthCrossFylkePathVariantEligibleForNeighbor,
+  painterNorthCrossFylkeVariantId,
+} from "@/lib/regional-delivery/painter-north-cross-fylke-path-variant";
 import type { StudyRouteSnapshotStep } from "@/lib/routes/route-types";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { buildPainterNorthCrossFylkeRouteSteps } from "./build-painter-north-cross-fylke-route-steps";
 import { getVerifiedLarebedriftApprenticeshipOptions } from "./get-verified-larebedrift-options";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -64,6 +77,36 @@ type CuratedRegionalVariantDefinition = {
 
 const MAX_SNAPSHOT_VERSION_INSERT_RETRIES = 5;
 
+/**
+ * Curated regional alternatives (Steigen, P-7 north painter) resolve neighbor PSA themselves.
+ * They must sync even when home fylke has no programme rows / PSA truth (missing_programme_rows).
+ */
+export function shouldSyncStudyRouteCuratedRegionalAlternatives(params: {
+  hasContourBProfessionLinks: boolean;
+  contourBTruthPathUsed: boolean;
+  professionSlug: string;
+  preferredMunicipalityCodes: string[];
+}): boolean {
+  if (!params.hasContourBProfessionLinks) {
+    return false;
+  }
+  if (params.contourBTruthPathUsed) {
+    return true;
+  }
+  if (
+    isSteigenCarpenterVekslingPathVariantEligible({
+      professionSlug: params.professionSlug,
+      preferredMunicipalityCodes: params.preferredMunicipalityCodes,
+    })
+  ) {
+    return true;
+  }
+  return (
+    params.professionSlug === "painter" &&
+    isPainterNorthHomeFylke(childHomeFylkeCodes(params.preferredMunicipalityCodes))
+  );
+}
+
 const CURATED_REGIONAL_VARIANTS: CuratedRegionalVariantDefinition[] = [
   {
     variantId: STEIGEN_CARPENTER_VEKSLING_VARIANT_ID,
@@ -82,6 +125,37 @@ const CURATED_REGIONAL_VARIANTS: CuratedRegionalVariantDefinition[] = [
           }),
       }),
   },
+  ...PAINTER_NORTH_CROSS_FYLKE_NEIGHBOR_CONFIGS.map((neighbor) => ({
+    variantId: painterNorthCrossFylkeVariantId(neighbor.countyCode),
+    variantLabel: buildPainterNorthCrossFylkeVariantLabel(neighbor.countyCode),
+    variantReason: buildPainterNorthCrossFylkeVariantReason(neighbor.countyCode),
+    isEligible: (params: {
+      professionSlug: string;
+      preferredMunicipalityCodes: string[];
+    }) =>
+      isPainterNorthCrossFylkePathVariantEligibleForNeighbor({
+        professionSlug: params.professionSlug,
+        preferredMunicipalityCodes: params.preferredMunicipalityCodes,
+        neighborCountyCode: neighbor.countyCode,
+      }),
+    buildSteps: ({
+      supabase,
+      professionSlug,
+      preferredMunicipalityCodes,
+    }: BuildStepsParams) =>
+      buildPainterNorthCrossFylkeAlternativeSteps({
+        professionSlug,
+        preferredMunicipalityCodes,
+        neighborCountyCode: neighbor.countyCode,
+        buildRouteSteps: ({ neighborCountyCode }) =>
+          buildPainterNorthCrossFylkeRouteSteps({
+            supabase,
+            professionSlug,
+            preferredMunicipalityCodes,
+            neighborCountyCode,
+          }),
+      }),
+  })),
 ];
 
 async function promoteCuratedRegionalSnapshot(params: {
@@ -312,6 +386,9 @@ export async function syncStudyRouteCuratedRegionalAlternatives(params: {
       professionSlug: params.professionSlug,
       preferredMunicipalityCodes: params.preferredMunicipalityCodes,
     });
+    if (alternativeSteps.length === 0) {
+      continue;
+    }
     if (stableStringify(alternativeSteps) === primaryStepsJson) {
       continue;
     }

@@ -15,7 +15,7 @@ import type { KommuneTransportSortContext } from "@/lib/planning/kommune-transpo
 import type { AvailabilityTruthRow } from "./get-availability-truth";
 import { getVilbliBranchConfig } from "@/lib/vgs/vilbli-branch-config";
 import {
-  isHomeCountyPrimarySchoolChainComplete,
+  assessHomeCountyPrimaryRouteEligibility,
   primaryRouteStepsIncludeRequiredSchoolChain,
 } from "@/lib/vgs/home-county-primary-route-completeness";
 import { assertRouteTruthInvariants } from "@/lib/vgs/route-truth-invariants";
@@ -427,7 +427,12 @@ export function buildStepsFromAvailabilityTruth(params: {
     return [];
   }
 
-  if (!isHomeCountyPrimarySchoolChainComplete(params.rows)) {
+  // psa_to_primary gate — Contour B handoff; see home-county-primary-route-completeness.ts
+  const primaryEligibility = assessHomeCountyPrimaryRouteEligibility({
+    truthRows: params.rows,
+    professionSlug: params.professionSlug,
+  });
+  if (!primaryEligibility.eligible) {
     return [];
   }
 
