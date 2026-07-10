@@ -196,12 +196,8 @@ export async function getAvailabilityTruth({
     }
 
     for (const row of (countyLosaRows ?? []) as typeof availabilityRows) {
-      // Guardrail: never borrow LOSA rows from another profession chain.
-      // This keeps "show truth only" intact when a county has LOSA for one
-      // profession (e.g. electrician) but not for the currently requested one.
-      if (!programById.has(row.education_program_id)) {
-        continue;
-      }
+      // County LOSA truth is geography-scoped, not profession-scoped: surface all active
+      // LOSA rows in this fylke and map display to the current route programme (see below).
       const key = [
         row.institution_id,
         row.municipality_code ?? "",

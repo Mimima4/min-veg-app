@@ -95,6 +95,7 @@ Supporting context (not restated here): `phase-2-runtime-write-closure.md`, `pha
 - **Stale** VGS rows are handled by the **VGS pipeline lifecycle** (deactivation / `is_active`), not by Phase 4 LOSA refresh outcomes.
 - **Phase 4 LOSA must not redefine** Vilbli/NSR/Utdanning/VGS rules.
 - **Phase 4 LOSA** interacts only where **LOSA / external-delivery** semantics are required (e.g. CASE 4, `unsupported_losa`, `external_delivery`).
+- **LOSA is not profession-specific:** `losa_fjern_delivery_municipality` / external-delivery rows apply by **geography and delivery model** (kommune / fylke), not by VGS profession slug. **Route runtime:** when LOSA PSA exists in a fylke, `get-availability-truth` surfaces those rows for **every** profession route in that county (display mapped to the route’s VG-stage programme). The electrician Finnmark ingest is the **reference PSA write**, not an exclusive product rule. Per-profession LOSA **publication** gates still apply for new counties/slices.
 
 ## 8. Matcher contour boundary
 

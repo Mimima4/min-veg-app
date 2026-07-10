@@ -22,11 +22,11 @@ Add **`anleggsteknikk`** as the sixth VGS catalogue profession on the **V.BA** B
 | # | Question | Status |
 |---|----------|--------|
 | P-1 | Profession slug + catalog label | **Proposed — `anleggsteknikk`** · NAV catalog level TBD (scout P-3) |
-| P-2 | Pilot fylke | **Proposed — Vestland (`46`)** (green truth path, kommune transport proven) |
-| P-3 | Rollout | **Proposed — pilot first, then 15-county batch** (template §7) |
+| P-2 | Pilot fylke | **N/A** — nationwide batch ingest (template §7), same as carpenter |
+| P-3 | Rollout | **15-county batch** via `run-contour-b-operational-ingest` (2026-07-10) |
 | P-4 | Vilbli contour | **Proposed — Bygg → Anleggsteknikfaget only** (`BAANL2`), not full `V.BA` VG2 menu |
 | P-5 | V.BA VG2 switch | **Extend** existing gate (`carpenter` / `plumber` / `painter` + `anleggsteknikk`) |
-| P-6 | Overlays (LOSA / Steigen / P-7) | **None expected** unless scout finds gap |
+| P-6 | Overlays (LOSA / Steigen / P-7) | **LOSA:** cross-profession by kommune (not anleggsteknikk-specific). **Steigen / P-7:** none expected unless scout finds gap |
 
 ---
 
@@ -58,6 +58,26 @@ County pipeline URL pattern (signed 2026-07-10):
 | VG2 | `V.BAANL2----` |
 | Kolonne-3 (proposed) | `V.BAANL3----` (verify on pilot extract) |
 
+**Post-ingest classify matrix (2026-07-10):**
+
+| Fylke | Status | PSA | VG1 | VG2 | Notes |
+|-------|--------|-----|-----|-----|-------|
+| `03` Oslo | `missing_programme_rows` | 0 | 3 | **0** | **ABORT** — no local VG2; primary empty per P-6 policy |
+| `11` Rogaland | green | 18 | 13 | 5 | |
+| `15` Møre og Romsdal | green | 8 | 6 | 2 | |
+| `18` Nordland | green | 8 | 7 | 1 | P-6: VG2 present (unlike painter north) |
+| `31` Østfold | green | 11 | 9 | 2 | |
+| `32` Akershus | green | 9 | 8 | 1 | |
+| `33` Buskerud | green | 9 | 6 | 3 | |
+| `34` Innlandet | `canonical_matching_review` | 12 | 12 | 1 | matching-review batch |
+| `39` Vestfold | green | 5 | 4 | 1 | |
+| `40` Telemark | green | 5 | 4 | 1 | |
+| `42` Agder | `canonical_matching_review` | 16 | 15 | 2 | matching-review batch |
+| `46` Vestland | green | 22 | 18 | 4 | |
+| `50` Trøndelag | green | 25 | 22 | 3 | |
+| `55` Troms | green | 5 | 4 | 1 | P-6: VG2 present |
+| `56` Finnmark | `canonical_matching_review` | 6 | 23 | 1 | matching-review batch; partial PSA (5 matched) |
+
 National strukturkart: https://www.vilbli.no/nb/no/strukturkart/V.BA/anleggsteknikk-fag-og-timefordeling?kurs=V.BABAT1----_V.BAANL2----&side=p2
 
 ---
@@ -73,8 +93,8 @@ National strukturkart: https://www.vilbli.no/nb/no/strukturkart/V.BA/anleggstekn
 | 5 | ☑ | NAV map row + `path-family-slug` |
 | 6 | ☑ (partial) | V.BA VG2 switch ☑; `primary-route-larebedrift-pilot` + bedrift roster **deferred** (P-5) |
 | 7 | ☐ | Build + deploy |
-| 8 | ☑ (local) | Relay dry-run Vestland `46` — local `dry_run_ok`, VG1=18 VG2=4, `wouldWrite=44`; prod API pending deploy |
-| 9 | ☐ | Pilot production ingest (home IP) |
+| 8 | ☑ | Relay dry-run Vestland `46` prod API 2026-07-10 |
+| 9 | ☑ | **15-county batch** `run-contour-b-operational-ingest` 2026-07-10 — **11 green**, **3** `canonical_matching_review`, **Oslo `03` ABORT** (VG2=0) |
 | 10 | ☐ | E2E Block C + prod sign-off |
 
 ---

@@ -62,6 +62,8 @@ If step 3–6 are missing, relay **will not** process the new pair even if the p
 
 Readiness values such as `missing_programme_rows` or `canonical_matching_review` after **`ingested`** are **expected** for Contour B partial counties (e.g. Finnmark **56** LOSA tail). **P06-OPERATIONAL-CLOSED** (2026-06-05); remaining LOSA rows → Phase 4, not P06 rework.
 
+**LOSA (cross-profession):** Phase 4 LOSA / `losa_fjern_delivery_municipality` is a **geography + delivery-model** overlay — **not** tied to one VGS profession. When LOSA PSA rows exist for a fylke, **route truth surfaces them on every Contour B profession** in that county context (mapped to the route’s VG-stage programme for display). Electrician Finnmark was the **reference ingest**; other professions do not need duplicate PSA rows until their own LOSA slices are published. See `docs/architecture/phase-4-source-truth-contour-map.md` §7.
+
 ### Authority
 
 - Product policy: P06 §12 + `docs/architecture/phase-0-6-contour-b-operational-closure-checklist.md` (**P06-CLOSURE**)
@@ -261,7 +263,7 @@ Checks: CLI rejects `--contour-b-partial` on `run-vgs-truth-pipeline.mjs`; Conto
 
 | Layer | Status |
 |-------|--------|
-| **C-VGS-YRKESFAG** | **5 professions live** (`electrician`, `mechanic`, `carpenter`, `plumber`, `painter`); **`anleggsteknikk` scaffolding** (2026-07-10, relay pending); VG2 gate + V.BA switch; **more catalogue professions remain** |
+| **C-VGS-YRKESFAG** | **6 professions** in pipeline (`electrician`, `mechanic`, `carpenter`, `plumber`, `painter`, **`anleggsteknikk`**); anleggsteknikk PSA nationwide batch 2026-07-10 (Oslo `03` VG2=0 ABORT) |
 | **C-NAV-OCCUPATION** | Matcher wired at **catalog profession / NAV vacancy level** |
 | **Verified bedrift** | P3b for 5 professions; ingest roster = tømrer + rørlegger + maler kolonne-3 + 11 elektro + 10 kjøretøy; **empty bedrift when no godkjent = OK** |
 | **C-TRANSPORT-KOMMUNE** | Live nationwide overlay |
@@ -331,16 +333,16 @@ Contour B / catalog expansion checklist (if adding counties): `§ Expansion gate
 
 ### Anleggsteknikk (`anleggsteknikk` / Anleggsmaskinfører) — scaffolding (2026-07-10)
 
-**Code only — not live in prod until relay + catalog seed.** Vilbli chain: VG1 `V.BABAT1----` → VG2 `V.BAANL2----` → kolonne-3 `V.BAANL3----` (verify on pilot extract). Charter: `phase-0-6-contour-b-anleggsteknikk-vilbli-branch-owner-record.md`.
+**Code + nationwide PSA ingest (2026-07-10).** Vilbli chain: VG1 `V.BABAT1----` → VG2 `V.BAANL2----`; kolonne-3 from chain page (not `BAANL3` in `kurs`). Charter: `phase-0-6-contour-b-anleggsteknikk-vilbli-branch-owner-record.md`.
 
 | Layer | Status |
 |-------|--------|
-| Path definition + materialization | ☑ `vgs-path-definitions.mjs`, planner |
-| V.BA VG2 switch | ☑ extends carpenter/plumber/painter gate |
-| Catalog seed | `scripts/sql/seed-profession-anleggsteknikk-catalog.sql` — **applied** prod DB 2026-07-10 |
-| NAV map | ☑ `anleggsteknikk-vba-anleggsteknikk` (`håndverkere.anleggsmaskinør` — confirm) |
-| Bedrift ingest | **Deferred** — kolonne-3 `larefag_code` / cron roster TBD after Vestland (`46`) extract |
-| Pilot | Vestland (`46`) — relay dry-run next |
+| Path definition + materialization | ☑ |
+| V.BA VG2 switch | ☑ |
+| Catalog seed | ☑ applied prod DB |
+| NAV map | ☑ `håndverkere.anleggsmaskinør` (confirm) |
+| PSA ingest | ☑ **14/15 counties** written; **Oslo `03` ABORT** (VG2=0); `34`/`42`/`56` partial + matching review |
+| Bedrift ingest | **Deferred** — kolonne-3 roster TBD |
 
 ### Bedrift UI performance (truth-preserving)
 

@@ -149,6 +149,7 @@ Source: `src/lib/i18n/route-steps-empty-copy.ts`. Signal: `PRIMARY_ROUTE_INCOMPL
 | When | `carpenter`, `plumber`, `painter`, `anleggsteknikk` (Bygg VG1) |
 |------|-----------------------------------------------|
 | UX | Two-zone VG2 card: programme picker → school picker |
+| Programme picker | **Only professions with a buildable route in home fylke** — primary (local VG1+VG2) or curated alternative (e.g. painter P-7); not every V.BA catalogue slug (`resolve-vba-shared-vg2-programme-options.ts`) |
 | Cross-profession switch | `switch-study-route-for-vg2-programme.ts` — new working route, no VG1 carry-over |
 | Hub | `child_profession_interests` upsert on switch |
 

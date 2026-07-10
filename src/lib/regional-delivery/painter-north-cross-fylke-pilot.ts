@@ -171,6 +171,42 @@ export function getPainterNorthCrossFylkeInfoCopy(
   };
 }
 
+/** P-7 UI contract: one curated alternative with VG2 school dropdown. */
+export const PAINTER_NORTH_CROSS_FYLKE_NABOFYLKE_VARIANT_ID =
+  "painter-north-overflateteknikk-nabofylke" as const;
+
+export const PAINTER_NORTH_CROSS_FYLKE_NABOFYLKE_VARIANT_LABEL_NB =
+  "Overflateteknikk nabofylke" as const;
+
+/** Canonical VG2 programme slug for nabofylke school dropdown (all neighbor schools share one slug). */
+export const PAINTER_NORTH_NABOFYLKE_VG2_PROGRAMME_SLUG =
+  "painter-vg2-overflateteknikk-nabofylke" as const;
+
+/** @deprecated Per-neighbor variant ids — superseded by NABOFYLKE merged variant. */
 export function painterNorthCrossFylkeVariantId(neighborCountyCode: string): string {
   return `painter-north-overflateteknikk-${neighborCountyCode}`;
+}
+
+export function listPainterNorthReachableNeighborCountyCodes(
+  preferredMunicipalityCodes: string[]
+): string[] {
+  const homeFylkeCodes = childHomeFylkeCodes(preferredMunicipalityCodes);
+  if (!isPainterNorthHomeFylke(homeFylkeCodes)) {
+    return [];
+  }
+  return PAINTER_NORTH_CROSS_FYLKE_NEIGHBOR_CONFIGS.map((neighbor) => neighbor.countyCode).filter(
+    (countyCode) =>
+      isNeighborFylkeReachableFromPainterNorthHome({ homeFylkeCodes, neighborCountyCode: countyCode })
+  );
+}
+
+export function isPainterNorthCrossFylkeNabofylkeVariantEligible(params: {
+  professionSlug: string | null | undefined;
+  preferredMunicipalityCodes: string[];
+}): boolean {
+  const profession = String(params.professionSlug ?? "").trim();
+  if (profession !== "painter") {
+    return false;
+  }
+  return listPainterNorthReachableNeighborCountyCodes(params.preferredMunicipalityCodes).length > 0;
 }

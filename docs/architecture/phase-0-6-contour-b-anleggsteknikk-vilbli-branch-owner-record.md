@@ -75,11 +75,13 @@ VG3/bedrift: `anleggsteknikk-vg3-{title}-{countySlug}` pattern.
 | # | Question | Status |
 |---|----------|--------|
 | P-1 | Vilbli contour | **Signed — Bygg → Anleggsteknikfaget** (`BAANL2`) |
-| P-2 | Pilot fylke | **Signed — Vestland (`46`)** |
+| P-2 | Pilot fylke | **N/A** — nationwide batch (not pilot-first) |
 | P-3 | NAV matcher | **Scaffolded** — `håndverkere.anleggsmaskinør` (confirm on classify) |
 | P-4 | V.BA VG2 switch | **Signed — extend** existing V.BA gate |
 | P-5 | Bedrift kolonne-3 | **TBD** after pilot Vilbli extract |
-| P-6 | Northern VG2=0 | **Scout: no signal** (unlike painter); confirm on classify |
+| P-6 | Northern VG2=0 | **Scout: no signal** for anleggsteknikk north (unlike painter); Oslo `03` VG2=0 ABORT |
+| P-7 | (n/a) | Anleggsteknikk has local VG2 in `55`/`56`; no north cross-fylke overlay |
+| P-8 | Alternatives-only UX | When primary empty but curated alternatives exist (painter P-7), **show alternatives** — do not hide viable paths behind empty primary only |
 
 ---
 
@@ -110,5 +112,5 @@ See parent `phase-0-6-contour-b-sixth-profession-expansion-owner-record.md` §3.
 | Owner sign P-1…P-6 | ☑ P-1/P-2/P-4; P-3 scaffolded; P-5/P-6 pending extract |
 | Code scaffolding | ☑ |
 | Classify green counties | ☐ |
-| Relay dry-run + production | ☐ |
+| Relay dry-run + production | ☑ **15-county batch** 2026-07-10 (`run-contour-b-operational-ingest`); Oslo `03` ABORT VG2=0 |
 | E2E + prod UI | ☐ |

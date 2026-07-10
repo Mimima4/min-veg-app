@@ -10,6 +10,7 @@ import {
   getRouteAuthenticityRule,
   type RouteAuthenticityStep,
 } from "./route-authenticity-rules";
+import { resolveRouteSnapshotSource } from "./resolve-route-snapshot-source";
 import { getStudyRouteDetail } from "./get-study-route-detail";
 import { RouteDomainError } from "./route-errors";
 import {
@@ -467,6 +468,7 @@ export async function createInitialStudyRoute(
         supabase,
         professionSlug: professionRow.slug,
         truthRows: truth.rows,
+        preferredMunicipalityCodes,
       });
       initialSteps = buildStepsFromAvailabilityTruth({
         rows: truth.rows,
@@ -752,9 +754,11 @@ export async function createInitialStudyRoute(
       : null,
   });
 
-  const routeSource = initialSteps.some((step) => step.source === "availability_truth")
-    ? "availability_truth"
-    : "legacy";
+  const routeSource = resolveRouteSnapshotSource({
+    steps: initialSteps,
+    contourBTruthPathUsed,
+    primaryRouteIncompleteHomeCounty,
+  });
 
   const { error: snapshotError } = await supabase.from("study_route_snapshots").insert({
     route_variant_id: variant.id,

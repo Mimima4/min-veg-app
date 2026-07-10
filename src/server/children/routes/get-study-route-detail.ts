@@ -307,11 +307,17 @@ export async function getStudyRouteDetail(
     "source" in currentSnapshot.selected_steps_payload[0]
       ? ((currentSnapshot.selected_steps_payload[0] as { source?: string }).source ?? null)
       : null);
-  const isTruthPromotionNeeded =
-    useTruth && snapshotSource !== "availability_truth" && Boolean(route.current_variant_id);
   const isLegacyTruthShapeStale =
     snapshotSource === "availability_truth" &&
     isLegacyTruthSnapshotShape(currentSnapshot?.selected_steps_payload);
+  const snapshotStepsEmpty =
+    Array.isArray(currentSnapshot?.selected_steps_payload) &&
+    currentSnapshot.selected_steps_payload.length === 0;
+  const isTruthPromotionNeeded =
+    useTruth &&
+    snapshotSource !== "availability_truth" &&
+    Boolean(route.current_variant_id) &&
+    !snapshotStepsEmpty;
   const isStale =
     !snapshotRouteInputSignature ||
     snapshotRouteInputSignature !== currentRouteInputSignature ||

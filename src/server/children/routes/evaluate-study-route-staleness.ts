@@ -15,6 +15,11 @@ export function isLegacyTruthSnapshotShape(selectedStepsPayload: unknown): boole
     return false;
   }
 
+  // P-6: intentional empty primary in home fylke — not a legacy snapshot shape.
+  if (selectedStepsPayload.length === 0) {
+    return false;
+  }
+
   let hasProgressionStep = false;
   let hasApprenticeshipStep = false;
   let hasLarefagStep = false;
@@ -204,11 +209,17 @@ export async function evaluateStudyRouteStaleness(params: {
         null)
       : null);
 
-  const isTruthPromotionNeeded =
-    useTruth && snapshotSource !== "availability_truth" && Boolean(route.current_variant_id);
   const isLegacyTruthShapeStale =
     snapshotSource === "availability_truth" &&
     isLegacyTruthSnapshotShape(currentSnapshot?.selected_steps_payload);
+  const snapshotStepsEmpty =
+    Array.isArray(currentSnapshot?.selected_steps_payload) &&
+    currentSnapshot.selected_steps_payload.length === 0;
+  const isTruthPromotionNeeded =
+    useTruth &&
+    snapshotSource !== "availability_truth" &&
+    Boolean(route.current_variant_id) &&
+    !snapshotStepsEmpty;
 
   const isStale =
     !snapshotRouteInputSignature ||

@@ -3,16 +3,27 @@ import { getRouteOutcomeFilterLabelNb } from "@/lib/nav/route-outcome-filter-lab
 import { parseOutcomeFilterVariantReason } from "@/lib/nav/parse-outcome-filter-variant-reason";
 import { resolveCuratedRegionalAlternativeMainDifference } from "@/lib/regional-delivery/curated-regional-alternative-copy";
 import { parseCuratedRegionalVariantReason } from "@/lib/regional-delivery/curated-regional-variant-reason";
+import { isPainterNorthCrossFylkePathVariantEligibleForNeighbor } from "@/lib/regional-delivery/painter-north-cross-fylke-path-variant";
+import {
+  isPainterNorthCrossFylkeNabofylkeVariantEligible,
+  PAINTER_NORTH_CROSS_FYLKE_NABOFYLKE_VARIANT_ID,
+} from "@/lib/regional-delivery/painter-north-cross-fylke-pilot";
+import {
+  isSteigenCarpenterVekslingPathVariantEligible,
+  STEIGEN_CARPENTER_VEKSLING_VARIANT_ID,
+} from "@/lib/regional-delivery/steigen-carpenter-veksling-path-variant";
 import type {
   StudyRouteAlternativeTeaser,
   StudyRouteSnapshotStep,
 } from "@/lib/routes/route-types";
 import { buildSelectionSignatureFromPayload } from "@/lib/routes/selection-signature";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   batchGetRouteAdmissionRealismForCandidates,
   getRouteAdmissionRealism,
 } from "./get-route-admission-realism";
 import { enrichStudyRouteSteps } from "./enrich-study-route-steps";
+import { getChildPreferredMunicipalityCodes } from "@/server/children/planning/get-child-preferred-municipality-codes";
 
 type Params = {
   routeId: string;
@@ -39,6 +50,81 @@ type SnapshotRow = {
   route_variant_id: string;
   selected_steps_payload: unknown;
 };
+
+type CuratedRegionalEligibilityContext = {
+  professionSlug: string;
+  preferredMunicipalityCodes: string[];
+};
+
+function parsePainterNorthNeighborCountyCode(curatedRegionalVariantId: string): string | null {
+  const prefix = "painter-north-overflateteknikk-";
+  if (!curatedRegionalVariantId.startsWith(prefix)) {
+    return null;
+  }
+  const countyCode = curatedRegionalVariantId.slice(prefix.length).trim();
+  return /^\d{2}$/.test(countyCode) ? countyCode : null;
+}
+
+async function loadCuratedRegionalEligibilityContext(
+  supabase: SupabaseClient,
+  routeId: string
+): Promise<CuratedRegionalEligibilityContext | null> {
+  const { data: route } = await supabase
+    .from("study_routes")
+    .select("child_id, target_profession_id")
+    .eq("id", routeId)
+    .maybeSingle();
+
+  if (!route?.child_id || !route?.target_profession_id) {
+    return null;
+  }
+
+  const [preferredMunicipalityCodes, professionResult] = await Promise.all([
+    getChildPreferredMunicipalityCodes(route.child_id, supabase),
+    supabase
+      .from("professions")
+      .select("slug")
+      .eq("id", route.target_profession_id)
+      .maybeSingle(),
+  ]);
+
+  const professionSlug = professionResult.data?.slug;
+  if (typeof professionSlug !== "string" || professionSlug.trim().length === 0) {
+    return null;
+  }
+
+  return { professionSlug, preferredMunicipalityCodes };
+}
+
+function isCuratedRegionalVariantEligible(
+  curatedRegionalVariantId: string,
+  context: CuratedRegionalEligibilityContext
+): boolean {
+  if (curatedRegionalVariantId === STEIGEN_CARPENTER_VEKSLING_VARIANT_ID) {
+    return isSteigenCarpenterVekslingPathVariantEligible({
+      professionSlug: context.professionSlug,
+      preferredMunicipalityCodes: context.preferredMunicipalityCodes,
+    });
+  }
+
+  if (curatedRegionalVariantId === PAINTER_NORTH_CROSS_FYLKE_NABOFYLKE_VARIANT_ID) {
+    return isPainterNorthCrossFylkeNabofylkeVariantEligible({
+      professionSlug: context.professionSlug,
+      preferredMunicipalityCodes: context.preferredMunicipalityCodes,
+    });
+  }
+
+  const neighborCountyCode = parsePainterNorthNeighborCountyCode(curatedRegionalVariantId);
+  if (neighborCountyCode) {
+    return isPainterNorthCrossFylkePathVariantEligibleForNeighbor({
+      professionSlug: context.professionSlug,
+      preferredMunicipalityCodes: context.preferredMunicipalityCodes,
+      neighborCountyCode,
+    });
+  }
+
+  return false;
+}
 
 type ProgrammeSelectionStep = {
   type: "programme_selection";
@@ -335,12 +421,22 @@ export async function getStudyRouteAlternatives(
   });
 
   const savedSignatureSet = new Set(params.savedSelectionSignatures ?? []);
+  const curatedRegionalEligibilityContext = await loadCuratedRegionalEligibilityContext(
+    supabase,
+    params.routeId
+  );
 
   const alternativeTeasers = teasers.filter(
     (teaser) =>
       !teaser.isCurrent &&
-      (Boolean(teaser.routeOutcomeFilterId) || Boolean(teaser.curatedRegionalVariantId)) &&
-      (teaser.changedStepsCount ?? 0) > 0
+      (teaser.changedStepsCount ?? 0) > 0 &&
+      (Boolean(teaser.routeOutcomeFilterId) ||
+        (Boolean(teaser.curatedRegionalVariantId) &&
+          curatedRegionalEligibilityContext !== null &&
+          isCuratedRegionalVariantEligible(
+            teaser.curatedRegionalVariantId!,
+            curatedRegionalEligibilityContext
+          )))
   );
 
   return Promise.all(

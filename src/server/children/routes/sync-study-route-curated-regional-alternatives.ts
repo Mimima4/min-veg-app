@@ -10,20 +10,17 @@ import {
   STEIGEN_CARPENTER_VEKSLING_VARIANT_REASON,
 } from "@/lib/regional-delivery/steigen-carpenter-veksling-path-variant";
 import {
-  PAINTER_NORTH_CROSS_FYLKE_NEIGHBOR_CONFIGS,
-  childHomeFylkeCodes,
-  isPainterNorthHomeFylke,
+  PAINTER_NORTH_CROSS_FYLKE_NABOFYLKE_VARIANT_ID,
+  isPainterNorthCrossFylkeNabofylkeVariantEligible,
 } from "@/lib/regional-delivery/painter-north-cross-fylke-pilot";
 import {
-  buildPainterNorthCrossFylkeAlternativeSteps,
-  buildPainterNorthCrossFylkeVariantLabel,
-  buildPainterNorthCrossFylkeVariantReason,
-  isPainterNorthCrossFylkePathVariantEligibleForNeighbor,
-  painterNorthCrossFylkeVariantId,
+  buildPainterNorthCrossFylkeNabofylkeAlternativeSteps,
+  buildPainterNorthCrossFylkeNabofylkeVariantLabel,
+  PAINTER_NORTH_CROSS_FYLKE_NABOFYLKE_VARIANT_REASON,
 } from "@/lib/regional-delivery/painter-north-cross-fylke-path-variant";
 import type { StudyRouteSnapshotStep } from "@/lib/routes/route-types";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { buildPainterNorthCrossFylkeRouteSteps } from "./build-painter-north-cross-fylke-route-steps";
+import { buildPainterNorthCrossFylkeMergedRouteSteps } from "./build-painter-north-cross-fylke-route-steps";
 import { getVerifiedLarebedriftApprenticeshipOptions } from "./get-verified-larebedrift-options";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -80,6 +77,9 @@ const MAX_SNAPSHOT_VERSION_INSERT_RETRIES = 5;
 /**
  * Curated regional alternatives (Steigen, P-7 north painter) resolve neighbor PSA themselves.
  * They must sync even when home fylke has no programme rows / PSA truth (missing_programme_rows).
+ *
+ * Always sync for Contour B professions so stale variants are archived when home fylke or
+ * eligibility changes (e.g. Finnmark → Buskerud must drop P-7 alternatives).
  */
 export function shouldSyncStudyRouteCuratedRegionalAlternatives(params: {
   hasContourBProfessionLinks: boolean;
@@ -87,24 +87,10 @@ export function shouldSyncStudyRouteCuratedRegionalAlternatives(params: {
   professionSlug: string;
   preferredMunicipalityCodes: string[];
 }): boolean {
-  if (!params.hasContourBProfessionLinks) {
-    return false;
-  }
-  if (params.contourBTruthPathUsed) {
-    return true;
-  }
-  if (
-    isSteigenCarpenterVekslingPathVariantEligible({
-      professionSlug: params.professionSlug,
-      preferredMunicipalityCodes: params.preferredMunicipalityCodes,
-    })
-  ) {
-    return true;
-  }
-  return (
-    params.professionSlug === "painter" &&
-    isPainterNorthHomeFylke(childHomeFylkeCodes(params.preferredMunicipalityCodes))
-  );
+  void params.contourBTruthPathUsed;
+  void params.professionSlug;
+  void params.preferredMunicipalityCodes;
+  return params.hasContourBProfessionLinks;
 }
 
 const CURATED_REGIONAL_VARIANTS: CuratedRegionalVariantDefinition[] = [
@@ -125,37 +111,23 @@ const CURATED_REGIONAL_VARIANTS: CuratedRegionalVariantDefinition[] = [
           }),
       }),
   },
-  ...PAINTER_NORTH_CROSS_FYLKE_NEIGHBOR_CONFIGS.map((neighbor) => ({
-    variantId: painterNorthCrossFylkeVariantId(neighbor.countyCode),
-    variantLabel: buildPainterNorthCrossFylkeVariantLabel(neighbor.countyCode),
-    variantReason: buildPainterNorthCrossFylkeVariantReason(neighbor.countyCode),
-    isEligible: (params: {
-      professionSlug: string;
-      preferredMunicipalityCodes: string[];
-    }) =>
-      isPainterNorthCrossFylkePathVariantEligibleForNeighbor({
-        professionSlug: params.professionSlug,
-        preferredMunicipalityCodes: params.preferredMunicipalityCodes,
-        neighborCountyCode: neighbor.countyCode,
-      }),
-    buildSteps: ({
-      supabase,
-      professionSlug,
-      preferredMunicipalityCodes,
-    }: BuildStepsParams) =>
-      buildPainterNorthCrossFylkeAlternativeSteps({
+  {
+    variantId: PAINTER_NORTH_CROSS_FYLKE_NABOFYLKE_VARIANT_ID,
+    variantLabel: buildPainterNorthCrossFylkeNabofylkeVariantLabel(),
+    variantReason: PAINTER_NORTH_CROSS_FYLKE_NABOFYLKE_VARIANT_REASON,
+    isEligible: isPainterNorthCrossFylkeNabofylkeVariantEligible,
+    buildSteps: ({ supabase, professionSlug, preferredMunicipalityCodes }: BuildStepsParams) =>
+      buildPainterNorthCrossFylkeNabofylkeAlternativeSteps({
         professionSlug,
         preferredMunicipalityCodes,
-        neighborCountyCode: neighbor.countyCode,
-        buildRouteSteps: ({ neighborCountyCode }) =>
-          buildPainterNorthCrossFylkeRouteSteps({
+        buildMergedRouteSteps: () =>
+          buildPainterNorthCrossFylkeMergedRouteSteps({
             supabase,
             professionSlug,
             preferredMunicipalityCodes,
-            neighborCountyCode,
           }),
       }),
-  })),
+  },
 ];
 
 async function promoteCuratedRegionalSnapshot(params: {

@@ -80,7 +80,17 @@ VG3/bedrift: expanded from Vilbli bedrift links (`painter-vg3-{title}-{countySlu
 | P-4 | V.BA VG2 switch | **OK — sibling switch with carpenter/plumber** |
 | P-5 | Empty bedrift | **OK — godkjent-only truth** |
 | P-6 | Northern fylke (VG2=0 local) | **OK — no primary route in home fylke; no VG1-only patch** (`phase-4-county-local-primary-route-completeness-owner-policy.md`) |
-| P-7 | Cross-fylke Vilbli schools | **OK — alternative routes only** when home has VG1 PSA and neighbor has VG2+ PSA (Vilbli split: VG1 home, VG2 neighbor); never primary |
+| P-7 | Cross-fylke Vilbli schools | **OK — alternative routes only** when home has VG1 PSA and neighbor has VG2+ PSA (Vilbli split: VG1 home, VG2 neighbor); never primary. **UI (2026-07-10):** one card **«Overflateteknikk nabofylke»** with **VG2 school dropdown** (Nordland / Trøndelag / …) — not one card per neighbor fylke. |
+
+### P-7 UI contract (owner 2026-07-10)
+
+| Rule | Detail |
+|------|--------|
+| Eligibility | Home fylke `55` or `56` only; painter profession |
+| Primary | Empty when local VG2=0 (P-6) |
+| Alternatives | **One** curated regional variant; label nb: **«Overflateteknikk nabofylke»** |
+| VG2 step | Dropdown of neighbor schools (PSA-backed), not separate full route cards per fylke |
+| Buskerud `33`, Møre `15`, … | **No P-7** — primary empty only; no neighbor alternatives |
 
 ---
 

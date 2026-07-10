@@ -54,16 +54,9 @@ assert.equal(isPainterNorthCrossFylkeEligible({ professionSlug: "painter", homeF
 assert.equal(isPainterNorthCrossFylkeEligible({ professionSlug: "painter", homeFylkeCode: "03", neighborCountyCode: "18" }), false);
 assert.equal(isPainterNorthCrossFylkeEligible({ professionSlug: "carpenter", homeFylkeCode: "56", neighborCountyCode: "18" }), false);
 
-// P-7 sync must run even when home county has no PSA rows (missing_programme_rows).
-function shouldSyncCuratedRegionalAlternatives({
-  hasContourBProfessionLinks,
-  contourBTruthPathUsed,
-  professionSlug,
-  homeFylkeCode,
-}) {
-  if (!hasContourBProfessionLinks) return false;
-  if (contourBTruthPathUsed) return true;
-  return professionSlug === "painter" && PAINTER_NORTH_HOME_FYLKE_CODES.has(homeFylkeCode);
+// P-7 sync runs for all Contour B professions so stale curated variants are pruned on recompute.
+function shouldSyncCuratedRegionalAlternatives({ hasContourBProfessionLinks }) {
+  return hasContourBProfessionLinks;
 }
 
 assert.equal(
@@ -80,7 +73,16 @@ assert.equal(
     hasContourBProfessionLinks: true,
     contourBTruthPathUsed: false,
     professionSlug: "painter",
-    homeFylkeCode: "03",
+    homeFylkeCode: "33",
+  }),
+  true
+);
+assert.equal(
+  shouldSyncCuratedRegionalAlternatives({
+    hasContourBProfessionLinks: false,
+    contourBTruthPathUsed: false,
+    professionSlug: "painter",
+    homeFylkeCode: "55",
   }),
   false
 );

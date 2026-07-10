@@ -10,6 +10,7 @@ import {
   getRouteAuthenticityRule,
   type RouteAuthenticityStep,
 } from "./route-authenticity-rules";
+import { resolveRouteSnapshotSource } from "./resolve-route-snapshot-source";
 import { getStudyRouteDetail } from "./get-study-route-detail";
 import { RouteDomainError } from "./route-errors";
 import {
@@ -759,6 +760,7 @@ export async function triggerStudyRouteRecompute(params: Params) {
           supabase,
           professionSlug: professionRow.slug,
           truthRows: truth.rows,
+          preferredMunicipalityCodes,
         });
         recomputedSteps = buildStepsFromAvailabilityTruth({
           rows: truth.rows,
@@ -1085,9 +1087,11 @@ export async function triggerStudyRouteRecompute(params: Params) {
       );
     }
 
-    const routeSource = recomputedSteps.some((step) => step.source === "availability_truth")
-      ? "availability_truth"
-      : "legacy";
+    const routeSource = resolveRouteSnapshotSource({
+      steps: recomputedSteps,
+      contourBTruthPathUsed,
+      primaryRouteIncompleteHomeCounty,
+    });
 
     await insertRecomputedSnapshotWithRetry({
       supabase,
