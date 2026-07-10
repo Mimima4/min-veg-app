@@ -65,6 +65,25 @@ const FAG_REGISTRY = [
     apiQueryCodes: ["BAIMF3"],
   },
   {
+    code: "ANLEGGSMASKINFORERFAGET",
+    label: "Anleggsmaskinførerfaget",
+    labelAliases: [
+      "anleggsmaskinforer",
+      "anleggsmaskinforerfaget",
+      "anleggsmaskinfører",
+      "anleggsmaskinførerfaget",
+    ],
+    codeAliases: ["baamf3----", "baamf3"],
+    apiQueryCodes: ["BAAMF3"],
+  },
+  {
+    code: "VEG_OG_ANLEGGSFAGET",
+    label: "Veg- og anleggsfaget",
+    labelAliases: ["veg og anlegg", "vegog anlegg", "veganlegg"],
+    codeAliases: ["baanl3----", "baanl3"],
+    apiQueryCodes: ["BAANL3"],
+  },
+  {
     code: "ELEKTRIKERFAGET",
     label: "Elektrikerfaget",
     labelAliases: ["elektrikerfaget", "elektrikerfag", "elektriker"],

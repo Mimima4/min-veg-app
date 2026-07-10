@@ -55,6 +55,7 @@ const VIGO_QUERY_CODE_TO_LAREFAG: Readonly<Record<string, LarefagIdentity>> = {
   BATMF3: { code: "TOMRERFAGET", label: "Tømrerfaget" },
   BAMOT3: { code: "MALER_OG_OVERFLATETEKNIKKFAGET", label: "Maler- og overflateteknikkfaget" },
   BAIMF3: { code: "INDUSTRIMALERFAGET", label: "Industrimalerfaget" },
+  BAAMF3: { code: "ANLEGGSMASKINFORERFAGET", label: "Anleggsmaskinførerfaget" },
   ELPRO3: {
     code: "PRODUKSJONSELEKTRIKERFAGET",
     label: "Produksjonselektronikerfaget",
@@ -98,6 +99,22 @@ const KOLONNE3_TITLE_MATCHERS: ReadonlyArray<{
     match: ({ slugHaystack, titleHaystack }) =>
       slugHaystack.includes("industrimaler") || titleHaystack.includes("industrimaler"),
     identity: { code: "INDUSTRIMALERFAGET", label: "Industrimalerfaget" },
+  },
+  {
+    match: ({ slugHaystack, titleHaystack }) =>
+      slugHaystack.includes("anleggsmaskinforer") ||
+      slugHaystack.includes("anleggsmaskinfører") ||
+      titleHaystack.includes("anleggsmaskinforer") ||
+      titleHaystack.includes("anleggsmaskinfører"),
+    identity: {
+      code: "ANLEGGSMASKINFORERFAGET",
+      label: "Anleggsmaskinførerfaget",
+    },
+  },
+  {
+    match: ({ slugHaystack, titleHaystack }) =>
+      slugHaystack.includes("veg og anlegg") || titleHaystack.includes("veg og anlegg"),
+    identity: { code: "VEG_OG_ANLEGGSFAGET", label: "Veg- og anleggsfaget" },
   },
   {
     match: ({ slugHaystack, titleHaystack }) =>

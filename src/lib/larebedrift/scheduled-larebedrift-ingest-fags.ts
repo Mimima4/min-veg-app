@@ -14,6 +14,7 @@ export const SCHEDULED_LAREBEDRIFT_INGEST_FAGS: ReadonlyArray<ScheduledLarebedri
   { apiQueryCode: "BARLF3", code: "RORLEGGERFAGET", label: "Rørleggerfaget" },
   { apiQueryCode: "BAMOT3", code: "MALER_OG_OVERFLATETEKNIKKFAGET", label: "Maler- og overflateteknikkfaget" },
   { apiQueryCode: "BAIMF3", code: "INDUSTRIMALERFAGET", label: "Industrimalerfaget" },
+  { apiQueryCode: "BAAMF3", code: "ANLEGGSMASKINFORERFAGET", label: "Anleggsmaskinførerfaget" },
   { apiQueryCode: "ELELE3", code: "ELEKTRIKERFAGET", label: "Elektrikerfaget" },
   { apiQueryCode: "ELMEL3", code: "MARITIM_ELEKTRIKERFAGET", label: "Maritim elektrikerfaget" },
   { apiQueryCode: "ELERF3", code: "ELEKTROREPARATORFAGET", label: "Elektroreparatørfaget" },
@@ -41,7 +42,7 @@ export const SCHEDULED_LAREBEDRIFT_INGEST_FAGS: ReadonlyArray<ScheduledLarebedri
 export const SCHEDULED_LAREBEDRIFT_INGEST_BATCHES: ReadonlyArray<
   ReadonlyArray<(typeof SCHEDULED_LAREBEDRIFT_INGEST_FAGS)[number]["code"]>
 > = [
-  ["TOMRERFAGET", "RORLEGGERFAGET", "MALER_OG_OVERFLATETEKNIKKFAGET", "INDUSTRIMALERFAGET"],
+  ["TOMRERFAGET", "RORLEGGERFAGET", "MALER_OG_OVERFLATETEKNIKKFAGET", "INDUSTRIMALERFAGET", "ANLEGGSMASKINFORERFAGET"],
   ["ELEKTRIKERFAGET", "MARITIM_ELEKTRIKERFAGET", "ELEKTROREPARATORFAGET", "ENERGIMONTORFAGET"],
   ["ENERGIOPERATORFAGET", "HEISMONTORFAGET", "SIGNALMONTORFAGET", "TAVLEMONTORFAGET"],
   ["TELEKOMMUNIKASJONSMONTORFAGET", "TOGELEKTRIKERFAGET", "VIKLERFAGET"],

@@ -200,6 +200,45 @@ for (const fixture of PAINTER_FAG) {
   }
 }
 
+const ANLEGGSTEKNIKK_FAG = {
+  title: "Anleggsmaskinførerfaget",
+  programmeUrl:
+    "/nb/vestland/yrker/v.ba/bygg-og-anleggsteknikk?kurs=v.babat1----_v.baanl2----_v.baamf3----_",
+  expectedCode: "ANLEGGSMASKINFORERFAGET",
+};
+
+{
+  const programSlug = `kolonne3-${slugify(ANLEGGSTEKNIKK_FAG.title)}`;
+  const resolved = resolveLarefagFromKolonne3Selection({
+    programSlug,
+    programTitle: ANLEGGSTEKNIKK_FAG.title,
+    title: ANLEGGSTEKNIKK_FAG.title,
+    programmeUrl: ANLEGGSTEKNIKK_FAG.programmeUrl,
+  });
+  if (resolved?.code !== ANLEGGSTEKNIKK_FAG.expectedCode) {
+    failed += 1;
+    console.error(
+      `FAIL ${ANLEGGSTEKNIKK_FAG.title}: expected ${ANLEGGSTEKNIKK_FAG.expectedCode}, got ${resolved?.code ?? "null"}`
+    );
+  } else {
+    console.log(`OK ${ANLEGGSTEKNIKK_FAG.title} -> ${resolved.code}`);
+  }
+}
+
+const anleggProfessionDefault = resolveLarefagFromKolonne3Selection({
+  programSlug: "anleggsteknikk-vg3-anleggsmaskinforer-vestland",
+  programTitle: "VG3 Anleggsmaskinførerfaget",
+  title: "Anleggsmaskinførerfaget",
+});
+if (anleggProfessionDefault?.code !== "ANLEGGSMASKINFORERFAGET") {
+  failed += 1;
+  console.error(
+    `FAIL anleggsteknikk VG3 slug: expected ANLEGGSMASKINFORERFAGET, got ${anleggProfessionDefault?.code ?? "null"}`
+  );
+} else {
+  console.log(`OK anleggsteknikk VG3 slug -> ${anleggProfessionDefault.code}`);
+}
+
 const industrimalerTitleOnly = resolveLarefagFromKolonne3Selection({
   programSlug: "kolonne3-industrimalerfaget",
   programTitle: "Industrimalerfaget",

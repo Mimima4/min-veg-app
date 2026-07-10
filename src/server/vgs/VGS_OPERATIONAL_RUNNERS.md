@@ -265,7 +265,7 @@ Checks: CLI rejects `--contour-b-partial` on `run-vgs-truth-pipeline.mjs`; Conto
 |-------|--------|
 | **C-VGS-YRKESFAG** | **6 professions** in pipeline (`electrician`, `mechanic`, `carpenter`, `plumber`, `painter`, **`anleggsteknikk`**); anleggsteknikk PSA nationwide batch 2026-07-10 (Oslo `03` VG2=0 ABORT) |
 | **C-NAV-OCCUPATION** | Matcher wired at **catalog profession / NAV vacancy level** |
-| **Verified bedrift** | P3b for 5 professions; ingest roster = tømrer + rørlegger + maler kolonne-3 + 11 elektro + 10 kjøretøy; **empty bedrift when no godkjent = OK** |
+| **Verified bedrift** | P3b for **6 professions**; ingest roster = tømrer + rørlegger + maler kolonne-3 + **anleggsmaskinfører (`BAAMF3`)** + 11 elektro + 10 kjøretøy; **empty bedrift when no godkjent = OK** |
 | **C-TRANSPORT-KOMMUNE** | Live nationwide overlay |
 | **C-LOSA-FJERN** | Live Finnmark (56) electrician charter |
 | **C-FAGSKOLE / C-HOYSKOLE / C-PROFESJONSSTUDIER / C-PABYGGING** | **Out of scope for P4-MCT-1** — filters hidden until respective MCT phases |
@@ -342,7 +342,7 @@ Contour B / catalog expansion checklist (if adding counties): `§ Expansion gate
 | Catalog seed | ☑ applied prod DB |
 | NAV map | ☑ `håndverkere.anleggsmaskinør` (confirm) |
 | PSA ingest | ☑ **14/15 counties** written; **Oslo `03` ABORT** (VG2=0); `34`/`42`/`56` partial + matching review |
-| Bedrift ingest | **Deferred** — kolonne-3 roster TBD |
+| Bedrift ingest | ☑ **Mapping wired** — primary `ANLEGGSMASKINFORERFAGET` / VIGO `BAAMF3` (not `BAANL3` in `kurs` URL); cron batch 0; nationwide ingest pending prod run |
 
 ### Bedrift UI performance (truth-preserving)
 
@@ -363,4 +363,4 @@ Eleven elektro kolonne-3 lærefag in `larebedrift-fagkode.mjs` + `kolonne3-laref
 
 Ten kjøretøy kolonne-3 lærefag registered in `larebedrift-fagkode.mjs` + `kolonne3-larefag-mapping.ts` (VIGO `TP*` codes). Default profession slug `mechanic` → `MOTORMEKANIKERFAGET`. Pilot gate: `primary-route-larebedrift-pilot.ts` (nationwide when child has home kommune). **Nationwide ingest done (2026-07-03)** — ~1777 mechanic rows, ~6494 total active in `larebedrift_truth`; prod-check Vestland Fagvalg → bedrift.
 
-**Monthly cron:** Vercel runs seven batched `GET /api/internal/larebedrift/run-ingest/{0..6}` jobs on the 1st (`0/10/20/30/40/50 4 * *` + `0 5 1 * *`, auth `CRON_SECRET`) — batch 0 Tømrer + Rørlegger, 1–3 eleven elektro, 4–6 ten kjøretøy (`scheduled-larebedrift-ingest-fags.ts`). Each route `maxDuration` 300s (Hobby/Pro safe). Manual all-fag run: `GET /run-ingest` (may timeout). Dry-run: `?dryRun=true`. Single-fag filter: `?larefagCode=RORLEGGERFAGET`. **Alerts:** HTTP 5xx posts to `OPS_ALERT_WEBHOOK_URL` (Discord/Slack); 4xx (e.g. invalid batch) are silent; suppress with `?notify=false`.
+**Monthly cron:** Vercel runs seven batched `GET /api/internal/larebedrift/run-ingest/{0..6}` jobs on the 1st (`0/10/20/30/40/50 4 * *` + `0 5 1 * *`, auth `CRON_SECRET`) — batch 0 tømrer + rørlegger + maler kolonne-3 + anleggsmaskinfører (`BAAMF3`), 1–3 eleven elektro, 4–6 ten kjøretøy (`scheduled-larebedrift-ingest-fags.ts`). Each route `maxDuration` 300s (Hobby/Pro safe). Manual all-fag run: `GET /run-ingest` (may timeout). Dry-run: `?dryRun=true`. Single-fag filter: `?larefagCode=ANLEGGSMASKINFORERFAGET`. **Alerts:** HTTP 5xx posts to `OPS_ALERT_WEBHOOK_URL` (Discord/Slack); 4xx (e.g. invalid batch) are silent; suppress with `?notify=false`.
