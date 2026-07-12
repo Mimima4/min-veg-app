@@ -6,6 +6,31 @@
  * (e.g. `_v.elmel3----` → `ELMEL3`). Title/slug matchers are a fallback only.
  */
 
+import anleggsteknikkRoster from "../../../data/larebedrift/kolonne3-rosters/anleggsteknikk.json" with { type: "json" };
+
+type Kolonne3RosterEntry = {
+  apiQueryCode: string;
+  code: string;
+  label: string;
+  labelAliases?: string[];
+};
+
+const KOLONNE3_ROSTER_ENTRIES: ReadonlyArray<Kolonne3RosterEntry> = [
+  ...(anleggsteknikkRoster.entries as Kolonne3RosterEntry[]),
+];
+
+function kolonne3RosterByApiQueryCode(): Readonly<Record<string, LarefagIdentity>> {
+  const map: Record<string, LarefagIdentity> = {};
+  for (const entry of KOLONNE3_ROSTER_ENTRIES) {
+    map[entry.apiQueryCode.toUpperCase()] = { code: entry.code, label: entry.label };
+  }
+  return map;
+}
+
+function kolonne3RosterEntriesFlat(): ReadonlyArray<Kolonne3RosterEntry> {
+  return KOLONNE3_ROSTER_ENTRIES;
+}
+
 type LarefagIdentity = {
   code: string;
   label: string;
@@ -39,7 +64,7 @@ export function parseVigoLaerefagQueryCodeFromUrl(
   return null;
 }
 
-const VIGO_QUERY_CODE_TO_LAREFAG: Readonly<Record<string, LarefagIdentity>> = {
+const BASE_VIGO_QUERY_CODE_TO_LAREFAG: Readonly<Record<string, LarefagIdentity>> = {
   ELELE3: { code: "ELEKTRIKERFAGET", label: "Elektrikerfaget" },
   ELMEL3: { code: "MARITIM_ELEKTRIKERFAGET", label: "Maritim elektrikerfaget" },
   ELERF3: { code: "ELEKTROREPARATORFAGET", label: "Elektroreparatørfaget" },
@@ -55,7 +80,6 @@ const VIGO_QUERY_CODE_TO_LAREFAG: Readonly<Record<string, LarefagIdentity>> = {
   BATMF3: { code: "TOMRERFAGET", label: "Tømrerfaget" },
   BAMOT3: { code: "MALER_OG_OVERFLATETEKNIKKFAGET", label: "Maler- og overflateteknikkfaget" },
   BAIMF3: { code: "INDUSTRIMALERFAGET", label: "Industrimalerfaget" },
-  BAAMF3: { code: "ANLEGGSMASKINFORERFAGET", label: "Anleggsmaskinførerfaget" },
   ELPRO3: {
     code: "PRODUKSJONSELEKTRIKERFAGET",
     label: "Produksjonselektronikerfaget",
@@ -81,13 +105,40 @@ const VIGO_QUERY_CODE_TO_LAREFAG: Readonly<Record<string, LarefagIdentity>> = {
   },
 };
 
+const VIGO_QUERY_CODE_TO_LAREFAG: Readonly<Record<string, LarefagIdentity>> = {
+  ...BASE_VIGO_QUERY_CODE_TO_LAREFAG,
+  ...kolonne3RosterByApiQueryCode(),
+};
+
+function rosterTitleMatchers(): ReadonlyArray<{
+  match: (haystacks: { slugHaystack: string; titleHaystack: string }) => boolean;
+  identity: LarefagIdentity;
+}> {
+  return kolonne3RosterEntriesFlat().map((entry) => ({
+    match: ({ slugHaystack, titleHaystack }) => {
+      const needles = [
+        normalize(entry.label),
+        normalize(entry.label.replace(/faget$/i, "")),
+        ...(entry.labelAliases ?? []).map((alias) => normalize(alias)),
+      ].filter(Boolean);
+      return needles.some(
+        (needle) => slugHaystack.includes(needle) || titleHaystack.includes(needle)
+      );
+    },
+    identity: { code: entry.code, label: entry.label },
+  }));
+}
+
 const KOLONNE3_TITLE_MATCHERS: ReadonlyArray<{
   match: (haystacks: { slugHaystack: string; titleHaystack: string }) => boolean;
   identity: LarefagIdentity;
 }> = [
+  ...rosterTitleMatchers(),
   {
     match: ({ slugHaystack, titleHaystack }) =>
-      slugHaystack.includes("rorlegger") || titleHaystack.includes("rorlegger"),
+      (slugHaystack.includes("rorlegger") || titleHaystack.includes("rorlegger")) &&
+      !slugHaystack.includes("anleggsrorlegger") &&
+      !titleHaystack.includes("anleggsrorlegger"),
     identity: { code: "RORLEGGERFAGET", label: "Rørleggerfaget" },
   },
   {
@@ -99,22 +150,6 @@ const KOLONNE3_TITLE_MATCHERS: ReadonlyArray<{
     match: ({ slugHaystack, titleHaystack }) =>
       slugHaystack.includes("industrimaler") || titleHaystack.includes("industrimaler"),
     identity: { code: "INDUSTRIMALERFAGET", label: "Industrimalerfaget" },
-  },
-  {
-    match: ({ slugHaystack, titleHaystack }) =>
-      slugHaystack.includes("anleggsmaskinforer") ||
-      slugHaystack.includes("anleggsmaskinfører") ||
-      titleHaystack.includes("anleggsmaskinforer") ||
-      titleHaystack.includes("anleggsmaskinfører"),
-    identity: {
-      code: "ANLEGGSMASKINFORERFAGET",
-      label: "Anleggsmaskinførerfaget",
-    },
-  },
-  {
-    match: ({ slugHaystack, titleHaystack }) =>
-      slugHaystack.includes("veg og anlegg") || titleHaystack.includes("veg og anlegg"),
-    identity: { code: "VEG_OG_ANLEGGSFAGET", label: "Veg- og anleggsfaget" },
   },
   {
     match: ({ slugHaystack, titleHaystack }) =>

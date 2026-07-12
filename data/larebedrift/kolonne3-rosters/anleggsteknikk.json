@@ -1,0 +1,63 @@
+{
+  "professionSlug": "anleggsteknikk",
+  "vilbliChainTokens": "V.BABAT1----_V.BAANL2----",
+  "extractReferenceCountySlug": "vestland",
+  "ingestBatch": 7,
+  "entries": [
+    {
+      "apiQueryCode": "BAAMF3",
+      "code": "ANLEGGSMASKINFORERFAGET",
+      "label": "Anleggsmaskinførerfaget",
+      "labelAliases": ["anleggsmaskinforer", "anleggsmaskinforerfaget", "anleggsmaskinfører", "anleggsmaskinførerfaget"],
+      "ingestBatch": 0
+    },
+    {
+      "apiQueryCode": "BAARL3",
+      "code": "ANLEGGRORLEGGERFAGET",
+      "label": "Anleggsrørleggerfaget",
+      "labelAliases": ["anleggsrorlegger", "anleggsrorleggerfaget", "anleggsrørlegger", "anleggsrørleggerfaget"]
+    },
+    {
+      "apiQueryCode": "BAASF3",
+      "code": "ASFALTFAGET",
+      "label": "Asfaltfaget",
+      "labelAliases": ["asfalt", "asfaltfaget"]
+    },
+    {
+      "apiQueryCode": "BABAN3",
+      "code": "BANEMONTORFAGET",
+      "label": "Banemontørfaget",
+      "labelAliases": ["banemontor", "banemontorfaget", "banemontører", "banemontørfaget"]
+    },
+    {
+      "apiQueryCode": "BABRO3",
+      "code": "BRONN_OG_BOREFAGET",
+      "label": "Brønn- og borefaget",
+      "labelAliases": ["bronn og bore", "brønn og bore", "bronn- og borefaget", "brønn- og borefaget"]
+    },
+    {
+      "apiQueryCode": "BAFJE3",
+      "code": "FJELL_OG_BERGVERKSFAGET",
+      "label": "Fjell- og bergverksfaget",
+      "labelAliases": ["fjell og bergverk", "fjell- og bergverksfaget"]
+    },
+    {
+      "apiQueryCode": "BAFUN3",
+      "code": "FUNDAMENTERINGSFAGET",
+      "label": "Fundamenteringsfaget",
+      "labelAliases": ["fundamentering", "fundamenteringsfaget"]
+    },
+    {
+      "apiQueryCode": "BAVOA3",
+      "code": "VEG_OG_ANLEGGSFAGET",
+      "label": "Vei- og anleggsfaget",
+      "labelAliases": ["vei og anlegg", "vei- og anleggsfaget", "vegog anlegg"]
+    },
+    {
+      "apiQueryCode": "BAVOV3",
+      "code": "VEIDRIFT_OG_VEIVEDLIKEHOLDSFAGET",
+      "label": "Veidrift- og veivedlikeholdsfaget",
+      "labelAliases": ["veidrift", "veivedlikehold", "veidrift- og veivedlikeholdsfaget"]
+    }
+  ]
+}

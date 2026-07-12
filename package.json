@@ -28,6 +28,7 @@
     "ops:deactivate-vg3-catalog-orphans": "node scripts/deactivate-vg3-catalog-orphans.mjs",
     "smoke:vg3-catalog": "node scripts/smoke-vg3-catalog-status.mjs",
     "smoke:kolonne3-larefag-mapping": "node scripts/smoke-kolonne3-larefag-mapping.mjs",
+    "verify:kolonne3-roster": "node scripts/extract-vilbli-kolonne3-roster.mjs --verify",
     "smoke:painter-north-cross-fylke": "node scripts/smoke-painter-north-cross-fylke-pilot.mjs",
     "smoke:losa-cross-profession": "node --env-file=.env.local scripts/smoke-losa-cross-profession-availability-truth.mjs",
     "test:e2e": "node --env-file=.env.local node_modules/.bin/playwright test",

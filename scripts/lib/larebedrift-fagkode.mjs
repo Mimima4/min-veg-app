@@ -27,7 +27,9 @@ function normalize(value) {
  * (incl. the Finnlærebedrift lærefag code). `apiQueryCodes` are the codes passed
  * to the Finnlærebedrift API `fag=` filter.
  */
-const FAG_REGISTRY = [
+import { mergeKolonne3RosterIntoFagRegistry } from "./load-kolonne3-rosters.mjs";
+
+const FAG_REGISTRY = mergeKolonne3RosterIntoFagRegistry([
   {
     code: "TOMRERFAGET",
     label: "Tømrerfaget",
@@ -63,25 +65,6 @@ const FAG_REGISTRY = [
     labelAliases: ["industrimaler", "industrimalerfaget"],
     codeAliases: ["baimf3----", "baimf3"],
     apiQueryCodes: ["BAIMF3"],
-  },
-  {
-    code: "ANLEGGSMASKINFORERFAGET",
-    label: "Anleggsmaskinførerfaget",
-    labelAliases: [
-      "anleggsmaskinforer",
-      "anleggsmaskinforerfaget",
-      "anleggsmaskinfører",
-      "anleggsmaskinførerfaget",
-    ],
-    codeAliases: ["baamf3----", "baamf3"],
-    apiQueryCodes: ["BAAMF3"],
-  },
-  {
-    code: "VEG_OG_ANLEGGSFAGET",
-    label: "Veg- og anleggsfaget",
-    labelAliases: ["veg og anlegg", "vegog anlegg", "veganlegg"],
-    codeAliases: ["baanl3----", "baanl3"],
-    apiQueryCodes: ["BAANL3"],
   },
   {
     code: "ELEKTRIKERFAGET",
@@ -230,7 +213,7 @@ const FAG_REGISTRY = [
     codeAliases: ["tptlm3----", "tptlm3"],
     apiQueryCodes: ["TPTLM3"],
   },
-];
+]);
 
 function buildLookup() {
   const byCode = new Map();

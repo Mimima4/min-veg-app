@@ -200,28 +200,78 @@ for (const fixture of PAINTER_FAG) {
   }
 }
 
-const ANLEGGSTEKNIKK_FAG = {
-  title: "Anleggsmaskinførerfaget",
-  programmeUrl:
-    "/nb/vestland/yrker/v.ba/bygg-og-anleggsteknikk?kurs=v.babat1----_v.baanl2----_v.baamf3----_",
-  expectedCode: "ANLEGGSMASKINFORERFAGET",
-};
+const ANLEGGSTEKNIKK_FAG = [
+  {
+    title: "Anleggsmaskinførerfaget",
+    programmeUrl:
+      "/nb/vestland/strukturkart/V.BA/anleggsmaskinforerfaget-skoler-og-laerebedrifter?kurs=v.babat1----_v.baanl2----_v.baamf3----_",
+    expectedCode: "ANLEGGSMASKINFORERFAGET",
+  },
+  {
+    title: "Anleggsrørleggerfaget",
+    programmeUrl:
+      "/nb/vestland/strukturkart/V.BA/anleggsrorleggerfaget-skoler-og-laerebedrifter?kurs=v.babat1----_v.baanl2----_v.baarl3----_",
+    expectedCode: "ANLEGGRORLEGGERFAGET",
+  },
+  {
+    title: "Asfaltfaget",
+    programmeUrl:
+      "/nb/vestland/strukturkart/V.BA/asfaltfaget-skoler-og-laerebedrifter?kurs=v.babat1----_v.baanl2----_v.baasf3----_",
+    expectedCode: "ASFALTFAGET",
+  },
+  {
+    title: "Banemontørfaget",
+    programmeUrl:
+      "/nb/vestland/strukturkart/V.BA/banemontorfaget-skoler-og-laerebedrifter?kurs=v.babat1----_v.baanl2----_v.baban3----_",
+    expectedCode: "BANEMONTORFAGET",
+  },
+  {
+    title: "Brønn- og borefaget",
+    programmeUrl:
+      "/nb/vestland/strukturkart/V.BA/bronn-og-borefaget-skoler-og-laerebedrifter?kurs=v.babat1----_v.baanl2----_v.babro3----_",
+    expectedCode: "BRONN_OG_BOREFAGET",
+  },
+  {
+    title: "Fjell- og bergverksfaget",
+    programmeUrl:
+      "/nb/vestland/strukturkart/V.BA/fjell-og-bergverksfaget-skoler-og-laerebedrifter?kurs=v.babat1----_v.baanl2----_v.bafje3----_",
+    expectedCode: "FJELL_OG_BERGVERKSFAGET",
+  },
+  {
+    title: "Fundamenteringsfaget",
+    programmeUrl:
+      "/nb/vestland/strukturkart/V.BA/fundamenteringsfaget-skoler-og-laerebedrifter?kurs=v.babat1----_v.baanl2----_v.bafun3----_",
+    expectedCode: "FUNDAMENTERINGSFAGET",
+  },
+  {
+    title: "Vei- og anleggsfaget",
+    programmeUrl:
+      "/nb/vestland/strukturkart/V.BA/vei-og-anleggsfaget-skoler-og-laerebedrifter?kurs=v.babat1----_v.baanl2----_v.bavoa3----_",
+    expectedCode: "VEG_OG_ANLEGGSFAGET",
+  },
+  {
+    title: "Veidrift- og veivedlikeholdsfaget",
+    programmeUrl:
+      "/nb/vestland/strukturkart/V.BA/veidrift-og-veivedlikeholdsfaget-skoler-og-laerebedrifter?kurs=v.babat1----_v.baanl2----_v.bavov3----_",
+    expectedCode: "VEIDRIFT_OG_VEIVEDLIKEHOLDSFAGET",
+  },
+];
 
-{
-  const programSlug = `kolonne3-${slugify(ANLEGGSTEKNIKK_FAG.title)}`;
+for (const fixture of ANLEGGSTEKNIKK_FAG) {
+  const programSlug = `kolonne3-${slugify(fixture.title)}`;
   const resolved = resolveLarefagFromKolonne3Selection({
     programSlug,
-    programTitle: ANLEGGSTEKNIKK_FAG.title,
-    title: ANLEGGSTEKNIKK_FAG.title,
-    programmeUrl: ANLEGGSTEKNIKK_FAG.programmeUrl,
+    programTitle: fixture.title,
+    title: fixture.title,
+    programmeUrl: fixture.programmeUrl,
   });
-  if (resolved?.code !== ANLEGGSTEKNIKK_FAG.expectedCode) {
+  if (resolved?.code !== fixture.expectedCode) {
     failed += 1;
     console.error(
-      `FAIL ${ANLEGGSTEKNIKK_FAG.title}: expected ${ANLEGGSTEKNIKK_FAG.expectedCode}, got ${resolved?.code ?? "null"}`
+      `FAIL ${fixture.title}: expected ${fixture.expectedCode}, got ${resolved?.code ?? "null"}`
     );
   } else {
-    console.log(`OK ${ANLEGGSTEKNIKK_FAG.title} -> ${resolved.code}`);
+    console.log(`OK ${fixture.title} -> ${resolved.code}`);
   }
 }
 
@@ -237,6 +287,22 @@ if (anleggProfessionDefault?.code !== "ANLEGGSMASKINFORERFAGET") {
   );
 } else {
   console.log(`OK anleggsteknikk VG3 slug -> ${anleggProfessionDefault.code}`);
+}
+
+const anleggRorleggerUrl = resolveLarefagFromKolonne3Selection({
+  programSlug: "kolonne3-anleggsrorleggerfaget",
+  programTitle: "Anleggsrørleggerfaget",
+  title: "Anleggsrørleggerfaget",
+  programmeUrl:
+    "/nb/vestland/strukturkart/V.BA/anleggsrorleggerfaget-skoler-og-laerebedrifter?kurs=v.babat1----_v.baanl2----_v.baarl3----_",
+});
+if (anleggRorleggerUrl?.code !== "ANLEGGRORLEGGERFAGET") {
+  failed += 1;
+  console.error(
+    `FAIL Anleggsrørlegger URL must not collapse to RORLEGGERFAGET: got ${anleggRorleggerUrl?.code ?? "null"}`
+  );
+} else {
+  console.log(`OK Anleggsrørlegger URL -> ${anleggRorleggerUrl.code}`);
 }
 
 const industrimalerTitleOnly = resolveLarefagFromKolonne3Selection({

@@ -65,9 +65,9 @@ VG3/bedrift: `anleggsteknikk-vg3-{title}-{countySlug}` pattern.
 | Field | Value |
 |-------|--------|
 | Primary `larefag_code` | **`ANLEGGSMASKINFORERFAGET`** (profession default for `anleggsteknikk`) |
-| VIGO api query | **`BAAMF3`** (from chain `…_V.BAANL2----_V.BAAMF3----`; **not** `BAANL3` in `kurs` URL) |
-| Sibling kolonne-3 | `VEG_OG_ANLEGGSFAGET` / `BAANL3` mapped for Fagvalg branches; not in cron batch 0 yet |
-| Cron batch | **0** with tømrer + rørlegger + maler kolonne-3 (`scheduled-larebedrift-ingest-fags.ts`) |
+| Kolonne-3 roster | **`data/larebedrift/kolonne3-rosters/anleggsteknikk.json`** — 9 fag, URL-first VIGO match |
+| VIGO codes (reference) | `BAAMF3`, `BAARL3`, `BAASF3`, `BABAN3`, `BABRO3`, `BAFJE3`, `BAFUN3`, `BAVOA3`, `BAVOV3` |
+| Cron batch | **0** (`BAAMF3` primary) + **7** (8 siblings) |
 | Pilot gate | `primary-route-larebedrift-pilot.ts` — nationwide when child has home kommune |
 
 ---

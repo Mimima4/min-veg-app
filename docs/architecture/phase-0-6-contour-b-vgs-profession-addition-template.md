@@ -31,7 +31,7 @@ Create `docs/architecture/phase-0-6-contour-b-<slug>-vilbli-branch-owner-record.
 | Signed Vilbli contour | VG1/VG2 tokens, kolonne-3 policy, show/do-not-show table |
 | Reference URLs | National strukturkart + **county pipeline** URL (`side=p5`) |
 | Materialization slugs | `{slug}-vg1-…`, `{slug}-vg2-…`, VG3/bedrift pattern |
-| Lærebedrift | `larefag_code`, VIGO query token, cron batch roster |
+| Lærebedrift | Primary `larefag_code` + **kolonne-3 roster JSON** (`data/larebedrift/kolonne3-rosters/<slug>.json`) — see template §4.4.1 |
 | Owner decisions | P-1…P-n (pilot fylke, rollout, bedrift, northern policy, …) |
 | Classify matrix | Per-fylke `status`, primary eligibility, relay notes |
 | Closure checklist | Code → relay → E2E → prod sign-off |
@@ -138,11 +138,30 @@ Source: `src/lib/i18n/route-steps-empty-copy.ts`. Signal: `PRIMARY_ROUTE_INCOMPL
 | Step | Artifact |
 |------|----------|
 | Pilot scope | `primary-route-larebedrift-pilot.ts` — add profession to set when ready |
-| Ingest roster | `scheduled-larebedrift-ingest-fags.ts` — kolonne-3 VIGO codes |
+| **Kolonne-3 roster (required when chain has ≥2 bedrift fag)** | See **§4.4.1** — one JSON per signed VG1→VG2 chain; **do not** hand-wire fag one-by-one in route code |
+| Ingest roster | `scheduled-larebedrift-ingest-fags.ts` — merges `data/larebedrift/kolonne3-rosters/*.json` |
 | Truth | `larebedrift_truth` — **godkjent-only** |
 | Empty list | Honest — «Ingen godkjente lærebedrifter…» — **not** a P4-MCT-1 blocker |
 
 **Ref:** `phase-4-verified-larebedrift-employer-layer-charter.md`
+
+#### 4.4.1 Kolonne-3 VIGO roster (automatic Fagvalg → bedrift match)
+
+**Policy:** Fagvalg options come from Vilbli (`build-path-variants.ts`). Bedrift matching is **URL-first**: parse tail VIGO code from `programme_url` (`_v.baamf3----` → `BAAMF3`) via `kolonne3-larefag-mapping.ts`. Title matchers are fallback only.
+
+| Step | Command / artifact |
+|------|-------------------|
+| 1. Extract | `node scripts/extract-vilbli-kolonne3-roster.mjs --profession <slug> --county-slug <pilot> --chain "<VG1>_<VG2>"` |
+| 2. Commit roster | `data/larebedrift/kolonne3-rosters/<slug>.json` — all kolonne-3 fag on the signed chain |
+| 3. Register TS | Import roster in `src/lib/larebedrift/kolonne3-roster.ts` (`KOLONNE3_PROFESSION_ROSTERS`) |
+| 4. Verify | `npm run verify:kolonne3-roster -- <slug>` — JSON matches live Vilbli extract |
+| 5. Smoke | `npm run smoke:kolonne3-larefag-mapping` — URL + title resolution per roster entry |
+| 6. Ingest batch | Set `ingestBatch` on roster JSON; add cron batch in `scheduled-larebedrift-ingest-fags.ts` + `vercel.json` when >5 fag |
+| 7. Prod ingest | `GET /api/internal/larebedrift/run-ingest?larefagCode=<CODE>` per fag or whole batch |
+
+**Do not** use wrong VIGO tokens in docs (`BAANL3` in `kurs` URL breaks Vilbli extract). Tail codes come from kolonne-3 `href` on the chain page (`side=p5`), e.g. anleggsteknikk: `BAAMF3`, `BAARL3`, `BAVOA3`, …
+
+**Profession default** (`profession-larefag-mapping.ts`): one primary kolonne-3 fag when user has not opened Fagvalg — not the full sibling list.
 
 ### 4.5 V.BA shared VG1 — multi-profession VG2 switch
 
@@ -212,6 +231,8 @@ For each kolonne-3 fag Vilbli lists on the signed chain in a fylke:
 | Typecheck + build | `npx tsc --noEmit && npm run build` |
 | Route invariants | `npm run smoke:route-truth-invariants` |
 | Profession smokes | e.g. `npm run smoke:painter-north-cross-fylke-pilot` when P-7 applies |
+| Kolonne-3 roster verify | `npm run verify:kolonne3-roster -- <slug>` when bedrift chain has ≥2 fag |
+| Kolonne-3 mapping smoke | `npm run smoke:kolonne3-larefag-mapping` |
 | E2E | `npm run test:e2e:<profession>` — Block C `programme_selection` |
 | Prod relay | Full matrix from home IP; record `ingested`/`ABORT` per pair in branch record |
 | Prod UI spot-check | Owner sign-off per pilot matrix row |

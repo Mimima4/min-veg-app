@@ -29,6 +29,10 @@
       "schedule": "0 5 1 * *"
     },
     {
+      "path": "/api/internal/larebedrift/run-ingest/7",
+      "schedule": "10 5 1 * *"
+    },
+    {
       "path": "/api/internal/vgs/psa-snapshot-watchdog",
       "schedule": "0 6 * * 1"
     }

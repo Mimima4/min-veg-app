@@ -1,7 +1,9 @@
 /**
  * Fag included in the monthly Vercel cron ingest (`run-larebedrift-ingest.ts`).
- * Keep apiQueryCode + code aligned with `scripts/lib/larebedrift-fagkode.mjs`.
+ * Kolonne-3 chain rosters: `data/larebedrift/kolonne3-rosters/*.json` via `kolonne3-roster.ts`.
  */
+
+import { scheduledIngestEntriesFromKolonne3Rosters } from "@/lib/larebedrift/kolonne3-roster";
 
 export type ScheduledLarebedriftIngestFag = {
   apiQueryCode: string;
@@ -9,12 +11,11 @@ export type ScheduledLarebedriftIngestFag = {
   label: string;
 };
 
-export const SCHEDULED_LAREBEDRIFT_INGEST_FAGS: ReadonlyArray<ScheduledLarebedriftIngestFag> = [
+const CORE_SCHEDULED_LAREBEDRIFT_INGEST_FAGS: ReadonlyArray<ScheduledLarebedriftIngestFag> = [
   { apiQueryCode: "BATMF3", code: "TOMRERFAGET", label: "Tømrerfaget" },
   { apiQueryCode: "BARLF3", code: "RORLEGGERFAGET", label: "Rørleggerfaget" },
   { apiQueryCode: "BAMOT3", code: "MALER_OG_OVERFLATETEKNIKKFAGET", label: "Maler- og overflateteknikkfaget" },
   { apiQueryCode: "BAIMF3", code: "INDUSTRIMALERFAGET", label: "Industrimalerfaget" },
-  { apiQueryCode: "BAAMF3", code: "ANLEGGSMASKINFORERFAGET", label: "Anleggsmaskinførerfaget" },
   { apiQueryCode: "ELELE3", code: "ELEKTRIKERFAGET", label: "Elektrikerfaget" },
   { apiQueryCode: "ELMEL3", code: "MARITIM_ELEKTRIKERFAGET", label: "Maritim elektrikerfaget" },
   { apiQueryCode: "ELERF3", code: "ELEKTROREPARATORFAGET", label: "Elektroreparatørfaget" },
@@ -38,11 +39,40 @@ export const SCHEDULED_LAREBEDRIFT_INGEST_FAGS: ReadonlyArray<ScheduledLarebedri
   { apiQueryCode: "TPTLM3", code: "TRUCK_OG_LIFTMEKANIKERFAGET", label: "Truck- og liftmekanikerfaget" },
 ];
 
+function mergeScheduledLarebedriftIngestFags(): ScheduledLarebedriftIngestFag[] {
+  const byApiCode = new Map(
+    CORE_SCHEDULED_LAREBEDRIFT_INGEST_FAGS.map((fag) => [fag.apiQueryCode.toUpperCase(), fag])
+  );
+
+  for (const entry of scheduledIngestEntriesFromKolonne3Rosters()) {
+    byApiCode.set(entry.apiQueryCode.toUpperCase(), {
+      apiQueryCode: entry.apiQueryCode,
+      code: entry.code,
+      label: entry.label,
+    });
+  }
+
+  return [...byApiCode.values()];
+}
+
+export const SCHEDULED_LAREBEDRIFT_INGEST_FAGS: ReadonlyArray<ScheduledLarebedriftIngestFag> =
+  mergeScheduledLarebedriftIngestFags();
+
+const KOLONNE3_ROSTER_BATCH_CODES = scheduledIngestEntriesFromKolonne3Rosters()
+  .filter((entry) => entry.ingestBatch === 7)
+  .map((entry) => entry.code);
+
 /** Cron batches — each must finish within Vercel `maxDuration` (300s on Hobby). */
 export const SCHEDULED_LAREBEDRIFT_INGEST_BATCHES: ReadonlyArray<
   ReadonlyArray<(typeof SCHEDULED_LAREBEDRIFT_INGEST_FAGS)[number]["code"]>
 > = [
-  ["TOMRERFAGET", "RORLEGGERFAGET", "MALER_OG_OVERFLATETEKNIKKFAGET", "INDUSTRIMALERFAGET", "ANLEGGSMASKINFORERFAGET"],
+  [
+    "TOMRERFAGET",
+    "RORLEGGERFAGET",
+    "MALER_OG_OVERFLATETEKNIKKFAGET",
+    "INDUSTRIMALERFAGET",
+    "ANLEGGSMASKINFORERFAGET",
+  ],
   ["ELEKTRIKERFAGET", "MARITIM_ELEKTRIKERFAGET", "ELEKTROREPARATORFAGET", "ENERGIMONTORFAGET"],
   ["ENERGIOPERATORFAGET", "HEISMONTORFAGET", "SIGNALMONTORFAGET", "TAVLEMONTORFAGET"],
   ["TELEKOMMUNIKASJONSMONTORFAGET", "TOGELEKTRIKERFAGET", "VIKLERFAGET"],
@@ -56,6 +86,7 @@ export const SCHEDULED_LAREBEDRIFT_INGEST_BATCHES: ReadonlyArray<
     "BILFAGET_DEMONTERING_KJORETOY",
     "SYKKELMEKANIKERFAGET",
   ],
+  KOLONNE3_ROSTER_BATCH_CODES,
 ];
 
 export function isScheduledLarebedriftIngestBatchIndex(batchIndex: number): boolean {
