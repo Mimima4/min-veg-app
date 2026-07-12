@@ -256,6 +256,19 @@ For each kolonne-3 fag Vilbli lists on the signed chain in a fylke:
 
 ---
 
+**Reference instance — `anleggsteknikk` (6th profession, closed 2026-07-12)**
+
+| Overlay | Applied? | Evidence |
+|---------|----------|----------|
+| Contour B path + relay | **Yes** | 14/15 counties; Oslo `03` ABORT |
+| P-6 primary gate | **Yes** | Local VG2 in `55`/`56` |
+| P-7 north | **No** | Local VG2 present |
+| V.BA VG2 switch | **Yes** | carpenter/plumber/painter/anleggsteknikk |
+| Bedrift kolonne-3 roster | **Yes** | `kolonne3-rosters/anleggsteknikk.json`, batch 7 |
+| Steigen / LOSA-specific | **No** | Cross-profession LOSA only (Finnmark charter) |
+
+---
+
 ## 8. Reference instance — `painter` (Maler)
 
 | Overlay | Applied? | Evidence |

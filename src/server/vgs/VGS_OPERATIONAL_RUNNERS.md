@@ -342,7 +342,7 @@ Contour B / catalog expansion checklist (if adding counties): `§ Expansion gate
 | Catalog seed | ☑ applied prod DB |
 | NAV map | ☑ `håndverkere.anleggsmaskinør` (confirm) |
 | PSA ingest | ☑ **14/15 counties** written; **Oslo `03` ABORT** (VG2=0); `34`/`42`/`56` partial + matching review |
-| Bedrift ingest | ☑ **Mapping wired** — primary `ANLEGGSMASKINFORERFAGET` / VIGO `BAAMF3` (not `BAANL3` in `kurs` URL); cron batch 0; nationwide ingest pending prod run |
+| Bedrift ingest | ☑ **Closed** — kolonne-3 roster 9 fag; 2140 active rows; prod UI 2026-07-12 |
 
 ### Bedrift UI performance (truth-preserving)
 

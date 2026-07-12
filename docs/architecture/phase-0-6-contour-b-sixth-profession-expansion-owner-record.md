@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **SCAFFOLDING** — owner agreed 2026-07-10; code landed; relay pending |
+| **Status** | **CLOSED** — sixth profession live 2026-07-12 |
 | **Date (UTC)** | 2026-07-10 |
 | **Prerequisite** | Five professions closed in pipeline (`electrician`, `mechanic`, `carpenter`, `plumber`, `painter`); template `phase-0-6-contour-b-vgs-profession-addition-template.md` |
 | **Profession slug (proposed)** | `anleggsteknikk` (catalog: **Anleggsmaskinfører** / Anleggsteknikk — owner sign P-1) |
@@ -91,11 +91,11 @@ National strukturkart: https://www.vilbli.no/nb/no/strukturkart/V.BA/anleggstekn
 | 3 | ☑ | `SUPPORTED_VGS_PROFESSION_SLUGS` (TS + scripts) |
 | 4 | ☑ | `scripts/sql/seed-profession-anleggsteknikk-catalog.sql` — applied prod DB 2026-07-10 (`id=12498f7f-0777-4e17-9ff4-db088559c9f5`) |
 | 5 | ☑ | NAV map row + `path-family-slug` |
-| 6 | ☑ (partial) | V.BA VG2 switch ☑; `primary-route-larebedrift-pilot` + bedrift mapping **wired** (`BAAMF3` → `ANLEGGSMASKINFORERFAGET`, cron batch 0); **nationwide ingest + prod UI** pending |
-| 7 | ☐ | Build + deploy |
+| 6 | ☑ | V.BA VG2 switch ☑; bedrift kolonne-3 roster + nationwide ingest ☑; prod UI 2026-07-12 |
+| 7 | ☑ | Build + deploy (`3b286b1`+) |
 | 8 | ☑ | Relay dry-run Vestland `46` prod API 2026-07-10 |
 | 9 | ☑ | **15-county batch** `run-contour-b-operational-ingest` 2026-07-10 — **11 green**, **3** `canonical_matching_review`, **Oslo `03` ABORT** (VG2=0) |
-| 10 | ☐ | E2E Block C + prod sign-off |
+| 10 | ☑ | E2E Block C + prod sign-off — `phase-0-6-contour-b-anleggsteknikk-prod-e2e-closure.md` |
 
 ---
 
