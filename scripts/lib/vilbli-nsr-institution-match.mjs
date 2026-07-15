@@ -21,6 +21,13 @@ function extractIdentityCore(name) {
   return normalizeSchoolNameForMatch(name).replace(/\bavd\b.*$/, "").trim();
 }
 
+/**
+ * Bare campus-direction labels (e.g. Avdeling Nord) are not geographic avd tokens.
+ * Matching them via avd_location causes false ties (Nord-Fron, Nord-Østerdal, …).
+ * Rollback checkpoint: commit 14640dc + docs/.../canonical-matching-review-checkpoint-2026-07-15.md
+ */
+const AVD_LOCATION_BLOCKED_PRIMARY_TOKENS = new Set(["nord"]);
+
 /** e.g. "Førde vidaregåande skule avd. Høyanger" → "hoyanger" */
 export function extractAvdLocationLabel(vilbliSchoolName) {
   const normalized = normalizeSchoolNameForMatch(vilbliSchoolName);
@@ -42,6 +49,10 @@ function scoreAvdLocationInstitutionMatch(vilbliSchoolName, institutionName, ins
   }
 
   const primaryToken = avdTokens[0];
+  if (AVD_LOCATION_BLOCKED_PRIMARY_TOKENS.has(primaryToken)) {
+    return null;
+  }
+
   const municipalityMatches =
     municipalityNorm.length > 0 &&
     (municipalityNorm === avdLocation ||

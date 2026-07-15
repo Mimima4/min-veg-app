@@ -1,0 +1,1710 @@
+{
+  "generatedAt": "2026-07-12T10:19:40.462Z",
+  "results": [
+    {
+      "professionSlug": "electrician",
+      "countyCode": "34",
+      "countyLabel": "Innlandet",
+      "status": "canonical_matching_review",
+      "extractedSchoolCounts": {
+        "VG1": 11,
+        "VG2": 10
+      },
+      "matchedSchools": 10,
+      "unmatchedSchools": [],
+      "ambiguousMatches": [
+        {
+          "candidates": [
+            {
+              "institutionName": "Karriere Innlandet Gudbrandsdal",
+              "matchType": "avd_location_match",
+              "score": 0.96
+            },
+            {
+              "institutionName": "Karriere Innlandet Nord-Østerdal",
+              "matchType": "avd_location_match",
+              "score": 0.96
+            },
+            {
+              "institutionName": "Karriere Innlandet Valdres",
+              "matchType": "avd_location_match",
+              "score": 0.96
+            }
+          ]
+        }
+      ],
+      "psaRows": 19,
+      "psaVerification": {
+        "needs_review": 19
+      },
+      "identitySemantics": {
+        "slashAliasCount": 0,
+        "losaCount": 0,
+        "multiLocationSignalCount": 0,
+        "needsReviewCount": 0,
+        "unsupportedCount": 0
+      },
+      "extractedStages": {
+        "VG1": [
+          "Elverum videregående skole",
+          "Hadeland videregående skole",
+          "Hamar katedralskole",
+          "Lillehammer videregående skole Avdeling Nord",
+          "Nord-Østerdal videregående skole",
+          "Raufoss videregående skole",
+          "Ringsaker videregående skole",
+          "Sentrum videregående skole",
+          "Solør videregående skole",
+          "Valdres vidaregåande skule",
+          "Vinstra vidaregåande skule"
+        ],
+        "VG2": [
+          "Elverum videregående skole",
+          "Hadeland videregående skole",
+          "Lillehammer videregående skole Avdeling Nord",
+          "Nord-Østerdal videregående skole",
+          "Raufoss videregående skole",
+          "Ringsaker videregående skole",
+          "Sentrum videregående skole",
+          "Solør videregående skole",
+          "Valdres vidaregåande skule",
+          "Vinstra vidaregåande skule"
+        ]
+      }
+    },
+    {
+      "professionSlug": "mechanic",
+      "countyCode": "34",
+      "countyLabel": "Innlandet",
+      "status": "canonical_matching_review",
+      "extractedSchoolCounts": {
+        "VG1": 16,
+        "VG2": 9
+      },
+      "matchedSchools": 16,
+      "unmatchedSchools": [],
+      "ambiguousMatches": [
+        {
+          "candidates": [
+            {
+              "institutionName": "Karriere Innlandet Gudbrandsdal",
+              "matchType": "avd_location_match",
+              "score": 0.96
+            },
+            {
+              "institutionName": "Karriere Innlandet Nord-Østerdal",
+              "matchType": "avd_location_match",
+              "score": 0.96
+            },
+            {
+              "institutionName": "Karriere Innlandet Valdres",
+              "matchType": "avd_location_match",
+              "score": 0.96
+            }
+          ]
+        }
+      ],
+      "psaRows": 23,
+      "psaVerification": {
+        "needs_review": 23
+      },
+      "identitySemantics": {
+        "slashAliasCount": 0,
+        "losaCount": 0,
+        "multiLocationSignalCount": 0,
+        "needsReviewCount": 0,
+        "unsupportedCount": 0
+      },
+      "extractedStages": {
+        "VG1": [
+          "Elverum videregående skole",
+          "Hadeland videregående skole",
+          "Hamar katedralskole",
+          "Jønsberg videregående skole",
+          "Lena-Valle videregående skole",
+          "Lillehammer videregående skole Avdeling Nord",
+          "Nord-Gudbrandsdal vidaregåande skule",
+          "Nord-Østerdal videregående skole",
+          "Raufoss videregående skole",
+          "Ringsaker videregående skole",
+          "Sentrum videregående skole",
+          "Solør videregående skole",
+          "Storsteigen videregående skole Avdeling Nordstumoen",
+          "Valdres vidaregåande skule",
+          "Vinstra vidaregåande skule",
+          "Raufoss videregående skole avd Dokka"
+        ],
+        "VG2": [
+          "Hadeland videregående skole",
+          "Hamar katedralskole",
+          "Lena-Valle videregående skole",
+          "Lillehammer videregående skole Avdeling Nord",
+          "Nord-Gudbrandsdal vidaregåande skule",
+          "Nord-Østerdal videregående skole",
+          "Sentrum videregående skole",
+          "Solør videregående skole",
+          "Valdres vidaregåande skule"
+        ]
+      }
+    },
+    {
+      "professionSlug": "carpenter",
+      "countyCode": "34",
+      "countyLabel": "Innlandet",
+      "status": "canonical_matching_review",
+      "extractedSchoolCounts": {
+        "VG1": 12,
+        "VG2": 12
+      },
+      "matchedSchools": 12,
+      "unmatchedSchools": [],
+      "ambiguousMatches": [
+        {
+          "candidates": [
+            {
+              "institutionName": "Karriere Innlandet Gudbrandsdal",
+              "matchType": "avd_location_match",
+              "score": 0.96
+            },
+            {
+              "institutionName": "Karriere Innlandet Nord-Østerdal",
+              "matchType": "avd_location_match",
+              "score": 0.96
+            },
+            {
+              "institutionName": "Karriere Innlandet Valdres",
+              "matchType": "avd_location_match",
+              "score": 0.96
+            }
+          ]
+        }
+      ],
+      "psaRows": 22,
+      "psaVerification": {
+        "needs_review": 22
+      },
+      "identitySemantics": {
+        "slashAliasCount": 0,
+        "losaCount": 0,
+        "multiLocationSignalCount": 0,
+        "needsReviewCount": 0,
+        "unsupportedCount": 0
+      },
+      "extractedStages": {
+        "VG1": [
+          "Elverum videregående skole",
+          "Gjøvik videregående skole",
+          "Hadeland videregående skole",
+          "Lillehammer videregående skole Avdeling Nord",
+          "Nord-Østerdal videregående skole",
+          "Ringsaker videregående skole",
+          "Sentrum videregående skole",
+          "Solør videregående skole",
+          "Stange videregående skole",
+          "Trysil videregående skole",
+          "Valdres vidaregåande skule",
+          "Vinstra vidaregåande skule"
+        ],
+        "VG2": [
+          "Elverum videregående skole",
+          "Gjøvik videregående skole",
+          "Hadeland videregående skole",
+          "Lillehammer videregående skole Avdeling Nord",
+          "Nord-Østerdal videregående skole",
+          "Ringsaker videregående skole",
+          "Sentrum videregående skole",
+          "Stange videregående skole",
+          "Trysil videregående skole",
+          "Valdres vidaregåande skule",
+          "Vinstra vidaregåande skule",
+          "Hjerleid Handverksskole AS"
+        ]
+      }
+    },
+    {
+      "professionSlug": "plumber",
+      "countyCode": "34",
+      "countyLabel": "Innlandet",
+      "status": "canonical_matching_review",
+      "extractedSchoolCounts": {
+        "VG1": 12,
+        "VG2": 4
+      },
+      "matchedSchools": 11,
+      "unmatchedSchools": [],
+      "ambiguousMatches": [
+        {
+          "candidates": [
+            {
+              "institutionName": "Karriere Innlandet Gudbrandsdal",
+              "matchType": "avd_location_match",
+              "score": 0.96
+            },
+            {
+              "institutionName": "Karriere Innlandet Nord-Østerdal",
+              "matchType": "avd_location_match",
+              "score": 0.96
+            },
+            {
+              "institutionName": "Karriere Innlandet Valdres",
+              "matchType": "avd_location_match",
+              "score": 0.96
+            }
+          ]
+        }
+      ],
+      "psaRows": 14,
+      "psaVerification": {
+        "needs_review": 14
+      },
+      "identitySemantics": {
+        "slashAliasCount": 0,
+        "losaCount": 0,
+        "multiLocationSignalCount": 0,
+        "needsReviewCount": 0,
+        "unsupportedCount": 0
+      },
+      "extractedStages": {
+        "VG1": [
+          "Elverum videregående skole",
+          "Gjøvik videregående skole",
+          "Hadeland videregående skole",
+          "Lillehammer videregående skole Avdeling Nord",
+          "Nord-Østerdal videregående skole",
+          "Ringsaker videregående skole",
+          "Sentrum videregående skole",
+          "Solør videregående skole",
+          "Stange videregående skole",
+          "Trysil videregående skole",
+          "Valdres vidaregåande skule",
+          "Vinstra vidaregåande skule"
+        ],
+        "VG2": [
+          "Gjøvik videregående skole",
+          "Lillehammer videregående skole Avdeling Nord",
+          "Ringsaker videregående skole",
+          "Sentrum videregående skole"
+        ]
+      }
+    },
+    {
+      "professionSlug": "painter",
+      "countyCode": "34",
+      "countyLabel": "Innlandet",
+      "status": "canonical_matching_review",
+      "extractedSchoolCounts": {
+        "VG1": 12,
+        "VG2": 2
+      },
+      "matchedSchools": 12,
+      "unmatchedSchools": [],
+      "ambiguousMatches": [
+        {
+          "candidates": [
+            {
+              "institutionName": "Karriere Innlandet Gudbrandsdal",
+              "matchType": "avd_location_match",
+              "score": 0.96
+            },
+            {
+              "institutionName": "Karriere Innlandet Nord-Østerdal",
+              "matchType": "avd_location_match",
+              "score": 0.96
+            },
+            {
+              "institutionName": "Karriere Innlandet Valdres",
+              "matchType": "avd_location_match",
+              "score": 0.96
+            }
+          ]
+        }
+      ],
+      "psaRows": 13,
+      "psaVerification": {
+        "needs_review": 13
+      },
+      "identitySemantics": {
+        "slashAliasCount": 0,
+        "losaCount": 0,
+        "multiLocationSignalCount": 0,
+        "needsReviewCount": 0,
+        "unsupportedCount": 0
+      },
+      "extractedStages": {
+        "VG1": [
+          "Elverum videregående skole",
+          "Gjøvik videregående skole",
+          "Hadeland videregående skole",
+          "Lillehammer videregående skole Avdeling Nord",
+          "Nord-Østerdal videregående skole",
+          "Ringsaker videregående skole",
+          "Sentrum videregående skole",
+          "Solør videregående skole",
+          "Stange videregående skole",
+          "Trysil videregående skole",
+          "Valdres vidaregåande skule",
+          "Vinstra vidaregåande skule"
+        ],
+        "VG2": [
+          "Stange videregående skole",
+          "Hjerleid Handverksskole AS"
+        ]
+      }
+    },
+    {
+      "professionSlug": "anleggsteknikk",
+      "countyCode": "34",
+      "countyLabel": "Innlandet",
+      "status": "canonical_matching_review",
+      "extractedSchoolCounts": {
+        "VG1": 12,
+        "VG2": 1
+      },
+      "matchedSchools": 11,
+      "unmatchedSchools": [],
+      "ambiguousMatches": [
+        {
+          "candidates": [
+            {
+              "institutionName": "Karriere Innlandet Gudbrandsdal",
+              "matchType": "avd_location_match",
+              "score": 0.96
+            },
+            {
+              "institutionName": "Karriere Innlandet Nord-Østerdal",
+              "matchType": "avd_location_match",
+              "score": 0.96
+            },
+            {
+              "institutionName": "Karriere Innlandet Valdres",
+              "matchType": "avd_location_match",
+              "score": 0.96
+            }
+          ]
+        }
+      ],
+      "psaRows": 12,
+      "psaVerification": {
+        "needs_review": 12
+      },
+      "identitySemantics": {
+        "slashAliasCount": 0,
+        "losaCount": 0,
+        "multiLocationSignalCount": 0,
+        "needsReviewCount": 0,
+        "unsupportedCount": 0
+      },
+      "extractedStages": {
+        "VG1": [
+          "Elverum videregående skole",
+          "Gjøvik videregående skole",
+          "Hadeland videregående skole",
+          "Lillehammer videregående skole Avdeling Nord",
+          "Nord-Østerdal videregående skole",
+          "Ringsaker videregående skole",
+          "Sentrum videregående skole",
+          "Solør videregående skole",
+          "Stange videregående skole",
+          "Trysil videregående skole",
+          "Valdres vidaregåande skule",
+          "Vinstra vidaregåande skule"
+        ],
+        "VG2": [
+          "Solør videregående skole"
+        ]
+      }
+    },
+    {
+      "professionSlug": "electrician",
+      "countyCode": "42",
+      "countyLabel": "Agder",
+      "status": "verification_ready_after_write",
+      "extractedSchoolCounts": {
+        "VG1": 9,
+        "VG2": 9
+      },
+      "matchedSchools": 9,
+      "unmatchedSchools": [],
+      "ambiguousMatches": [],
+      "psaRows": 18,
+      "psaVerification": {
+        "needs_review": 18
+      },
+      "identitySemantics": {
+        "slashAliasCount": 0,
+        "losaCount": 0,
+        "multiLocationSignalCount": 0,
+        "needsReviewCount": 0,
+        "unsupportedCount": 0
+      },
+      "extractedStages": {
+        "VG1": [
+          "Byremo videregående skole",
+          "Dahlske videregående skole",
+          "Eilert Sundt videregående skole Studiested Farsund",
+          "Flekkefjord videregående skole Studiested Flekkefjord",
+          "Kvadraturen videregående skole",
+          "Mandal videregående skole",
+          "Sam Eyde videregående skole",
+          "Vennesla videregående skole",
+          "Østre Agder Videregående skole"
+        ],
+        "VG2": [
+          "Byremo videregående skole",
+          "Dahlske videregående skole",
+          "Eilert Sundt videregående skole Studiested Farsund",
+          "Flekkefjord videregående skole Studiested Flekkefjord",
+          "Kvadraturen videregående skole",
+          "Mandal videregående skole",
+          "Sam Eyde videregående skole",
+          "Vennesla videregående skole",
+          "Østre Agder Videregående skole"
+        ]
+      }
+    },
+    {
+      "professionSlug": "mechanic",
+      "countyCode": "42",
+      "countyLabel": "Agder",
+      "status": "canonical_matching_review",
+      "extractedSchoolCounts": {
+        "VG1": 13,
+        "VG2": 3
+      },
+      "matchedSchools": 13,
+      "unmatchedSchools": [],
+      "ambiguousMatches": [
+        {
+          "candidates": [
+            {
+              "institutionName": "Setesdal vidaregåande skule",
+              "matchType": "avd_location_match",
+              "score": 0.96
+            },
+            {
+              "institutionName": "Setesdal vidaregåande skule",
+              "matchType": "avd_location_match",
+              "score": 0.96
+            },
+            {
+              "institutionName": "Setesdal vidaregåande skule",
+              "matchType": "avd_location_match",
+              "score": 0.96
+            }
+          ]
+        }
+      ],
+      "psaRows": 15,
+      "psaVerification": {
+        "needs_review": 15
+      },
+      "identitySemantics": {
+        "slashAliasCount": 0,
+        "losaCount": 0,
+        "multiLocationSignalCount": 0,
+        "needsReviewCount": 0,
+        "unsupportedCount": 0
+      },
+      "extractedStages": {
+        "VG1": [
+          "Byremo videregående skole",
+          "Dahlske videregående skole",
+          "Eilert Sundt videregående skole Studiested Farsund",
+          "Flekkefjord videregående skole Studiested Flekkefjord",
+          "Kvadraturen videregående skole",
+          "Mandal videregående skole",
+          "Sam Eyde videregående skole",
+          "Setesdal vidaregåande skule Avdeling Hornnes",
+          "Søgne videregående skole",
+          "Vennesla videregående skole",
+          "Blå Kors videregående skole Øvrebø",
+          "Østre Agder Videregående skole",
+          "Maritim videregående skole Sørlandet"
+        ],
+        "VG2": [
+          "Eilert Sundt videregående skole Studiested Lyngdal",
+          "Kvadraturen videregående skole",
+          "Sam Eyde videregående skole"
+        ]
+      }
+    },
+    {
+      "professionSlug": "carpenter",
+      "countyCode": "42",
+      "countyLabel": "Agder",
+      "status": "canonical_matching_review",
+      "extractedSchoolCounts": {
+        "VG1": 15,
+        "VG2": 14
+      },
+      "matchedSchools": 14,
+      "unmatchedSchools": [],
+      "ambiguousMatches": [
+        {
+          "candidates": [
+            {
+              "institutionName": "Setesdal vidaregåande skule",
+              "matchType": "avd_location_match",
+              "score": 0.96
+            },
+            {
+              "institutionName": "Setesdal vidaregåande skule",
+              "matchType": "avd_location_match",
+              "score": 0.96
+            },
+            {
+              "institutionName": "Setesdal vidaregåande skule",
+              "matchType": "avd_location_match",
+              "score": 0.96
+            }
+          ]
+        }
+      ],
+      "psaRows": 27,
+      "psaVerification": {
+        "needs_review": 27
+      },
+      "identitySemantics": {
+        "slashAliasCount": 0,
+        "losaCount": 0,
+        "multiLocationSignalCount": 0,
+        "needsReviewCount": 0,
+        "unsupportedCount": 0
+      },
+      "extractedStages": {
+        "VG1": [
+          "Byremo videregående skole",
+          "Dahlske videregående skole",
+          "Eilert Sundt videregående skole Studiested Lyngdal",
+          "Flekkefjord videregående skole Studiested Flekkefjord",
+          "Lillesand videregående skole",
+          "Mandal videregående skole",
+          "Sam Eyde videregående skole",
+          "Setesdal vidaregåande skule Avdeling Hornnes",
+          "Søgne videregående skole",
+          "Tangen videregående skole",
+          "Vennesla videregående skole",
+          "Blå Kors videregående skole Grimstad",
+          "Blå Kors videregående skole Øvrebø",
+          "KVS-Bygland",
+          "Østre Agder Videregående skole"
+        ],
+        "VG2": [
+          "Byremo videregående skole",
+          "Dahlske videregående skole",
+          "Eilert Sundt videregående skole Studiested Lyngdal",
+          "Lillesand videregående skole",
+          "Mandal videregående skole",
+          "Sam Eyde videregående skole",
+          "Setesdal vidaregåande skule Avdeling Hornnes",
+          "Søgne videregående skole",
+          "Tangen videregående skole",
+          "Vennesla videregående skole",
+          "Blå Kors videregående skole Grimstad",
+          "Blå Kors videregående skole Øvrebø",
+          "KVS-Bygland",
+          "Østre Agder Videregående skole"
+        ]
+      }
+    },
+    {
+      "professionSlug": "plumber",
+      "countyCode": "42",
+      "countyLabel": "Agder",
+      "status": "canonical_matching_review",
+      "extractedSchoolCounts": {
+        "VG1": 15,
+        "VG2": 3
+      },
+      "matchedSchools": 14,
+      "unmatchedSchools": [],
+      "ambiguousMatches": [
+        {
+          "candidates": [
+            {
+              "institutionName": "Setesdal vidaregåande skule",
+              "matchType": "avd_location_match",
+              "score": 0.96
+            },
+            {
+              "institutionName": "Setesdal vidaregåande skule",
+              "matchType": "avd_location_match",
+              "score": 0.96
+            },
+            {
+              "institutionName": "Setesdal vidaregåande skule",
+              "matchType": "avd_location_match",
+              "score": 0.96
+            }
+          ]
+        }
+      ],
+      "psaRows": 17,
+      "psaVerification": {
+        "needs_review": 17
+      },
+      "identitySemantics": {
+        "slashAliasCount": 0,
+        "losaCount": 0,
+        "multiLocationSignalCount": 0,
+        "needsReviewCount": 0,
+        "unsupportedCount": 0
+      },
+      "extractedStages": {
+        "VG1": [
+          "Byremo videregående skole",
+          "Dahlske videregående skole",
+          "Eilert Sundt videregående skole Studiested Lyngdal",
+          "Flekkefjord videregående skole Studiested Flekkefjord",
+          "Lillesand videregående skole",
+          "Mandal videregående skole",
+          "Sam Eyde videregående skole",
+          "Setesdal vidaregåande skule Avdeling Hornnes",
+          "Søgne videregående skole",
+          "Tangen videregående skole",
+          "Vennesla videregående skole",
+          "Blå Kors videregående skole Grimstad",
+          "Blå Kors videregående skole Øvrebø",
+          "KVS-Bygland",
+          "Østre Agder Videregående skole"
+        ],
+        "VG2": [
+          "Eilert Sundt videregående skole Studiested Lyngdal",
+          "Sam Eyde videregående skole",
+          "Tangen videregående skole"
+        ]
+      }
+    },
+    {
+      "professionSlug": "painter",
+      "countyCode": "42",
+      "countyLabel": "Agder",
+      "status": "canonical_matching_review",
+      "extractedSchoolCounts": {
+        "VG1": 15,
+        "VG2": 1
+      },
+      "matchedSchools": 14,
+      "unmatchedSchools": [],
+      "ambiguousMatches": [
+        {
+          "candidates": [
+            {
+              "institutionName": "Setesdal vidaregåande skule",
+              "matchType": "avd_location_match",
+              "score": 0.96
+            },
+            {
+              "institutionName": "Setesdal vidaregåande skule",
+              "matchType": "avd_location_match",
+              "score": 0.96
+            },
+            {
+              "institutionName": "Setesdal vidaregåande skule",
+              "matchType": "avd_location_match",
+              "score": 0.96
+            }
+          ]
+        }
+      ],
+      "psaRows": 15,
+      "psaVerification": {
+        "needs_review": 15
+      },
+      "identitySemantics": {
+        "slashAliasCount": 0,
+        "losaCount": 0,
+        "multiLocationSignalCount": 0,
+        "needsReviewCount": 0,
+        "unsupportedCount": 0
+      },
+      "extractedStages": {
+        "VG1": [
+          "Byremo videregående skole",
+          "Dahlske videregående skole",
+          "Eilert Sundt videregående skole Studiested Lyngdal",
+          "Flekkefjord videregående skole Studiested Flekkefjord",
+          "Lillesand videregående skole",
+          "Mandal videregående skole",
+          "Sam Eyde videregående skole",
+          "Setesdal vidaregåande skule Avdeling Hornnes",
+          "Søgne videregående skole",
+          "Tangen videregående skole",
+          "Vennesla videregående skole",
+          "Blå Kors videregående skole Grimstad",
+          "Blå Kors videregående skole Øvrebø",
+          "KVS-Bygland",
+          "Østre Agder Videregående skole"
+        ],
+        "VG2": [
+          "Tangen videregående skole"
+        ]
+      }
+    },
+    {
+      "professionSlug": "anleggsteknikk",
+      "countyCode": "42",
+      "countyLabel": "Agder",
+      "status": "canonical_matching_review",
+      "extractedSchoolCounts": {
+        "VG1": 15,
+        "VG2": 2
+      },
+      "matchedSchools": 14,
+      "unmatchedSchools": [],
+      "ambiguousMatches": [
+        {
+          "candidates": [
+            {
+              "institutionName": "Setesdal vidaregåande skule",
+              "matchType": "avd_location_match",
+              "score": 0.96
+            },
+            {
+              "institutionName": "Setesdal vidaregåande skule",
+              "matchType": "avd_location_match",
+              "score": 0.96
+            },
+            {
+              "institutionName": "Setesdal vidaregåande skule",
+              "matchType": "avd_location_match",
+              "score": 0.96
+            }
+          ]
+        }
+      ],
+      "psaRows": 16,
+      "psaVerification": {
+        "needs_review": 16
+      },
+      "identitySemantics": {
+        "slashAliasCount": 0,
+        "losaCount": 0,
+        "multiLocationSignalCount": 0,
+        "needsReviewCount": 0,
+        "unsupportedCount": 0
+      },
+      "extractedStages": {
+        "VG1": [
+          "Byremo videregående skole",
+          "Dahlske videregående skole",
+          "Eilert Sundt videregående skole Studiested Lyngdal",
+          "Flekkefjord videregående skole Studiested Flekkefjord",
+          "Lillesand videregående skole",
+          "Mandal videregående skole",
+          "Sam Eyde videregående skole",
+          "Setesdal vidaregåande skule Avdeling Hornnes",
+          "Søgne videregående skole",
+          "Tangen videregående skole",
+          "Vennesla videregående skole",
+          "Blå Kors videregående skole Grimstad",
+          "Blå Kors videregående skole Øvrebø",
+          "KVS-Bygland",
+          "Østre Agder Videregående skole"
+        ],
+        "VG2": [
+          "Byremo videregående skole",
+          "Sam Eyde videregående skole"
+        ]
+      }
+    },
+    {
+      "professionSlug": "electrician",
+      "countyCode": "56",
+      "countyLabel": "Finnmark",
+      "status": "canonical_matching_review",
+      "extractedSchoolCounts": {
+        "VG1": 24,
+        "VG2": 5
+      },
+      "matchedSchools": 6,
+      "unmatchedSchools": [
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Alta",
+          "schoolCode": "872137",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Berlevåg",
+          "schoolCode": "229030",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Gamvik",
+          "schoolCode": "203171",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Hasvik",
+          "schoolCode": "8873",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Lebesby",
+          "schoolCode": "8874",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Loppa",
+          "schoolCode": "229033",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Måsøy",
+          "schoolCode": "8883",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Tana",
+          "schoolCode": "259133",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Båtsfjord",
+          "schoolCode": "908779",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Hammerfest",
+          "schoolCode": "6108473",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Karasjok",
+          "schoolCode": "6108476",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Kautokeino",
+          "schoolCode": "6108477",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Nesseby",
+          "schoolCode": "6108478",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Nordkapp",
+          "schoolCode": "6108474",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Porsanger",
+          "schoolCode": "6108475",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Sør-Varanger",
+          "schoolCode": "6108481",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Vadsø",
+          "schoolCode": "6108480",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Vardø",
+          "schoolCode": "6108482",
+          "schoolType": ""
+        }
+      ],
+      "ambiguousMatches": [],
+      "psaRows": 29,
+      "psaVerification": {
+        "needs_review": 29
+      },
+      "identitySemantics": {
+        "slashAliasCount": 0,
+        "losaCount": 0,
+        "multiLocationSignalCount": 0,
+        "needsReviewCount": 0,
+        "unsupportedCount": 0
+      },
+      "extractedStages": {
+        "VG1": [
+          "Alta videregående skole / Àlttà joatkkaskuvla",
+          "Hammerfest videregående skole / Hámmerfeasta joatkkaskuvla",
+          "Kirkenes videregående skole / Girkonjárgga joatkkaskuvla",
+          "Lakselv videregående skole / Leavnnja joatkkaskuvla",
+          "Nordkapp videregående skole",
+          "Nordkapp videregående skole – LOSA Alta",
+          "Nordkapp videregående skole – LOSA Berlevåg",
+          "Nordkapp videregående skole – LOSA Gamvik",
+          "Nordkapp videregående skole – LOSA Hasvik",
+          "Nordkapp videregående skole – LOSA Lebesby",
+          "Nordkapp videregående skole – LOSA Loppa",
+          "Nordkapp videregående skole – LOSA Måsøy",
+          "Nordkapp videregående skole – LOSA Tana",
+          "Vadsø videregående skole / Cáhcesullo joatkkaskuvla",
+          "Nordkapp videregående skole – LOSA Båtsfjord",
+          "Nordkapp videregående skole – LOSA Hammerfest",
+          "Nordkapp videregående skole – LOSA Karasjok",
+          "Nordkapp videregående skole – LOSA Kautokeino",
+          "Nordkapp videregående skole – LOSA Nesseby",
+          "Nordkapp videregående skole – LOSA Nordkapp",
+          "Nordkapp videregående skole – LOSA Porsanger",
+          "Nordkapp videregående skole – LOSA Sør-Varanger",
+          "Nordkapp videregående skole – LOSA Vadsø",
+          "Nordkapp videregående skole – LOSA Vardø"
+        ],
+        "VG2": [
+          "Alta videregående skole / Àlttà joatkkaskuvla",
+          "Hammerfest videregående skole / Hámmerfeasta joatkkaskuvla",
+          "Kirkenes videregående skole / Girkonjárgga joatkkaskuvla",
+          "Lakselv videregående skole / Leavnnja joatkkaskuvla",
+          "Nordkapp videregående skole"
+        ]
+      }
+    },
+    {
+      "professionSlug": "mechanic",
+      "countyCode": "56",
+      "countyLabel": "Finnmark",
+      "status": "canonical_matching_review",
+      "extractedSchoolCounts": {
+        "VG1": 25,
+        "VG2": 3
+      },
+      "matchedSchools": 7,
+      "unmatchedSchools": [
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Alta",
+          "schoolCode": "872137",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Berlevåg",
+          "schoolCode": "229030",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Gamvik",
+          "schoolCode": "203171",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Hasvik",
+          "schoolCode": "8873",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Lebesby",
+          "schoolCode": "8874",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Loppa",
+          "schoolCode": "229033",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Måsøy",
+          "schoolCode": "8883",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Tana",
+          "schoolCode": "259133",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Båtsfjord",
+          "schoolCode": "908779",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Hammerfest",
+          "schoolCode": "6108473",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Karasjok",
+          "schoolCode": "6108476",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Kautokeino",
+          "schoolCode": "6108477",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Nesseby",
+          "schoolCode": "6108478",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Nordkapp",
+          "schoolCode": "6108474",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Porsanger",
+          "schoolCode": "6108475",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Sør-Varanger",
+          "schoolCode": "6108481",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Vadsø",
+          "schoolCode": "6108480",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Vardø",
+          "schoolCode": "6108482",
+          "schoolType": ""
+        }
+      ],
+      "ambiguousMatches": [],
+      "psaRows": 10,
+      "psaVerification": {
+        "needs_review": 10
+      },
+      "identitySemantics": {
+        "slashAliasCount": 0,
+        "losaCount": 0,
+        "multiLocationSignalCount": 0,
+        "needsReviewCount": 0,
+        "unsupportedCount": 0
+      },
+      "extractedStages": {
+        "VG1": [
+          "Alta videregående skole / Àlttà joatkkaskuvla",
+          "Hammerfest videregående skole / Hámmerfeasta joatkkaskuvla",
+          "Kirkenes videregående skole / Girkonjárgga joatkkaskuvla",
+          "Lakselv videregående skole / Leavnnja joatkkaskuvla",
+          "Nordkapp videregående skole – LOSA Alta",
+          "Nordkapp videregående skole – LOSA Berlevåg",
+          "Nordkapp videregående skole – LOSA Gamvik",
+          "Nordkapp videregående skole – LOSA Hasvik",
+          "Nordkapp videregående skole – LOSA Lebesby",
+          "Nordkapp videregående skole – LOSA Loppa",
+          "Nordkapp videregående skole – LOSA Måsøy",
+          "Nordkapp videregående skole – LOSA Tana",
+          "Sami joatkkaskuvla ja boazodoalloskuvla / Samisk videregående og reindriftsskole i Kautokeino",
+          "Samisk videregående skole Karasjok – Sámi joatkkaskuvla Kárásjogas",
+          "Vadsø videregående skole / Cáhcesullo joatkkaskuvla",
+          "Nordkapp videregående skole – LOSA Båtsfjord",
+          "Nordkapp videregående skole – LOSA Hammerfest",
+          "Nordkapp videregående skole – LOSA Karasjok",
+          "Nordkapp videregående skole – LOSA Kautokeino",
+          "Nordkapp videregående skole – LOSA Nesseby",
+          "Nordkapp videregående skole – LOSA Nordkapp",
+          "Nordkapp videregående skole – LOSA Porsanger",
+          "Nordkapp videregående skole – LOSA Sør-Varanger",
+          "Nordkapp videregående skole – LOSA Vadsø",
+          "Nordkapp videregående skole – LOSA Vardø"
+        ],
+        "VG2": [
+          "Alta videregående skole / Àlttà joatkkaskuvla",
+          "Kirkenes videregående skole / Girkonjárgga joatkkaskuvla",
+          "Lakselv videregående skole / Leavnnja joatkkaskuvla"
+        ]
+      }
+    },
+    {
+      "professionSlug": "carpenter",
+      "countyCode": "56",
+      "countyLabel": "Finnmark",
+      "status": "canonical_matching_review",
+      "extractedSchoolCounts": {
+        "VG1": 23,
+        "VG2": 5
+      },
+      "matchedSchools": 5,
+      "unmatchedSchools": [
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Alta",
+          "schoolCode": "872137",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Berlevåg",
+          "schoolCode": "229030",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Gamvik",
+          "schoolCode": "203171",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Hasvik",
+          "schoolCode": "8873",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Lebesby",
+          "schoolCode": "8874",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Loppa",
+          "schoolCode": "229033",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Måsøy",
+          "schoolCode": "8883",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Tana",
+          "schoolCode": "259133",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Båtsfjord",
+          "schoolCode": "908779",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Hammerfest",
+          "schoolCode": "6108473",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Karasjok",
+          "schoolCode": "6108476",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Kautokeino",
+          "schoolCode": "6108477",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Nesseby",
+          "schoolCode": "6108478",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Nordkapp",
+          "schoolCode": "6108474",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Porsanger",
+          "schoolCode": "6108475",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Sør-Varanger",
+          "schoolCode": "6108481",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Vadsø",
+          "schoolCode": "6108480",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Vardø",
+          "schoolCode": "6108482",
+          "schoolType": ""
+        }
+      ],
+      "ambiguousMatches": [],
+      "psaRows": 10,
+      "psaVerification": {
+        "needs_review": 10
+      },
+      "identitySemantics": {
+        "slashAliasCount": 0,
+        "losaCount": 0,
+        "multiLocationSignalCount": 0,
+        "needsReviewCount": 0,
+        "unsupportedCount": 0
+      },
+      "extractedStages": {
+        "VG1": [
+          "Alta videregående skole / Àlttà joatkkaskuvla",
+          "Hammerfest videregående skole / Hámmerfeasta joatkkaskuvla",
+          "Kirkenes videregående skole / Girkonjárgga joatkkaskuvla",
+          "Nordkapp videregående skole – LOSA Alta",
+          "Nordkapp videregående skole – LOSA Berlevåg",
+          "Nordkapp videregående skole – LOSA Gamvik",
+          "Nordkapp videregående skole – LOSA Hasvik",
+          "Nordkapp videregående skole – LOSA Lebesby",
+          "Nordkapp videregående skole – LOSA Loppa",
+          "Nordkapp videregående skole – LOSA Måsøy",
+          "Nordkapp videregående skole – LOSA Tana",
+          "Sami joatkkaskuvla ja boazodoalloskuvla / Samisk videregående og reindriftsskole i Kautokeino",
+          "Samisk videregående skole Karasjok – Sámi joatkkaskuvla Kárásjogas",
+          "Nordkapp videregående skole – LOSA Båtsfjord",
+          "Nordkapp videregående skole – LOSA Hammerfest",
+          "Nordkapp videregående skole – LOSA Karasjok",
+          "Nordkapp videregående skole – LOSA Kautokeino",
+          "Nordkapp videregående skole – LOSA Nesseby",
+          "Nordkapp videregående skole – LOSA Nordkapp",
+          "Nordkapp videregående skole – LOSA Porsanger",
+          "Nordkapp videregående skole – LOSA Sør-Varanger",
+          "Nordkapp videregående skole – LOSA Vadsø",
+          "Nordkapp videregående skole – LOSA Vardø"
+        ],
+        "VG2": [
+          "Alta videregående skole / Àlttà joatkkaskuvla",
+          "Hammerfest videregående skole / Hámmerfeasta joatkkaskuvla",
+          "Kirkenes videregående skole / Girkonjárgga joatkkaskuvla",
+          "Sami joatkkaskuvla ja boazodoalloskuvla / Samisk videregående og reindriftsskole i Kautokeino",
+          "Samisk videregående skole Karasjok – Sámi joatkkaskuvla Kárásjogas"
+        ]
+      }
+    },
+    {
+      "professionSlug": "plumber",
+      "countyCode": "56",
+      "countyLabel": "Finnmark",
+      "status": "canonical_matching_review",
+      "extractedSchoolCounts": {
+        "VG1": 23,
+        "VG2": 20
+      },
+      "matchedSchools": 5,
+      "unmatchedSchools": [
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Alta",
+          "schoolCode": "872137",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Berlevåg",
+          "schoolCode": "229030",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Gamvik",
+          "schoolCode": "203171",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Hasvik",
+          "schoolCode": "8873",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Lebesby",
+          "schoolCode": "8874",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Loppa",
+          "schoolCode": "229033",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Måsøy",
+          "schoolCode": "8883",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Tana",
+          "schoolCode": "259133",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Båtsfjord",
+          "schoolCode": "908779",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Hammerfest",
+          "schoolCode": "6108473",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Karasjok",
+          "schoolCode": "6108476",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Kautokeino",
+          "schoolCode": "6108477",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Nesseby",
+          "schoolCode": "6108478",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Nordkapp",
+          "schoolCode": "6108474",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Porsanger",
+          "schoolCode": "6108475",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Sør-Varanger",
+          "schoolCode": "6108481",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Vadsø",
+          "schoolCode": "6108480",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Vardø",
+          "schoolCode": "6108482",
+          "schoolType": ""
+        }
+      ],
+      "ambiguousMatches": [],
+      "psaRows": 7,
+      "psaVerification": {
+        "needs_review": 7
+      },
+      "identitySemantics": {
+        "slashAliasCount": 0,
+        "losaCount": 0,
+        "multiLocationSignalCount": 0,
+        "needsReviewCount": 0,
+        "unsupportedCount": 0
+      },
+      "extractedStages": {
+        "VG1": [
+          "Alta videregående skole / Àlttà joatkkaskuvla",
+          "Hammerfest videregående skole / Hámmerfeasta joatkkaskuvla",
+          "Kirkenes videregående skole / Girkonjárgga joatkkaskuvla",
+          "Nordkapp videregående skole – LOSA Alta",
+          "Nordkapp videregående skole – LOSA Berlevåg",
+          "Nordkapp videregående skole – LOSA Gamvik",
+          "Nordkapp videregående skole – LOSA Hasvik",
+          "Nordkapp videregående skole – LOSA Lebesby",
+          "Nordkapp videregående skole – LOSA Loppa",
+          "Nordkapp videregående skole – LOSA Måsøy",
+          "Nordkapp videregående skole – LOSA Tana",
+          "Sami joatkkaskuvla ja boazodoalloskuvla / Samisk videregående og reindriftsskole i Kautokeino",
+          "Samisk videregående skole Karasjok – Sámi joatkkaskuvla Kárásjogas",
+          "Nordkapp videregående skole – LOSA Båtsfjord",
+          "Nordkapp videregående skole – LOSA Hammerfest",
+          "Nordkapp videregående skole – LOSA Karasjok",
+          "Nordkapp videregående skole – LOSA Kautokeino",
+          "Nordkapp videregående skole – LOSA Nesseby",
+          "Nordkapp videregående skole – LOSA Nordkapp",
+          "Nordkapp videregående skole – LOSA Porsanger",
+          "Nordkapp videregående skole – LOSA Sør-Varanger",
+          "Nordkapp videregående skole – LOSA Vadsø",
+          "Nordkapp videregående skole – LOSA Vardø"
+        ],
+        "VG2": [
+          "Alta videregående skole / Àlttà joatkkaskuvla",
+          "Kirkenes videregående skole / Girkonjárgga joatkkaskuvla",
+          "Nordkapp videregående skole – LOSA Alta",
+          "Nordkapp videregående skole – LOSA Berlevåg",
+          "Nordkapp videregående skole – LOSA Gamvik",
+          "Nordkapp videregående skole – LOSA Hasvik",
+          "Nordkapp videregående skole – LOSA Lebesby",
+          "Nordkapp videregående skole – LOSA Loppa",
+          "Nordkapp videregående skole – LOSA Måsøy",
+          "Nordkapp videregående skole – LOSA Tana",
+          "Nordkapp videregående skole – LOSA Båtsfjord",
+          "Nordkapp videregående skole – LOSA Hammerfest",
+          "Nordkapp videregående skole – LOSA Karasjok",
+          "Nordkapp videregående skole – LOSA Kautokeino",
+          "Nordkapp videregående skole – LOSA Nesseby",
+          "Nordkapp videregående skole – LOSA Nordkapp",
+          "Nordkapp videregående skole – LOSA Porsanger",
+          "Nordkapp videregående skole – LOSA Sør-Varanger",
+          "Nordkapp videregående skole – LOSA Vadsø",
+          "Nordkapp videregående skole – LOSA Vardø"
+        ]
+      }
+    },
+    {
+      "professionSlug": "painter",
+      "countyCode": "56",
+      "countyLabel": "Finnmark",
+      "status": "missing_programme_rows",
+      "extractedSchoolCounts": {
+        "VG1": 23,
+        "VG2": 0
+      },
+      "matchedSchools": 5,
+      "unmatchedSchools": [
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Alta",
+          "schoolCode": "872137",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Berlevåg",
+          "schoolCode": "229030",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Gamvik",
+          "schoolCode": "203171",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Hasvik",
+          "schoolCode": "8873",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Lebesby",
+          "schoolCode": "8874",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Loppa",
+          "schoolCode": "229033",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Måsøy",
+          "schoolCode": "8883",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Tana",
+          "schoolCode": "259133",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Båtsfjord",
+          "schoolCode": "908779",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Hammerfest",
+          "schoolCode": "6108473",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Karasjok",
+          "schoolCode": "6108476",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Kautokeino",
+          "schoolCode": "6108477",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Nesseby",
+          "schoolCode": "6108478",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Nordkapp",
+          "schoolCode": "6108474",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Porsanger",
+          "schoolCode": "6108475",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Sør-Varanger",
+          "schoolCode": "6108481",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Vadsø",
+          "schoolCode": "6108480",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Vardø",
+          "schoolCode": "6108482",
+          "schoolType": ""
+        }
+      ],
+      "ambiguousMatches": [],
+      "psaRows": 0,
+      "psaVerification": {},
+      "identitySemantics": {
+        "slashAliasCount": 0,
+        "losaCount": 0,
+        "multiLocationSignalCount": 0,
+        "needsReviewCount": 0,
+        "unsupportedCount": 0
+      },
+      "extractedStages": {
+        "VG1": [
+          "Alta videregående skole / Àlttà joatkkaskuvla",
+          "Hammerfest videregående skole / Hámmerfeasta joatkkaskuvla",
+          "Kirkenes videregående skole / Girkonjárgga joatkkaskuvla",
+          "Nordkapp videregående skole – LOSA Alta",
+          "Nordkapp videregående skole – LOSA Berlevåg",
+          "Nordkapp videregående skole – LOSA Gamvik",
+          "Nordkapp videregående skole – LOSA Hasvik",
+          "Nordkapp videregående skole – LOSA Lebesby",
+          "Nordkapp videregående skole – LOSA Loppa",
+          "Nordkapp videregående skole – LOSA Måsøy",
+          "Nordkapp videregående skole – LOSA Tana",
+          "Sami joatkkaskuvla ja boazodoalloskuvla / Samisk videregående og reindriftsskole i Kautokeino",
+          "Samisk videregående skole Karasjok – Sámi joatkkaskuvla Kárásjogas",
+          "Nordkapp videregående skole – LOSA Båtsfjord",
+          "Nordkapp videregående skole – LOSA Hammerfest",
+          "Nordkapp videregående skole – LOSA Karasjok",
+          "Nordkapp videregående skole – LOSA Kautokeino",
+          "Nordkapp videregående skole – LOSA Nesseby",
+          "Nordkapp videregående skole – LOSA Nordkapp",
+          "Nordkapp videregående skole – LOSA Porsanger",
+          "Nordkapp videregående skole – LOSA Sør-Varanger",
+          "Nordkapp videregående skole – LOSA Vadsø",
+          "Nordkapp videregående skole – LOSA Vardø"
+        ],
+        "VG2": []
+      }
+    },
+    {
+      "professionSlug": "anleggsteknikk",
+      "countyCode": "56",
+      "countyLabel": "Finnmark",
+      "status": "canonical_matching_review",
+      "extractedSchoolCounts": {
+        "VG1": 23,
+        "VG2": 1
+      },
+      "matchedSchools": 5,
+      "unmatchedSchools": [
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Alta",
+          "schoolCode": "872137",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Berlevåg",
+          "schoolCode": "229030",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Gamvik",
+          "schoolCode": "203171",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Hasvik",
+          "schoolCode": "8873",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Lebesby",
+          "schoolCode": "8874",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Loppa",
+          "schoolCode": "229033",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Måsøy",
+          "schoolCode": "8883",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Tana",
+          "schoolCode": "259133",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Båtsfjord",
+          "schoolCode": "908779",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Hammerfest",
+          "schoolCode": "6108473",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Karasjok",
+          "schoolCode": "6108476",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Kautokeino",
+          "schoolCode": "6108477",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Nesseby",
+          "schoolCode": "6108478",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Nordkapp",
+          "schoolCode": "6108474",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Porsanger",
+          "schoolCode": "6108475",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Sør-Varanger",
+          "schoolCode": "6108481",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Vadsø",
+          "schoolCode": "6108480",
+          "schoolType": ""
+        },
+        {
+          "schoolName": "Nordkapp videregående skole – LOSA Vardø",
+          "schoolCode": "6108482",
+          "schoolType": ""
+        }
+      ],
+      "ambiguousMatches": [],
+      "psaRows": 6,
+      "psaVerification": {
+        "needs_review": 6
+      },
+      "identitySemantics": {
+        "slashAliasCount": 0,
+        "losaCount": 0,
+        "multiLocationSignalCount": 0,
+        "needsReviewCount": 0,
+        "unsupportedCount": 0
+      },
+      "extractedStages": {
+        "VG1": [
+          "Alta videregående skole / Àlttà joatkkaskuvla",
+          "Hammerfest videregående skole / Hámmerfeasta joatkkaskuvla",
+          "Kirkenes videregående skole / Girkonjárgga joatkkaskuvla",
+          "Nordkapp videregående skole – LOSA Alta",
+          "Nordkapp videregående skole – LOSA Berlevåg",
+          "Nordkapp videregående skole – LOSA Gamvik",
+          "Nordkapp videregående skole – LOSA Hasvik",
+          "Nordkapp videregående skole – LOSA Lebesby",
+          "Nordkapp videregående skole – LOSA Loppa",
+          "Nordkapp videregående skole – LOSA Måsøy",
+          "Nordkapp videregående skole – LOSA Tana",
+          "Sami joatkkaskuvla ja boazodoalloskuvla / Samisk videregående og reindriftsskole i Kautokeino",
+          "Samisk videregående skole Karasjok – Sámi joatkkaskuvla Kárásjogas",
+          "Nordkapp videregående skole – LOSA Båtsfjord",
+          "Nordkapp videregående skole – LOSA Hammerfest",
+          "Nordkapp videregående skole – LOSA Karasjok",
+          "Nordkapp videregående skole – LOSA Kautokeino",
+          "Nordkapp videregående skole – LOSA Nesseby",
+          "Nordkapp videregående skole – LOSA Nordkapp",
+          "Nordkapp videregående skole – LOSA Porsanger",
+          "Nordkapp videregående skole – LOSA Sør-Varanger",
+          "Nordkapp videregående skole – LOSA Vadsø",
+          "Nordkapp videregående skole – LOSA Vardø"
+        ],
+        "VG2": [
+          "Kirkenes videregående skole / Girkonjárgga joatkkaskuvla"
+        ]
+      }
+    }
+  ]
+}

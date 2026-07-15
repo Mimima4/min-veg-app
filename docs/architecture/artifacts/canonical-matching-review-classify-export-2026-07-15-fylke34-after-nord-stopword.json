@@ -1,0 +1,126 @@
+{
+  "generatedAt": "2026-07-15T11:11:53.633Z",
+  "change": "AVD_LOCATION_BLOCKED_PRIMARY_TOKENS=nord",
+  "results": [
+    {
+      "professionSlug": "electrician",
+      "status": "verification_ready_after_write",
+      "matchedSchools": 11,
+      "unmatchedSchools": 0,
+      "ambiguousCount": 0,
+      "ambiguous": [],
+      "psaRows": 19,
+      "matchedDetail": [
+        {
+          "schoolCode": "16888",
+          "schoolName": "Lillehammer videregående skole Avdeling Nord",
+          "institutionId": "e06e29ea-185c-4c2a-a42a-56ffa5b7dab7",
+          "institutionName": "Lillehammer videregående skole avd Nord",
+          "matchType": "fallback_fuzzy",
+          "score": 0.6,
+          "resolvedVia": null
+        }
+      ]
+    },
+    {
+      "professionSlug": "mechanic",
+      "status": "verification_ready_after_write",
+      "matchedSchools": 17,
+      "unmatchedSchools": 0,
+      "ambiguousCount": 0,
+      "ambiguous": [],
+      "psaRows": 23,
+      "matchedDetail": [
+        {
+          "schoolCode": "16888",
+          "schoolName": "Lillehammer videregående skole Avdeling Nord",
+          "institutionId": "e06e29ea-185c-4c2a-a42a-56ffa5b7dab7",
+          "institutionName": "Lillehammer videregående skole avd Nord",
+          "matchType": "fallback_fuzzy",
+          "score": 0.6,
+          "resolvedVia": null
+        }
+      ]
+    },
+    {
+      "professionSlug": "carpenter",
+      "status": "verification_ready_after_write",
+      "matchedSchools": 13,
+      "unmatchedSchools": 0,
+      "ambiguousCount": 0,
+      "ambiguous": [],
+      "psaRows": 22,
+      "matchedDetail": [
+        {
+          "schoolCode": "16888",
+          "schoolName": "Lillehammer videregående skole Avdeling Nord",
+          "institutionId": "e06e29ea-185c-4c2a-a42a-56ffa5b7dab7",
+          "institutionName": "Lillehammer videregående skole avd Nord",
+          "matchType": "fallback_fuzzy",
+          "score": 0.6,
+          "resolvedVia": null
+        }
+      ]
+    },
+    {
+      "professionSlug": "plumber",
+      "status": "verification_ready_after_write",
+      "matchedSchools": 12,
+      "unmatchedSchools": 0,
+      "ambiguousCount": 0,
+      "ambiguous": [],
+      "psaRows": 14,
+      "matchedDetail": [
+        {
+          "schoolCode": "16888",
+          "schoolName": "Lillehammer videregående skole Avdeling Nord",
+          "institutionId": "e06e29ea-185c-4c2a-a42a-56ffa5b7dab7",
+          "institutionName": "Lillehammer videregående skole avd Nord",
+          "matchType": "fallback_fuzzy",
+          "score": 0.6,
+          "resolvedVia": null
+        }
+      ]
+    },
+    {
+      "professionSlug": "painter",
+      "status": "verification_ready_after_write",
+      "matchedSchools": 13,
+      "unmatchedSchools": 0,
+      "ambiguousCount": 0,
+      "ambiguous": [],
+      "psaRows": 13,
+      "matchedDetail": [
+        {
+          "schoolCode": "16888",
+          "schoolName": "Lillehammer videregående skole Avdeling Nord",
+          "institutionId": "e06e29ea-185c-4c2a-a42a-56ffa5b7dab7",
+          "institutionName": "Lillehammer videregående skole avd Nord",
+          "matchType": "fallback_fuzzy",
+          "score": 0.6,
+          "resolvedVia": null
+        }
+      ]
+    },
+    {
+      "professionSlug": "anleggsteknikk",
+      "status": "verification_ready_after_write",
+      "matchedSchools": 12,
+      "unmatchedSchools": 0,
+      "ambiguousCount": 0,
+      "ambiguous": [],
+      "psaRows": 12,
+      "matchedDetail": [
+        {
+          "schoolCode": "16888",
+          "schoolName": "Lillehammer videregående skole Avdeling Nord",
+          "institutionId": "e06e29ea-185c-4c2a-a42a-56ffa5b7dab7",
+          "institutionName": "Lillehammer videregående skole avd Nord",
+          "matchType": "fallback_fuzzy",
+          "score": 0.6,
+          "resolvedVia": null
+        }
+      ]
+    }
+  ]
+}
