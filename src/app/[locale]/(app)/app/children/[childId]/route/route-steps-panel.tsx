@@ -37,6 +37,7 @@ import {
   parseVg2ProgrammeOptionId,
   resolveVg2ProgrammeOptionsFromStep,
 } from "@/lib/vgs/vg2-programme-options";
+import { resolveProfessionSlugFromProgramSlug } from "@/lib/vgs/vg2-cross-profession";
 import { getRouteStepsEmptyMessage } from "@/lib/i18n/route-steps-empty-copy";
 
 type ApprenticeshipOptionList = NonNullable<
@@ -672,8 +673,26 @@ export default function RouteStepsPanel({
     if (fromSelection) return fromSelection;
 
     const stepSlug = String(step.program_slug ?? "").trim();
-    if (stepSlug) return stepSlug;
-    return programmeOptions[0]?.programSlug ?? null;
+    const routeProfession = String(step.current_profession_slug ?? professionSlug ?? "").trim();
+    if (stepSlug) {
+      const slugProfession = resolveProfessionSlugFromProgramSlug(stepSlug);
+      if (!routeProfession || slugProfession === routeProfession) {
+        return stepSlug;
+      }
+    }
+
+    if (routeProfession) {
+      const byProfession = programmeOptions.find(
+        (option) =>
+          resolveProfessionSlugFromProgramSlug(String(option.programSlug ?? "").trim()) ===
+          routeProfession
+      );
+      if (byProfession?.programSlug) {
+        return byProfession.programSlug;
+      }
+    }
+
+    return stepSlug || (programmeOptions[0]?.programSlug ?? null);
   };
 
   const buildVg2SchoolStepOptions = (
@@ -932,12 +951,30 @@ export default function RouteStepsPanel({
                             null
                           );
                         }
-                        const slug = String(step.program_slug ?? "").trim();
-                        return (
-                          vg2ProgrammeOptions.find((option) => option.programSlug === slug) ??
-                          vg2ProgrammeOptions[0] ??
-                          null
+                        const slug = resolveSelectedVg2ProgrammeSlug(
+                          stepKey,
+                          step,
+                          vg2ProgrammeOptions
                         );
+                        const bySlug = vg2ProgrammeOptions.find(
+                          (option) => option.programSlug === slug
+                        );
+                        if (bySlug) return bySlug;
+
+                        const routeProfession = String(
+                          step.current_profession_slug ?? professionSlug ?? ""
+                        ).trim();
+                        if (routeProfession) {
+                          const byProfession = vg2ProgrammeOptions.find(
+                            (option) =>
+                              resolveProfessionSlugFromProgramSlug(
+                                String(option.programSlug ?? "").trim()
+                              ) === routeProfession
+                          );
+                          if (byProfession) return byProfession;
+                        }
+
+                        return vg2ProgrammeOptions[0] ?? null;
                       })()
                     : null;
                 const priorLarefagSelection = resolvePriorLarefagSelection(index);

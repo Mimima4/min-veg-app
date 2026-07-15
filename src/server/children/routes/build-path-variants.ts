@@ -6,6 +6,7 @@ import {
 import { assessHomeCountyPrimaryRouteEligibility } from "@/lib/vgs/home-county-primary-route-completeness";
 import { hasVg3SchoolProgrammeAvailability } from "@/lib/vgs/vg3-school-programme-availability";
 import { assertRouteTruthInvariants } from "@/lib/vgs/route-truth-invariants";
+import { selectAvailabilityTruthStageRow } from "@/lib/vgs/select-availability-truth-stage-row";
 
 import {
   shouldEmitDedicatedLarefagStep,
@@ -100,30 +101,6 @@ function stageOrder(stage: string): number {
     VG3: 3,
   };
   return order[stage] ?? 999;
-}
-
-function verificationPriority(status: string): number {
-  if (status === "verified") return 1;
-  if (status === "needs_review") return 2;
-  return 999;
-}
-
-function selectStageRow(
-  rows: AvailabilityTruthRow[],
-  stage: "VG1" | "VG2" | "VG3"
-): AvailabilityTruthRow | null {
-  return (
-    [...rows]
-      .filter((row) => row.stage === stage)
-      .sort((a, b) => {
-        const verificationDelta =
-          verificationPriority(a.verificationStatus) - verificationPriority(b.verificationStatus);
-        if (verificationDelta !== 0) return verificationDelta;
-        const byInstitution = (a.institutionName ?? "").localeCompare(b.institutionName ?? "");
-        if (byInstitution !== 0) return byInstitution;
-        return (a.institutionId ?? "").localeCompare(b.institutionId ?? "");
-      })[0] ?? null
-  );
 }
 
 function resolveApprenticeshipLabel(html: string): string | null {
@@ -465,7 +442,7 @@ export async function buildPathVariants(
   }
 
   const baseProgrammeNodes: PathVariantNode[] = orderedStages.map((stage) => {
-    const stageRow = selectStageRow(truthRows, stage);
+    const stageRow = selectAvailabilityTruthStageRow(truthRows, stage, professionSlug);
     return {
       type: "programme_selection",
       stage,
@@ -521,7 +498,7 @@ export async function buildPathVariants(
       ];
 
       if (hasVg3SchoolTruth) {
-        const vg3TruthRow = selectStageRow(truthRows, "VG3");
+        const vg3TruthRow = selectAvailabilityTruthStageRow(truthRows, "VG3", professionSlug);
         const vg3Node: PathVariantNode = {
           type: "programme_selection",
           stage: "VG3",

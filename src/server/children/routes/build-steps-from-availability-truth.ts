@@ -19,9 +19,14 @@ import {
   primaryRouteStepsIncludeRequiredSchoolChain,
 } from "@/lib/vgs/home-county-primary-route-completeness";
 import { assertRouteTruthInvariants } from "@/lib/vgs/route-truth-invariants";
+import { resolveProfessionSlugFromProgramSlug } from "@/lib/vgs/vg2-cross-profession";
+import { selectAvailabilityTruthStageRow } from "@/lib/vgs/select-availability-truth-stage-row";
 import { findPriorBedriftLaerefagStep } from "@/lib/larebedrift/bedrift-laerefag-from-route";
 import { isLarefagSelectionStage } from "@/lib/vgs/larefag-selection-stage";
-import { buildVg2ProgrammeOptionsFromTruthRows } from "@/lib/vgs/vg2-programme-options";
+import {
+  buildVg2ProgrammeOptionsFromTruthRows,
+  pickDefaultVg2ProgramSlugForProfession,
+} from "@/lib/vgs/vg2-programme-options";
 import type { Vg2ProgrammeOption } from "@/lib/vgs/vg2-programme-options";
 import type {
   PathVariant,
@@ -43,19 +48,6 @@ function verificationPriority(status: string): number {
   if (status === "verified") return 1;
   if (status === "needs_review") return 2;
   return 999;
-}
-
-function selectStageRow(rows: AvailabilityTruthRow[], stage: "VG1" | "VG2" | "VG3") {
-  return [...rows]
-    .filter((row) => row.stage === stage)
-    .sort((a, b) => {
-      const verificationDelta =
-        verificationPriority(a.verificationStatus) - verificationPriority(b.verificationStatus);
-      if (verificationDelta !== 0) return verificationDelta;
-      const byInstitution = (a.institutionName ?? "").localeCompare(b.institutionName ?? "");
-      if (byInstitution !== 0) return byInstitution;
-      return (a.institutionId ?? "").localeCompare(b.institutionId ?? "");
-    })[0];
 }
 
 function stageRowsSorted(rows: AvailabilityTruthRow[], stage: "VG1" | "VG2" | "VG3") {
@@ -276,6 +268,26 @@ function resolveVg3InstitutionWebsite(params: {
   return sameSchool ? params.continuityRow.institutionWebsite ?? null : null;
 }
 
+function scopeVg2TruthRowsForRoute(
+  rows: AvailabilityTruthRow[],
+  professionSlug: string,
+  programSlug: string | null | undefined
+): AvailabilityTruthRow[] {
+  const vg2Rows = rows.filter((row) => row.stage === "VG2");
+  const slug = String(programSlug ?? "").trim();
+  if (slug) {
+    const bySlug = vg2Rows.filter((row) => row.programSlug === slug);
+    if (bySlug.length > 0) {
+      return bySlug;
+    }
+  }
+
+  const byProfession = vg2Rows.filter(
+    (row) => resolveProfessionSlugFromProgramSlug(row.programSlug) === professionSlug
+  );
+  return byProfession.length > 0 ? byProfession : vg2Rows;
+}
+
 /** VG3+ uses regional availability — not VG1/VG2 logistics continuity. */
 function regionalStageRows(params: {
   rows: AvailabilityTruthRow[];
@@ -436,6 +448,27 @@ export function buildStepsFromAvailabilityTruth(params: {
     return [];
   }
 
+  const vg2ProgrammeOptions =
+    params.vg2ProgrammeOptions && params.vg2ProgrammeOptions.length > 0
+      ? params.vg2ProgrammeOptions
+      : buildVg2ProgrammeOptionsFromTruthRows(params.rows);
+
+  const effectiveSelectedVg2ProgramSlug = (() => {
+    const explicit = String(params.selectedVg2ProgramSlug ?? "").trim();
+    if (explicit) {
+      const slugProfession = resolveProfessionSlugFromProgramSlug(explicit);
+      if (slugProfession === params.professionSlug) {
+        return explicit;
+      }
+    }
+
+    return (
+      pickDefaultVg2ProgramSlugForProfession(vg2ProgrammeOptions, params.professionSlug) ??
+      selectAvailabilityTruthStageRow(params.rows, "VG2", params.professionSlug)?.programSlug ??
+      (explicit || null)
+    );
+  })();
+
   const defaultRow = [...params.rows].sort((a, b) => {
     const aAnchor =
       params.selectedCandidate &&
@@ -590,7 +623,11 @@ export function buildStepsFromAvailabilityTruth(params: {
   const steps: StudyRouteSnapshotStep[] = [];
   const linkedProgrammeSlugByStage = new Map<"VG1" | "VG2" | "VG3", string>();
   for (const stage of ["VG1", "VG2", "VG3"] as const) {
-    const stageLinkedRow = selectStageRow(params.rows, stage);
+    const stageLinkedRow = selectAvailabilityTruthStageRow(
+      params.rows,
+      stage,
+      stage === "VG2" ? params.professionSlug : null
+    );
     if (stageLinkedRow?.programSlug) {
       linkedProgrammeSlugByStage.set(stage, stageLinkedRow.programSlug);
     }
@@ -638,12 +675,12 @@ export function buildStepsFromAvailabilityTruth(params: {
               ? null
               : params.selectedCandidate ?? null;
 
-        const vg2ProgrammeScopeRows =
-          node.stage === "VG2" && params.selectedVg2ProgramSlug
-            ? params.rows.filter(
-                (row) =>
-                  row.stage === "VG2" &&
-                  row.programSlug === params.selectedVg2ProgramSlug
+        const vg2ScopedRows =
+          node.stage === "VG2"
+            ? scopeVg2TruthRowsForRoute(
+                params.rows,
+                params.professionSlug,
+                effectiveSelectedVg2ProgramSlug
               )
             : null;
 
@@ -652,8 +689,8 @@ export function buildStepsFromAvailabilityTruth(params: {
             ? regionalStageRows({ rows: params.rows, stage: "VG3" })
             : continuityStageRows({
                 rows:
-                  vg2ProgrammeScopeRows && vg2ProgrammeScopeRows.length > 0
-                    ? vg2ProgrammeScopeRows
+                  node.stage === "VG2" && vg2ScopedRows
+                    ? vg2ScopedRows
                     : params.rows,
                 stage: node.stage === "VG2" ? "VG2" : "VG1",
                 selectedCandidate: params.selectedCandidate ?? null,
@@ -677,20 +714,43 @@ export function buildStepsFromAvailabilityTruth(params: {
         if (node.stage === "VG2") {
           selectedVg2RowForGate = stageRow;
         }
-        const selectedProgrammeSlug =
-          (node.stage === "VG2" ? params.selectedVg2ProgramSlug : null) ??
-          stageRow?.programSlug ??
-          node.programSlug ??
-          linkedProgrammeSlugByStage.get(node.stage) ??
-          null;
+        const selectedProgrammeSlug = (() => {
+          const candidate =
+            (node.stage === "VG2" ? effectiveSelectedVg2ProgramSlug : null) ??
+            stageRow?.programSlug ??
+            node.programSlug ??
+            linkedProgrammeSlugByStage.get(node.stage) ??
+            null;
+
+          if (node.stage !== "VG2" || !candidate) {
+            return candidate;
+          }
+
+          const slugProfession = resolveProfessionSlugFromProgramSlug(candidate);
+          if (!slugProfession || slugProfession === params.professionSlug) {
+            return candidate;
+          }
+
+          return (
+            effectiveSelectedVg2ProgramSlug ??
+            pickDefaultVg2ProgramSlugForProfession(vg2ProgrammeOptions, params.professionSlug) ??
+            candidate
+          );
+        })();
         if (!selectedProgrammeSlug) {
           throw new Error(
             `Invariant violation: missing source-backed programme slug for ${node.stage}`
           );
         }
+        const catalogueProgrammeTitle = vg2ProgrammeOptions.find(
+          (option) => option.program_slug === selectedProgrammeSlug
+        )?.program_title;
         const selectedProgrammeTitleRaw = hasStageAvailability
-          ? stageRow?.programTitle ?? node.programTitle ?? node.title
-          : node.programTitle ?? node.title;
+          ? catalogueProgrammeTitle ??
+            stageRow?.programTitle ??
+            node.programTitle ??
+            node.title
+          : catalogueProgrammeTitle ?? node.programTitle ?? node.title;
         const selectedProgrammeTitle = toStageAwareProgrammeTitle({
           stage: node.stage,
           title: selectedProgrammeTitleRaw,
@@ -713,10 +773,7 @@ export function buildStepsFromAvailabilityTruth(params: {
           stage: node.stage,
           ...(node.stage === "VG2"
             ? {
-                programme_options:
-                  params.vg2ProgrammeOptions && params.vg2ProgrammeOptions.length > 0
-                    ? params.vg2ProgrammeOptions
-                    : buildVg2ProgrammeOptionsFromTruthRows(params.rows),
+                programme_options: vg2ProgrammeOptions,
               }
             : {}),
           options: buildProgrammeSelectionOptions(stageRows),

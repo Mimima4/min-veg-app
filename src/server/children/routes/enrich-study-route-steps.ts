@@ -6,6 +6,8 @@ import {
 } from "@/lib/losa/availability-scope";
 import { resolveInstitutionDisplayName } from "@/lib/i18n/institution-display-name";
 import { toStageAwareProgrammeTitleForStage } from "@/lib/vgs/stage-aware-programme-title";
+import { resolveProfessionSlugFromProgramSlug } from "@/lib/vgs/vg2-cross-profession";
+import { pickDefaultVg2ProgrammeOptionForProfession } from "@/lib/vgs/vg2-programme-options";
 import { createClient } from "@/lib/supabase/server";
 import { selectEducationInstitutions } from "@/server/education/query-education-institutions";
 import type { StudyRouteSnapshotStep } from "@/lib/routes/route-types";
@@ -357,10 +359,29 @@ export async function enrichStudyRouteSteps(
               .get(step.current_profession_slug)
               ?.get(step.stage.toUpperCase())
           : null;
-        const resolvedProgramTitle =
-          rawLooksLikeStageOnly || rawStageMismatched
-            ? inferredByStage ?? rawProgramTitle
-            : rawProgramTitle;
+        const resolvedProgramTitle = (() => {
+          let title =
+            rawLooksLikeStageOnly || rawStageMismatched
+              ? inferredByStage ?? rawProgramTitle
+              : rawProgramTitle;
+
+          if (step.stage?.toUpperCase() === "VG2") {
+            const slugProfession = resolveProfessionSlugFromProgramSlug(step.program_slug);
+            if (
+              slugProfession &&
+              slugProfession !== step.current_profession_slug
+            ) {
+              const professionOption = pickDefaultVg2ProgrammeOptionForProfession(
+                step.programme_options,
+                step.current_profession_slug
+              );
+              title =
+                professionOption?.program_title ?? inferredByStage ?? rawProgramTitle;
+            }
+          }
+
+          return title;
+        })();
 
         const normalizedProgramTitle = stripInstitutionSuffixFromProgrammeTitle({
           rawTitle: resolvedProgramTitle,

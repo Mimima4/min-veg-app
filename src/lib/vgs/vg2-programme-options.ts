@@ -1,4 +1,5 @@
 import type { StudyRouteSnapshotStep } from "@/lib/routes/route-types";
+import { resolveProfessionSlugFromProgramSlug } from "@/lib/vgs/vg2-cross-profession";
 
 export type Vg2ProgrammeOption = {
   program_slug: string;
@@ -49,6 +50,42 @@ export function resolveVg2ProgrammeOptionsFromStep(
 
   return Array.from(bySlug.values()).sort((a, b) =>
     a.program_title.localeCompare(b.program_title, "nb")
+  );
+}
+
+export function pickDefaultVg2ProgramSlugForProfession(
+  options: Vg2ProgrammeOption[] | null | undefined,
+  professionSlug: string | null | undefined
+): string | null {
+  const profession = String(professionSlug ?? "").trim();
+  if (!profession || !options?.length) {
+    return null;
+  }
+
+  const match = options.find((option) => {
+    const optionProfession =
+      option.profession_slug ?? resolveProfessionSlugFromProgramSlug(option.program_slug);
+    return optionProfession === profession;
+  });
+
+  return match?.program_slug?.trim() || null;
+}
+
+export function pickDefaultVg2ProgrammeOptionForProfession(
+  options: Vg2ProgrammeOption[] | null | undefined,
+  professionSlug: string | null | undefined
+): Vg2ProgrammeOption | null {
+  const profession = String(professionSlug ?? "").trim();
+  if (!profession || !options?.length) {
+    return null;
+  }
+
+  return (
+    options.find((option) => {
+      const optionProfession =
+        option.profession_slug ?? resolveProfessionSlugFromProgramSlug(option.program_slug);
+      return optionProfession === profession;
+    }) ?? null
   );
 }
 
