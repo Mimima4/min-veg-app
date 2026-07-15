@@ -1,0 +1,86 @@
+{
+  "generatedAt": "2026-07-15T14:10:14.329Z",
+  "matcher": "brand-cohort-variant-1-commit-1cc183c",
+  "countyCode": "56",
+  "countyLabel": "Finnmark-sample",
+  "results": [
+    {
+      "professionSlug": "electrician",
+      "countyCode": "56",
+      "status": "canonical_matching_review",
+      "matchedSchools": 6,
+      "unmatchedSchools": 18,
+      "ambiguousCount": 0,
+      "ambiguous": [],
+      "psaRows": 29,
+      "setesdal": [],
+      "lillehammer": [],
+      "losaUnmatched": 18
+    },
+    {
+      "professionSlug": "mechanic",
+      "countyCode": "56",
+      "status": "canonical_matching_review",
+      "matchedSchools": 7,
+      "unmatchedSchools": 18,
+      "ambiguousCount": 0,
+      "ambiguous": [],
+      "psaRows": 10,
+      "setesdal": [],
+      "lillehammer": [],
+      "losaUnmatched": 18
+    },
+    {
+      "professionSlug": "carpenter",
+      "countyCode": "56",
+      "status": "canonical_matching_review",
+      "matchedSchools": 5,
+      "unmatchedSchools": 18,
+      "ambiguousCount": 0,
+      "ambiguous": [],
+      "psaRows": 10,
+      "setesdal": [],
+      "lillehammer": [],
+      "losaUnmatched": 18
+    },
+    {
+      "professionSlug": "plumber",
+      "countyCode": "56",
+      "status": "canonical_matching_review",
+      "matchedSchools": 5,
+      "unmatchedSchools": 18,
+      "ambiguousCount": 0,
+      "ambiguous": [],
+      "psaRows": 7,
+      "setesdal": [],
+      "lillehammer": [],
+      "losaUnmatched": 18
+    },
+    {
+      "professionSlug": "painter",
+      "countyCode": "56",
+      "status": "missing_programme_rows",
+      "matchedSchools": 5,
+      "unmatchedSchools": 18,
+      "ambiguousCount": 0,
+      "ambiguous": [],
+      "psaRows": 0,
+      "setesdal": [],
+      "lillehammer": [],
+      "losaUnmatched": 18
+    },
+    {
+      "professionSlug": "anleggsteknikk",
+      "countyCode": "56",
+      "status": "canonical_matching_review",
+      "matchedSchools": 5,
+      "unmatchedSchools": 18,
+      "ambiguousCount": 0,
+      "ambiguous": [],
+      "psaRows": 6,
+      "setesdal": [],
+      "lillehammer": [],
+      "losaUnmatched": 18
+    }
+  ]
+}

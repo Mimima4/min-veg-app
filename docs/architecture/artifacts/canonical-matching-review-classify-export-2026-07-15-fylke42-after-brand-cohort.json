@@ -1,0 +1,196 @@
+{
+  "generatedAt": "2026-07-15T14:09:59.778Z",
+  "matcher": "brand-cohort-variant-1-commit-1cc183c",
+  "countyCode": "42",
+  "countyLabel": "Agder",
+  "results": [
+    {
+      "professionSlug": "electrician",
+      "countyCode": "42",
+      "status": "verification_ready_after_write",
+      "matchedSchools": 9,
+      "unmatchedSchools": 0,
+      "ambiguousCount": 0,
+      "ambiguous": [],
+      "psaRows": 18,
+      "setesdal": [],
+      "lillehammer": [],
+      "losaUnmatched": 0
+    },
+    {
+      "professionSlug": "mechanic",
+      "countyCode": "42",
+      "status": "verification_ready_after_write",
+      "matchedSchools": 16,
+      "unmatchedSchools": 0,
+      "ambiguousCount": 0,
+      "ambiguous": [],
+      "psaRows": 16,
+      "setesdal": [
+        {
+          "schoolCode": "220473",
+          "schoolName": "Setesdal vidaregåande skule Avdeling Hornnes",
+          "institutionId": "89a59848-33a0-44dd-8460-ed45905920f2",
+          "matchType": "avd_location_match",
+          "resolvedVia": "multi_avd_identity"
+        },
+        {
+          "schoolCode": "220473",
+          "schoolName": "Setesdal vidaregåande skule Avdeling Hornnes",
+          "institutionId": "e09c2f9b-d361-4d35-b509-01ee1c5daf05",
+          "matchType": "avd_location_match",
+          "resolvedVia": "multi_avd_identity"
+        },
+        {
+          "schoolCode": "220473",
+          "schoolName": "Setesdal vidaregåande skule Avdeling Hornnes",
+          "institutionId": "24aa89ea-da24-4539-9afb-2f0b977be18c",
+          "matchType": "avd_location_match",
+          "resolvedVia": "multi_avd_identity"
+        }
+      ],
+      "lillehammer": [],
+      "losaUnmatched": 0
+    },
+    {
+      "professionSlug": "carpenter",
+      "countyCode": "42",
+      "status": "verification_ready_after_write",
+      "matchedSchools": 17,
+      "unmatchedSchools": 0,
+      "ambiguousCount": 0,
+      "ambiguous": [],
+      "psaRows": 29,
+      "setesdal": [
+        {
+          "schoolCode": "220473",
+          "schoolName": "Setesdal vidaregåande skule Avdeling Hornnes",
+          "institutionId": "89a59848-33a0-44dd-8460-ed45905920f2",
+          "matchType": "avd_location_match",
+          "resolvedVia": "multi_avd_identity"
+        },
+        {
+          "schoolCode": "220473",
+          "schoolName": "Setesdal vidaregåande skule Avdeling Hornnes",
+          "institutionId": "e09c2f9b-d361-4d35-b509-01ee1c5daf05",
+          "matchType": "avd_location_match",
+          "resolvedVia": "multi_avd_identity"
+        },
+        {
+          "schoolCode": "220473",
+          "schoolName": "Setesdal vidaregåande skule Avdeling Hornnes",
+          "institutionId": "24aa89ea-da24-4539-9afb-2f0b977be18c",
+          "matchType": "avd_location_match",
+          "resolvedVia": "multi_avd_identity"
+        }
+      ],
+      "lillehammer": [],
+      "losaUnmatched": 0
+    },
+    {
+      "professionSlug": "plumber",
+      "countyCode": "42",
+      "status": "verification_ready_after_write",
+      "matchedSchools": 17,
+      "unmatchedSchools": 0,
+      "ambiguousCount": 0,
+      "ambiguous": [],
+      "psaRows": 18,
+      "setesdal": [
+        {
+          "schoolCode": "220473",
+          "schoolName": "Setesdal vidaregåande skule Avdeling Hornnes",
+          "institutionId": "89a59848-33a0-44dd-8460-ed45905920f2",
+          "matchType": "avd_location_match",
+          "resolvedVia": "multi_avd_identity"
+        },
+        {
+          "schoolCode": "220473",
+          "schoolName": "Setesdal vidaregåande skule Avdeling Hornnes",
+          "institutionId": "e09c2f9b-d361-4d35-b509-01ee1c5daf05",
+          "matchType": "avd_location_match",
+          "resolvedVia": "multi_avd_identity"
+        },
+        {
+          "schoolCode": "220473",
+          "schoolName": "Setesdal vidaregåande skule Avdeling Hornnes",
+          "institutionId": "24aa89ea-da24-4539-9afb-2f0b977be18c",
+          "matchType": "avd_location_match",
+          "resolvedVia": "multi_avd_identity"
+        }
+      ],
+      "lillehammer": [],
+      "losaUnmatched": 0
+    },
+    {
+      "professionSlug": "painter",
+      "countyCode": "42",
+      "status": "verification_ready_after_write",
+      "matchedSchools": 17,
+      "unmatchedSchools": 0,
+      "ambiguousCount": 0,
+      "ambiguous": [],
+      "psaRows": 16,
+      "setesdal": [
+        {
+          "schoolCode": "220473",
+          "schoolName": "Setesdal vidaregåande skule Avdeling Hornnes",
+          "institutionId": "89a59848-33a0-44dd-8460-ed45905920f2",
+          "matchType": "avd_location_match",
+          "resolvedVia": "multi_avd_identity"
+        },
+        {
+          "schoolCode": "220473",
+          "schoolName": "Setesdal vidaregåande skule Avdeling Hornnes",
+          "institutionId": "e09c2f9b-d361-4d35-b509-01ee1c5daf05",
+          "matchType": "avd_location_match",
+          "resolvedVia": "multi_avd_identity"
+        },
+        {
+          "schoolCode": "220473",
+          "schoolName": "Setesdal vidaregåande skule Avdeling Hornnes",
+          "institutionId": "24aa89ea-da24-4539-9afb-2f0b977be18c",
+          "matchType": "avd_location_match",
+          "resolvedVia": "multi_avd_identity"
+        }
+      ],
+      "lillehammer": [],
+      "losaUnmatched": 0
+    },
+    {
+      "professionSlug": "anleggsteknikk",
+      "countyCode": "42",
+      "status": "verification_ready_after_write",
+      "matchedSchools": 17,
+      "unmatchedSchools": 0,
+      "ambiguousCount": 0,
+      "ambiguous": [],
+      "psaRows": 17,
+      "setesdal": [
+        {
+          "schoolCode": "220473",
+          "schoolName": "Setesdal vidaregåande skule Avdeling Hornnes",
+          "institutionId": "89a59848-33a0-44dd-8460-ed45905920f2",
+          "matchType": "avd_location_match",
+          "resolvedVia": "multi_avd_identity"
+        },
+        {
+          "schoolCode": "220473",
+          "schoolName": "Setesdal vidaregåande skule Avdeling Hornnes",
+          "institutionId": "e09c2f9b-d361-4d35-b509-01ee1c5daf05",
+          "matchType": "avd_location_match",
+          "resolvedVia": "multi_avd_identity"
+        },
+        {
+          "schoolCode": "220473",
+          "schoolName": "Setesdal vidaregåande skule Avdeling Hornnes",
+          "institutionId": "24aa89ea-da24-4539-9afb-2f0b977be18c",
+          "matchType": "avd_location_match",
+          "resolvedVia": "multi_avd_identity"
+        }
+      ],
+      "lillehammer": [],
+      "losaUnmatched": 0
+    }
+  ]
+}

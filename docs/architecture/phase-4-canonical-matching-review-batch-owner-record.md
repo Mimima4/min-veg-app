@@ -47,9 +47,9 @@ Documented across carpenter / painter closure records — **verify on next class
 
 | County | Typical status | Professions affected | Notes |
 |--------|----------------|----------------------|-------|
-| `34` Innlandet | `canonical_matching_review` | All Contour B professions with ingested PSA | UI works post-ingest; matching tail |
-| `42` Agder | `canonical_matching_review` | Same | Avdeling/slash cases resolved for some pairs 2026-07-09 — re-verify |
-| `56` Finnmark | `canonical_matching_review` | Contour B partial | Split: 6 ordinary + LOSA via P4; not painter-specific |
+| `34` Innlandet | **green** (2026-07-15) | All 6 | Brand-cohort matcher; Lillehammer avd Nord; re-ingest `34` — see checkpoint artifact |
+| `42` Agder | **green** (2026-07-15) | All 6 | Setesdal Hornnes `multi_avd_identity`; re-ingest `42`; UI sign-off |
+| `56` Finnmark | `canonical_matching_review` | Contour B partial | **Deferred:** 18 LOSA unmatched by design (CASE 4); 6 ordinary schools OK; painter `missing_programme_rows` separate |
 
 **Action:** extend table with any additional `(profession, county)` from fresh classify export.
 
@@ -59,8 +59,8 @@ Documented across carpenter / painter closure records — **verify on next class
 
 | # | Criterion |
 |---|-----------|
-| B-1 | Fresh classify export attached (date + command) |
-| B-2 | Every `canonical_matching_review` row has owner disposition: **fixed** / **accepted partial** / **deferred with reason** |
+| B-1 | Fresh classify export attached (date + command) | ☑ 2026-07-15 — `fylke34`/`42`/`56` artifacts under `docs/architecture/artifacts/` |
+| B-2 | Every `canonical_matching_review` row has owner disposition: **fixed** / **accepted partial** / **deferred with reason** | ☑ `34`/`42` **fixed**; `56` **deferred** (LOSA CASE 4) |
 | B-3 | No new profession-specific exceptions without doc row |
 | B-4 | `phase-4-multi-contour-truth-registry-owner-decision-record.md` unchanged — this batch does **not** close P4-MCT-1 |
 

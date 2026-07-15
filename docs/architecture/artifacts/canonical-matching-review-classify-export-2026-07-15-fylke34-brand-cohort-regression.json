@@ -1,0 +1,134 @@
+{
+  "generatedAt": "2026-07-15T14:10:05.498Z",
+  "matcher": "brand-cohort-variant-1-commit-1cc183c",
+  "countyCode": "34",
+  "countyLabel": "Innlandet-regression",
+  "results": [
+    {
+      "professionSlug": "electrician",
+      "countyCode": "34",
+      "status": "verification_ready_after_write",
+      "matchedSchools": 11,
+      "unmatchedSchools": 0,
+      "ambiguousCount": 0,
+      "ambiguous": [],
+      "psaRows": 21,
+      "setesdal": [],
+      "lillehammer": [
+        {
+          "schoolCode": "16888",
+          "schoolName": "Lillehammer videregående skole Avdeling Nord",
+          "institutionId": "e06e29ea-185c-4c2a-a42a-56ffa5b7dab7",
+          "matchType": "avd_location_match",
+          "resolvedVia": "avd_location"
+        }
+      ],
+      "losaUnmatched": 0
+    },
+    {
+      "professionSlug": "mechanic",
+      "countyCode": "34",
+      "status": "verification_ready_after_write",
+      "matchedSchools": 17,
+      "unmatchedSchools": 0,
+      "ambiguousCount": 0,
+      "ambiguous": [],
+      "psaRows": 25,
+      "setesdal": [],
+      "lillehammer": [
+        {
+          "schoolCode": "16888",
+          "schoolName": "Lillehammer videregående skole Avdeling Nord",
+          "institutionId": "e06e29ea-185c-4c2a-a42a-56ffa5b7dab7",
+          "matchType": "avd_location_match",
+          "resolvedVia": "avd_location"
+        }
+      ],
+      "losaUnmatched": 0
+    },
+    {
+      "professionSlug": "carpenter",
+      "countyCode": "34",
+      "status": "verification_ready_after_write",
+      "matchedSchools": 13,
+      "unmatchedSchools": 0,
+      "ambiguousCount": 0,
+      "ambiguous": [],
+      "psaRows": 24,
+      "setesdal": [],
+      "lillehammer": [
+        {
+          "schoolCode": "16888",
+          "schoolName": "Lillehammer videregående skole Avdeling Nord",
+          "institutionId": "e06e29ea-185c-4c2a-a42a-56ffa5b7dab7",
+          "matchType": "avd_location_match",
+          "resolvedVia": "avd_location"
+        }
+      ],
+      "losaUnmatched": 0
+    },
+    {
+      "professionSlug": "plumber",
+      "countyCode": "34",
+      "status": "verification_ready_after_write",
+      "matchedSchools": 12,
+      "unmatchedSchools": 0,
+      "ambiguousCount": 0,
+      "ambiguous": [],
+      "psaRows": 16,
+      "setesdal": [],
+      "lillehammer": [
+        {
+          "schoolCode": "16888",
+          "schoolName": "Lillehammer videregående skole Avdeling Nord",
+          "institutionId": "e06e29ea-185c-4c2a-a42a-56ffa5b7dab7",
+          "matchType": "avd_location_match",
+          "resolvedVia": "avd_location"
+        }
+      ],
+      "losaUnmatched": 0
+    },
+    {
+      "professionSlug": "painter",
+      "countyCode": "34",
+      "status": "verification_ready_after_write",
+      "matchedSchools": 13,
+      "unmatchedSchools": 0,
+      "ambiguousCount": 0,
+      "ambiguous": [],
+      "psaRows": 14,
+      "setesdal": [],
+      "lillehammer": [
+        {
+          "schoolCode": "16888",
+          "schoolName": "Lillehammer videregående skole Avdeling Nord",
+          "institutionId": "e06e29ea-185c-4c2a-a42a-56ffa5b7dab7",
+          "matchType": "avd_location_match",
+          "resolvedVia": "avd_location"
+        }
+      ],
+      "losaUnmatched": 0
+    },
+    {
+      "professionSlug": "anleggsteknikk",
+      "countyCode": "34",
+      "status": "verification_ready_after_write",
+      "matchedSchools": 12,
+      "unmatchedSchools": 0,
+      "ambiguousCount": 0,
+      "ambiguous": [],
+      "psaRows": 13,
+      "setesdal": [],
+      "lillehammer": [
+        {
+          "schoolCode": "16888",
+          "schoolName": "Lillehammer videregående skole Avdeling Nord",
+          "institutionId": "e06e29ea-185c-4c2a-a42a-56ffa5b7dab7",
+          "matchType": "avd_location_match",
+          "resolvedVia": "avd_location"
+        }
+      ],
+      "losaUnmatched": 0
+    }
+  ]
+}

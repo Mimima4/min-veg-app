@@ -89,6 +89,52 @@ The previously "rejected" identity-before-`avd_location` ordering no longer brea
 Førde → Høyanger campus pick, because Phase 2 restores the campus signal *inside* the
 brand cohort (both `avd`/`avdeling` now normalize to the same core).
 
+## Agder fylke `42` — closed after brand-cohort + re-ingest (2026-07-15)
+
+| Field | Value |
+|-------|--------|
+| **Matcher commit** | `1cc183c` — brand-cohort Variant 1 (replaces nord blocklist) |
+| **Resolved school** | `Setesdal vidaregåande skule Avdeling Hornnes` [220473] → NSR `Setesdal vidaregåande skule` (`24aa89ea-…`, kommune Evje og Hornnes), `multi_avd_identity` |
+| **Root cause** | 3 duplicate NSR rows with identical name → pre-fix `ambiguous` → 0 PSA rows → UI gap |
+| **Ingest** | `run-contour-b-operational-ingest.mjs` all 6 professions × county `42` |
+| **UI** | Setesdal visible after recompute (user sign-off 2026-07-15) |
+
+### Classify `42` after brand-cohort (all green)
+
+| Profession | Status | Matched | Ambiguous | PSA rows | Setesdal |
+|------------|--------|---------|-----------|----------|----------|
+| electrician | green | 9 | 0 | 18 | — (not in Vilbli chain) |
+| mechanic | green | 16 | 0 | 16 | ✓ multi_avd |
+| carpenter | green | 17 | 0 | 29 | ✓ multi_avd |
+| plumber | green | 17 | 0 | 18 | ✓ multi_avd |
+| painter | green | 17 | 0 | 16 | ✓ multi_avd |
+| anleggsteknikk | green | 17 | 0 | 17 | ✓ multi_avd |
+
+Artifact: `canonical-matching-review-classify-export-2026-07-15-fylke42-after-brand-cohort.json`
+
+### Regression `34` (brand-cohort, post re-ingest `34`)
+
+All 6 professions green; Lillehammer avd Nord matched (no Karriere false ties). No regressions vs nord-stopword ingest.
+
+Artifact: `canonical-matching-review-classify-export-2026-07-15-fylke34-brand-cohort-regression.json`
+
+## Finnmark fylke `56` — sample (unchanged by matcher; deferred)
+
+Brand-cohort matcher does **not** change LOSA handling (CASE 4 — excluded by design).
+
+| Profession | Status | Ordinary matched | LOSA unmatched | Notes |
+|------------|--------|------------------|----------------|-------|
+| electrician | `canonical_matching_review` | 6 | 18 | LOSA rows excluded from ordinary matcher |
+| mechanic | `canonical_matching_review` | 7 | 18 | same |
+| carpenter | `canonical_matching_review` | 5 | 18 | same |
+| plumber | `canonical_matching_review` | 5 | 18 | same |
+| painter | `missing_programme_rows` | 5 | 18 | programme materialization gap |
+| anleggsteknikk | `canonical_matching_review` | 5 | 18 | same |
+
+**Disposition:** **deferred** — LOSA publication contract (P4-LOSA); not a Vilbli–NSR matcher defect.
+
+Artifact: `canonical-matching-review-classify-export-2026-07-15-fylke56-brand-cohort-sample.json`
+
 ## Rejected approach (historical; do not re-apply the nord stop-word)
 
 **Identity before `avd_location` (naïve global reorder)** — broke campus pick when Vilbli
