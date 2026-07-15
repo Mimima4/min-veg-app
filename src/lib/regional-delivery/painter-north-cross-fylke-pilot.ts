@@ -76,10 +76,15 @@ export function mergePainterNorthCrossFylkeTruthRows(
     neighborRows: AvailabilityTruthRow[];
   }
 ): AvailabilityTruthRow[] {
-  const homeVg1 = countyScopedSchoolRows(params.homeRows).filter((row) => row.stage === "VG1");
-  const neighborFromVg2 = countyScopedSchoolRows(params.neighborRows).filter(
-    (row) => row.stage !== "VG1"
-  );
+  // Home VG1 includes LOSA (phase-4-losa-cross-profession-route-consumption-closure).
+  const homeVg1 = params.homeRows.filter((row) => row.stage === "VG1");
+  const neighborFromVg2 = countyScopedSchoolRows(params.neighborRows)
+    .filter((row) => row.stage !== "VG1")
+    .map((row) =>
+      row.stage === "VG2"
+        ? { ...row, programSlug: PAINTER_NORTH_NABOFYLKE_VG2_PROGRAMME_SLUG }
+        : row
+    );
   return [...homeVg1, ...neighborFromVg2];
 }
 

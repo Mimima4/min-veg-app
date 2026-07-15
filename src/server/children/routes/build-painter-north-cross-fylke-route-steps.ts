@@ -5,6 +5,7 @@ import {
   isPainterNorthCrossFylkePathVariantEligible,
   listPainterNorthReachableNeighborCountyCodes,
   mergePainterNorthCrossFylkeTruthRows,
+  PAINTER_NORTH_NABOFYLKE_VG2_PROGRAMME_SLUG,
   painterHomeVg1ProgrammeSlugsForFylke,
   painterProgrammeSlugsForFylke,
   resolvePainterNorthHomeFylkeCode,
@@ -134,6 +135,7 @@ export async function buildPainterNorthCrossFylkeRouteSteps(params: {
     pathVariants: enrichedPathVariants,
     selectedPathVariantId: pathVariantNavContext.primaryPathVariantId,
     navOutcomes: navOutcomesForSteps,
+    selectedVg2ProgramSlug: PAINTER_NORTH_NABOFYLKE_VG2_PROGRAMME_SLUG,
   });
 
   steps = await applyVerifiedLarebedriftToApprenticeshipSteps({
@@ -265,6 +267,7 @@ export async function buildPainterNorthCrossFylkeMergedRouteSteps(params: {
     pathVariants: enrichedPathVariants,
     selectedPathVariantId: pathVariantNavContext.primaryPathVariantId,
     navOutcomes: navOutcomesForSteps,
+    selectedVg2ProgramSlug: PAINTER_NORTH_NABOFYLKE_VG2_PROGRAMME_SLUG,
   });
 
   steps = await applyVerifiedLarebedriftToApprenticeshipSteps({
