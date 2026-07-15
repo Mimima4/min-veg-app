@@ -18172,6 +18172,7 @@ function normalizeSchoolNameForMatch(value) {
 function extractIdentityCore(name) {
   return normalizeSchoolNameForMatch(name).replace(/\bavd\b.*$/, "").trim();
 }
+var AVD_LOCATION_BLOCKED_PRIMARY_TOKENS = /* @__PURE__ */ new Set(["nord"]);
 function extractAvdLocationLabel(vilbliSchoolName) {
   const normalized = normalizeSchoolNameForMatch(vilbliSchoolName);
   const match = normalized.match(/\b(?:avd|avdeling)\.?\s+(.+)$/);
@@ -18189,6 +18190,9 @@ function scoreAvdLocationInstitutionMatch(vilbliSchoolName, institutionName, ins
     return null;
   }
   const primaryToken = avdTokens[0];
+  if (AVD_LOCATION_BLOCKED_PRIMARY_TOKENS.has(primaryToken)) {
+    return null;
+  }
   const municipalityMatches = municipalityNorm.length > 0 && (municipalityNorm === avdLocation || municipalityNorm.includes(primaryToken) || avdLocation.includes(municipalityNorm));
   const institutionMatches = institutionNorm.includes(primaryToken) || avdTokens.every((token) => institutionNorm.includes(token));
   if (!municipalityMatches && !institutionMatches) {
