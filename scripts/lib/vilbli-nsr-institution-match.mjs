@@ -17,16 +17,16 @@ export function normalizeSchoolNameForMatch(value) {
     .trim();
 }
 
-function extractIdentityCore(name) {
-  return normalizeSchoolNameForMatch(name).replace(/\bavd\b.*$/, "").trim();
-}
-
 /**
- * Bare campus-direction labels (e.g. Avdeling Nord) are not geographic avd tokens.
- * Matching them via avd_location causes false ties (Nord-Fron, Nord-Østerdal, …).
- * Rollback checkpoint: commit 14640dc + docs/.../canonical-matching-review-checkpoint-2026-07-15.md
+ * Identity core = normalized brand name with the department suffix removed.
+ * BOTH Vilbli (`avd. Høyanger`) and NSR (`Avdeling Høyanger`) must reduce to the
+ * same brand core (`forde`), so the strip must cover `avd` AND `avdeling`.
  */
-const AVD_LOCATION_BLOCKED_PRIMARY_TOKENS = new Set(["nord"]);
+const AVD_SUFFIX_RE = /\b(?:avd|avdeling)\b.*$/;
+
+function extractIdentityCore(name) {
+  return normalizeSchoolNameForMatch(name).replace(AVD_SUFFIX_RE, "").trim();
+}
 
 /** e.g. "Førde vidaregåande skule avd. Høyanger" → "hoyanger" */
 export function extractAvdLocationLabel(vilbliSchoolName) {
@@ -35,24 +35,20 @@ export function extractAvdLocationLabel(vilbliSchoolName) {
   return match?.[1]?.trim() || null;
 }
 
-function scoreAvdLocationInstitutionMatch(vilbliSchoolName, institutionName, institutionMunicipalityName) {
-  const avdLocation = extractAvdLocationLabel(vilbliSchoolName);
-  if (!avdLocation) {
-    return null;
-  }
-
+/**
+ * Does an `avd_location` label (e.g. "hoyanger", "nord") point at this NSR campus?
+ * Location-only signal — used ONLY to disambiguate campuses inside a single brand
+ * cohort (Phase 2). It must never promote a candidate outside the brand cohort.
+ */
+function avdLocationMatchesInstitution(avdLocation, institutionName, institutionMunicipalityName) {
   const municipalityNorm = normalizeSchoolNameForMatch(institutionMunicipalityName ?? "");
   const institutionNorm = normalizeSchoolNameForMatch(institutionName);
   const avdTokens = avdLocation.split(" ").filter((token) => token.length >= 4);
   if (avdTokens.length === 0) {
-    return null;
+    return false;
   }
 
   const primaryToken = avdTokens[0];
-  if (AVD_LOCATION_BLOCKED_PRIMARY_TOKENS.has(primaryToken)) {
-    return null;
-  }
-
   const municipalityMatches =
     municipalityNorm.length > 0 &&
     (municipalityNorm === avdLocation ||
@@ -62,22 +58,20 @@ function scoreAvdLocationInstitutionMatch(vilbliSchoolName, institutionName, ins
     institutionNorm.includes(primaryToken) ||
     avdTokens.every((token) => institutionNorm.includes(token));
 
-  if (!municipalityMatches && !institutionMatches) {
-    return null;
-  }
-
-  return {
-    matchType: "avd_location_match",
-    score: 0.96,
-    resolvedVia: "avd_location",
-  };
+  return municipalityMatches || institutionMatches;
 }
 
-const MULTI_AVD_ALLOWED_MATCH_TYPES = new Set(["exact_normalized", "core_name_match"]);
+const MULTI_AVD_ALLOWED_MATCH_TYPES = new Set([
+  "exact_normalized",
+  "core_name_match",
+  // Phase 2 may mark same-identity campus ties as avd_location_match (CASE 2).
+  "avd_location_match",
+]);
 
 /**
  * CASE 2 (1:N): Vilbli school identity maps to multiple NSR avd rows at the same tier.
  * Requires core identity match — never expands weak fuzzy ties across different schools.
+ * Includes avd_location_match ties when every candidate shares the Vilbli identity core.
  */
 export function isMultiAvdIdentityTie({ vilbliSchoolName, tiedCandidates }) {
   if (tiedCandidates.length < 2) {
@@ -104,6 +98,11 @@ export function isMultiAvdIdentityTie({ vilbliSchoolName, tiedCandidates }) {
   return institutionIds.size === tiedCandidates.length;
 }
 
+/**
+ * Phase 1: identity-only match (exact / core / conservative fuzzy).
+ * NO avd_location scoring here — campus disambiguation happens in Phase 2 within a
+ * brand cohort, so a bare location token can never inflate an unrelated brand.
+ */
 export function classifyInstitutionMatch(vilbliName, institutionName) {
   const vilbliNorm = normalizeSchoolNameForMatch(vilbliName);
   const nsrNorm = normalizeSchoolNameForMatch(institutionName);
@@ -112,8 +111,8 @@ export function classifyInstitutionMatch(vilbliName, institutionName) {
     return { matchType: "exact_normalized", score: 1 };
   }
 
-  const vilbliCore = vilbliNorm.replace(/\bavd\b.*$/, "").trim();
-  const nsrCore = nsrNorm.replace(/\bavd\b.*$/, "").trim();
+  const vilbliCore = vilbliNorm.replace(AVD_SUFFIX_RE, "").trim();
+  const nsrCore = nsrNorm.replace(AVD_SUFFIX_RE, "").trim();
   if (vilbliCore && nsrCore && vilbliCore === nsrCore) {
     return { matchType: "core_name_match", score: 0.9 };
   }
@@ -140,26 +139,23 @@ function pickBestAliasInstitutionMatch(aliasLabels, institutionName) {
 }
 
 /**
+ * Phase 1 identity classification for a Vilbli school row.
+ *
  * CASE 3: slash-separated Vilbli labels match NSR via alias segments, not the raw combined string.
  * CASE 4: LOSA rows never match ordinary NSR institutions here.
+ *
+ * `institutionMunicipalityName` is retained in the signature for call-site compatibility;
+ * campus/location resolution is deferred to Phase 2 (`pickInstitutionMatchesForVilbliSchool`).
  */
 export function classifyInstitutionMatchForVilbliSchool(
   vilbliSchoolName,
   institutionName,
   institutionMunicipalityName
 ) {
+  void institutionMunicipalityName;
   const semantics = classifyIdentitySemantics(vilbliSchoolName);
   if (semantics.isLosa) {
     return { matchType: "none", score: 0 };
-  }
-
-  const avdLocationMatch = scoreAvdLocationInstitutionMatch(
-    vilbliSchoolName,
-    institutionName,
-    institutionMunicipalityName
-  );
-  if (avdLocationMatch) {
-    return avdLocationMatch;
   }
 
   if (semantics.hasSlashAliases && semantics.aliasLabels.length > 0) {
@@ -241,6 +237,69 @@ export function resolveSlashAliasNsrTie({ vilbliSchoolName, tiedCandidates }) {
 }
 
 /**
+ * Phase 2: campus disambiguation via `avd_location`, applied ONLY inside the brand
+ * cohort (tied candidates sharing the Vilbli identity core). This is what lets
+ * Førde `avd. Høyanger` land on the Høyanger campus without a location token ever
+ * selecting an unrelated brand.
+ *
+ * @returns {null | { matches: Array<object>, unmatched: false, ambiguous: false }}
+ */
+function resolveAvdLocationCampusTie({ vilbliSchoolName, tiedCandidates }) {
+  const avdLocation = extractAvdLocationLabel(vilbliSchoolName);
+  if (!avdLocation) {
+    return null;
+  }
+
+  const vilbliCore = extractIdentityCore(vilbliSchoolName);
+  if (!vilbliCore) {
+    return null;
+  }
+
+  const cohort = tiedCandidates.filter(
+    (candidate) => extractIdentityCore(candidate.institution.name) === vilbliCore
+  );
+  if (cohort.length === 0) {
+    return null;
+  }
+
+  const campusMatches = cohort
+    .filter((candidate) =>
+      avdLocationMatchesInstitution(
+        avdLocation,
+        candidate.institution.name,
+        candidate.institution.municipality_name
+      )
+    )
+    .map((candidate) => ({
+      ...candidate,
+      matchType: "avd_location_match",
+      resolvedVia: "avd_location",
+    }));
+
+  if (campusMatches.length === 0) {
+    return null;
+  }
+
+  if (campusMatches.length === 1) {
+    return { matches: [campusMatches[0]], unmatched: false, ambiguous: false };
+  }
+
+  // Multiple cohort campuses share the same location label (identical avd rows) → CASE 2.
+  if (isMultiAvdIdentityTie({ vilbliSchoolName, tiedCandidates: campusMatches })) {
+    return {
+      matches: campusMatches.map((candidate) => ({
+        ...candidate,
+        resolvedVia: "multi_avd_identity",
+      })),
+      unmatched: false,
+      ambiguous: false,
+    };
+  }
+
+  return null;
+}
+
+/**
  * @returns {{
  *   matches: Array<object>;
  *   unmatched: boolean;
@@ -258,11 +317,19 @@ export function pickInstitutionMatchesForVilbliSchool({ vilbliSchoolName, ranked
     return { matches: [best], unmatched: false, ambiguous: false };
   }
 
+  // CASE 3: slash-alias campus / segment disambiguation.
   const slashResolved = resolveSlashAliasNsrTie({ vilbliSchoolName, tiedCandidates: ties });
   if (slashResolved) {
     return { matches: [slashResolved], unmatched: false, ambiguous: false };
   }
 
+  // Phase 2: campus disambiguation via avd_location, constrained to the brand cohort.
+  const campusResolved = resolveAvdLocationCampusTie({ vilbliSchoolName, tiedCandidates: ties });
+  if (campusResolved) {
+    return campusResolved;
+  }
+
+  // CASE 2: same-identity multi-avd tie → link all rows, 1:1 PSA emission downstream.
   if (isMultiAvdIdentityTie({ vilbliSchoolName, tiedCandidates: ties })) {
     return {
       matches: ties.map((candidate) => ({

@@ -18169,42 +18169,33 @@ function classifyIdentitySemantics(value, context = {}) {
 function normalizeSchoolNameForMatch(value) {
   return String(value ?? "").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\bvideregaende skole\b/g, " ").replace(/\bvideregande skule\b/g, " ").replace(/\bvidaregaande skole\b/g, " ").replace(/\bvidaregaande skule\b/g, " ").replace(/\bvgs\b/g, " ").replace(/\s+as$/g, " ").replace(/\s+/g, " ").trim();
 }
+var AVD_SUFFIX_RE = /\b(?:avd|avdeling)\b.*$/;
 function extractIdentityCore(name) {
-  return normalizeSchoolNameForMatch(name).replace(/\bavd\b.*$/, "").trim();
+  return normalizeSchoolNameForMatch(name).replace(AVD_SUFFIX_RE, "").trim();
 }
-var AVD_LOCATION_BLOCKED_PRIMARY_TOKENS = /* @__PURE__ */ new Set(["nord"]);
 function extractAvdLocationLabel(vilbliSchoolName) {
   const normalized = normalizeSchoolNameForMatch(vilbliSchoolName);
   const match = normalized.match(/\b(?:avd|avdeling)\.?\s+(.+)$/);
   return match?.[1]?.trim() || null;
 }
-function scoreAvdLocationInstitutionMatch(vilbliSchoolName, institutionName, institutionMunicipalityName) {
-  const avdLocation = extractAvdLocationLabel(vilbliSchoolName);
-  if (!avdLocation) {
-    return null;
-  }
+function avdLocationMatchesInstitution(avdLocation, institutionName, institutionMunicipalityName) {
   const municipalityNorm = normalizeSchoolNameForMatch(institutionMunicipalityName ?? "");
   const institutionNorm = normalizeSchoolNameForMatch(institutionName);
   const avdTokens = avdLocation.split(" ").filter((token) => token.length >= 4);
   if (avdTokens.length === 0) {
-    return null;
+    return false;
   }
   const primaryToken = avdTokens[0];
-  if (AVD_LOCATION_BLOCKED_PRIMARY_TOKENS.has(primaryToken)) {
-    return null;
-  }
   const municipalityMatches = municipalityNorm.length > 0 && (municipalityNorm === avdLocation || municipalityNorm.includes(primaryToken) || avdLocation.includes(municipalityNorm));
   const institutionMatches = institutionNorm.includes(primaryToken) || avdTokens.every((token) => institutionNorm.includes(token));
-  if (!municipalityMatches && !institutionMatches) {
-    return null;
-  }
-  return {
-    matchType: "avd_location_match",
-    score: 0.96,
-    resolvedVia: "avd_location"
-  };
+  return municipalityMatches || institutionMatches;
 }
-var MULTI_AVD_ALLOWED_MATCH_TYPES = /* @__PURE__ */ new Set(["exact_normalized", "core_name_match"]);
+var MULTI_AVD_ALLOWED_MATCH_TYPES = /* @__PURE__ */ new Set([
+  "exact_normalized",
+  "core_name_match",
+  // Phase 2 may mark same-identity campus ties as avd_location_match (CASE 2).
+  "avd_location_match"
+]);
 function isMultiAvdIdentityTie({ vilbliSchoolName, tiedCandidates }) {
   if (tiedCandidates.length < 2) {
     return false;
@@ -18231,8 +18222,8 @@ function classifyInstitutionMatch(vilbliName, institutionName) {
   if (vilbliNorm && nsrNorm && vilbliNorm === nsrNorm) {
     return { matchType: "exact_normalized", score: 1 };
   }
-  const vilbliCore = vilbliNorm.replace(/\bavd\b.*$/, "").trim();
-  const nsrCore = nsrNorm.replace(/\bavd\b.*$/, "").trim();
+  const vilbliCore = vilbliNorm.replace(AVD_SUFFIX_RE, "").trim();
+  const nsrCore = nsrNorm.replace(AVD_SUFFIX_RE, "").trim();
   if (vilbliCore && nsrCore && vilbliCore === nsrCore) {
     return { matchType: "core_name_match", score: 0.9 };
   }
@@ -18255,17 +18246,10 @@ function pickBestAliasInstitutionMatch(aliasLabels, institutionName) {
   return best;
 }
 function classifyInstitutionMatchForVilbliSchool(vilbliSchoolName, institutionName, institutionMunicipalityName) {
+  void institutionMunicipalityName;
   const semantics = classifyIdentitySemantics(vilbliSchoolName);
   if (semantics.isLosa) {
     return { matchType: "none", score: 0 };
-  }
-  const avdLocationMatch = scoreAvdLocationInstitutionMatch(
-    vilbliSchoolName,
-    institutionName,
-    institutionMunicipalityName
-  );
-  if (avdLocationMatch) {
-    return avdLocationMatch;
   }
   if (semantics.hasSlashAliases && semantics.aliasLabels.length > 0) {
     const best = pickBestAliasInstitutionMatch(semantics.aliasLabels, institutionName);
@@ -18327,6 +18311,50 @@ function resolveSlashAliasNsrTie({ vilbliSchoolName, tiedCandidates }) {
   }
   return null;
 }
+function resolveAvdLocationCampusTie({ vilbliSchoolName, tiedCandidates }) {
+  const avdLocation = extractAvdLocationLabel(vilbliSchoolName);
+  if (!avdLocation) {
+    return null;
+  }
+  const vilbliCore = extractIdentityCore(vilbliSchoolName);
+  if (!vilbliCore) {
+    return null;
+  }
+  const cohort = tiedCandidates.filter(
+    (candidate) => extractIdentityCore(candidate.institution.name) === vilbliCore
+  );
+  if (cohort.length === 0) {
+    return null;
+  }
+  const campusMatches = cohort.filter(
+    (candidate) => avdLocationMatchesInstitution(
+      avdLocation,
+      candidate.institution.name,
+      candidate.institution.municipality_name
+    )
+  ).map((candidate) => ({
+    ...candidate,
+    matchType: "avd_location_match",
+    resolvedVia: "avd_location"
+  }));
+  if (campusMatches.length === 0) {
+    return null;
+  }
+  if (campusMatches.length === 1) {
+    return { matches: [campusMatches[0]], unmatched: false, ambiguous: false };
+  }
+  if (isMultiAvdIdentityTie({ vilbliSchoolName, tiedCandidates: campusMatches })) {
+    return {
+      matches: campusMatches.map((candidate) => ({
+        ...candidate,
+        resolvedVia: "multi_avd_identity"
+      })),
+      unmatched: false,
+      ambiguous: false
+    };
+  }
+  return null;
+}
 function pickInstitutionMatchesForVilbliSchool({ vilbliSchoolName, ranked }) {
   if (ranked.length === 0) {
     return { matches: [], unmatched: true, ambiguous: false };
@@ -18339,6 +18367,10 @@ function pickInstitutionMatchesForVilbliSchool({ vilbliSchoolName, ranked }) {
   const slashResolved = resolveSlashAliasNsrTie({ vilbliSchoolName, tiedCandidates: ties });
   if (slashResolved) {
     return { matches: [slashResolved], unmatched: false, ambiguous: false };
+  }
+  const campusResolved = resolveAvdLocationCampusTie({ vilbliSchoolName, tiedCandidates: ties });
+  if (campusResolved) {
+    return campusResolved;
   }
   if (isMultiAvdIdentityTie({ vilbliSchoolName, tiedCandidates: ties })) {
     return {

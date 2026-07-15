@@ -57,6 +57,40 @@ git checkout 14640dc -- scripts/lib/vilbli-nsr-institution-match.mjs
 # Re-run classify matrix for 34/42/56 if verifying restore
 ```
 
-## Rejected approach (do not re-apply)
+## Superseded: nord blocklist removed for brand-cohort architecture (2026-07-15)
 
-**Identity before `avd_location`** — breaks campus pick when Vilbli `avd.` vs NSR `Avdeling` (Førde → Høyanger regression proved in chat 2026-07-15).
+The `AVD_LOCATION_BLOCKED_PRIMARY_TOKENS = { nord }` stop-word hack has been
+**removed** in favor of a two-phase, brand-cohort matcher (Variant 1) in
+`scripts/lib/vilbli-nsr-institution-match.mjs`:
+
+- **Fix — identity core symmetry:** `extractIdentityCore` and
+  `classifyInstitutionMatch` now strip **both** `avd` and `avdeling`
+  (`/\b(?:avd|avdeling)\b.*$/`), so Vilbli `avd. Høyanger` and NSR
+  `Avdeling Høyanger` share the same brand core (`forde`).
+- **Phase 1 (identity only):** `classifyInstitutionMatchForVilbliSchool` no longer
+  scores `avd_location`. Ranking is exact / core / conservative-fuzzy only, so a bare
+  location token (e.g. `nord`) can no longer inflate an unrelated brand
+  (Karriere Innlandet, Nord-Fron, Nord-Østerdal drop out as `none`).
+- **Phase 2 (campus within cohort):** `avd_location` is applied **only** to tied
+  candidates sharing the Vilbli identity core (`resolveAvdLocationCampusTie`). It can
+  never select a brand outside the cohort — so no per-token blocklist is needed.
+- **CASE 2 tie:** `isMultiAvdIdentityTie` now also accepts `avd_location_match` ties
+  when every candidate shares the same `vilbliCore` (identical avd rows →
+  `multi_avd_identity`, 1:1 PSA emission).
+
+Regression coverage in `scripts/smoke-vilbli-nsr-institution-match.mjs`:
+
+- **A** Lillehammer `Avdeling Nord` → Lillehammer avd Nord (no Karriere / Nord-Fron ties).
+- **B** Setesdal `Avdeling Hornnes` → 3 identical NSR rows → `multi_avd_identity` → single PSA.
+- **C** Førde `avd. Høyanger` → Høyanger campus, not main Førde.
+- Invariant: `avd_location` never selects outside the brand cohort.
+
+The previously "rejected" identity-before-`avd_location` ordering no longer breaks the
+Førde → Høyanger campus pick, because Phase 2 restores the campus signal *inside* the
+brand cohort (both `avd`/`avdeling` now normalize to the same core).
+
+## Rejected approach (historical; do not re-apply the nord stop-word)
+
+**Identity before `avd_location` (naïve global reorder)** — broke campus pick when Vilbli
+`avd.` vs NSR `Avdeling` (Førde → Høyanger regression, chat 2026-07-15). Superseded by the
+brand-cohort Phase 2 above, which resolves the campus without a global reorder or blocklist.
