@@ -16996,7 +16996,13 @@ var ANLEGSTEKNIKK_PATH_DEFINITION = {
     buildVilbliUrl(countySlug) {
       return `https://www.vilbli.no/nb/${countySlug}/strukturkart/V.BA/bygg-og-anleggsteknikk-skoler-og-laerebedrifter?kurs=V.BABAT1----_V.BAANL2----&side=p5`;
     },
-    strukturkartReferenceUrl: "https://www.vilbli.no/nb/no/strukturkart/V.BA/anleggsteknikk-fag-og-timefordeling?kurs=V.BABAT1----_V.BAANL2----&side=p2"
+    // Current-year offering source (owner P4-CURRENT-YEAR-OFFERING §4a). Anleggsteknikk VG2 is a
+    // «landslinje / landstilbud»: its `vb_map_data_Vg2` pins the national offering schools on every
+    // county's course-specific p5 page. We read it from Oslo — a PROBE county that offers no local
+    // anleggsteknikk — so the VG2 map is exactly the national offering (no local-structure noise).
+    // The national p2 «fag- og timefordeling» page carries no `vb_map_data`, which is why the gate
+    // previously never engaged. Live-validate the count (expect 6) before enabling enforcement.
+    strukturkartReferenceUrl: "https://www.vilbli.no/nb/oslo/strukturkart/V.BA/anleggsteknikk-skoler-og-laerebedrifter?kurs=V.BABAT1----_V.BAANL2----&side=p5"
   },
   stageNodes: [
     {
@@ -18009,6 +18015,14 @@ function parseSchoolProgrammeLinksFromHtml({ html, sourceUrl, countySlug }) {
   return Array.from(
     new Map(rows.map((row) => [`${row.stage ?? "UNK"}::${row.titleDisplay}`, row])).values()
   );
+}
+function extractVilbliMapPinsByStage(html) {
+  const rawMapStageArrays = parseStageArraysFromHtml(String(html ?? ""));
+  const byStage = {};
+  for (const [stage, items] of Object.entries(rawMapStageArrays)) {
+    byStage[stage] = (items ?? []).map(mapVilbliSchool2).filter((school) => school.schoolName && school.schoolCode);
+  }
+  return byStage;
 }
 function extractVilbliStagesFromHtml({ html, countySlug, countyLabel }) {
   const rawMapStageArrays = parseStageArraysFromHtml(html);
@@ -19280,6 +19294,82 @@ async function syncInstitutionNameI18nFromVilbliMatches({
   return { updated };
 }
 
+// scripts/lib/vilbli-current-year-offering.mjs
+var MIN_OFFERING_HTML_BYTES = 1e4;
+var MIN_LANDSLINJE_FYLKE = 2;
+function normalizeOfferingName(value) {
+  return String(value ?? "").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/ø/g, "o").replace(/æ/g, "ae").replace(/å/g, "a").replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim();
+}
+function normalizeFylke(value) {
+  return String(value ?? "").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/ø/g, "o").replace(/æ/g, "ae").replace(/å/g, "a").replace(/[^\p{L}\p{N}]/gu, "").trim();
+}
+function buildCurrentYearOfferingSet({ offeringHtml, countySlug, countyLabel } = {}) {
+  void countySlug;
+  void countyLabel;
+  const html = String(offeringHtml ?? "");
+  if (html.length < MIN_OFFERING_HTML_BYTES) {
+    return null;
+  }
+  let byStagePins;
+  try {
+    byStagePins = extractVilbliMapPinsByStage(html);
+  } catch {
+    return null;
+  }
+  const byStage = {};
+  const stageCounts = {};
+  for (const [stage, schools] of Object.entries(byStagePins ?? {})) {
+    const fylker = /* @__PURE__ */ new Set();
+    for (const school of schools ?? []) {
+      const fylke = normalizeFylke(school?.fylkeName);
+      if (fylke) fylker.add(fylke);
+    }
+    if (fylker.size < MIN_LANDSLINJE_FYLKE) {
+      continue;
+    }
+    const codes = /* @__PURE__ */ new Set();
+    const names = /* @__PURE__ */ new Set();
+    for (const school of schools ?? []) {
+      const code = String(school?.schoolCode ?? "").trim();
+      if (code) codes.add(code);
+      const name = normalizeOfferingName(school?.schoolName);
+      if (name) names.add(name);
+    }
+    if (codes.size === 0 && names.size === 0) {
+      continue;
+    }
+    byStage[stage] = { codes, names, fylkeCount: fylker.size };
+    stageCounts[stage] = codes.size || names.size;
+  }
+  const anyOffering = Object.values(stageCounts).some((count) => count > 0);
+  if (!anyOffering) {
+    return null;
+  }
+  return { byStage, source: "vilbli_strukturkart_landstilbud_p5", stageCounts };
+}
+function resolveOfferingDecision({ offering, stage, school }) {
+  if (!offering) {
+    return { enforceable: false, isOffered: true, matchedVia: null };
+  }
+  const entry = offering.byStage?.[stage];
+  if (!entry || entry.codes.size === 0 && entry.names.size === 0) {
+    return { enforceable: false, isOffered: true, matchedVia: null };
+  }
+  const code = String(school?.schoolCode ?? "").trim();
+  if (code && entry.codes.has(code)) {
+    return { enforceable: true, isOffered: true, matchedVia: "code" };
+  }
+  const name = normalizeOfferingName(school?.schoolName);
+  if (name && entry.names.has(name)) {
+    return { enforceable: true, isOffered: true, matchedVia: "name" };
+  }
+  return { enforceable: true, isOffered: false, matchedVia: null };
+}
+function isCurrentYearOfferingEnforcementEnabled(env = process.env) {
+  const raw = String(env?.CONTOUR_B_ENFORCE_CURRENT_YEAR_OFFERING ?? "1").trim();
+  return raw !== "0" && raw.toLowerCase() !== "false";
+}
+
 // scripts/run-vgs-truth-pipeline.mjs
 var COUNTY_CODE_TO_VILBLI3 = {
   "03": { slug: "oslo", label: "Oslo" },
@@ -19732,7 +19822,8 @@ async function runVgsTruthPipeline({
   isDryRun = false,
   isContourBPartial = false,
   supabase,
-  vilbliHtml = null
+  vilbliHtml = null,
+  currentYearOfferingHtml = null
 }) {
   if (!supabase) {
     throw new Error("runVgsTruthPipeline requires a supabase client");
@@ -20275,6 +20366,26 @@ async function runVgsTruthPipeline({
   const snapshotLabel = `vilbli-${countyMeta.slug}-${professionSlug}-pipeline-${(/* @__PURE__ */ new Date()).toISOString().slice(0, 10)}`;
   const writeCounters = { inserted: 0, updated: 0 };
   const writeRows = [];
+  const currentYearOffering = buildCurrentYearOfferingSet({
+    offeringHtml: currentYearOfferingHtml,
+    countySlug: countyMeta.slug,
+    countyLabel: countyMeta.label
+  });
+  const enforceCurrentYearOffering = isCurrentYearOfferingEnforcementEnabled();
+  const offeringDiagnostics = {
+    provided: currentYearOfferingHtml != null,
+    parsed: Boolean(currentYearOffering),
+    enforce: enforceCurrentYearOffering,
+    source: currentYearOffering?.source ?? null,
+    offeringStageCounts: currentYearOffering?.stageCounts ?? {},
+    byStage: {}
+  };
+  function noteOfferingDecision(stage, decision) {
+    const bucket = offeringDiagnostics.byStage[stage] ?? (offeringDiagnostics.byStage[stage] = { offered: 0, structureOnly: 0, notEnforceable: 0 });
+    if (!decision.enforceable) bucket.notEnforceable += 1;
+    else if (decision.isOffered) bucket.offered += 1;
+    else bucket.structureOnly += 1;
+  }
   for (const [stage, schools] of Object.entries(extractedStages)) {
     if (!requiredProgrammesByStage.has(stage)) continue;
     const programme = requiredProgrammesByStage.get(stage);
@@ -20283,6 +20394,11 @@ async function runVgsTruthPipeline({
       if (!matched) {
         if (isContourBPartial) continue;
         throw new Error(`ABORT: Missing matched NSR institution for schoolCode=${school.schoolCode}`);
+      }
+      const offeringDecision = resolveOfferingDecision({ offering: currentYearOffering, stage, school });
+      noteOfferingDecision(stage, offeringDecision);
+      if (enforceCurrentYearOffering && offeringDecision.enforceable && !offeringDecision.isOffered) {
+        continue;
       }
       for (const institutionMatch of pickInstitutionsForPsaEmission(matched.institutions)) {
         const payload = {
@@ -20338,6 +20454,11 @@ async function runVgsTruthPipeline({
         if (!matched) {
           if (isContourBPartial) continue;
           throw new Error(`ABORT: Missing matched NSR institution for schoolCode=${school.schoolCode}`);
+        }
+        const offeringDecision = resolveOfferingDecision({ offering: currentYearOffering, stage, school });
+        noteOfferingDecision(stage, offeringDecision);
+        if (enforceCurrentYearOffering && offeringDecision.enforceable && !offeringDecision.isOffered) {
+          continue;
         }
         for (const institutionMatch of pickInstitutionsForPsaEmission(matched.institutions)) {
           const payload = {
@@ -20436,6 +20557,21 @@ async function runVgsTruthPipeline({
     deactivateCandidatesSummary.checkedActiveRows = (activeRowsForScope ?? []).length;
   }
   wouldSkipCount = skippedSiblingProgrammeLinks.length + skippedNoSchoolAvailability.length + excludedProgrammeLinks.length;
+  if (isContourBPartial) {
+    if (!offeringDiagnostics.provided) {
+      console.error(
+        `[current-year-offering] county=${countyCode} profession=${professionSlug} NO_OFFERING_HTML \u2014 is_active written from structure map (superset). Current-year tilbud NOT enforced; re-run reconcile after relay or thread the landslinje p5 reference HTML. See phase-4-current-year-programme-offering-owner-decision-record.md`
+      );
+    } else if (!offeringDiagnostics.parsed) {
+      console.error(
+        `[current-year-offering] county=${countyCode} profession=${professionSlug} OFFERING_PARSE_EMPTY \u2014 reference HTML provided but no landslinje offering set parsed (fail-open). is_active NOT gated. Verify strukturkart p5 vb_map_data landslinje markup before enabling enforcement.`
+      );
+    } else {
+      console.error(
+        `[current-year-offering] county=${countyCode} profession=${professionSlug} enforce=${offeringDiagnostics.enforce} offeringStageCounts=${JSON.stringify(offeringDiagnostics.offeringStageCounts)} decisions=${JSON.stringify(offeringDiagnostics.byStage)}`
+      );
+    }
+  }
   const normalSummary = {
     professionSlug,
     countyCode,
@@ -20475,7 +20611,8 @@ async function runVgsTruthPipeline({
       checked: (activeRowsForScope ?? []).length,
       deactivated: deactivatedCount,
       kept: keptCount
-    }
+    },
+    currentYearOffering: offeringDiagnostics
   };
   if (!isDryRun) {
     console.log(JSON.stringify(normalSummary, null, 2));
@@ -20505,6 +20642,7 @@ async function runVgsTruthPipeline({
     identitySemanticsSummary,
     identitySemanticsBySchoolCode,
     identitySemanticsWarning,
+    currentYearOffering: offeringDiagnostics,
     safety: {
       dbWritesExecuted: false,
       informationalOnly: dryRunLimitations.length > 0 || expandedProgrammeMaterializationSummary.materializationSimulationLimitations.length > 0
@@ -20572,7 +20710,8 @@ async function runContourBOperationalIngest({
   countyCode,
   dryRun = false,
   supabase,
-  vilbliHtml = null
+  vilbliHtml = null,
+  currentYearOfferingHtml = null
 }) {
   if (!supabase) {
     throw new Error("runContourBOperationalIngest requires a supabase client");
@@ -20607,7 +20746,8 @@ async function runContourBOperationalIngest({
     isDryRun: dryRun,
     isContourBPartial: true,
     supabase,
-    vilbliHtml
+    vilbliHtml,
+    currentYearOfferingHtml
   });
 }
 async function runCli4() {
@@ -20730,7 +20870,8 @@ async function runContourBCountyRelay({
   professionSlug,
   countyCode,
   dryRun = false,
-  vilbliHtml
+  vilbliHtml,
+  currentYearOfferingHtml = null
 }) {
   const supabase = createSupabaseAdmin();
   const profession = String(professionSlug ?? "").trim();
@@ -20763,7 +20904,8 @@ async function runContourBCountyRelay({
     countyCode: county,
     dryRun: Boolean(dryRun),
     supabase,
-    vilbliHtml
+    vilbliHtml,
+    currentYearOfferingHtml
   });
   return {
     ok: true,

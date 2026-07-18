@@ -30,6 +30,7 @@ export async function runContourBOperationalIngest({
   dryRun = false,
   supabase,
   vilbliHtml = null,
+  currentYearOfferingHtml = null,
 }) {
   if (!supabase) {
     throw new Error("runContourBOperationalIngest requires a supabase client");
@@ -72,6 +73,7 @@ export async function runContourBOperationalIngest({
     isContourBPartial: true,
     supabase,
     vilbliHtml,
+    currentYearOfferingHtml,
   });
 }
 

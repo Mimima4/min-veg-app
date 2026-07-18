@@ -48,6 +48,7 @@ import {
 import { applyVerifiedLarebedriftToApprenticeshipSteps } from "./apply-verified-larebedrift-to-apprenticeship-steps";
 import { resolveVbaSharedVg2ProgrammeOptions } from "./resolve-vba-shared-vg2-programme-options";
 import { assessHomeCountyPrimaryRouteEligibility } from "@/lib/vgs/home-county-primary-route-completeness";
+import { enrichAnleggsteknikkNorthZonePrimaryTruthRows } from "./enrich-anleggsteknikk-north-zone-primary-truth";
 
 type Params = {
   childId: string;
@@ -399,8 +400,16 @@ export async function createInitialStudyRoute(
 
     if (useTruth) {
       contourBTruthPathUsed = true;
+      const enrichedPrimaryTruthRows = await enrichAnleggsteknikkNorthZonePrimaryTruthRows({
+        professionSlug: professionRow.slug,
+        preferredMunicipalityCodes,
+        relocationWillingness,
+        homeTruthRows: truth.rows,
+        locale,
+      });
+      const primaryTruthRows = enrichedPrimaryTruthRows;
       const primaryEligibility = assessHomeCountyPrimaryRouteEligibility({
-        truthRows: truth.rows,
+        truthRows: primaryTruthRows,
         professionSlug: professionRow.slug,
       });
 
@@ -411,12 +420,12 @@ export async function createInitialStudyRoute(
         initialSteps = [];
       } else {
       const transportSortContext = await buildKommuneTransportSortContext({
-        rows: truth.rows,
+        rows: primaryTruthRows,
         homeMunicipalityCodes: preferredMunicipalityCodes,
       });
       const selectedTruthCandidate = await selectTruthCandidateForRoute({
         supabase,
-        rows: truth.rows,
+        rows: primaryTruthRows,
         preferredMunicipalityCodes,
         relocationWillingness: childPlanning.relocation_willingness,
         transportSortContext,
@@ -432,7 +441,7 @@ export async function createInitialStudyRoute(
       const stageProgrammeIdentity = deriveStageProgrammeIdentity(
         ((linkedPrograms ?? []) as Array<{ slug: string; title: string | null }>)
       );
-      const pathVariants = await buildPathVariants(truth.rows, professionRow.slug);
+      const pathVariants = await buildPathVariants(primaryTruthRows, professionRow.slug);
       const enrichedPathVariants = pathVariants.variants.map((variant) => ({
         ...variant,
         nodes: variant.nodes.map((node) => {
@@ -467,11 +476,11 @@ export async function createInitialStudyRoute(
       const vg2ProgrammeOptions = await resolveVbaSharedVg2ProgrammeOptions({
         supabase,
         professionSlug: professionRow.slug,
-        truthRows: truth.rows,
+        truthRows: primaryTruthRows,
         preferredMunicipalityCodes,
       });
       initialSteps = buildStepsFromAvailabilityTruth({
-        rows: truth.rows,
+        rows: primaryTruthRows,
         selectedCandidate: selectedTruthCandidate,
         vg2ProgrammeOptions,
         transportSortContext,
@@ -489,7 +498,7 @@ export async function createInitialStudyRoute(
 
       outcomeFilterAlternativesContext = {
         pathVariantNavContext,
-        truthRows: truth.rows,
+        truthRows: primaryTruthRows,
         selectedCandidate: selectedTruthCandidate,
         transportSortContext,
         pathVariants,
@@ -819,6 +828,7 @@ export async function createInitialStudyRoute(
       primarySteps: initialSteps,
       professionSlug: professionRow.slug,
       preferredMunicipalityCodes,
+      relocationWillingness,
       snapshotContext,
       routeInputSignature,
       createdByType,

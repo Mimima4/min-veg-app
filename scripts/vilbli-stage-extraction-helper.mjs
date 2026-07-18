@@ -250,6 +250,27 @@ function parseSchoolProgrammeLinksFromHtml({ html, sourceUrl, countySlug }) {
   );
 }
 
+/**
+ * National (NO county filter) extraction of `vb_map_data_Vg*` pins, keyed by stage (VG1/VG2/…).
+ *
+ * Unlike {@link extractVilbliStagesFromHtml} this does not drop pins by county — every pin on the
+ * page is returned. Used by the current-year offering gate, where a «landslinje / landstilbud»
+ * course (e.g. anleggsteknikk VG2) pins the *national* set of offering schools on every county
+ * page regardless of the page's own county.
+ *
+ * @returns {Record<string, Array<{schoolName:string, schoolCode:string, schoolType:string, fylkeName:string, schoolPagePath:string, source:string}>>}
+ */
+export function extractVilbliMapPinsByStage(html) {
+  const rawMapStageArrays = parseStageArraysFromHtml(String(html ?? ""));
+  const byStage = {};
+  for (const [stage, items] of Object.entries(rawMapStageArrays)) {
+    byStage[stage] = (items ?? [])
+      .map(mapVilbliSchool)
+      .filter((school) => school.schoolName && school.schoolCode);
+  }
+  return byStage;
+}
+
 export function extractVilbliStagesFromHtml({ html, countySlug, countyLabel }) {
   const rawMapStageArrays = parseStageArraysFromHtml(html);
   const htmlStageLinks = parseStageAdrLinksFromHtml(html);

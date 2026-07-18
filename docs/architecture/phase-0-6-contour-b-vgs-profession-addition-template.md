@@ -133,6 +133,21 @@ Source: `src/lib/i18n/route-steps-empty-copy.ts`. Signal: `PRIMARY_ROUTE_INCOMPL
 
 **Do not** use P-7 pattern for `15,32,33,39,40` unless owner signs a new charter.
 
+### 4.5 P-8 — sparse national VG2 + relocation (anleggsteknikk precedent)
+
+**Only when owner charters it** — gated by PSA-derived sparse eligibility; **not** for dense VGS professions.
+
+| Element | Planned implementation |
+|---------|------------------------|
+| Charter | `phase-0-6-contour-b-anleggsteknikk-p8-sparse-vg2-relocation-owner-record.md` |
+| Geography contract | `phase-4-relocation-geography-contract-owner-decision-record.md` |
+| Contour | C-VGS-YRKESFAG only |
+| North zone | Primary picker `{55,56}` + `{18}`; national VG2 → alternative |
+| Relocation | First VGS school activation; bedrift already scoped |
+| Implementation gate | Opus 4.8+ review |
+
+**Do not** apply P-8 pattern to carpenter/plumber/electrician/mechanic without new sparse gate proof.
+
 ### 4.4 Verified lærebedrift (C-VGS bedrift layer)
 
 | Step | Artifact |

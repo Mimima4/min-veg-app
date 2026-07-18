@@ -21,11 +21,16 @@ export async function POST(request: NextRequest) {
       countyCode?: string;
       dryRun?: boolean;
       vilbliHtml?: string;
+      currentYearOfferingHtml?: string;
     };
 
     const professionSlug = String(body.professionSlug ?? "").trim();
     const countyCode = String(body.countyCode ?? "").trim();
     const vilbliHtml = String(body.vilbliHtml ?? "");
+    const currentYearOfferingHtml =
+      typeof body.currentYearOfferingHtml === "string" && body.currentYearOfferingHtml.length > 0
+        ? body.currentYearOfferingHtml
+        : null;
 
     if (!professionSlug || !countyCode || vilbliHtml.length < 10_000) {
       return NextResponse.json(
@@ -43,6 +48,7 @@ export async function POST(request: NextRequest) {
       countyCode,
       dryRun: Boolean(body.dryRun),
       vilbliHtml,
+      currentYearOfferingHtml,
     });
 
     if (

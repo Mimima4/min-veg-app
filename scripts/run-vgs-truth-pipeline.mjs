@@ -16,6 +16,11 @@ import {
   pickInstitutionsForPsaEmission,
 } from "./lib/vilbli-nsr-institution-match.mjs";
 import { syncInstitutionNameI18nFromVilbliMatches } from "./lib/institution-name-i18n.mjs";
+import {
+  buildCurrentYearOfferingSet,
+  isCurrentYearOfferingEnforcementEnabled,
+  resolveOfferingDecision,
+} from "./lib/vilbli-current-year-offering.mjs";
 
 const COUNTY_CODE_TO_VILBLI = {
   "03": { slug: "oslo", label: "Oslo" },
@@ -626,6 +631,7 @@ export async function runVgsTruthPipeline({
   isContourBPartial = false,
   supabase,
   vilbliHtml = null,
+  currentYearOfferingHtml = null,
 }) {
   if (!supabase) {
     throw new Error("runVgsTruthPipeline requires a supabase client");
@@ -1289,6 +1295,33 @@ export async function runVgsTruthPipeline({
     .slice(0, 10)}`;
   const writeCounters = { inserted: 0, updated: 0 };
   const writeRows = [];
+
+  // Current-year offering gate (I-1…I-3). Fail-open: only acts when the p2 «Skoler som tilbyr
+  // dette» extract succeeded AND enforcement is explicitly enabled. Otherwise it is diagnostic
+  // only and PSA write behavior is unchanged.
+  const currentYearOffering = buildCurrentYearOfferingSet({
+    offeringHtml: currentYearOfferingHtml,
+    countySlug: countyMeta.slug,
+    countyLabel: countyMeta.label,
+  });
+  const enforceCurrentYearOffering = isCurrentYearOfferingEnforcementEnabled();
+  const offeringDiagnostics = {
+    provided: currentYearOfferingHtml != null,
+    parsed: Boolean(currentYearOffering),
+    enforce: enforceCurrentYearOffering,
+    source: currentYearOffering?.source ?? null,
+    offeringStageCounts: currentYearOffering?.stageCounts ?? {},
+    byStage: {},
+  };
+  function noteOfferingDecision(stage, decision) {
+    const bucket =
+      offeringDiagnostics.byStage[stage] ??
+      (offeringDiagnostics.byStage[stage] = { offered: 0, structureOnly: 0, notEnforceable: 0 });
+    if (!decision.enforceable) bucket.notEnforceable += 1;
+    else if (decision.isOffered) bucket.offered += 1;
+    else bucket.structureOnly += 1;
+  }
+
   for (const [stage, schools] of Object.entries(extractedStages)) {
     if (!requiredProgrammesByStage.has(stage)) continue;
     const programme = requiredProgrammesByStage.get(stage);
@@ -1297,6 +1330,13 @@ export async function runVgsTruthPipeline({
       if (!matched) {
         if (isContourBPartial) continue;
         throw new Error(`ABORT: Missing matched NSR institution for schoolCode=${school.schoolCode}`);
+      }
+      const offeringDecision = resolveOfferingDecision({ offering: currentYearOffering, stage, school });
+      noteOfferingDecision(stage, offeringDecision);
+      if (enforceCurrentYearOffering && offeringDecision.enforceable && !offeringDecision.isOffered) {
+        // Structure-only school (not in current-year «Skoler som tilbyr dette»). Skip the write;
+        // the stale-deactivation pass below flips any previously-active row to is_active=false.
+        continue;
       }
       for (const institutionMatch of pickInstitutionsForPsaEmission(matched.institutions)) {
       const payload = {
@@ -1354,6 +1394,11 @@ export async function runVgsTruthPipeline({
         if (!matched) {
           if (isContourBPartial) continue;
           throw new Error(`ABORT: Missing matched NSR institution for schoolCode=${school.schoolCode}`);
+        }
+        const offeringDecision = resolveOfferingDecision({ offering: currentYearOffering, stage, school });
+        noteOfferingDecision(stage, offeringDecision);
+        if (enforceCurrentYearOffering && offeringDecision.enforceable && !offeringDecision.isOffered) {
+          continue;
         }
         for (const institutionMatch of pickInstitutionsForPsaEmission(matched.institutions)) {
         const payload = {
@@ -1485,6 +1530,23 @@ export async function runVgsTruthPipeline({
     skippedNoSchoolAvailability.length +
     excludedProgrammeLinks.length;
 
+  // 5d) Current-year offering diagnostic (loud — owner requirement #7).
+  if (isContourBPartial) {
+    if (!offeringDiagnostics.provided) {
+      console.error(
+        `[current-year-offering] county=${countyCode} profession=${professionSlug} NO_OFFERING_HTML — is_active written from structure map (superset). Current-year tilbud NOT enforced; re-run reconcile after relay or thread the landslinje p5 reference HTML. See phase-4-current-year-programme-offering-owner-decision-record.md`
+      );
+    } else if (!offeringDiagnostics.parsed) {
+      console.error(
+        `[current-year-offering] county=${countyCode} profession=${professionSlug} OFFERING_PARSE_EMPTY — reference HTML provided but no landslinje offering set parsed (fail-open). is_active NOT gated. Verify strukturkart p5 vb_map_data landslinje markup before enabling enforcement.`
+      );
+    } else {
+      console.error(
+        `[current-year-offering] county=${countyCode} profession=${professionSlug} enforce=${offeringDiagnostics.enforce} offeringStageCounts=${JSON.stringify(offeringDiagnostics.offeringStageCounts)} decisions=${JSON.stringify(offeringDiagnostics.byStage)}`
+      );
+    }
+  }
+
   // 6) Print summary.
   const normalSummary = {
         professionSlug,
@@ -1526,6 +1588,7 @@ export async function runVgsTruthPipeline({
           deactivated: deactivatedCount,
           kept: keptCount,
         },
+        currentYearOffering: offeringDiagnostics,
       };
 
   if (!isDryRun) {
@@ -1557,6 +1620,7 @@ export async function runVgsTruthPipeline({
     identitySemanticsSummary,
     identitySemanticsBySchoolCode,
     identitySemanticsWarning,
+    currentYearOffering: offeringDiagnostics,
     safety: {
       dbWritesExecuted: false,
       informationalOnly:

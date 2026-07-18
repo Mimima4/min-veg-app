@@ -21,6 +21,7 @@ export type ContourBSchedulerBundle = {
     countyCode: string;
     dryRun?: boolean;
     vilbliHtml: string;
+    currentYearOfferingHtml?: string | null;
   }) => Promise<{
     ok: boolean;
     action: string;

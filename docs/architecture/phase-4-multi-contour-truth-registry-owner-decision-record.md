@@ -37,6 +37,9 @@ Every contour in this registry MUST implement:
 | U-7 | **UI scope ≤ pipeline scope** — product must not show institutions/programmes the contour has not ingested | P06 §12 policy |
 | U-8 | **Route steps** — institution + programme + stage (domain validity); no shorthand-only UI | `route-path-engine-production-spec.md` §9 |
 | U-9 | **Omit, don’t stub** — if contour not live, hide filter option or skip alternative; no fake schools | Owner filter record §3 |
+| U-10 | **Geography scope** — `relocation_willingness` + `contour_id` + `layer: primary \| alternative` scopes institution pickers; **phased**: inactive for dense VGS until sparse gate (P-8); bedrift layer already live | `phase-4-relocation-geography-contract-owner-decision-record.md` |
+
+**Prototype (deferred):** unified `education_contour_truth` table (§6) — document only until post–P4-MCT-2 charter; VGS PSA remains source for C-VGS.
 
 ---
 

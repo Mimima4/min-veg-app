@@ -52,6 +52,7 @@ import {
 } from "@/lib/vgs/vg2-cross-profession";
 import { resolveVbaSharedVg2ProgrammeOptions } from "./resolve-vba-shared-vg2-programme-options";
 import { assessHomeCountyPrimaryRouteEligibility } from "@/lib/vgs/home-county-primary-route-completeness";
+import { enrichAnleggsteknikkNorthZonePrimaryTruthRows } from "./enrich-anleggsteknikk-north-zone-primary-truth";
 import { switchStudyRouteForVg2Programme } from "./switch-study-route-for-vg2-programme";
 
 type Params = {
@@ -688,8 +689,16 @@ export async function triggerStudyRouteRecompute(params: Params) {
 
       if (useTruth) {
         contourBTruthPathUsed = true;
+        const enrichedPrimaryTruthRows = await enrichAnleggsteknikkNorthZonePrimaryTruthRows({
+          professionSlug: professionRow.slug,
+          preferredMunicipalityCodes,
+          relocationWillingness,
+          homeTruthRows: truth.rows,
+          locale,
+        });
+        const primaryTruthRows = enrichedPrimaryTruthRows;
         const primaryEligibility = assessHomeCountyPrimaryRouteEligibility({
-          truthRows: truth.rows,
+          truthRows: primaryTruthRows,
           professionSlug: professionRow.slug,
         });
 
@@ -699,12 +708,12 @@ export async function triggerStudyRouteRecompute(params: Params) {
           recomputedSteps = [];
         } else {
         const transportSortContext = await buildKommuneTransportSortContext({
-          rows: truth.rows,
+          rows: primaryTruthRows,
           homeMunicipalityCodes: preferredMunicipalityCodes,
         });
         const selectedTruthCandidate = await selectTruthCandidateForRoute({
           supabase,
-          rows: truth.rows,
+          rows: primaryTruthRows,
           preferredMunicipalityCodes,
           relocationWillingness,
           transportSortContext,
@@ -720,7 +729,7 @@ export async function triggerStudyRouteRecompute(params: Params) {
         const stageProgrammeIdentity = deriveStageProgrammeIdentity(
           ((linkedPrograms ?? []) as Array<{ slug: string; title: string | null }>)
         );
-        const pathVariants = await buildPathVariants(truth.rows, professionRow.slug);
+        const pathVariants = await buildPathVariants(primaryTruthRows, professionRow.slug);
         const enrichedPathVariants = pathVariants.variants.map((variant) => ({
           ...variant,
           nodes: variant.nodes.map((node) => {
@@ -759,11 +768,11 @@ export async function triggerStudyRouteRecompute(params: Params) {
         const vg2ProgrammeOptions = await resolveVbaSharedVg2ProgrammeOptions({
           supabase,
           professionSlug: professionRow.slug,
-          truthRows: truth.rows,
+          truthRows: primaryTruthRows,
           preferredMunicipalityCodes,
         });
         recomputedSteps = buildStepsFromAvailabilityTruth({
-          rows: truth.rows,
+          rows: primaryTruthRows,
           selectedCandidate: selectedTruthCandidate,
           selectedVg2ProgramSlug,
           vg2ProgrammeOptions,
@@ -782,7 +791,7 @@ export async function triggerStudyRouteRecompute(params: Params) {
 
         outcomeFilterAlternativesContext = {
           pathVariantNavContext,
-          truthRows: truth.rows,
+          truthRows: primaryTruthRows,
           selectedCandidate: selectedTruthCandidate,
           transportSortContext,
           pathVariants,
@@ -1049,6 +1058,7 @@ export async function triggerStudyRouteRecompute(params: Params) {
           primarySteps: recomputedSteps,
           professionSlug: professionRow.slug,
           preferredMunicipalityCodes,
+          relocationWillingness,
           snapshotContext,
           routeInputSignature,
           createdByType: triggeredByType,
@@ -1133,6 +1143,7 @@ export async function triggerStudyRouteRecompute(params: Params) {
         primarySteps: recomputedSteps,
         professionSlug: professionRow.slug,
         preferredMunicipalityCodes,
+        relocationWillingness,
         snapshotContext,
         routeInputSignature,
         createdByType: triggeredByType,

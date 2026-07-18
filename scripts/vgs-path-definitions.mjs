@@ -359,8 +359,14 @@ const ANLEGSTEKNIKK_PATH_DEFINITION = {
     buildVilbliUrl(countySlug) {
       return `https://www.vilbli.no/nb/${countySlug}/strukturkart/V.BA/bygg-og-anleggsteknikk-skoler-og-laerebedrifter?kurs=V.BABAT1----_V.BAANL2----&side=p5`;
     },
+    // Current-year offering source (owner P4-CURRENT-YEAR-OFFERING §4a). Anleggsteknikk VG2 is a
+    // «landslinje / landstilbud»: its `vb_map_data_Vg2` pins the national offering schools on every
+    // county's course-specific p5 page. We read it from Oslo — a PROBE county that offers no local
+    // anleggsteknikk — so the VG2 map is exactly the national offering (no local-structure noise).
+    // The national p2 «fag- og timefordeling» page carries no `vb_map_data`, which is why the gate
+    // previously never engaged. Live-validate the count (expect 6) before enabling enforcement.
     strukturkartReferenceUrl:
-      "https://www.vilbli.no/nb/no/strukturkart/V.BA/anleggsteknikk-fag-og-timefordeling?kurs=V.BABAT1----_V.BAANL2----&side=p2",
+      "https://www.vilbli.no/nb/oslo/strukturkart/V.BA/anleggsteknikk-skoler-og-laerebedrifter?kurs=V.BABAT1----_V.BAANL2----&side=p5",
   },
   stageNodes: [
     {

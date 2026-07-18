@@ -9,9 +9,15 @@ import {
   PAINTER_NORTH_CROSS_FYLKE_NABOFYLKE_VARIANT_ID,
 } from "@/lib/regional-delivery/painter-north-cross-fylke-pilot";
 import {
+  isAnleggsteknikkSparseVg2VariantEligible,
+  relocationAllowsNationalSparseAlternative,
+} from "@/lib/regional-delivery/anleggsteknikk-sparse-vg2-pilot";
+import {
   isSteigenCarpenterVekslingPathVariantEligible,
   STEIGEN_CARPENTER_VEKSLING_VARIANT_ID,
 } from "@/lib/regional-delivery/steigen-carpenter-veksling-path-variant";
+import { ANLEGGSTEKNIKK_SPARSE_VG2_ALTERNATIVE_VARIANT_ID } from "@/lib/vgs/sparse-vg2-alternative-eligibility";
+import type { RelocationWillingness } from "@/lib/planning/school-geography-scope";
 import type {
   StudyRouteAlternativeTeaser,
   StudyRouteSnapshotStep,
@@ -54,6 +60,7 @@ type SnapshotRow = {
 type CuratedRegionalEligibilityContext = {
   professionSlug: string;
   preferredMunicipalityCodes: string[];
+  relocationWillingness: RelocationWillingness;
 };
 
 function parsePainterNorthNeighborCountyCode(curatedRegionalVariantId: string): string | null {
@@ -79,12 +86,17 @@ async function loadCuratedRegionalEligibilityContext(
     return null;
   }
 
-  const [preferredMunicipalityCodes, professionResult] = await Promise.all([
+  const [preferredMunicipalityCodes, professionResult, childResult] = await Promise.all([
     getChildPreferredMunicipalityCodes(route.child_id, supabase),
     supabase
       .from("professions")
       .select("slug")
       .eq("id", route.target_profession_id)
+      .maybeSingle(),
+    supabase
+      .from("child_profiles")
+      .select("relocation_willingness")
+      .eq("id", route.child_id)
       .maybeSingle(),
   ]);
 
@@ -93,7 +105,10 @@ async function loadCuratedRegionalEligibilityContext(
     return null;
   }
 
-  return { professionSlug, preferredMunicipalityCodes };
+  const relocationWillingness =
+    (childResult.data?.relocation_willingness as RelocationWillingness | undefined) ?? null;
+
+  return { professionSlug, preferredMunicipalityCodes, relocationWillingness };
 }
 
 function isCuratedRegionalVariantEligible(
@@ -112,6 +127,15 @@ function isCuratedRegionalVariantEligible(
       professionSlug: context.professionSlug,
       preferredMunicipalityCodes: context.preferredMunicipalityCodes,
     });
+  }
+
+  if (curatedRegionalVariantId === ANLEGGSTEKNIKK_SPARSE_VG2_ALTERNATIVE_VARIANT_ID) {
+    return (
+      isAnleggsteknikkSparseVg2VariantEligible({
+        professionSlug: context.professionSlug,
+        preferredMunicipalityCodes: context.preferredMunicipalityCodes,
+      }) && relocationAllowsNationalSparseAlternative(context.relocationWillingness)
+    );
   }
 
   const neighborCountyCode = parsePainterNorthNeighborCountyCode(curatedRegionalVariantId);

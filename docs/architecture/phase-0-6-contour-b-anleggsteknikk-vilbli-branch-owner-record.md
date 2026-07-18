@@ -83,7 +83,8 @@ VG3/bedrift: `anleggsteknikk-vg3-{title}-{countySlug}` pattern.
 | P-5 | Bedrift kolonne-3 | **Closed** — roster 9 fag, ingest 2140 rows, prod UI OK 2026-07-12 |
 | P-6 | Northern VG2=0 | **Scout: no signal** for anleggsteknikk north (unlike painter); Oslo `03` VG2=0 ABORT |
 | P-7 | (n/a) | Anleggsteknikk has local VG2 in `55`/`56`; no north cross-fylke overlay |
-| P-8 | Alternatives-only UX | When primary empty but curated alternatives exist (painter P-7), **show alternatives** — do not hide viable paths behind empty primary only |
+| P-8 | Sparse national VG2 + relocation | **CHARTERED 2026-07-15** — `phase-0-6-contour-b-anleggsteknikk-p8-sparse-vg2-relocation-owner-record.md`; pilot activates `relocation_willingness` for VGS schools **anleggsteknikk only**; north zone primary scope `{55,56}+18`; national VG2 → alternative |
+| P-8b | Alternatives-only UX | When primary empty but curated alternatives exist (painter P-7), **show alternatives** — do not hide viable paths behind empty primary only |
 
 ---
 

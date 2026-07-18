@@ -47,6 +47,7 @@ export async function runContourBCountyRelay({
   countyCode,
   dryRun = false,
   vilbliHtml,
+  currentYearOfferingHtml = null,
 }) {
   const supabase = createSupabaseAdmin();
   const profession = String(professionSlug ?? "").trim();
@@ -84,6 +85,7 @@ export async function runContourBCountyRelay({
     dryRun: Boolean(dryRun),
     supabase,
     vilbliHtml,
+    currentYearOfferingHtml,
   });
 
   return {

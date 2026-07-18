@@ -49,6 +49,36 @@ async function main() {
   const relayUrl = `${baseUrl}/api/internal/vgs/ingest-contour-b-vilbli-relay`;
   const results = [];
 
+  // Current-year offering reference (owner P4-CURRENT-YEAR-OFFERING §4a): the course-specific
+  // «…-skoler-og-laerebedrifter … side=p5» page for a non-offering probe county, whose landslinje
+  // `vb_map_data_Vg2` is the national current-year offering set. Fetched ONCE per profession and
+  // reused for every county. Best-effort: a failed/blocked fetch → null → pipeline stays fail-open.
+  const offeringHtmlByProfession = new Map();
+  async function getCurrentYearOfferingHtml(professionSlug) {
+    if (offeringHtmlByProfession.has(professionSlug)) {
+      return offeringHtmlByProfession.get(professionSlug);
+    }
+    let offeringHtml = null;
+    try {
+      const referenceUrl = getVgsPathDefinition(professionSlug)?.sourceModel?.strukturkartReferenceUrl;
+      if (referenceUrl) {
+        const res = await vilbliFetch(referenceUrl);
+        const html = await res.text();
+        offeringHtml =
+          res.status >= 200 && res.status < 300 && html.length >= 10_000 ? html : null;
+        console.error(
+          `[relay] ${professionSlug} offering landslinje p5 fetch status=${res.status} len=${html.length} usable=${Boolean(offeringHtml)}`
+        );
+      }
+    } catch (error) {
+      console.error(
+        `[relay] ${professionSlug} offering p2 fetch failed: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+    offeringHtmlByProfession.set(professionSlug, offeringHtml);
+    return offeringHtml;
+  }
+
   const professionSlugs = [...SUPPORTED_VGS_PROFESSION_SLUGS].filter(
     (slug) => (!professionFilter || slug === professionFilter) && getVgsPathDefinition(slug)
   );
@@ -93,6 +123,8 @@ async function main() {
           );
         }
 
+        const currentYearOfferingHtml = await getCurrentYearOfferingHtml(professionSlug);
+
         console.error(
           `[relay] (${pairIndex}/${plannedPairs}) ${professionSlug}/${countyCode} posting to API…`
         );
@@ -107,6 +139,7 @@ async function main() {
             countyCode,
             dryRun,
             vilbliHtml,
+            currentYearOfferingHtml,
           }),
           signal: AbortSignal.timeout(280_000),
         });

@@ -18,8 +18,19 @@ import {
   buildPainterNorthCrossFylkeNabofylkeVariantLabel,
   PAINTER_NORTH_CROSS_FYLKE_NABOFYLKE_VARIANT_REASON,
 } from "@/lib/regional-delivery/painter-north-cross-fylke-path-variant";
+import {
+  ANLEGGSTEKNIKK_SPARSE_VG2_ALTERNATIVE_VARIANT_ID,
+} from "@/lib/vgs/sparse-vg2-alternative-eligibility";
+import { isAnleggsteknikkSparseVg2VariantEligible } from "@/lib/regional-delivery/anleggsteknikk-sparse-vg2-pilot";
+import {
+  buildAnleggsteknikkSparseVg2AlternativeSteps,
+  buildAnleggsteknikkSparseVg2AlternativeVariantLabel,
+  ANLEGGSTEKNIKK_SPARSE_VG2_ALTERNATIVE_VARIANT_REASON,
+} from "@/lib/regional-delivery/anleggsteknikk-sparse-vg2-path-variant";
+import type { RelocationWillingness } from "@/lib/planning/school-geography-scope";
 import type { StudyRouteSnapshotStep } from "@/lib/routes/route-types";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { buildAnleggsteknikkSparseVg2AlternativeRouteSteps } from "./build-anleggsteknikk-sparse-vg2-alternative-route-steps";
 import { buildPainterNorthCrossFylkeMergedRouteSteps } from "./build-painter-north-cross-fylke-route-steps";
 import { getVerifiedLarebedriftApprenticeshipOptions } from "./get-verified-larebedrift-options";
 
@@ -59,6 +70,7 @@ type BuildStepsParams = {
   supabase: SupabaseClient;
   professionSlug: string;
   preferredMunicipalityCodes: string[];
+  relocationWillingness: RelocationWillingness;
 };
 
 type CuratedRegionalVariantDefinition = {
@@ -125,6 +137,30 @@ const CURATED_REGIONAL_VARIANTS: CuratedRegionalVariantDefinition[] = [
             supabase,
             professionSlug,
             preferredMunicipalityCodes,
+          }),
+      }),
+  },
+  {
+    variantId: ANLEGGSTEKNIKK_SPARSE_VG2_ALTERNATIVE_VARIANT_ID,
+    variantLabel: buildAnleggsteknikkSparseVg2AlternativeVariantLabel(),
+    variantReason: ANLEGGSTEKNIKK_SPARSE_VG2_ALTERNATIVE_VARIANT_REASON,
+    isEligible: isAnleggsteknikkSparseVg2VariantEligible,
+    buildSteps: ({
+      supabase,
+      professionSlug,
+      preferredMunicipalityCodes,
+      relocationWillingness,
+    }: BuildStepsParams) =>
+      buildAnleggsteknikkSparseVg2AlternativeSteps({
+        professionSlug,
+        preferredMunicipalityCodes,
+        relocationWillingness,
+        buildRouteSteps: () =>
+          buildAnleggsteknikkSparseVg2AlternativeRouteSteps({
+            supabase,
+            professionSlug,
+            preferredMunicipalityCodes,
+            relocationWillingness,
           }),
       }),
   },
@@ -315,6 +351,7 @@ export async function syncStudyRouteCuratedRegionalAlternatives(params: {
   primarySteps: StudyRouteSnapshotStep[];
   professionSlug: string;
   preferredMunicipalityCodes: string[];
+  relocationWillingness: RelocationWillingness;
   snapshotContext: unknown;
   routeInputSignature: string;
   createdByType: string;
@@ -357,6 +394,7 @@ export async function syncStudyRouteCuratedRegionalAlternatives(params: {
       supabase: params.supabase,
       professionSlug: params.professionSlug,
       preferredMunicipalityCodes: params.preferredMunicipalityCodes,
+      relocationWillingness: params.relocationWillingness,
     });
     if (alternativeSteps.length === 0) {
       continue;

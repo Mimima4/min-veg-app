@@ -5,6 +5,7 @@ import type { StudyRouteAlternativeTeaser } from "@/lib/routes/route-types";
 import type { SteigenCarpenterVekslingInfoCopy } from "@/lib/regional-delivery/steigen-carpenter-veksling-pilot";
 import { STEIGEN_CARPENTER_VEKSLING_VARIANT_ID } from "@/lib/regional-delivery/steigen-carpenter-veksling-path-variant";
 import { PAINTER_NORTH_CROSS_FYLKE_NABOFYLKE_VARIANT_ID } from "@/lib/regional-delivery/painter-north-cross-fylke-pilot";
+import { ANLEGGSTEKNIKK_SPARSE_VG2_ALTERNATIVE_VARIANT_ID } from "@/lib/vgs/sparse-vg2-alternative-eligibility";
 import SteigenVekslingBadgeWithInfo from "@/components/route/steigen-veksling-badge-with-info";
 import RouteStepsPanel from "./route-steps-panel";
 import SaveRouteButton from "./[routeId]/save-route-button";
@@ -66,7 +67,10 @@ export default function AlternativeRoutesCollapsible({
                   : alternative.curatedRegionalVariantId ===
                       PAINTER_NORTH_CROSS_FYLKE_NABOFYLKE_VARIANT_ID
                     ? "painter-north-cross-fylke-alternative-route"
-                    : undefined
+                    : alternative.curatedRegionalVariantId ===
+                        ANLEGGSTEKNIKK_SPARSE_VG2_ALTERNATIVE_VARIANT_ID
+                      ? "anleggsteknikk-sparse-vg2-alternative-route"
+                      : undefined
               }
             >
               <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
