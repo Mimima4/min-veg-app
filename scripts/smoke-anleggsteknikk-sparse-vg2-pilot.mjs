@@ -186,4 +186,43 @@ assert.deepEqual(
   ["Skedsmo", "Kalnes"]
 );
 
+// --- P-8 Fagvalg parity: copy LAREFAG from primary when alt skipped it ---
+function ensureLarefagParity(alt, primary) {
+  if (alt.some((s) => String(s.stage ?? "").toUpperCase() === "LAREFAG")) return alt;
+  const primaryLarefag = primary.find(
+    (s) => s.type === "programme_selection" && String(s.stage ?? "").toUpperCase() === "LAREFAG"
+  );
+  if (!primaryLarefag) return alt;
+  const bedriftIndex = alt.findIndex((s) => s.type === "apprenticeship_step");
+  if (bedriftIndex < 0) return [...alt, primaryLarefag];
+  return [...alt.slice(0, bedriftIndex), primaryLarefag, ...alt.slice(bedriftIndex)];
+}
+
+const primaryWithFag = [
+  { type: "programme_selection", stage: "VG1", title: "VG1" },
+  { type: "programme_selection", stage: "VG2", title: "VG2" },
+  {
+    type: "programme_selection",
+    stage: "LAREFAG",
+    title: "Fagvalg",
+    program_title: "Anleggsmaskinførerfaget",
+    options: [{ program_title: "Anleggsmaskinførerfaget" }, { program_title: "Asfaltfaget" }],
+  },
+  { type: "apprenticeship_step", title: "Opplæring i bedrift (Anleggsmaskinførerfaget)" },
+];
+const altMissingFag = [
+  { type: "programme_selection", stage: "VG1", title: "VG1" },
+  { type: "programme_selection", stage: "VG2", title: "VG2" },
+  { type: "apprenticeship_step", title: "Opplæring i bedrift (Anleggsmaskinførerfaget)" },
+];
+const repaired = ensureLarefagParity(altMissingFag, primaryWithFag);
+assert.equal(repaired.length, 4);
+assert.equal(repaired[2].stage, "LAREFAG");
+assert.equal(repaired[3].type, "apprenticeship_step");
+assert.equal(
+  ensureLarefagParity(primaryWithFag, primaryWithFag).filter((s) => s.stage === "LAREFAG").length,
+  1,
+  "already has LAREFAG → unchanged"
+);
+
 console.error("[smoke:anleggsteknikk-sparse-vg2] PASS");

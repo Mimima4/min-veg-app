@@ -363,11 +363,13 @@ export function resolvePathVariantSourceUrl(
 
 export async function buildPathVariants(
   truthRows: AvailabilityTruthRow[],
-  professionSlug?: string | null
+  professionSlug?: string | null,
+  options?: { sourceUrlOverride?: string | null }
 ): Promise<PathVariantsResult> {
   const branchConfig = getVilbliBranchConfig(String(professionSlug ?? "").trim());
 
-  const sourceUrl = resolvePathVariantSourceUrl(truthRows, professionSlug);
+  const override = String(options?.sourceUrlOverride ?? "").trim();
+  const sourceUrl = override || resolvePathVariantSourceUrl(truthRows, professionSlug);
   const hasVg3SchoolTruth = hasVg3SchoolProgrammeAvailability(truthRows);
 
   if (!sourceUrl) {

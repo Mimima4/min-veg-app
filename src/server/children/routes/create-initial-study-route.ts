@@ -826,6 +826,7 @@ export async function createInitialStudyRoute(
       routeId: route.id,
       primaryVariantId: variant.id,
       primarySteps: initialSteps,
+      primaryPathVariants: outcomeFilterAlternativesContext?.pathVariants ?? null,
       professionSlug: professionRow.slug,
       preferredMunicipalityCodes,
       relocationWillingness,

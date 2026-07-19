@@ -11,6 +11,7 @@ import {
   ANLEGGSTEKNIKK_SPARSE_VG2_ALTERNATIVE_VARIANT_ID,
   ANLEGGSTEKNIKK_SPARSE_VG2_NATIONAL_PROGRAMME_SLUG,
 } from "@/lib/vgs/sparse-vg2-alternative-eligibility";
+import { isLarefagSelectionStage } from "@/lib/vgs/larefag-selection-stage";
 import {
   getAnleggsteknikkSparseVg2InfoCopy,
   isAnleggsteknikkSparseVg2VariantEligible,
@@ -59,10 +60,69 @@ export function normalizeAnleggsteknikkSparseVg2StepPresentation(
   });
 }
 
+/**
+ * P-8 only: copy Fagvalg from primary when the alternative skipped LAREFAG
+ * (second Vilbli parse failed / never ran). No new network — reuses primary snapshot steps.
+ */
+export function ensureAnleggsteknikkSparseVg2LarefagParity(params: {
+  alternativeSteps: StudyRouteSnapshotStep[];
+  primarySteps: StudyRouteSnapshotStep[];
+}): StudyRouteSnapshotStep[] {
+  const alt = params.alternativeSteps;
+  if (
+    alt.some(
+      (step) =>
+        step.type === "programme_selection" && isLarefagSelectionStage(step.stage)
+    )
+  ) {
+    return alt;
+  }
+
+  const primaryLarefag = params.primarySteps.find(
+    (step): step is Extract<StudyRouteSnapshotStep, { type: "programme_selection" }> =>
+      step.type === "programme_selection" && isLarefagSelectionStage(step.stage)
+  );
+  if (!primaryLarefag) {
+    return alt;
+  }
+
+  const bedriftIndex = alt.findIndex((step) => step.type === "apprenticeship_step");
+  const larefagStep: StudyRouteSnapshotStep = {
+    ...primaryLarefag,
+    options: primaryLarefag.options ? [...primaryLarefag.options] : primaryLarefag.options,
+  };
+
+  if (bedriftIndex < 0) {
+    return [...alt, larefagStep];
+  }
+
+  const selectedTitle =
+    primaryLarefag.program_title ?? primaryLarefag.institution_name ?? primaryLarefag.title;
+  const bedrift = alt[bedriftIndex];
+  if (bedrift.type !== "apprenticeship_step") {
+    return alt;
+  }
+  const nextBedrift: StudyRouteSnapshotStep = {
+    ...bedrift,
+    title: selectedTitle
+      ? `Opplæring i bedrift (${selectedTitle})`
+      : bedrift.title,
+    program_title: selectedTitle ?? bedrift.program_title,
+  };
+
+  return [
+    ...alt.slice(0, bedriftIndex),
+    larefagStep,
+    nextBedrift,
+    ...alt.slice(bedriftIndex + 1),
+  ];
+}
+
 export type BuildAnleggsteknikkSparseVg2AlternativeStepsParams = {
   professionSlug: string;
   preferredMunicipalityCodes: string[];
   relocationWillingness: RelocationWillingness;
+  primarySteps?: StudyRouteSnapshotStep[];
   buildRouteSteps: () => Promise<StudyRouteSnapshotStep[]>;
 };
 
@@ -83,7 +143,11 @@ export async function buildAnleggsteknikkSparseVg2AlternativeSteps(
   }
 
   const steps = await params.buildRouteSteps();
-  return normalizeAnleggsteknikkSparseVg2StepPresentation(steps);
+  const withLarefag = ensureAnleggsteknikkSparseVg2LarefagParity({
+    alternativeSteps: steps,
+    primarySteps: params.primarySteps ?? [],
+  });
+  return normalizeAnleggsteknikkSparseVg2StepPresentation(withLarefag);
 }
 
 export { getAnleggsteknikkSparseVg2InfoCopy };

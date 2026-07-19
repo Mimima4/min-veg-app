@@ -3,6 +3,7 @@ import "server-only";
 import {
   anleggsteknikkHomeVg1ProgrammeSlugsForFylke,
   anleggsteknikkVg2ProgrammeSlugsForFylke,
+  anleggsteknikkVilbliChainUrlForFylke,
   ANLEGGSTEKNIKK_SPARSE_VG2_CANDIDATE_FYLKE_CODES,
   countNationalSparseVg2Schools,
   mergeAnleggsteknikkSparseVg2TruthRows,
@@ -22,11 +23,15 @@ import {
   ANLEGGSTEKNIKK_SPARSE_VG2_NATIONAL_PROGRAMME_SLUG,
   isSparseVg2PilotProfession,
 } from "@/lib/vgs/sparse-vg2-alternative-eligibility";
+import { isLarefagSelectionStage } from "@/lib/vgs/larefag-selection-stage";
 import type { StudyRouteSnapshotStep } from "@/lib/routes/route-types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { buildKommuneTransportSortContext } from "@/server/planning/kommune-transport/build-transport-sort-context";
 import { applyVerifiedLarebedriftToApprenticeshipSteps } from "./apply-verified-larebedrift-to-apprenticeship-steps";
-import { buildPathVariants } from "./build-path-variants";
+import {
+  buildPathVariants,
+  type PathVariantsResult,
+} from "./build-path-variants";
 import { buildRoutePathVariantNavContext } from "./build-route-path-variant-nav-context";
 import { buildStepsFromAvailabilityTruth } from "./build-steps-from-availability-truth";
 import { getAvailabilityTruth } from "./get-availability-truth";
@@ -37,6 +42,17 @@ import {
 import { resolveVbaSharedVg2ProgrammeOptions } from "./resolve-vba-shared-vg2-programme-options";
 import { selectTruthCandidateForRoute } from "./select-truth-candidate-for-route";
 
+function pathVariantsIncludeLarefag(pathVariants: PathVariantsResult | null | undefined): boolean {
+  return Boolean(
+    pathVariants?.variants.some((variant) =>
+      variant.nodes.some(
+        (node) =>
+          node.type === "programme_selection" && isLarefagSelectionStage(node.stage)
+      )
+    )
+  );
+}
+
 /**
  * P-8 — national sparse VG2 alternative for anleggsteknikk ("VG2 andre steder").
  *
@@ -44,6 +60,10 @@ import { selectTruthCandidateForRoute } from "./select-truth-candidate-for-route
  * relocation willingness (`no`/null → []), and surfaces schools that fall OUTSIDE the
  * child's primary geography scope. Returns [] for every other profession and whenever the
  * PSA-derived sparse gate is inactive — the primary route is never affected.
+ *
+ * Kolonne-3 / Fagvalg: prefer the already-parsed primary `pathVariants` (zero extra Vilbli
+ * fetch). Fallback is one canonical home-county chain URL — never re-resolve from the
+ * multi-county national PSA URL set (that path was flaky / timed out).
  */
 export async function buildAnleggsteknikkSparseVg2AlternativeRouteSteps(params: {
   supabase: SupabaseClient;
@@ -51,6 +71,8 @@ export async function buildAnleggsteknikkSparseVg2AlternativeRouteSteps(params: 
   preferredMunicipalityCodes: string[];
   relocationWillingness: RelocationWillingness;
   locale?: string;
+  /** Already-parsed primary path variants from the same recompute — reuse Fagvalg graph. */
+  primaryPathVariants?: PathVariantsResult | null;
 }): Promise<StudyRouteSnapshotStep[]> {
   if (!isSparseVg2PilotProfession(params.professionSlug)) {
     return [];
@@ -168,7 +190,13 @@ export async function buildAnleggsteknikkSparseVg2AlternativeRouteSteps(params: 
     transportSortContext,
   });
 
-  const pathVariants = await buildPathVariants(mergedTruthRows, params.professionSlug);
+  // Prefer primary's already-parsed kolonne-3 graph (same recompute). Otherwise one
+  // canonical home-county Vilbli URL — do not re-pick from national multi-county PSA URLs.
+  const pathVariants = pathVariantsIncludeLarefag(params.primaryPathVariants)
+    ? params.primaryPathVariants!
+    : await buildPathVariants(mergedTruthRows, params.professionSlug, {
+        sourceUrlOverride: anleggsteknikkVilbliChainUrlForFylke(homeFylkeCode),
+      });
   const enrichedPathVariants = pathVariants.variants.map((variant) => ({ ...variant }));
 
   const pathVariantNavContext = await buildRoutePathVariantNavContext({

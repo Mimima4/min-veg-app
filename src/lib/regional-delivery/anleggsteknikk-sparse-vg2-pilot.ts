@@ -67,6 +67,14 @@ export function anleggsteknikkHomeVg1ProgrammeSlugsForFylke(fylkeCode: string): 
   return Array.from(new Set([...anleggVg1, carpenterVg1]));
 }
 
+export function anleggsteknikkVilbliChainUrlForFylke(fylkeCode: string): string | null {
+  const countySlug = FYLKE_CODE_TO_VILBLI_COUNTY_SLUG[String(fylkeCode ?? "").trim()];
+  if (!countySlug) {
+    return null;
+  }
+  return `https://www.vilbli.no/nb/${countySlug}/strukturkart/V.BA/bygg-og-anleggsteknikk-skoler-og-laerebedrifter?kurs=V.BABAT1----_V.BAANL2----&side=p5`;
+}
+
 export function anleggsteknikkVg2ProgrammeSlugsForFylke(fylkeCode: string): string[] {
   const countySlug = FYLKE_CODE_TO_VILBLI_COUNTY_SLUG[String(fylkeCode ?? "").trim()];
   if (!countySlug) {

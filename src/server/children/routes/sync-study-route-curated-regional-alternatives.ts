@@ -31,6 +31,7 @@ import type { RelocationWillingness } from "@/lib/planning/school-geography-scop
 import type { StudyRouteSnapshotStep } from "@/lib/routes/route-types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { buildAnleggsteknikkSparseVg2AlternativeRouteSteps } from "./build-anleggsteknikk-sparse-vg2-alternative-route-steps";
+import type { PathVariantsResult } from "./build-path-variants";
 import { buildPainterNorthCrossFylkeMergedRouteSteps } from "./build-painter-north-cross-fylke-route-steps";
 import { getVerifiedLarebedriftApprenticeshipOptions } from "./get-verified-larebedrift-options";
 
@@ -71,6 +72,8 @@ type BuildStepsParams = {
   professionSlug: string;
   preferredMunicipalityCodes: string[];
   relocationWillingness: RelocationWillingness;
+  primarySteps: StudyRouteSnapshotStep[];
+  primaryPathVariants: PathVariantsResult | null;
 };
 
 type CuratedRegionalVariantDefinition = {
@@ -150,17 +153,21 @@ const CURATED_REGIONAL_VARIANTS: CuratedRegionalVariantDefinition[] = [
       professionSlug,
       preferredMunicipalityCodes,
       relocationWillingness,
+      primarySteps,
+      primaryPathVariants,
     }: BuildStepsParams) =>
       buildAnleggsteknikkSparseVg2AlternativeSteps({
         professionSlug,
         preferredMunicipalityCodes,
         relocationWillingness,
+        primarySteps,
         buildRouteSteps: () =>
           buildAnleggsteknikkSparseVg2AlternativeRouteSteps({
             supabase,
             professionSlug,
             preferredMunicipalityCodes,
             relocationWillingness,
+            primaryPathVariants,
           }),
       }),
   },
@@ -349,6 +356,8 @@ export async function syncStudyRouteCuratedRegionalAlternatives(params: {
   routeId: string;
   primaryVariantId: string;
   primarySteps: StudyRouteSnapshotStep[];
+  /** Same-recompute primary pathVariants — P-8 reuses kolonne-3 / Fagvalg without a second fetch. */
+  primaryPathVariants?: PathVariantsResult | null;
   professionSlug: string;
   preferredMunicipalityCodes: string[];
   relocationWillingness: RelocationWillingness;
@@ -395,6 +404,8 @@ export async function syncStudyRouteCuratedRegionalAlternatives(params: {
       professionSlug: params.professionSlug,
       preferredMunicipalityCodes: params.preferredMunicipalityCodes,
       relocationWillingness: params.relocationWillingness,
+      primarySteps: params.primarySteps,
+      primaryPathVariants: params.primaryPathVariants ?? null,
     });
     if (alternativeSteps.length === 0) {
       continue;
