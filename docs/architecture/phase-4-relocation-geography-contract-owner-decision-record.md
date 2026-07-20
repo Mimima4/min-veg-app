@@ -68,7 +68,7 @@ Curated / sparse alternatives (`P-7`, `P-8`, Steigen, future post-VGS contours).
 | `relocation_willingness` | Alternative geography (P-8 sparse VG2) |
 |--------------------------|----------------------------------------|
 | `no` | **Omit** P-8 national alternative (north zone schools already in primary scope where applicable) |
-| `maybe` | Schools outside primary scope within **Entur public-transport reach** — bus+rail network km soft band ≤**500** (soft admit **500–550**; deny **>550**). See `phase-4-relocation-maybe-public-transport-reach-owner-draft.md`. **Not** private-car km; **not** haversine-as-admit. |
+| `maybe` | Schools outside primary scope within **Entur public-transport reach** — bus+rail network km soft band ≤**500** (soft admit **500–550**; deny **>550**). **North-coast homes (Troms 55, Finnmark 56, Nordland 18):** if no ground PT admit, **air** allowed by one-way duration ≤**5h** (soft ≤**8h**). See `phase-4-relocation-maybe-public-transport-reach-owner-draft.md`. **Not** private-car km; **not** haversine-as-admit. |
 | `yes` | **All PSA-backed national sparse VG2** schools for profession, ordered by transport realism |
 
 ---

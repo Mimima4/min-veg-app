@@ -2,7 +2,7 @@
 export const KOMMUNE_TRANSPORT_NATIONAL_ACTIVE = true;
 
 /** Bump when transport sort logic changes (invalidates route_input_signature). */
-export const KOMMUNE_TRANSPORT_LOGIC_VERSION = "v5-maybe-pt-reach-500";
+export const KOMMUNE_TRANSPORT_LOGIC_VERSION = "v7-maybe-pt-north-air-nordland";
 
 /**
  * Relocation `maybe` — Entur public-transport network km soft band
@@ -11,8 +11,17 @@ export const KOMMUNE_TRANSPORT_LOGIC_VERSION = "v5-maybe-pt-reach-500";
  */
 export const MAYBE_PT_SOFT_MAX_KM = 500;
 export const MAYBE_PT_HARD_MAX_KM = 550;
+
+/**
+ * One-way Entur duration caps when admitting via air.
+ * Home eligibility = Troms 55 + Finnmark 56 + Nordland 18
+ * (`MAYBE_AIR_HOME_FYLKE_CODES` in evaluate-maybe-reach).
+ */
+export const MAYBE_AIR_SOFT_MAX_DURATION_SEC = 5 * 60 * 60; // 5h
+export const MAYBE_AIR_HARD_MAX_DURATION_SEC = 8 * 60 * 60; // 8h
+
 /** Bump to invalidate durable maybe-reach cache rows. */
-export const MAYBE_PT_REACH_POLICY_VERSION = "v3-entur-pt-500-550-reverse-hub";
+export const MAYBE_PT_REACH_POLICY_VERSION = "v5-entur-pt-500-550-north-air-nordland";
 
 export const KOMMUNE_TRANSPORT_ARRIVAL_BUFFER_MINUTES = 5;
 

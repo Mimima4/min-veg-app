@@ -44,9 +44,11 @@ export async function readMaybePtReachCache(params: {
   }
   if (!data) return null;
   const row = data as CacheRow;
+  const reason = row.reason as MaybeReachVerdict["reason"];
   return {
     admitted: Boolean(row.admitted),
     soft: Boolean(row.soft),
+    viaAir: reason === "air_north" || reason === "air_north_soft",
     ptNetworkKm:
       typeof row.pt_network_km === "number" && Number.isFinite(row.pt_network_km)
         ? row.pt_network_km
@@ -55,7 +57,7 @@ export async function readMaybePtReachCache(params: {
       typeof row.duration_sec === "number" && Number.isFinite(row.duration_sec)
         ? row.duration_sec
         : null,
-    reason: row.reason as MaybeReachVerdict["reason"],
+    reason,
     policyVersion: MAYBE_PT_REACH_POLICY_VERSION,
   };
 }
