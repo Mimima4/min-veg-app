@@ -11,7 +11,12 @@ type GeocoderFeature = {
   properties?: {
     id?: string;
     name?: string;
+    label?: string;
+    county?: string;
     categories?: string[];
+  };
+  geometry?: {
+    coordinates?: number[];
   };
 };
 
@@ -53,49 +58,155 @@ function isStopPlaceId(id: string | undefined): id is string {
   return typeof id === "string" && id.startsWith("NSR:StopPlace:");
 }
 
-function pickBestStopFeature(features: GeocoderFeature[]): GeocoderFeature | null {
-  const stopPlaces = features.filter((feature) => isStopPlaceId(feature.properties?.id));
-  if (stopPlaces.length === 0) return null;
+function isGroupOfStopPlacesId(id: string | undefined): id is string {
+  return typeof id === "string" && id.startsWith("NSR:GroupOfStopPlaces:");
+}
 
-  const railway = stopPlaces.find((feature) =>
-    (feature.properties?.categories ?? []).some((category) =>
+function isUsableHubId(id: string | undefined): id is string {
+  return isStopPlaceId(id) || isGroupOfStopPlacesId(id);
+}
+
+function haversineKmBetween(
+  a: { lat: number; lng: number },
+  b: { lat: number; lng: number }
+): number {
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const R = 6371;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+/** Max distance from kommune centroid to accept a geocoder hit (blocks Os→Innlandet, Kirkenes→Kirkenær). */
+const MAX_HUB_DISTANCE_FROM_CENTROID_KM = 45;
+
+function pickBestStopFeature(
+  features: GeocoderFeature[],
+  focus?: { lat: number; lng: number } | null
+): GeocoderFeature | null {
+  const hubs = features.filter((feature) => isUsableHubId(feature.properties?.id));
+  if (hubs.length === 0) return null;
+
+  const withDistance = hubs.map((feature) => {
+    const coords = feature.geometry?.coordinates;
+    const lng = Array.isArray(coords) ? Number(coords[0]) : NaN;
+    const lat = Array.isArray(coords) ? Number(coords[1]) : NaN;
+    const distanceKm =
+      focus && Number.isFinite(lat) && Number.isFinite(lng)
+        ? haversineKmBetween(focus, { lat, lng })
+        : Number.POSITIVE_INFINITY;
+    return { feature, distanceKm, lat, lng };
+  });
+
+  const nearFocus = focus
+    ? withDistance.filter((item) => item.distanceKm <= MAX_HUB_DISTANCE_FROM_CENTROID_KM)
+    : withDistance;
+  const pool = nearFocus.length > 0 ? nearFocus : [];
+  if (pool.length === 0) return null;
+
+  pool.sort((a, b) => a.distanceKm - b.distanceKm);
+
+  const railway = pool.find((item) =>
+    (item.feature.properties?.categories ?? []).some((category) =>
       /rail|train|railway/i.test(category)
     )
   );
-  if (railway) return railway;
+  if (railway) return railway.feature;
 
-  const stationName = stopPlaces.find((feature) =>
-    /stasjon/i.test(feature.properties?.name ?? "")
+  const stationName = pool.find((item) =>
+    /stasjon/i.test(item.feature.properties?.name ?? "")
   );
-  if (stationName) return stationName;
+  if (stationName) return stationName.feature;
 
-  return stopPlaces[0] ?? null;
+  const stopPlace = pool.find((item) => isStopPlaceId(item.feature.properties?.id));
+  if (stopPlace) return stopPlace.feature;
+
+  return pool[0]?.feature ?? null;
+}
+
+async function resolveHubViaReverse(focus: { lat: number; lng: number }): Promise<string | null> {
+  const url = new URL("https://api.entur.io/geocoder/v1/reverse");
+  url.searchParams.set("point.lat", String(focus.lat));
+  url.searchParams.set("point.lon", String(focus.lng));
+  url.searchParams.set("size", "15");
+  url.searchParams.set("layers", "venue");
+  url.searchParams.set("boundary.circle.radius", "25");
+
+  try {
+    const json = await enturFetchJson<GeocoderResponse>(url.toString());
+    const scored = (json.features ?? [])
+      .filter((feature) => isStopPlaceId(feature.properties?.id))
+      .map((feature) => {
+        const coords = feature.geometry?.coordinates;
+        const lng = Array.isArray(coords) ? Number(coords[0]) : NaN;
+        const lat = Array.isArray(coords) ? Number(coords[1]) : NaN;
+        const distanceKm =
+          Number.isFinite(lat) && Number.isFinite(lng)
+            ? haversineKmBetween(focus, { lat, lng })
+            : Number.POSITIVE_INFINITY;
+        const name = feature.properties?.name ?? "";
+        let score = distanceKm;
+        if (/terminal|stasjon|sentrum|kai/i.test(name)) score -= 5;
+        if (/skole|barneskole|ungdomsskole/i.test(name)) score += 3;
+        return { id: feature.properties?.id, score, distanceKm, name };
+      })
+      .filter((item) => item.distanceKm <= MAX_HUB_DISTANCE_FROM_CENTROID_KM)
+      .sort((a, b) => a.score - b.score);
+    return scored[0]?.id && isStopPlaceId(scored[0].id) ? scored[0].id : null;
+  } catch {
+    return null;
+  }
 }
 
 export async function resolveKommuneHubStopPlaceId(params: {
   municipalityName: string;
+  /** Kommune centroid — required for disambiguation (Os vs Os Innlandet, Kirkenes vs Kirkenær). */
+  focusLat?: number | null;
+  focusLng?: number | null;
 }): Promise<string | null> {
+  const focus =
+    typeof params.focusLat === "number" &&
+    typeof params.focusLng === "number" &&
+    Number.isFinite(params.focusLat) &&
+    Number.isFinite(params.focusLng)
+      ? { lat: params.focusLat, lng: params.focusLng }
+      : null;
+
   const queries = [
+    params.municipalityName,
     `${params.municipalityName} stasjon`,
     `${params.municipalityName} rutebileterminal`,
-    params.municipalityName,
+    `${params.municipalityName} bussterminal`,
   ];
 
   for (const text of queries) {
     const url = new URL(ENTUR_GEOCODER_AUTOCOMPLETE_URL);
     url.searchParams.set("text", text);
-    url.searchParams.set("size", "8");
+    url.searchParams.set("size", "10");
     url.searchParams.set("lang", "no");
+    if (focus) {
+      url.searchParams.set("focus.point.lat", String(focus.lat));
+      url.searchParams.set("focus.point.lon", String(focus.lng));
+    }
 
     try {
       const json = await enturFetchJson<GeocoderResponse>(url.toString());
-      const best = pickBestStopFeature(json.features ?? []);
-      if (best?.properties?.id && isStopPlaceId(best.properties.id)) {
+      const best = pickBestStopFeature(json.features ?? [], focus);
+      if (best?.properties?.id && isUsableHubId(best.properties.id)) {
         return best.properties.id;
       }
     } catch {
       continue;
     }
+  }
+
+  if (focus) {
+    return resolveHubViaReverse(focus);
   }
 
   return null;
@@ -122,6 +233,7 @@ export async function planEnturTrip(params: {
         duration
         legs {
           mode
+          distance
           expectedStartTime
           expectedEndTime
         }

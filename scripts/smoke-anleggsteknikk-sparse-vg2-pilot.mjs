@@ -173,18 +173,26 @@ function distanceToSortRank(distanceKm) {
 assert.ok(distanceToSortRank(25) < distanceToSortRank(600), "Skedsmo nearer than Åfjord");
 assert.equal(distanceToSortRank(25) < distanceToSortRank(100), true);
 
-function filterMaybe(rows, maxKm) {
-  return rows.filter((r) => r.distanceKm <= maxKm);
+function filterMaybe(rows, softMaxKm, hardMaxKm) {
+  return rows.filter((r) => r.distanceKm <= hardMaxKm).map((r) => ({
+    ...r,
+    soft: r.distanceKm > softMaxKm,
+  }));
 }
 const scored = [
   { school: "Skedsmo", distanceKm: 25 },
   { school: "Åfjord", distanceKm: 480 },
   { school: "Kalnes", distanceKm: 90 },
+  { school: "SoftEdge", distanceKm: 520 },
+  { school: "TooFar", distanceKm: 600 },
 ];
+const maybeBand = filterMaybe(scored, 500, 550);
 assert.deepEqual(
-  filterMaybe(scored, 400).map((r) => r.school),
-  ["Skedsmo", "Kalnes"]
+  maybeBand.map((r) => r.school),
+  ["Skedsmo", "Åfjord", "Kalnes", "SoftEdge"]
 );
+assert.equal(maybeBand.find((r) => r.school === "SoftEdge")?.soft, true);
+assert.equal(maybeBand.find((r) => r.school === "Åfjord")?.soft, false);
 
 // --- P-8 Fagvalg parity: copy LAREFAG from primary when alt skipped it ---
 function ensureLarefagParity(alt, primary) {

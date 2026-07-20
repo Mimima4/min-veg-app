@@ -2,6 +2,8 @@ export type EnturTripLeg = {
   mode: string;
   expectedStartTime: string;
   expectedEndTime: string;
+  /** Metres when journey-planner returns leg.distance (maybe-reach + analytics). */
+  distance?: number | null;
 };
 
 export type EnturTripPattern = {

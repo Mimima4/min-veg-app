@@ -102,8 +102,30 @@ async function resolveHubForMunicipality(params: {
     params.nameCache.set(params.municipalityCode, municipalityName);
   }
 
+  let focusLat: number | null = null;
+  let focusLng: number | null = null;
+  try {
+    const response = await fetch(
+      `https://ws.geonorge.no/kommuneinfo/v1/kommuner/${params.municipalityCode}`
+    );
+    if (response.ok) {
+      const detail = (await response.json()) as {
+        punktIOmrade?: { coordinates?: number[] };
+      };
+      const coords = detail.punktIOmrade?.coordinates;
+      if (Array.isArray(coords) && coords.length >= 2) {
+        focusLng = Number(coords[0]);
+        focusLat = Number(coords[1]);
+      }
+    }
+  } catch {
+    // focus optional
+  }
+
   const hubId = await resolveKommuneHubStopPlaceId({
     municipalityName: municipalityName ?? params.municipalityName,
+    focusLat,
+    focusLng,
   });
   params.hubCache.set(params.municipalityCode, hubId);
   return hubId;

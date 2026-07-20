@@ -8,11 +8,16 @@ import {
   haversineDistanceKm,
   normalizeMunicipalityCode,
 } from "@/lib/planning/geo-distance";
+import {
+  evaluateMaybeReachBetweenMunicipalities,
+} from "@/lib/planning/kommune-transport/evaluate-maybe-reach";
+import {
+  readMaybePtReachCache,
+  writeMaybePtReachCache,
+} from "@/lib/planning/kommune-transport/maybe-pt-reach-cache";
 import { compareInstitutionTransportRank } from "@/lib/planning/kommune-transport/evaluate-reachability";
 import type { KommuneTransportSortContext } from "@/lib/planning/kommune-transport/types";
 import type { AvailabilityTruthRow } from "./get-availability-truth";
-
-const MAYBE_MAX_DISTANCE_KM = 400;
 
 function stagePriority(stage: string): number {
   const order: Record<string, number> = {
@@ -227,42 +232,69 @@ export async function selectTruthCandidateForRoute(params: {
     );
   }
 
-  const getDistanceKm = (row: AvailabilityTruthRow): number => {
-    const municipalityCode = normalizeMunicipalityCode(row.municipalityCode);
-    if (!municipalityCode) return Number.POSITIVE_INFINITY;
-    const geoPoint = municipalityGeoPointByCode.get(municipalityCode);
-    if (!geoPoint) return Number.POSITIVE_INFINITY;
-    let best = Number.POSITIVE_INFINITY;
-    for (const homeCode of preferredMunicipalityCodes) {
-      const homePoint = municipalityGeoPointByCode.get(homeCode);
-      if (!homePoint) continue;
-      const distance = haversineDistanceKm(homePoint, geoPoint);
-      if (distance < best) best = distance;
-    }
-    return best;
-  };
-
   if (params.relocationWillingness === "no") {
     return null;
   }
 
   if (params.relocationWillingness === "maybe") {
-    const maybeDistanceScoped = params.rows.filter((row) => {
-      const distanceKm = getDistanceKm(row);
-      return Number.isFinite(distanceKm) && distanceKm <= MAYBE_MAX_DISTANCE_KM;
-    });
-    if (maybeDistanceScoped.length > 0) {
-      return (
-        sortCandidatesWithinScope({
-          candidates: maybeDistanceScoped,
-          preferredMunicipalityCodes,
-          homeFylkeCodes,
-          municipalityGeoPointByCode,
-          transportSortContext: params.transportSortContext,
-        })[0] ?? null
-      );
+    const primaryHome = preferredMunicipalityCodes[0];
+    if (!primaryHome) return null;
+
+    const uniqueSchoolCodes = Array.from(
+      new Set(
+        params.rows
+          .map((row) => normalizeMunicipalityCode(row.municipalityCode))
+          .filter((code): code is string => Boolean(code))
+      )
+    );
+
+    const admittedSchoolCodes = new Set<string>();
+    const softSchoolCodes = new Set<string>();
+    const ptKmBySchool = new Map<string, number>();
+
+    for (const schoolCode of uniqueSchoolCodes) {
+      let verdict = await readMaybePtReachCache({
+        supabase: params.supabase,
+        homeMunicipalityCode: primaryHome,
+        schoolMunicipalityCode: schoolCode,
+      });
+      if (!verdict) {
+        verdict = await evaluateMaybeReachBetweenMunicipalities({
+          homeMunicipalityCode: primaryHome,
+          schoolMunicipalityCode: schoolCode,
+        });
+        await writeMaybePtReachCache({
+          supabase: params.supabase,
+          homeMunicipalityCode: primaryHome,
+          schoolMunicipalityCode: schoolCode,
+          verdict,
+        });
+      }
+      if (!verdict.admitted) continue;
+      admittedSchoolCodes.add(schoolCode);
+      if (verdict.soft) softSchoolCodes.add(schoolCode);
+      if (verdict.ptNetworkKm != null) ptKmBySchool.set(schoolCode, verdict.ptNetworkKm);
     }
-    return null;
+
+    const maybePtScoped = params.rows.filter((row) => {
+      const code = normalizeMunicipalityCode(row.municipalityCode);
+      return code ? admittedSchoolCodes.has(code) : false;
+    });
+    if (maybePtScoped.length === 0) return null;
+
+    const sorted = [...maybePtScoped].sort((a, b) => {
+      const aCode = normalizeMunicipalityCode(a.municipalityCode) ?? "";
+      const bCode = normalizeMunicipalityCode(b.municipalityCode) ?? "";
+      const aSoft = softSchoolCodes.has(aCode);
+      const bSoft = softSchoolCodes.has(bCode);
+      if (aSoft !== bSoft) return aSoft ? 1 : -1;
+      const aKm = ptKmBySchool.get(aCode) ?? Number.POSITIVE_INFINITY;
+      const bKm = ptKmBySchool.get(bCode) ?? Number.POSITIVE_INFINITY;
+      if (aKm !== bKm) return aKm - bKm;
+      return (a.institutionName ?? "").localeCompare(b.institutionName ?? "", "nb");
+    });
+
+    return sorted[0] ?? null;
   }
 
   if (params.relocationWillingness === "yes") {

@@ -3,7 +3,7 @@
 | Field | Value |
 |-------|--------|
 | **Section** | **P4-RELOCATION-MAYBE-PT-REACH** |
-| **Status** | **OWNER-SEEDED 2026-07-21** — product rules agreed; **implementation not started** (await explicit «го кодить») |
+| **Status** | **IMPLEMENTED 2026-07-21** — Entur PT soft band live (P-8 + select-truth); hub resolve uses centroid focus + reverse fallback; durable cache migration present (fail-open until applied) |
 | **Date** | 2026-07-20 · decisions locked 2026-07-21 |
 | **Parent** | `phase-4-relocation-geography-contract-owner-decision-record.md` §4.2 / §5; `phase-4-route-kommune-transport-logistics-owner-record.md` |
 | **Reuse scope** | Shared geography rule for VGS sparse alternatives **and later** fagskole / university / other contours |

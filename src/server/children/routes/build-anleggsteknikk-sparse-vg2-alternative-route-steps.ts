@@ -136,8 +136,12 @@ export async function buildAnleggsteknikkSparseVg2AlternativeRouteSteps(params: 
   }
 
   // Transport context today ranks VG1 only — without distance ranks VG2 falls back to
-  // alphabetical (Åfjord first). Rank by home-kommune haversine; maybe ≤400km filter.
-  const { rankedRows: rankedNationalVg2Rows, distanceKmByInstitutionId } =
+  // alphabetical. Rank by Entur PT km for maybe (500/550 soft band); haversine for yes.
+  const {
+    rankedRows: rankedNationalVg2Rows,
+    distanceKmByInstitutionId,
+    softByInstitutionId,
+  } =
     await filterAndRankSparseVg2RowsByHomeDistance({
       supabase: params.supabase,
       vg2Rows: nationalVg2RowsOutsidePrimaryScope,
@@ -180,6 +184,7 @@ export async function buildAnleggsteknikkSparseVg2AlternativeRouteSteps(params: 
     context: baseTransportSortContext,
     vg2Rows: rankedNationalVg2Rows,
     distanceKmByInstitutionId,
+    softByInstitutionId,
   });
 
   const selectedTruthCandidate = await selectTruthCandidateForRoute({

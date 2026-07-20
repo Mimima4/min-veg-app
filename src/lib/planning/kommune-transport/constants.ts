@@ -2,7 +2,17 @@
 export const KOMMUNE_TRANSPORT_NATIONAL_ACTIVE = true;
 
 /** Bump when transport sort logic changes (invalidates route_input_signature). */
-export const KOMMUNE_TRANSPORT_LOGIC_VERSION = "v4-national-rollout";
+export const KOMMUNE_TRANSPORT_LOGIC_VERSION = "v5-maybe-pt-reach-500";
+
+/**
+ * Relocation `maybe` — Entur public-transport network km soft band
+ * (`phase-4-relocation-maybe-public-transport-reach-owner-draft.md`).
+ * Normal admit ≤ soft; soft admit (soft, soft]…hard]; deny > hard.
+ */
+export const MAYBE_PT_SOFT_MAX_KM = 500;
+export const MAYBE_PT_HARD_MAX_KM = 550;
+/** Bump to invalidate durable maybe-reach cache rows. */
+export const MAYBE_PT_REACH_POLICY_VERSION = "v3-entur-pt-500-550-reverse-hub";
 
 export const KOMMUNE_TRANSPORT_ARRIVAL_BUFFER_MINUTES = 5;
 
