@@ -341,7 +341,7 @@ Contour B / catalog expansion checklist (if adding counties): `§ Expansion gate
 | Path definition + materialization | ☑ |
 | V.BA VG2 switch | ☑ |
 | Catalog seed | ☑ applied prod DB |
-| NAV map | ☑ `håndverkere.anleggsmaskinør` (confirm) |
+| NAV map | ☑ `bygg-og-anlegg.maskin--og-kranfører` (Maskin- og kranfører) — confirmed vs snapshot 2026-07-21 |
 | PSA ingest | ☑ **14/15 counties** written; **Oslo `03` ABORT** (VG2=0); `34`/`42`/`56` partial + matching review |
 | Bedrift ingest | ☑ **Closed** — kolonne-3 roster 9 fag; 2140 active rows; prod UI 2026-07-12 |
 

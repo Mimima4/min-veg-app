@@ -197,12 +197,15 @@ export const PATH_FAMILY_OUTCOME_NAV_MAP_ROWS: PathFamilyOutcomeNavMapRow[] = [
       "anleggsteknikk",
       "anleggsteknikfaget",
       "anleggsmaskinforer",
+      "anleggsmaskinfører",
       "veg og anlegg",
     ],
     vilbliOutcomeUrlIncludes: ["/yrker/v.ba/"],
     filterTags: ["laere", "fagbrev"],
-    navStyrkCode: "håndverkere.anleggsmaskinør",
-    navTitle: "Anleggsmaskinfører",
+    // NAV arbeidsplassen STYRK (snapshot) — no exact «Anleggsmaskinfører» leaf;
+    // closest occupation is Maskin- og kranfører.
+    navStyrkCode: "bygg-og-anlegg.maskin--og-kranfører",
+    navTitle: "Maskin- og kranfører",
     catalogProfessionSlug: "anleggsteknikk",
     sourceReferenceUrl: ANLEGSTEKNIKK_SOURCE,
   },

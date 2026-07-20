@@ -134,18 +134,26 @@ Stopgap `reconcile:anlegg-vg2-current-year` = emergency audit only. Next full an
 
 ---
 
-## 6. Verification log (agent, 2026-07-20)
+## 6. Verification log
 
-Home-IP / local env checks (no production write):
+### Agent 2026-07-20 (pre-relay)
 
 | Check | Result |
 |-------|--------|
 | `npm run smoke:current-year-offering -- --live` | **PASS** — VG2 offering count=6; codes `303535,8858,8158,8741,6586,8524` |
 | `npm run reconcile:anlegg-vg2-current-year` (dry-run) | **PASS** — active VG2 PSA=6; keep=6; deactivate=0 |
-| Enforcement default | **ON** (`isCurrentYearOfferingEnforcementEnabled` default `"1"`) |
-| Full-matrix Contour B production relay | **Not re-run this session** — next scheduled/home-IP full relay must keep PSA at 6 without stopgap (`VGS_OPERATIONAL_RUNNERS.md`) |
+| Enforcement default | **ON** |
 
-**Verdict:** P8-11 data correctness is **live today** (6 active). Durable self-heal is **code-ready and default-ON**; confirm once on the next full-matrix relay.
+### Home-IP full Contour B production relay 2026-07-21
+
+| Check | Result |
+|-------|--------|
+| `node scripts/relay-contour-b-vilbli-to-production.mjs` | **90 pairs** — ingested **74**, skipped Contour A **8**, failed ABORT VG2=0 **8** (~20 min) |
+| Anleggsteknikk | **14/15 ingested**; Oslo `03` ABORT VG2=0 (expected); offering landslinje p5 `usable=true` len=97476 |
+| Painter ABORTs (VG2=0 locally) | `15,32,33,39,40,55,56` — expected empty VG2 extract, not anlegg |
+| `npm run reconcile:anlegg-vg2-current-year` (dry-run, post-relay) | **PASS** — active VG2 PSA=**6**; keep=6; deactivate=0 |
+
+**Verdict:** P8-11 current-year tilbud is **live and durable** after full-matrix relay — PSA stayed at 6 without stopgap `--apply`.
 
 ---
 

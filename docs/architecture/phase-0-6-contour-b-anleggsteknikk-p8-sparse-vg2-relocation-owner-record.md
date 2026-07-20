@@ -97,7 +97,7 @@ National sparse VG2 — not dense. Gate `≤50` passes; carpenter/electrician fa
 | Alternative builder + sync | ☑ landed `a125eba` / `f76a474` |
 | Smokes + QA build | ☑ `smoke:anleggsteknikk-sparse-vg2` + `smoke:school-geography-scope` PASS 2026-07-20 |
 | Prod UI sign-off | ☑ owner 2026-07-20 |
-| Current-year tilbud (P8-11) | ☑ data=6 + live offering smoke PASS 2026-07-20 (durable gate ON; next full-matrix relay keeps it without stopgap) |
+| Current-year tilbud (P8-11) | ☑ data=6 + live offering smoke PASS 2026-07-20; **full-matrix relay 2026-07-21** kept PSA=6 (deactivate=0) |
 
 ---
 
@@ -107,4 +107,4 @@ National sparse VG2 — not dense. Gate `≤50` passes; carpenter/electrician fa
 - `phase-0-6-contour-b-sixth-profession-expansion-owner-record.md` §3 classify matrix
 - `phase-4-relocation-geography-contract-owner-decision-record.md`
 - `phase-4-current-year-programme-offering-owner-decision-record.md`
-- `phase-4-relocation-maybe-public-transport-reach-owner-draft.md` — next upgrade of `maybe` admit (bus+rail)
+- `phase-4-relocation-maybe-public-transport-reach-owner-draft.md` — maybe admit Entur PT + north-coast air (**IMPLEMENTED**)

@@ -36,7 +36,7 @@
 |------|--------|
 | `34` / `42` / `56` `canonical_matching_review` | Batch hygiene — not runtime blocker |
 | Oslo `03` VG2=0 ABORT | Expected — primary empty per P-6 |
-| P-3 NAV matcher classify confirm | Scaffolded — `håndverkere.anleggsmaskinør` |
+| P-3 NAV matcher classify confirm | **OK** — `bygg-og-anlegg.maskin--og-kranfører` present in NAV snapshot; map resolve PASS 2026-07-21 |
 
 ---
 
