@@ -16,7 +16,7 @@
 |-------|--------|--------|
 | **Before P-8** | `relocation_willingness` **does not** filter VGS `programme_selection` school dropdowns | **Correct — keep** |
 | **Bedrift** | `larebedrift-geography-scope.ts` already applies relocation to verified employers | **Live** |
-| **P-8 pilot** | First VGS school geography activation — **sparse national VG2** for `anleggsteknikk` only | **Next code** |
+| **P-8 pilot** | First VGS school geography activation — **sparse national VG2** for `anleggsteknikk` only | **Live / CLOSED** 2026-07-20 (`phase-0-6-contour-b-anleggsteknikk-p8-sparse-vg2-relocation-owner-record.md`) |
 | **Post P-8** | Same module reused when **C-FAGSKOLE** / other contours go live — separate alternative slots | **Planned** |
 
 **Non-goal:** Turn on relocation for **all** VGS professions in one step. Dense professions (carpenter, electrician, …) must **not** start pulling national school lists.

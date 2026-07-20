@@ -134,7 +134,22 @@ Stopgap `reconcile:anlegg-vg2-current-year` = emergency audit only. Next full an
 
 ---
 
-## 6. References
+## 6. Verification log (agent, 2026-07-20)
+
+Home-IP / local env checks (no production write):
+
+| Check | Result |
+|-------|--------|
+| `npm run smoke:current-year-offering -- --live` | **PASS** — VG2 offering count=6; codes `303535,8858,8158,8741,6586,8524` |
+| `npm run reconcile:anlegg-vg2-current-year` (dry-run) | **PASS** — active VG2 PSA=6; keep=6; deactivate=0 |
+| Enforcement default | **ON** (`isCurrentYearOfferingEnforcementEnabled` default `"1"`) |
+| Full-matrix Contour B production relay | **Not re-run this session** — next scheduled/home-IP full relay must keep PSA at 6 without stopgap (`VGS_OPERATIONAL_RUNNERS.md`) |
+
+**Verdict:** P8-11 data correctness is **live today** (6 active). Durable self-heal is **code-ready and default-ON**; confirm once on the next full-matrix relay.
+
+---
+
+## 7. References
 
 - `phase-0-6-contour-b-anleggsteknikk-p8-sparse-vg2-relocation-owner-record.md`
 - `phase-4-relocation-geography-contract-owner-decision-record.md`
