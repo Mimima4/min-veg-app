@@ -2,10 +2,11 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **SCAFFOLDED** 2026-07-21 — awaiting catalog seed + Contour B relay + prod UI |
+| **Status** | **CLOSED** — PSA relay + bedrift ingest + catalog 2026-07-21 |
 | **Date (UTC)** | 2026-07-21 |
 | **Profession slug** | `klima` (catalog: Ventilasjons- og blikkenslager) |
 | **Parent gate** | `phase-0-6-contour-b-vgs-profession-addition-template.md`; `phase-0-6-contour-b-seventh-profession-expansion-owner-record.md` |
+| **Commits** | `66cb987` (scaffold); closure ops same day |
 
 ---
 
@@ -16,21 +17,13 @@
 | VG1 | Bygg- og anleggsteknikk | `V.BABAT1----` |
 | VG2 | Klima, energi og miljøteknikk | `V.BAKEM2----` |
 
-**Kolonne-3 / bedrift (Vestland extract 2026-07-21):**
+**Kolonne-3 / bedrift:**
 
-| VIGO | Label |
-|------|--------|
-| `BAVBL3` | Ventilasjons- og blikkenslagerfaget (**primary**) |
-| `BAISL3` | Isolatørfaget |
-| `BATAK3` | Tak- og membrantekkerfaget |
-
-| Show | Do not show |
-|------|-------------|
-| KEM chain only (`BAKEM2`) | Other VG2 columns as this profession |
-| Kolonne-3 from **this** chain | National master list of all `V.BA` |
-| | **Påbygging** |
-
-**V.BA shared VG1:** `klima` shares VG1 Bygg with carpenter / plumber / painter / anleggsteknikk. Separate `profession_slug`; VG2 programme switch wired.
+| VIGO | Label | Ingest (2026-07-21) |
+|------|--------|---------------------|
+| `BAVBL3` | Ventilasjons- og blikkenslagerfaget (**primary**) | upserted **258** |
+| `BAISL3` | Isolatørfaget | upserted **11** |
+| `BATAK3` | Tak- og membrantekkerfaget | upserted **72** |
 
 ---
 
@@ -39,42 +32,33 @@
 | Purpose | URL |
 |---------|-----|
 | National strukturkart | https://www.vilbli.no/nb/no/strukturkart/V.BA/klima-energi-og-miljoteknikk-fag-og-timefordeling?kurs=V.BABAT1----_V.BAKEM2----&side=p2 |
-| **Pipeline ingest** (per fylke) | `.../bygg-og-anleggsteknikk-skoler-og-laerebedrifter?kurs=V.BABAT1----_V.BAKEM2----&side=p5` |
+| **Pipeline ingest** | `.../bygg-og-anleggsteknikk-skoler-og-laerebedrifter?kurs=V.BABAT1----_V.BAKEM2----&side=p5` |
 
 ---
 
-## Materialization slugs
+## Materialization / PSA (relay 2026-07-21)
 
-| Node | Slug pattern | Title |
-|------|----------------|-------|
-| VG1 | `klima-vg1-bygg-{countySlug}` | VG1 Bygg- og anleggsteknikk |
-| VG2 | `klima-vg2-klima-{countySlug}` | VG2 Klima, energi og miljøteknikk |
+| Node | Slug pattern |
+|------|----------------|
+| VG1 | `klima-vg1-bygg-{countySlug}` |
+| VG2 | `klima-vg2-klima-{countySlug}` |
 
-Trøndelag (`50`): `klima-vg1-bygg-trondelag`, `klima-vg2-klima-trondelag`.
+Full-matrix relay: **105** pairs — klima **10 ingested**, **5 ABORT** (Vilbli VG2=0: `15,18,32,40,56`). Active PSA **120** rows across 10 fylke with VG1+VG2. `profession_program_links` **20**.
 
----
-
-## Lærebedrift
-
-| Field | Value |
-|-------|--------|
-| Primary `larefag_code` | `VENTILASJONS_OG_BLIKKENSLAGERFAGET` |
-| VIGO | `BAVBL3` |
-| Roster | `data/larebedrift/kolonne3-rosters/klima.json` (ingestBatch **7**, primary fag batch **0**) |
+ABORT counties → no primary route (county-local policy); not a defect.
 
 ---
 
 ## Owner decisions
 
-| # | Question | Status |
-|---|----------|--------|
-| P-1 | Vilbli contour | **OK — Bygg → KEM** (`BAKEM2`) |
-| P-2 | VG3/bedrift list | **OK — kolonne-3 for Bygg→KEM** (3 fag) |
-| P-3 | NAV matcher | **OK — catalog level** `håndverkere.platearbeider-og-sveiser` (closest STYRK; no dedicated blikkenslager leaf) |
-| P-4 | V.BA VG2 switch | **OK — extend sibling set** |
-| P-5 | Empty bedrift | **OK — godkjent-only** |
-| P-6 | Northern VG2=0 | Per county-local primary policy — ABORT if Vilbli VG2=0 |
-| P-7 / P-8 | Cross-fylke / sparse | **Not chartered** for klima at start |
+| # | Status |
+|---|--------|
+| P-1 Vilbli contour | **OK — Bygg → KEM** (`BAKEM2`) |
+| P-2 kolonne-3 | **OK — 3 fag** |
+| P-3 NAV | **OK —** `håndverkere.platearbeider-og-sveiser` |
+| P-4 V.BA VG2 switch | **OK** |
+| P-5 empty bedrift | **OK — godkjent-only** |
+| P-6 / P-7 / P-8 | Primary empty where VG2=0; no north sparse overlay for klima |
 
 ---
 
@@ -82,8 +66,9 @@ Trøndelag (`50`): `klima-vg1-bygg-trondelag`, `klima-vg2-klima-trondelag`.
 
 | Step | Status |
 |------|--------|
-| Code scaffolding | ☑ |
-| Catalog seed applied prod | ☑ 2026-07-21 |
-| Relay dry-run + full production | ☐ |
-| Lærebedrift ingest (3 fag) | ☐ |
-| E2E + prod UI | ☐ |
+| Code scaffolding | ☑ `66cb987` |
+| Catalog seed prod | ☑ |
+| Full Contour B relay | ☑ 2026-07-21 |
+| Lærebedrift ingest (3 fag) | ☑ Finnlærebedrift API |
+| Monthly cron | ☑ primary in batch 0; siblings batch 7 via roster |
+| Prod UI / Block C E2E | ☐ owner browser spot-check (Vestland `46` recommended) |

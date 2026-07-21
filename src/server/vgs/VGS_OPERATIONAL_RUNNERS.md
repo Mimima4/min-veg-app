@@ -264,9 +264,9 @@ Checks: CLI rejects `--contour-b-partial` on `run-vgs-truth-pipeline.mjs`; Conto
 
 | Layer | Status |
 |-------|--------|
-| **C-VGS-YRKESFAG** | **7 professions** in pipeline (+ **`klima`** scaffolding 2026-07-21); prior six live; klima awaits catalog seed + Contour B relay |
+| **C-VGS-YRKESFAG** | **7 professions** in pipeline (`…`, **`klima`** closed 2026-07-21 — KEM / Ventilasjons- og blikkenslager) |
 | **C-NAV-OCCUPATION** | Matcher wired at **catalog profession / NAV vacancy level** |
-| **Verified bedrift** | P3b for **6 live + klima roster ready**; ingest roster includes KEM kolonne-3 (`BAVBL3`/`BAISL3`/`BATAK3`); **empty bedrift when no godkjent = OK** |
+| **Verified bedrift** | P3b for **7 professions**; KEM kolonne-3 ingest 2026-07-21 (`BAVBL3`/`BAISL3`/`BATAK3`); **empty bedrift when no godkjent = OK** |
 | **C-TRANSPORT-KOMMUNE** | Live nationwide overlay |
 | **C-LOSA-FJERN** | Live Finnmark (56) electrician charter |
 | **C-FAGSKOLE / C-HOYSKOLE / C-PROFESJONSSTUDIER / C-PABYGGING** | **Out of scope for P4-MCT-1** — filters hidden until respective MCT phases |
@@ -345,18 +345,18 @@ Contour B / catalog expansion checklist (if adding counties): `§ Expansion gate
 | PSA ingest | ☑ **14/15 counties** written; **Oslo `03` ABORT** (VG2=0); `34`/`42`/`56` partial + matching review |
 | Bedrift ingest | ☑ **Closed** — kolonne-3 roster 9 fag; 2140 active rows; prod UI 2026-07-12 |
 
-### Klima (`klima` / Ventilasjons- og blikkenslager) — scaffolding (2026-07-21)
+### Klima (`klima` / Ventilasjons- og blikkenslager) — live (2026-07-21)
 
-**Code scaffolding.** Vilbli chain: VG1 `V.BABAT1----` → VG2 `V.BAKEM2----`; kolonne-3 `BAVBL3` / `BAISL3` / `BATAK3`. Charter: `phase-0-6-contour-b-klima-vilbli-branch-owner-record.md`.
+**Code + nationwide PSA + bedrift.** Vilbli: VG1 `V.BABAT1----` → VG2 `V.BAKEM2----`; kolonne-3 `BAVBL3` / `BAISL3` / `BATAK3`. Charter: `phase-0-6-contour-b-klima-vilbli-branch-owner-record.md`.
 
 | Layer | Status |
 |-------|--------|
 | Path definition + materialization | ☑ |
 | V.BA VG2 switch | ☑ |
-| Catalog seed | ☑ applied prod 2026-07-21 |
+| Catalog seed | ☑ |
 | NAV map | ☑ `håndverkere.platearbeider-og-sveiser` |
-| PSA ingest | ☐ Contour B full-matrix relay after seed+deploy |
-| Bedrift ingest | ☐ roster ready (`klima.json`) — run lærebedrift ingest for 3 fag |
+| PSA ingest | ☑ full-matrix 2026-07-21 — 10/15 fylke; ABORT VG2=0 on `15,18,32,40,56` |
+| Bedrift ingest | ☑ Finnlærebedrift — 258+11+72 upserted |
 
 ### Bedrift UI performance (truth-preserving)
 
@@ -377,4 +377,4 @@ Eleven elektro kolonne-3 lærefag in `larebedrift-fagkode.mjs` + `kolonne3-laref
 
 Ten kjøretøy kolonne-3 lærefag registered in `larebedrift-fagkode.mjs` + `kolonne3-larefag-mapping.ts` (VIGO `TP*` codes). Default profession slug `mechanic` → `MOTORMEKANIKERFAGET`. Pilot gate: `primary-route-larebedrift-pilot.ts` (nationwide when child has home kommune). **Nationwide ingest done (2026-07-03)** — ~1777 mechanic rows, ~6494 total active in `larebedrift_truth`; prod-check Vestland Fagvalg → bedrift.
 
-**Monthly cron:** Vercel runs eight batched `GET /api/internal/larebedrift/run-ingest/{0..7}` jobs on the 1st — batch 0 core Bygg fag + `BAAMF3`; batch **7** anleggsteknikk sibling kolonne-3 (`scheduled-larebedrift-ingest-fags.ts` + `data/larebedrift/kolonne3-rosters/`). Manual single-fag: `?larefagCode=ANLEGGRORLEGGERFAGET`.
+**Monthly cron:** Vercel runs eight batched `GET /api/internal/larebedrift/run-ingest/{0..7}` jobs on the 1st — batch 0 core Bygg fag + `BAAMF3` + `BAVBL3` (klima primary); batch **7** anlegg + klima sibling kolonne-3 (`scheduled-larebedrift-ingest-fags.ts` + `data/larebedrift/kolonne3-rosters/`). Manual single-fag: `?larefagCode=VENTILASJONS_OG_BLIKKENSLAGERFAGET`.
