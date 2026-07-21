@@ -99,6 +99,30 @@ function detectAnleggsteknikkBranch(program) {
   return "unspecified";
 }
 
+function detectKlimaBranch(program) {
+  const title = normalizeBasic(program.title);
+  const code = normalizeBasic(program.program_code);
+
+  if (
+    title.includes("klima") ||
+    title.includes("energi og miljo") ||
+    title.includes("miljoteknikk") ||
+    title.includes("ventilasjon") ||
+    title.includes("blikkenslager") ||
+    title.includes("isolator") ||
+    code.includes("bakem") ||
+    code.includes("bavbl") ||
+    code.includes("baisl") ||
+    code.includes("batak")
+  ) {
+    return "klima_energi_miljo";
+  }
+  if (title.includes("bygg") || title.includes("anlegg") || code.includes("bat")) {
+    return "bygg_og_anlegg";
+  }
+  return "unspecified";
+}
+
 function detectElectricianBranch(program) {
   const title = normalizeBasic(program.title);
   const code = normalizeBasic(program.program_code);
@@ -569,6 +593,88 @@ const ELECTRICIAN_PATH_DEFINITION = {
   ],
 };
 
+/**
+ * Klima (catalog: klima / Ventilasjons- og blikkenslager) — Vilbli area V.BA:
+ * VG1 Bygg- og anleggsteknikk → VG2 Klima, energi og miljøteknikk → kolonne-3/bedrift.
+ * Excludes other V.BA VG2 columns and Påbygging.
+ */
+const KLIMA_PATH_DEFINITION = {
+  professionSlug: "klima",
+  contour: "vgs",
+  description:
+    "Klima VGS path: VG1 Bygg- og anleggsteknikk, VG2 Klima energi og miljøteknikk, kolonne-3/bedrift list from Vilbli.",
+  sourceModel: {
+    buildVilbliUrl(countySlug) {
+      return `https://www.vilbli.no/nb/${countySlug}/strukturkart/V.BA/bygg-og-anleggsteknikk-skoler-og-laerebedrifter?kurs=V.BABAT1----_V.BAKEM2----&side=p5`;
+    },
+    strukturkartReferenceUrl:
+      "https://www.vilbli.no/nb/no/strukturkart/V.BA/klima-energi-og-miljoteknikk-fag-og-timefordeling?kurs=V.BABAT1----_V.BAKEM2----&side=p2",
+  },
+  stageNodes: [
+    {
+      nodeKey: "VG1_BYGG",
+      stage: "VG1",
+      stageType: "school_programme",
+      branchSpecific: false,
+      requiredForWrite: true,
+      expectedLabel: "VG1 Bygg- og anleggsteknikk",
+      programmeMatcher: {
+        includesAny: [
+          "vg1 bygg og anleggsteknikk",
+          "vg1 bygg- og anleggsteknikk",
+          "bygg- og anleggsteknikk",
+          "bygg og anlegg",
+        ],
+      },
+    },
+    {
+      nodeKey: "VG2_KLIMA",
+      stage: "VG2",
+      stageType: "school_programme",
+      branchSpecific: true,
+      requiredForWrite: true,
+      branchKey: "klima_energi_miljo",
+      expectedLabel: "VG2 Klima, energi og miljøteknikk",
+      programmeMatcher: {
+        includesAny: [
+          "klima",
+          "energi og miljo",
+          "miljoteknikk",
+          "klima energi",
+          "ventilasjon",
+          "blikkenslager",
+        ],
+      },
+      branchResolver: detectKlimaBranch,
+    },
+    {
+      nodeKey: "VG3_OR_BEDRIFT_SPECIALIZATIONS",
+      stage: "VG3",
+      stageType: "awareness_only",
+      branchSpecific: false,
+      requiredForWrite: false,
+      expectedLabel:
+        "VG3 or Opplæring i bedrift — kolonne-3 list from Vilbli for Bygg→Klima chain (not Påbygging)",
+    },
+    {
+      nodeKey: "APPRENTICESHIP_PROGRESS",
+      stage: "APPRENTICESHIP",
+      stageType: "progression",
+      branchSpecific: true,
+      requiredForWrite: false,
+      expectedLabel: "Opplæring i bedrift (lære / fagbrev) after VG2 or VG3 specialization choice",
+    },
+    {
+      nodeKey: "FAGBREV_OUTCOME",
+      stage: "FAGBREV",
+      stageType: "progression_outcome",
+      branchSpecific: true,
+      requiredForWrite: false,
+      expectedLabel: "Fagbrev Ventilasjons- og blikkenslager",
+    },
+  ],
+};
+
 export const VGS_PATH_DEFINITIONS = {
   electrician: ELECTRICIAN_PATH_DEFINITION,
   mechanic: MECHANIC_PATH_DEFINITION,
@@ -576,6 +682,7 @@ export const VGS_PATH_DEFINITIONS = {
   plumber: PLUMBER_PATH_DEFINITION,
   painter: PAINTER_PATH_DEFINITION,
   anleggsteknikk: ANLEGSTEKNIKK_PATH_DEFINITION,
+  klima: KLIMA_PATH_DEFINITION,
 };
 
 export function getVgsPathDefinition(professionSlug) {

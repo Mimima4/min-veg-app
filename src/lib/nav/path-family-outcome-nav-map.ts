@@ -209,6 +209,30 @@ export const PATH_FAMILY_OUTCOME_NAV_MAP_ROWS: PathFamilyOutcomeNavMapRow[] = [
     catalogProfessionSlug: "anleggsteknikk",
     sourceReferenceUrl: ANLEGSTEKNIKK_SOURCE,
   },
+  // --- klima / klima-vba-klima-energi ---
+  {
+    mapVersion: 1,
+    pathFamilySlug: "klima-vba-klima-energi",
+    professionSlug: "klima",
+    vilbliTitleIncludes: [
+      "klima",
+      "energi og miljo",
+      "miljoteknikk",
+      "ventilasjon",
+      "blikkenslager",
+      "isolator",
+      "isolatør",
+      "membrantekker",
+    ],
+    vilbliOutcomeUrlIncludes: ["/yrker/v.ba/"],
+    filterTags: ["laere", "fagbrev"],
+    // Closest NAV arbeidsplassen leaf for Ventilasjons- / blikkenslager chain.
+    navStyrkCode: "håndverkere.platearbeider-og-sveiser",
+    navTitle: "Platearbeider og sveiser",
+    catalogProfessionSlug: "klima",
+    sourceReferenceUrl:
+      "https://www.vilbli.no/nb/no/strukturkart/V.BA/klima-energi-og-miljoteknikk-fag-og-timefordeling?kurs=V.BABAT1----_V.BAKEM2----&side=p2",
+  },
 ];
 
 const FILTER_TAG_ALLOWLIST: Record<RouteOutcomeFilterId, Set<PathFamilyOutcomeFilterTag> | null> =

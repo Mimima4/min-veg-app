@@ -264,9 +264,9 @@ Checks: CLI rejects `--contour-b-partial` on `run-vgs-truth-pipeline.mjs`; Conto
 
 | Layer | Status |
 |-------|--------|
-| **C-VGS-YRKESFAG** | **6 professions** in pipeline (`electrician`, `mechanic`, `carpenter`, `plumber`, `painter`, **`anleggsteknikk`**); anleggsteknikk PSA nationwide batch 2026-07-10 (Oslo `03` VG2=0 ABORT) |
+| **C-VGS-YRKESFAG** | **7 professions** in pipeline (+ **`klima`** scaffolding 2026-07-21); prior six live; klima awaits catalog seed + Contour B relay |
 | **C-NAV-OCCUPATION** | Matcher wired at **catalog profession / NAV vacancy level** |
-| **Verified bedrift** | P3b for **6 professions**; ingest roster = tømrer + rørlegger + maler kolonne-3 + **anleggsmaskinfører (`BAAMF3`)** + 11 elektro + 10 kjøretøy; **empty bedrift when no godkjent = OK** |
+| **Verified bedrift** | P3b for **6 live + klima roster ready**; ingest roster includes KEM kolonne-3 (`BAVBL3`/`BAISL3`/`BATAK3`); **empty bedrift when no godkjent = OK** |
 | **C-TRANSPORT-KOMMUNE** | Live nationwide overlay |
 | **C-LOSA-FJERN** | Live Finnmark (56) electrician charter |
 | **C-FAGSKOLE / C-HOYSKOLE / C-PROFESJONSSTUDIER / C-PABYGGING** | **Out of scope for P4-MCT-1** — filters hidden until respective MCT phases |
@@ -344,6 +344,19 @@ Contour B / catalog expansion checklist (if adding counties): `§ Expansion gate
 | NAV map | ☑ `bygg-og-anlegg.maskin--og-kranfører` (Maskin- og kranfører) — confirmed vs snapshot 2026-07-21 |
 | PSA ingest | ☑ **14/15 counties** written; **Oslo `03` ABORT** (VG2=0); `34`/`42`/`56` partial + matching review |
 | Bedrift ingest | ☑ **Closed** — kolonne-3 roster 9 fag; 2140 active rows; prod UI 2026-07-12 |
+
+### Klima (`klima` / Ventilasjons- og blikkenslager) — scaffolding (2026-07-21)
+
+**Code scaffolding.** Vilbli chain: VG1 `V.BABAT1----` → VG2 `V.BAKEM2----`; kolonne-3 `BAVBL3` / `BAISL3` / `BATAK3`. Charter: `phase-0-6-contour-b-klima-vilbli-branch-owner-record.md`.
+
+| Layer | Status |
+|-------|--------|
+| Path definition + materialization | ☑ |
+| V.BA VG2 switch | ☑ |
+| Catalog seed | ☑ applied prod 2026-07-21 |
+| NAV map | ☑ `håndverkere.platearbeider-og-sveiser` |
+| PSA ingest | ☐ Contour B full-matrix relay after seed+deploy |
+| Bedrift ingest | ☐ roster ready (`klima.json`) — run lærebedrift ingest for 3 fag |
 
 ### Bedrift UI performance (truth-preserving)
 

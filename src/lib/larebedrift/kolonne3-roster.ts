@@ -6,6 +6,7 @@
  * commit JSON under `data/larebedrift/kolonne3-rosters/`, wire ingest batch in template §4.4.
  */
 import anleggsteknikkRoster from "../../../data/larebedrift/kolonne3-rosters/anleggsteknikk.json" with { type: "json" };
+import klimaRoster from "../../../data/larebedrift/kolonne3-rosters/klima.json" with { type: "json" };
 
 export type Kolonne3RosterEntry = {
   apiQueryCode: string;
@@ -26,6 +27,7 @@ export type Kolonne3ProfessionRoster = {
 
 export const KOLONNE3_PROFESSION_ROSTERS: ReadonlyArray<Kolonne3ProfessionRoster> = [
   anleggsteknikkRoster as Kolonne3ProfessionRoster,
+  klimaRoster as Kolonne3ProfessionRoster,
 ];
 
 export function kolonne3RosterEntriesFlat(): Kolonne3RosterEntry[] {

@@ -1,0 +1,38 @@
+{
+  "professionSlug": "klima",
+  "vilbliChainTokens": "V.BABAT1----_V.BAKEM2----",
+  "extractReferenceCountySlug": "vestland",
+  "ingestBatch": 7,
+  "entries": [
+    {
+      "apiQueryCode": "BAVBL3",
+      "code": "VENTILASJONS_OG_BLIKKENSLAGERFAGET",
+      "label": "Ventilasjons- og blikkenslagerfaget",
+      "labelAliases": [
+        "ventilasjons- og blikkenslager",
+        "ventilasjons- og blikkenslagerfaget",
+        "ventilasjon",
+        "blikkenslager",
+        "blikkenslagerfaget"
+      ],
+      "ingestBatch": 0
+    },
+    {
+      "apiQueryCode": "BAISL3",
+      "code": "ISOLATORFAGET",
+      "label": "Isolatørfaget",
+      "labelAliases": ["isolator", "isolatorfaget", "isolatør", "isolatørfaget"]
+    },
+    {
+      "apiQueryCode": "BATAK3",
+      "code": "TAK_OG_MEMBRANTEKKERFAGET",
+      "label": "Tak- og membrantekkerfaget",
+      "labelAliases": [
+        "tak- og membrantekker",
+        "tak- og membrantekkerfaget",
+        "taktekker",
+        "membrantekker"
+      ]
+    }
+  ]
+}

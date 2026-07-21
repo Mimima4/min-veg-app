@@ -7,6 +7,7 @@ export const CARPENTER_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_TOMRER"];
 export const PLUMBER_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_RORLEGGER"];
 export const PAINTER_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_OVERFLATETEKNIKK"];
 export const ANLEGSTEKNIKK_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_ANLEGSTEKNIKK"];
+export const KLIMA_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_KLIMA"];
 
 const PROFESSION_MATERIALIZATION_CONFIG = {
   electrician: {
@@ -82,6 +83,18 @@ const PROFESSION_MATERIALIZATION_CONFIG = {
         slug: "anleggsteknikk-vg2-anleggsteknikk-trondelag",
         code: "ANLEG-VG2-TRONDELAG",
       },
+    },
+  },
+  klima: {
+    nodeKeys: KLIMA_MATERIALIZATION_NODE_KEYS,
+    deriveIdentitySpecs: deriveKlimaProgrammeIdentitySpecs,
+    countyScopedSlugPatterns: {
+      VG1: { slugMiddle: "vg1-bygg", codePrefix: "KLIMA-VG1" },
+      VG2: { slugMiddle: "vg2-klima", codePrefix: "KLIMA-VG2" },
+    },
+    trondelagSlugPatterns: {
+      VG1: { slug: "klima-vg1-bygg-trondelag", code: "KLIMA-VG1-TRONDELAG" },
+      VG2: { slug: "klima-vg2-klima-trondelag", code: "KLIMA-VG2-TRONDELAG" },
     },
   },
 };
@@ -383,6 +396,50 @@ function deriveAnleggsteknikkProgrammeIdentitySpecs({ professionSlug, countyCode
       slug: `${professionSlug}-${patterns.VG2.slugMiddle}-${countyMeta.slug}`,
       programCode: `${patterns.VG2.codePrefix}-${countyUpper}`,
       title: "VG2 Anleggsteknikfaget",
+    },
+  };
+}
+
+/** @internal */
+function deriveKlimaProgrammeIdentitySpecs({ professionSlug, countyCode, countyMeta }) {
+  if (professionSlug !== "klima") {
+    return null;
+  }
+
+  if (countyMeta == null || typeof countyMeta.slug !== "string" || countyMeta.slug.length === 0) {
+    return null;
+  }
+
+  const config = PROFESSION_MATERIALIZATION_CONFIG.klima;
+
+  if (countyCode === "50") {
+    return {
+      VG1_BYGG: {
+        slug: config.trondelagSlugPatterns.VG1.slug,
+        programCode: config.trondelagSlugPatterns.VG1.code,
+        title: "VG1 Bygg- og anleggsteknikk",
+      },
+      VG2_KLIMA: {
+        slug: config.trondelagSlugPatterns.VG2.slug,
+        programCode: config.trondelagSlugPatterns.VG2.code,
+        title: "VG2 Klima, energi og miljøteknikk",
+      },
+    };
+  }
+
+  const countyUpper = countyTokenFromMeta(countyMeta);
+  const patterns = config.countyScopedSlugPatterns;
+
+  return {
+    VG1_BYGG: {
+      slug: `${professionSlug}-${patterns.VG1.slugMiddle}-${countyMeta.slug}`,
+      programCode: `${patterns.VG1.codePrefix}-${countyUpper}`,
+      title: "VG1 Bygg- og anleggsteknikk",
+    },
+    VG2_KLIMA: {
+      slug: `${professionSlug}-${patterns.VG2.slugMiddle}-${countyMeta.slug}`,
+      programCode: `${patterns.VG2.codePrefix}-${countyUpper}`,
+      title: "VG2 Klima, energi og miljøteknikk",
     },
   };
 }
