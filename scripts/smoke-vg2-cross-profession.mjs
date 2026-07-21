@@ -50,6 +50,7 @@ assert.equal(isVbaSharedVg1Profession("plumber"), true);
 assert.equal(isVbaSharedVg1Profession("painter"), true);
 assert.equal(isVbaSharedVg1Profession("anleggsteknikk"), true);
 assert.equal(isVbaSharedVg1Profession("klima"), true);
+assert.equal(isVbaSharedVg1Profession("murer"), true);
 assert.equal(isVbaSharedVg1Profession("electrician"), false);
 
 assert.equal(

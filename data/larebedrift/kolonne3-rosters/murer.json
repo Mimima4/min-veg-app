@@ -1,0 +1,28 @@
+{
+  "professionSlug": "murer",
+  "vilbliChainTokens": "V.BABAT1----_V.BABMO2----",
+  "extractReferenceCountySlug": "vestland",
+  "ingestBatch": 7,
+  "entries": [
+    {
+      "apiQueryCode": "BAMFF3",
+      "code": "MURER_OG_FLISLEGGERFAGET",
+      "label": "Murer- og flisleggerfaget",
+      "labelAliases": [
+        "murer- og flisleggerfaget",
+        "murer og flislegger",
+        "murer",
+        "murerfaget",
+        "flislegger",
+        "flisleggerfaget"
+      ],
+      "ingestBatch": 0
+    },
+    {
+      "apiQueryCode": "BABET3",
+      "code": "BETONGFAGET",
+      "label": "Betongfaget",
+      "labelAliases": ["betong", "betongfaget", "betongfagarbeider"]
+    }
+  ]
+}

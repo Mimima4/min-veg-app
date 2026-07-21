@@ -11,6 +11,7 @@ const SUPPORTED = new Set([
   "painter",
   "anleggsteknikk",
   "klima",
+  "murer",
 ]);
 
 const NORWAY_FYLKE_ADJACENCY_GRAPH = {

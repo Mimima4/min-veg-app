@@ -8,6 +8,7 @@ export const PLUMBER_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_RORLEGGER"];
 export const PAINTER_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_OVERFLATETEKNIKK"];
 export const ANLEGSTEKNIKK_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_ANLEGSTEKNIKK"];
 export const KLIMA_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_KLIMA"];
+export const MURER_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_BETONG_MUR"];
 
 const PROFESSION_MATERIALIZATION_CONFIG = {
   electrician: {
@@ -95,6 +96,18 @@ const PROFESSION_MATERIALIZATION_CONFIG = {
     trondelagSlugPatterns: {
       VG1: { slug: "klima-vg1-bygg-trondelag", code: "KLIMA-VG1-TRONDELAG" },
       VG2: { slug: "klima-vg2-klima-trondelag", code: "KLIMA-VG2-TRONDELAG" },
+    },
+  },
+  murer: {
+    nodeKeys: MURER_MATERIALIZATION_NODE_KEYS,
+    deriveIdentitySpecs: deriveMurerProgrammeIdentitySpecs,
+    countyScopedSlugPatterns: {
+      VG1: { slugMiddle: "vg1-bygg", codePrefix: "MURER-VG1" },
+      VG2: { slugMiddle: "vg2-betong-mur", codePrefix: "MURER-VG2" },
+    },
+    trondelagSlugPatterns: {
+      VG1: { slug: "murer-vg1-bygg-trondelag", code: "MURER-VG1-TRONDELAG" },
+      VG2: { slug: "murer-vg2-betong-mur-trondelag", code: "MURER-VG2-TRONDELAG" },
     },
   },
 };
@@ -440,6 +453,50 @@ function deriveKlimaProgrammeIdentitySpecs({ professionSlug, countyCode, countyM
       slug: `${professionSlug}-${patterns.VG2.slugMiddle}-${countyMeta.slug}`,
       programCode: `${patterns.VG2.codePrefix}-${countyUpper}`,
       title: "VG2 Klima, energi og miljøteknikk",
+    },
+  };
+}
+
+/** @internal */
+function deriveMurerProgrammeIdentitySpecs({ professionSlug, countyCode, countyMeta }) {
+  if (professionSlug !== "murer") {
+    return null;
+  }
+
+  if (countyMeta == null || typeof countyMeta.slug !== "string" || countyMeta.slug.length === 0) {
+    return null;
+  }
+
+  const config = PROFESSION_MATERIALIZATION_CONFIG.murer;
+
+  if (countyCode === "50") {
+    return {
+      VG1_BYGG: {
+        slug: config.trondelagSlugPatterns.VG1.slug,
+        programCode: config.trondelagSlugPatterns.VG1.code,
+        title: "VG1 Bygg- og anleggsteknikk",
+      },
+      VG2_BETONG_MUR: {
+        slug: config.trondelagSlugPatterns.VG2.slug,
+        programCode: config.trondelagSlugPatterns.VG2.code,
+        title: "VG2 Betong og mur",
+      },
+    };
+  }
+
+  const countyUpper = countyTokenFromMeta(countyMeta);
+  const patterns = config.countyScopedSlugPatterns;
+
+  return {
+    VG1_BYGG: {
+      slug: `${professionSlug}-${patterns.VG1.slugMiddle}-${countyMeta.slug}`,
+      programCode: `${patterns.VG1.codePrefix}-${countyUpper}`,
+      title: "VG1 Bygg- og anleggsteknikk",
+    },
+    VG2_BETONG_MUR: {
+      slug: `${professionSlug}-${patterns.VG2.slugMiddle}-${countyMeta.slug}`,
+      programCode: `${patterns.VG2.codePrefix}-${countyUpper}`,
+      title: "VG2 Betong og mur",
     },
   };
 }

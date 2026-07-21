@@ -289,6 +289,32 @@ if (anleggProfessionDefault?.code !== "ANLEGGSMASKINFORERFAGET") {
   console.log(`OK anleggsteknikk VG3 slug -> ${anleggProfessionDefault.code}`);
 }
 
+const murerProfessionDefault = resolveLarefagFromKolonne3Selection({
+  programSlug: "murer-vg3-murer-og-flislegger-vestland",
+  programTitle: "VG3 Murer- og flisleggerfaget",
+  title: "Murer- og flisleggerfaget",
+});
+if (murerProfessionDefault?.code !== "MURER_OG_FLISLEGGERFAGET") {
+  failed += 1;
+  console.error(
+    `FAIL murer VG3 slug: expected MURER_OG_FLISLEGGERFAGET, got ${murerProfessionDefault?.code ?? "null"}`
+  );
+} else {
+  console.log(`OK murer VG3 slug -> ${murerProfessionDefault.code}`);
+}
+
+const betongFag = resolveLarefagFromKolonne3Selection({
+  programSlug: "kolonne3-betongfaget",
+  programTitle: "Betongfaget",
+  title: "Betongfaget",
+});
+if (betongFag?.code !== "BETONGFAGET") {
+  failed += 1;
+  console.error(`FAIL Betongfaget: expected BETONGFAGET, got ${betongFag?.code ?? "null"}`);
+} else {
+  console.log(`OK Betongfaget -> ${betongFag.code}`);
+}
+
 const anleggRorleggerUrl = resolveLarefagFromKolonne3Selection({
   programSlug: "kolonne3-anleggsrorleggerfaget",
   programTitle: "Anleggsrørleggerfaget",

@@ -233,6 +233,27 @@ export const PATH_FAMILY_OUTCOME_NAV_MAP_ROWS: PathFamilyOutcomeNavMapRow[] = [
     sourceReferenceUrl:
       "https://www.vilbli.no/nb/no/strukturkart/V.BA/klima-energi-og-miljoteknikk-fag-og-timefordeling?kurs=V.BABAT1----_V.BAKEM2----&side=p2",
   },
+  // --- murer / murer-vba-betong-mur ---
+  {
+    mapVersion: 1,
+    pathFamilySlug: "murer-vba-betong-mur",
+    professionSlug: "murer",
+    vilbliTitleIncludes: [
+      "betong og mur",
+      "betong",
+      "mur",
+      "murer",
+      "flislegger",
+    ],
+    vilbliOutcomeUrlIncludes: ["/yrker/v.ba/"],
+    filterTags: ["laere", "fagbrev"],
+    // Dedicated NAV arbeidsplassen leaf for the Murer- og flisleggerfaget primary fag.
+    navStyrkCode: "håndverkere.murer",
+    navTitle: "Murer",
+    catalogProfessionSlug: "murer",
+    sourceReferenceUrl:
+      "https://www.vilbli.no/nb/no/strukturkart/V.BA/betong-og-mur-fag-og-timefordeling?kurs=V.BABAT1----_V.BABMO2----&side=p2",
+  },
 ];
 
 const FILTER_TAG_ALLOWLIST: Record<RouteOutcomeFilterId, Set<PathFamilyOutcomeFilterTag> | null> =

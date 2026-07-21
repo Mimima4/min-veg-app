@@ -16787,6 +16787,17 @@ function detectKlimaBranch(program) {
   }
   return "unspecified";
 }
+function detectMurerBranch(program) {
+  const title = normalizeBasic(program.title);
+  const code = normalizeBasic(program.program_code);
+  if (title.includes("betong og mur") || title.includes("mur") || title.includes("betong") || title.includes("flislegger") || code.includes("babmo") || code.includes("bamff") || code.includes("babet")) {
+    return "betong_og_mur";
+  }
+  if (title.includes("bygg") || title.includes("anlegg") || code.includes("bat")) {
+    return "bygg_og_anlegg";
+  }
+  return "unspecified";
+}
 function detectElectricianBranch(program) {
   const title = normalizeBasic(program.title);
   const code = normalizeBasic(program.program_code);
@@ -17281,6 +17292,78 @@ var KLIMA_PATH_DEFINITION = {
     }
   ]
 };
+var MURER_PATH_DEFINITION = {
+  professionSlug: "murer",
+  contour: "vgs",
+  description: "Murer VGS path: VG1 Bygg- og anleggsteknikk, VG2 Betong og mur, kolonne-3/bedrift list from Vilbli.",
+  sourceModel: {
+    buildVilbliUrl(countySlug) {
+      return `https://www.vilbli.no/nb/${countySlug}/strukturkart/V.BA/bygg-og-anleggsteknikk-skoler-og-laerebedrifter?kurs=V.BABAT1----_V.BABMO2----&side=p5`;
+    },
+    strukturkartReferenceUrl: "https://www.vilbli.no/nb/no/strukturkart/V.BA/betong-og-mur-fag-og-timefordeling?kurs=V.BABAT1----_V.BABMO2----&side=p2"
+  },
+  stageNodes: [
+    {
+      nodeKey: "VG1_BYGG",
+      stage: "VG1",
+      stageType: "school_programme",
+      branchSpecific: false,
+      requiredForWrite: true,
+      expectedLabel: "VG1 Bygg- og anleggsteknikk",
+      programmeMatcher: {
+        includesAny: [
+          "vg1 bygg og anleggsteknikk",
+          "vg1 bygg- og anleggsteknikk",
+          "bygg- og anleggsteknikk",
+          "bygg og anlegg"
+        ]
+      }
+    },
+    {
+      nodeKey: "VG2_BETONG_MUR",
+      stage: "VG2",
+      stageType: "school_programme",
+      branchSpecific: true,
+      requiredForWrite: true,
+      branchKey: "betong_og_mur",
+      expectedLabel: "VG2 Betong og mur",
+      programmeMatcher: {
+        includesAny: [
+          "betong og mur",
+          "betong",
+          "mur",
+          "murer",
+          "flislegger"
+        ]
+      },
+      branchResolver: detectMurerBranch
+    },
+    {
+      nodeKey: "VG3_OR_BEDRIFT_SPECIALIZATIONS",
+      stage: "VG3",
+      stageType: "awareness_only",
+      branchSpecific: false,
+      requiredForWrite: false,
+      expectedLabel: "VG3 or Oppl\xE6ring i bedrift \u2014 kolonne-3 list from Vilbli for Bygg\u2192Betong og mur chain (not P\xE5bygging)"
+    },
+    {
+      nodeKey: "APPRENTICESHIP_PROGRESS",
+      stage: "APPRENTICESHIP",
+      stageType: "progression",
+      branchSpecific: true,
+      requiredForWrite: false,
+      expectedLabel: "Oppl\xE6ring i bedrift (l\xE6re / fagbrev) after VG2 or VG3 specialization choice"
+    },
+    {
+      nodeKey: "FAGBREV_OUTCOME",
+      stage: "FAGBREV",
+      stageType: "progression_outcome",
+      branchSpecific: true,
+      requiredForWrite: false,
+      expectedLabel: "Fagbrev Murer- og flislegger"
+    }
+  ]
+};
 var VGS_PATH_DEFINITIONS = {
   electrician: ELECTRICIAN_PATH_DEFINITION,
   mechanic: MECHANIC_PATH_DEFINITION,
@@ -17288,7 +17371,8 @@ var VGS_PATH_DEFINITIONS = {
   plumber: PLUMBER_PATH_DEFINITION,
   painter: PAINTER_PATH_DEFINITION,
   anleggsteknikk: ANLEGSTEKNIKK_PATH_DEFINITION,
-  klima: KLIMA_PATH_DEFINITION
+  klima: KLIMA_PATH_DEFINITION,
+  murer: MURER_PATH_DEFINITION
 };
 function getVgsPathDefinition(professionSlug) {
   return VGS_PATH_DEFINITIONS[professionSlug] ?? null;
@@ -17333,6 +17417,7 @@ var PLUMBER_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_RORLEGGER"];
 var PAINTER_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_OVERFLATETEKNIKK"];
 var ANLEGSTEKNIKK_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_ANLEGSTEKNIKK"];
 var KLIMA_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_KLIMA"];
+var MURER_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_BETONG_MUR"];
 var PROFESSION_MATERIALIZATION_CONFIG = {
   electrician: {
     nodeKeys: ELECTRICIAN_MATERIALIZATION_NODE_KEYS,
@@ -17419,6 +17504,18 @@ var PROFESSION_MATERIALIZATION_CONFIG = {
     trondelagSlugPatterns: {
       VG1: { slug: "klima-vg1-bygg-trondelag", code: "KLIMA-VG1-TRONDELAG" },
       VG2: { slug: "klima-vg2-klima-trondelag", code: "KLIMA-VG2-TRONDELAG" }
+    }
+  },
+  murer: {
+    nodeKeys: MURER_MATERIALIZATION_NODE_KEYS,
+    deriveIdentitySpecs: deriveMurerProgrammeIdentitySpecs,
+    countyScopedSlugPatterns: {
+      VG1: { slugMiddle: "vg1-bygg", codePrefix: "MURER-VG1" },
+      VG2: { slugMiddle: "vg2-betong-mur", codePrefix: "MURER-VG2" }
+    },
+    trondelagSlugPatterns: {
+      VG1: { slug: "murer-vg1-bygg-trondelag", code: "MURER-VG1-TRONDELAG" },
+      VG2: { slug: "murer-vg2-betong-mur-trondelag", code: "MURER-VG2-TRONDELAG" }
     }
   }
 };
@@ -17689,6 +17786,43 @@ function deriveKlimaProgrammeIdentitySpecs({ professionSlug, countyCode, countyM
       slug: `${professionSlug}-${patterns.VG2.slugMiddle}-${countyMeta.slug}`,
       programCode: `${patterns.VG2.codePrefix}-${countyUpper}`,
       title: "VG2 Klima, energi og milj\xF8teknikk"
+    }
+  };
+}
+function deriveMurerProgrammeIdentitySpecs({ professionSlug, countyCode, countyMeta }) {
+  if (professionSlug !== "murer") {
+    return null;
+  }
+  if (countyMeta == null || typeof countyMeta.slug !== "string" || countyMeta.slug.length === 0) {
+    return null;
+  }
+  const config = PROFESSION_MATERIALIZATION_CONFIG.murer;
+  if (countyCode === "50") {
+    return {
+      VG1_BYGG: {
+        slug: config.trondelagSlugPatterns.VG1.slug,
+        programCode: config.trondelagSlugPatterns.VG1.code,
+        title: "VG1 Bygg- og anleggsteknikk"
+      },
+      VG2_BETONG_MUR: {
+        slug: config.trondelagSlugPatterns.VG2.slug,
+        programCode: config.trondelagSlugPatterns.VG2.code,
+        title: "VG2 Betong og mur"
+      }
+    };
+  }
+  const countyUpper = countyTokenFromMeta(countyMeta);
+  const patterns = config.countyScopedSlugPatterns;
+  return {
+    VG1_BYGG: {
+      slug: `${professionSlug}-${patterns.VG1.slugMiddle}-${countyMeta.slug}`,
+      programCode: `${patterns.VG1.codePrefix}-${countyUpper}`,
+      title: "VG1 Bygg- og anleggsteknikk"
+    },
+    VG2_BETONG_MUR: {
+      slug: `${professionSlug}-${patterns.VG2.slugMiddle}-${countyMeta.slug}`,
+      programCode: `${patterns.VG2.codePrefix}-${countyUpper}`,
+      title: "VG2 Betong og mur"
     }
   };
 }
@@ -19134,7 +19268,8 @@ var MATERIALIZATION_NODE_KEYS_BY_PROFESSION = {
   plumber: PLUMBER_MATERIALIZATION_NODE_KEYS,
   painter: PAINTER_MATERIALIZATION_NODE_KEYS,
   anleggsteknikk: ANLEGSTEKNIKK_MATERIALIZATION_NODE_KEYS,
-  klima: KLIMA_MATERIALIZATION_NODE_KEYS
+  klima: KLIMA_MATERIALIZATION_NODE_KEYS,
+  murer: MURER_MATERIALIZATION_NODE_KEYS
 };
 var COUNTY_CODE_TO_VILBLI2 = {
   "03": { slug: "oslo", label: "Oslo" },

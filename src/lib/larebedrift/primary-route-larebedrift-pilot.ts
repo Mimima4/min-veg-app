@@ -12,7 +12,8 @@
  * Phase 6 (closed): painter nationwide when the child has a home kommune.
  * Phase 7 (2026-07-10): anleggsteknikk nationwide when the child has a home kommune.
  * Phase 8 (2026-07-21): klima nationwide when the child has a home kommune.
- * V.BA VG2 cross-profession programme switch (carpenter ↔ plumber ↔ painter ↔ anleggsteknikk ↔ klima) — see `VGS_OPERATIONAL_RUNNERS.md`.
+ * Phase 9 (2026-07-21): murer nationwide when the child has a home kommune.
+ * V.BA VG2 cross-profession programme switch (carpenter ↔ plumber ↔ painter ↔ anleggsteknikk ↔ klima ↔ murer) — see `VGS_OPERATIONAL_RUNNERS.md`.
  */
 
 const PRIMARY_ROUTE_LAREBEDRIFT_PROFESSIONS = new Set([
@@ -23,6 +24,7 @@ const PRIMARY_ROUTE_LAREBEDRIFT_PROFESSIONS = new Set([
   "painter",
   "anleggsteknikk",
   "klima",
+  "murer",
 ]);
 
 export function childHomeCountyCodes(
