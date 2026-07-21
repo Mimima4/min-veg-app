@@ -1,8 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import {
-  PAINTER_NORTH_HOME_FYLKE_CODES,
-  PAINTER_NORTH_NABOFYLKE_VG2_PROGRAMME_SLUG,
+  NORTH_CROSS_FYLKE_HOME_FYLKE_CODES,
+  northCrossFylkeNabofylkeVg2ProgrammeSlug,
+  northCrossFylkeVg2TitleNb,
 } from "@/lib/regional-delivery/painter-north-cross-fylke-pilot";
 import {
   buildVg2ProgrammeOptionsFromTruthRows,
@@ -149,22 +150,20 @@ export async function resolveVbaSharedVg2ProgrammeOptions(params: {
       continue;
     }
 
-    if (
-      siblingProfessionSlug === "painter" &&
-      PAINTER_NORTH_HOME_FYLKE_CODES.has(homeCountyCode)
-    ) {
+    if (NORTH_CROSS_FYLKE_HOME_FYLKE_CODES.has(homeCountyCode)) {
+      const nabofylkeSlug = northCrossFylkeNabofylkeVg2ProgrammeSlug(siblingProfessionSlug);
       const nabofylkeOption = await loadEducationProgrammeOption({
         supabase: params.supabase,
-        programSlug: PAINTER_NORTH_NABOFYLKE_VG2_PROGRAMME_SLUG,
-        professionSlug: "painter",
+        programSlug: nabofylkeSlug,
+        professionSlug: siblingProfessionSlug,
       });
-      const painterNorthOption = nabofylkeOption ?? {
-        program_slug: PAINTER_NORTH_NABOFYLKE_VG2_PROGRAMME_SLUG,
-        program_title: "VG2 Overflateteknikk",
-        profession_slug: "painter",
+      const northOption = nabofylkeOption ?? {
+        program_slug: nabofylkeSlug,
+        program_title: `VG2 ${northCrossFylkeVg2TitleNb(siblingProfessionSlug)}`,
+        profession_slug: siblingProfessionSlug,
       };
-      if (!bySlug.has(painterNorthOption.program_slug)) {
-        bySlug.set(painterNorthOption.program_slug, painterNorthOption);
+      if (!bySlug.has(northOption.program_slug)) {
+        bySlug.set(northOption.program_slug, northOption);
       }
     }
 

@@ -4,7 +4,10 @@ import { useState } from "react";
 import type { StudyRouteAlternativeTeaser } from "@/lib/routes/route-types";
 import type { SteigenCarpenterVekslingInfoCopy } from "@/lib/regional-delivery/steigen-carpenter-veksling-pilot";
 import { STEIGEN_CARPENTER_VEKSLING_VARIANT_ID } from "@/lib/regional-delivery/steigen-carpenter-veksling-path-variant";
-import { PAINTER_NORTH_CROSS_FYLKE_NABOFYLKE_VARIANT_ID } from "@/lib/regional-delivery/painter-north-cross-fylke-pilot";
+import {
+  isNorthCrossFylkeCuratedVariantId,
+  PAINTER_NORTH_CROSS_FYLKE_NABOFYLKE_VARIANT_ID,
+} from "@/lib/regional-delivery/painter-north-cross-fylke-pilot";
 import { ANLEGGSTEKNIKK_SPARSE_VG2_ALTERNATIVE_VARIANT_ID } from "@/lib/vgs/sparse-vg2-alternative-eligibility";
 import SteigenVekslingBadgeWithInfo from "@/components/route/steigen-veksling-badge-with-info";
 import RouteStepsPanel from "./route-steps-panel";
@@ -64,9 +67,13 @@ export default function AlternativeRoutesCollapsible({
               data-testid={
                 alternative.curatedRegionalVariantId === STEIGEN_CARPENTER_VEKSLING_VARIANT_ID
                   ? "steigen-veksling-alternative-route"
-                  : alternative.curatedRegionalVariantId ===
+                  : isNorthCrossFylkeCuratedVariantId(
+                        alternative.curatedRegionalVariantId ?? ""
+                      )
+                    ? alternative.curatedRegionalVariantId ===
                       PAINTER_NORTH_CROSS_FYLKE_NABOFYLKE_VARIANT_ID
-                    ? "painter-north-cross-fylke-alternative-route"
+                      ? "painter-north-cross-fylke-alternative-route"
+                      : "north-cross-fylke-alternative-route"
                     : alternative.curatedRegionalVariantId ===
                         ANLEGGSTEKNIKK_SPARSE_VG2_ALTERNATIVE_VARIANT_ID
                       ? "anleggsteknikk-sparse-vg2-alternative-route"

@@ -5,8 +5,8 @@ import { resolveCuratedRegionalAlternativeMainDifference } from "@/lib/regional-
 import { parseCuratedRegionalVariantReason } from "@/lib/regional-delivery/curated-regional-variant-reason";
 import { isPainterNorthCrossFylkePathVariantEligibleForNeighbor } from "@/lib/regional-delivery/painter-north-cross-fylke-path-variant";
 import {
-  isPainterNorthCrossFylkeNabofylkeVariantEligible,
-  PAINTER_NORTH_CROSS_FYLKE_NABOFYLKE_VARIANT_ID,
+  isNorthCrossFylkeCuratedVariantId,
+  isNorthCrossFylkeNabofylkeVariantEligible,
 } from "@/lib/regional-delivery/painter-north-cross-fylke-pilot";
 import {
   isAnleggsteknikkSparseVg2VariantEligible,
@@ -122,8 +122,8 @@ function isCuratedRegionalVariantEligible(
     });
   }
 
-  if (curatedRegionalVariantId === PAINTER_NORTH_CROSS_FYLKE_NABOFYLKE_VARIANT_ID) {
-    return isPainterNorthCrossFylkeNabofylkeVariantEligible({
+  if (isNorthCrossFylkeCuratedVariantId(curatedRegionalVariantId)) {
+    return isNorthCrossFylkeNabofylkeVariantEligible({
       professionSlug: context.professionSlug,
       preferredMunicipalityCodes: context.preferredMunicipalityCodes,
     });

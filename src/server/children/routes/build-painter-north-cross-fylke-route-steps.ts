@@ -1,14 +1,14 @@
 import "server-only";
 
 import {
-  assessPainterNorthSplitRouteTruthEligibility,
-  isPainterNorthCrossFylkePathVariantEligible,
-  listPainterNorthReachableNeighborCountyCodes,
-  mergePainterNorthCrossFylkeTruthRows,
-  PAINTER_NORTH_NABOFYLKE_VG2_PROGRAMME_SLUG,
-  painterHomeVg1ProgrammeSlugsForFylke,
-  painterProgrammeSlugsForFylke,
-  resolvePainterNorthHomeFylkeCode,
+  assessNorthCrossFylkeSplitRouteTruthEligibility,
+  isNorthCrossFylkePathVariantEligible,
+  listNorthCrossFylkeReachableNeighborCountyCodes,
+  mergeNorthCrossFylkeTruthRows,
+  northCrossFylkeHomeVg1ProgrammeSlugsForFylke,
+  northCrossFylkeNabofylkeVg2ProgrammeSlug,
+  northCrossFylkeProgrammeSlugsForFylke,
+  resolveNorthCrossFylkeHomeFylkeCode,
 } from "@/lib/regional-delivery/painter-north-cross-fylke-pilot";
 import type { StudyRouteSnapshotStep } from "@/lib/routes/route-types";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -27,7 +27,8 @@ import { selectTruthCandidateForRoute } from "./select-truth-candidate-for-route
 
 /**
  * P-7 — Vilbli north split: VG1 PSA in home fylke (55/56) + VG2+ PSA in neighbor fylke.
- * Returns [] when home lacks VG1 or neighbor lacks VG2 Overflateteknikk.
+ * Relocation willingness is ignored for selection (commute model — not P-8 relocation).
+ * Returns [] when home lacks VG1, home already has VG2, or neighbor lacks VG2.
  */
 export async function buildPainterNorthCrossFylkeRouteSteps(params: {
   supabase: SupabaseClient;
@@ -37,8 +38,10 @@ export async function buildPainterNorthCrossFylkeRouteSteps(params: {
   relocationWillingness?: "no" | "maybe" | "yes" | null;
   locale?: string;
 }): Promise<StudyRouteSnapshotStep[]> {
+  void params.relocationWillingness;
+
   if (
-    !isPainterNorthCrossFylkePathVariantEligible({
+    !isNorthCrossFylkePathVariantEligible({
       professionSlug: params.professionSlug,
       preferredMunicipalityCodes: params.preferredMunicipalityCodes,
       neighborCountyCode: params.neighborCountyCode,
@@ -47,21 +50,35 @@ export async function buildPainterNorthCrossFylkeRouteSteps(params: {
     return [];
   }
 
-  const homeFylkeCode = resolvePainterNorthHomeFylkeCode(params.preferredMunicipalityCodes);
+  const homeFylkeCode = resolveNorthCrossFylkeHomeFylkeCode(params.preferredMunicipalityCodes);
   if (!homeFylkeCode) {
     return [];
   }
 
-  const homeVg1Slugs = painterHomeVg1ProgrammeSlugsForFylke(homeFylkeCode);
-  const neighborProgrammeSlugs = painterProgrammeSlugsForFylke(params.neighborCountyCode);
-  if (homeVg1Slugs.length === 0 || neighborProgrammeSlugs.length === 0) {
+  const homeProgrammeSlugs = Array.from(
+    new Set([
+      ...northCrossFylkeHomeVg1ProgrammeSlugsForFylke({
+        professionSlug: params.professionSlug,
+        fylkeCode: homeFylkeCode,
+      }),
+      ...northCrossFylkeProgrammeSlugsForFylke({
+        professionSlug: params.professionSlug,
+        fylkeCode: homeFylkeCode,
+      }),
+    ])
+  );
+  const neighborProgrammeSlugs = northCrossFylkeProgrammeSlugsForFylke({
+    professionSlug: params.professionSlug,
+    fylkeCode: params.neighborCountyCode,
+  });
+  if (homeProgrammeSlugs.length === 0 || neighborProgrammeSlugs.length === 0) {
     return [];
   }
 
   const [homeTruth, neighborTruth] = await Promise.all([
     getAvailabilityTruth({
       countyCode: homeFylkeCode,
-      programmeSlugsOrCodes: homeVg1Slugs,
+      programmeSlugsOrCodes: homeProgrammeSlugs,
       locale: params.locale,
     }),
     getAvailabilityTruth({
@@ -71,7 +88,8 @@ export async function buildPainterNorthCrossFylkeRouteSteps(params: {
     }),
   ]);
 
-  const splitEligibility = assessPainterNorthSplitRouteTruthEligibility({
+  const splitEligibility = assessNorthCrossFylkeSplitRouteTruthEligibility({
+    professionSlug: params.professionSlug,
     homeRows: homeTruth.rows,
     neighborRows: neighborTruth.rows,
   });
@@ -79,74 +97,20 @@ export async function buildPainterNorthCrossFylkeRouteSteps(params: {
     return [];
   }
 
-  const mergedTruthRows = mergePainterNorthCrossFylkeTruthRows({
+  const mergedTruthRows = mergeNorthCrossFylkeTruthRows({
+    professionSlug: params.professionSlug,
     homeRows: homeTruth.rows,
     neighborRows: neighborTruth.rows,
   });
 
-  const transportSortContext = await buildKommuneTransportSortContext({
-    rows: mergedTruthRows,
-    homeMunicipalityCodes: params.preferredMunicipalityCodes,
-  });
-
-  const selectedTruthCandidate = await selectTruthCandidateForRoute({
+  return buildStepsFromMergedNorthCrossFylkeTruth({
     supabase: params.supabase,
-    rows: mergedTruthRows,
-    preferredMunicipalityCodes: params.preferredMunicipalityCodes,
-    relocationWillingness: params.relocationWillingness ?? "maybe",
-    transportSortContext,
-  });
-
-  const pathVariants = await buildPathVariants(neighborTruth.rows, params.professionSlug);
-  const enrichedPathVariants = pathVariants.variants.map((variant) => ({ ...variant }));
-
-  const pathVariantNavContext = await buildRoutePathVariantNavContext({
-    supabase: params.supabase,
-    professionSlug: params.professionSlug,
-    preferredEducationLevel: null,
-    pathVariants,
-    enrichedPathVariants,
-    childContext: true,
-  });
-
-  const professionIdBySlug = await resolveCatalogProfessionIdsForNavMatches({
-    supabase: params.supabase,
-    navMatches: pathVariantNavContext.navMatches,
-  });
-
-  const navOutcomesForSteps = attachCatalogProfessionIdsToNavMatches({
-    navMatches: pathVariantNavContext.navMatches,
-    professionIdBySlug,
-  });
-
-  const vg2ProgrammeOptions = await resolveVbaSharedVg2ProgrammeOptions({
-    supabase: params.supabase,
-    professionSlug: params.professionSlug,
-    truthRows: mergedTruthRows,
-    preferredMunicipalityCodes: params.preferredMunicipalityCodes,
-  });
-
-  let steps = buildStepsFromAvailabilityTruth({
-    rows: mergedTruthRows,
-    selectedCandidate: selectedTruthCandidate,
-    vg2ProgrammeOptions,
-    transportSortContext,
-    professionSlug: params.professionSlug,
-    pathVariants: enrichedPathVariants,
-    selectedPathVariantId: pathVariantNavContext.primaryPathVariantId,
-    navOutcomes: navOutcomesForSteps,
-    selectedVg2ProgramSlug: PAINTER_NORTH_NABOFYLKE_VG2_PROGRAMME_SLUG,
-  });
-
-  steps = await applyVerifiedLarebedriftToApprenticeshipSteps({
-    supabase: params.supabase,
-    steps,
     professionSlug: params.professionSlug,
     preferredMunicipalityCodes: params.preferredMunicipalityCodes,
-    countyCodesForEmployerScope: [homeFylkeCode],
+    homeFylkeCode,
+    mergedTruthRows,
+    neighborRowsForPathVariants: neighborTruth.rows,
   });
-
-  return steps;
 }
 
 /**
@@ -160,26 +124,39 @@ export async function buildPainterNorthCrossFylkeMergedRouteSteps(params: {
   relocationWillingness?: "no" | "maybe" | "yes" | null;
   locale?: string;
 }): Promise<StudyRouteSnapshotStep[]> {
-  const homeFylkeCode = resolvePainterNorthHomeFylkeCode(params.preferredMunicipalityCodes);
-  if (!homeFylkeCode || params.professionSlug !== "painter") {
+  void params.relocationWillingness;
+
+  const homeFylkeCode = resolveNorthCrossFylkeHomeFylkeCode(params.preferredMunicipalityCodes);
+  if (!homeFylkeCode) {
     return [];
   }
 
-  const neighborCountyCodes = listPainterNorthReachableNeighborCountyCodes(
+  const neighborCountyCodes = listNorthCrossFylkeReachableNeighborCountyCodes(
     params.preferredMunicipalityCodes
   );
   if (neighborCountyCodes.length === 0) {
     return [];
   }
 
-  const homeVg1Slugs = painterHomeVg1ProgrammeSlugsForFylke(homeFylkeCode);
-  if (homeVg1Slugs.length === 0) {
+  const homeProgrammeSlugs = Array.from(
+    new Set([
+      ...northCrossFylkeHomeVg1ProgrammeSlugsForFylke({
+        professionSlug: params.professionSlug,
+        fylkeCode: homeFylkeCode,
+      }),
+      ...northCrossFylkeProgrammeSlugsForFylke({
+        professionSlug: params.professionSlug,
+        fylkeCode: homeFylkeCode,
+      }),
+    ])
+  );
+  if (homeProgrammeSlugs.length === 0) {
     return [];
   }
 
   const homeTruth = await getAvailabilityTruth({
     countyCode: homeFylkeCode,
-    programmeSlugsOrCodes: homeVg1Slugs,
+    programmeSlugsOrCodes: homeProgrammeSlugs,
     locale: params.locale,
   });
 
@@ -187,7 +164,10 @@ export async function buildPainterNorthCrossFylkeMergedRouteSteps(params: {
     neighborCountyCodes.map((neighborCountyCode) =>
       getAvailabilityTruth({
         countyCode: neighborCountyCode,
-        programmeSlugsOrCodes: painterProgrammeSlugsForFylke(neighborCountyCode),
+        programmeSlugsOrCodes: northCrossFylkeProgrammeSlugsForFylke({
+          professionSlug: params.professionSlug,
+          fylkeCode: neighborCountyCode,
+        }),
         locale: params.locale,
       })
     )
@@ -199,7 +179,8 @@ export async function buildPainterNorthCrossFylkeMergedRouteSteps(params: {
       neighborTruth: neighborTruths[index] ?? { hasTruth: false, rows: [] },
     }))
     .filter(({ neighborTruth }) =>
-      assessPainterNorthSplitRouteTruthEligibility({
+      assessNorthCrossFylkeSplitRouteTruthEligibility({
+        professionSlug: params.professionSlug,
         homeRows: homeTruth.rows,
         neighborRows: neighborTruth.rows,
       }).eligible
@@ -209,27 +190,51 @@ export async function buildPainterNorthCrossFylkeMergedRouteSteps(params: {
     return [];
   }
 
-  const mergedTruthRows = mergePainterNorthCrossFylkeTruthRows({
+  const mergedTruthRows = mergeNorthCrossFylkeTruthRows({
+    professionSlug: params.professionSlug,
     homeRows: homeTruth.rows,
     neighborRows: eligibleNeighborPairs.flatMap((pair) => pair.neighborTruth.rows),
   });
 
   const allNeighborRows = eligibleNeighborPairs.flatMap((pair) => pair.neighborTruth.rows);
 
+  return buildStepsFromMergedNorthCrossFylkeTruth({
+    supabase: params.supabase,
+    professionSlug: params.professionSlug,
+    preferredMunicipalityCodes: params.preferredMunicipalityCodes,
+    homeFylkeCode,
+    mergedTruthRows,
+    neighborRowsForPathVariants: allNeighborRows,
+  });
+}
+
+async function buildStepsFromMergedNorthCrossFylkeTruth(params: {
+  supabase: SupabaseClient;
+  professionSlug: string;
+  preferredMunicipalityCodes: string[];
+  homeFylkeCode: string;
+  mergedTruthRows: Awaited<ReturnType<typeof getAvailabilityTruth>>["rows"];
+  neighborRowsForPathVariants: Awaited<ReturnType<typeof getAvailabilityTruth>>["rows"];
+}): Promise<StudyRouteSnapshotStep[]> {
   const transportSortContext = await buildKommuneTransportSortContext({
-    rows: mergedTruthRows,
+    rows: params.mergedTruthRows,
     homeMunicipalityCodes: params.preferredMunicipalityCodes,
   });
 
+  // P-7 commute: do not apply relocation_willingness filtering (pass null → full-set sort
+  // after home-fylke prefer). Neighbor VG2 schools remain visible in options.
   const selectedTruthCandidate = await selectTruthCandidateForRoute({
     supabase: params.supabase,
-    rows: mergedTruthRows,
+    rows: params.mergedTruthRows,
     preferredMunicipalityCodes: params.preferredMunicipalityCodes,
-    relocationWillingness: params.relocationWillingness ?? "maybe",
+    relocationWillingness: null,
     transportSortContext,
   });
 
-  const pathVariants = await buildPathVariants(allNeighborRows, params.professionSlug);
+  const pathVariants = await buildPathVariants(
+    params.neighborRowsForPathVariants,
+    params.professionSlug
+  );
   const enrichedPathVariants = pathVariants.variants.map((variant) => ({ ...variant }));
 
   const pathVariantNavContext = await buildRoutePathVariantNavContext({
@@ -254,12 +259,14 @@ export async function buildPainterNorthCrossFylkeMergedRouteSteps(params: {
   const vg2ProgrammeOptions = await resolveVbaSharedVg2ProgrammeOptions({
     supabase: params.supabase,
     professionSlug: params.professionSlug,
-    truthRows: mergedTruthRows,
+    truthRows: params.mergedTruthRows,
     preferredMunicipalityCodes: params.preferredMunicipalityCodes,
   });
 
+  const nabofylkeSlug = northCrossFylkeNabofylkeVg2ProgrammeSlug(params.professionSlug);
+
   let steps = buildStepsFromAvailabilityTruth({
-    rows: mergedTruthRows,
+    rows: params.mergedTruthRows,
     selectedCandidate: selectedTruthCandidate,
     vg2ProgrammeOptions,
     transportSortContext,
@@ -267,7 +274,7 @@ export async function buildPainterNorthCrossFylkeMergedRouteSteps(params: {
     pathVariants: enrichedPathVariants,
     selectedPathVariantId: pathVariantNavContext.primaryPathVariantId,
     navOutcomes: navOutcomesForSteps,
-    selectedVg2ProgramSlug: PAINTER_NORTH_NABOFYLKE_VG2_PROGRAMME_SLUG,
+    selectedVg2ProgramSlug: nabofylkeSlug,
   });
 
   steps = await applyVerifiedLarebedriftToApprenticeshipSteps({
@@ -275,7 +282,7 @@ export async function buildPainterNorthCrossFylkeMergedRouteSteps(params: {
     steps,
     professionSlug: params.professionSlug,
     preferredMunicipalityCodes: params.preferredMunicipalityCodes,
-    countyCodesForEmployerScope: [homeFylkeCode],
+    countyCodesForEmployerScope: [params.homeFylkeCode],
   });
 
   return steps;

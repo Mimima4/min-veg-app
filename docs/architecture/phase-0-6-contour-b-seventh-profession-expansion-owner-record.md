@@ -39,4 +39,4 @@ Detail: `phase-0-6-contour-b-klima-vilbli-branch-owner-record.md`.
 | NAV map | ☑ |
 | Full Contour B production relay | ☑ 2026-07-21 (10/15 klima ingested; 5 ABORT VG2=0) |
 | Lærebedrift ingest | ☑ 258+11+72 upserted |
-| Owner UI spot-check | ☐ Vestland recommended |
+| Owner UI spot-check | ☑ Finnmark P-7 nabofylke verified 2026-07-21 |

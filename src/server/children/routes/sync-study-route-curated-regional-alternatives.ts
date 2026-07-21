@@ -10,13 +10,13 @@ import {
   STEIGEN_CARPENTER_VEKSLING_VARIANT_REASON,
 } from "@/lib/regional-delivery/steigen-carpenter-veksling-path-variant";
 import {
-  PAINTER_NORTH_CROSS_FYLKE_NABOFYLKE_VARIANT_ID,
-  isPainterNorthCrossFylkeNabofylkeVariantEligible,
+  isNorthCrossFylkeNabofylkeVariantEligible,
+  northCrossFylkeNabofylkeVariantId,
 } from "@/lib/regional-delivery/painter-north-cross-fylke-pilot";
 import {
-  buildPainterNorthCrossFylkeNabofylkeAlternativeSteps,
-  buildPainterNorthCrossFylkeNabofylkeVariantLabel,
-  PAINTER_NORTH_CROSS_FYLKE_NABOFYLKE_VARIANT_REASON,
+  buildNorthCrossFylkeNabofylkeAlternativeSteps,
+  buildNorthCrossFylkeNabofylkeVariantLabel,
+  northCrossFylkeNabofylkeVariantReason,
 } from "@/lib/regional-delivery/painter-north-cross-fylke-path-variant";
 import {
   ANLEGGSTEKNIKK_SPARSE_VG2_ALTERNATIVE_VARIANT_ID,
@@ -77,9 +77,9 @@ type BuildStepsParams = {
 };
 
 type CuratedRegionalVariantDefinition = {
-  variantId: string;
-  variantLabel: string;
-  variantReason: string;
+  resolveVariantId: (professionSlug: string) => string;
+  resolveVariantLabel: (professionSlug: string) => string;
+  resolveVariantReason: (professionSlug: string) => string;
   isEligible: (params: {
     professionSlug: string;
     preferredMunicipalityCodes: string[];
@@ -110,9 +110,9 @@ export function shouldSyncStudyRouteCuratedRegionalAlternatives(params: {
 
 const CURATED_REGIONAL_VARIANTS: CuratedRegionalVariantDefinition[] = [
   {
-    variantId: STEIGEN_CARPENTER_VEKSLING_VARIANT_ID,
-    variantLabel: STEIGEN_CARPENTER_VEKSLING_VARIANT_LABEL,
-    variantReason: STEIGEN_CARPENTER_VEKSLING_VARIANT_REASON,
+    resolveVariantId: () => STEIGEN_CARPENTER_VEKSLING_VARIANT_ID,
+    resolveVariantLabel: () => STEIGEN_CARPENTER_VEKSLING_VARIANT_LABEL,
+    resolveVariantReason: () => STEIGEN_CARPENTER_VEKSLING_VARIANT_REASON,
     isEligible: isSteigenCarpenterVekslingPathVariantEligible,
     buildSteps: ({ supabase, professionSlug, preferredMunicipalityCodes }) =>
       buildSteigenCarpenterVekslingStepsWithVerifiedEmployers({
@@ -127,12 +127,14 @@ const CURATED_REGIONAL_VARIANTS: CuratedRegionalVariantDefinition[] = [
       }),
   },
   {
-    variantId: PAINTER_NORTH_CROSS_FYLKE_NABOFYLKE_VARIANT_ID,
-    variantLabel: buildPainterNorthCrossFylkeNabofylkeVariantLabel(),
-    variantReason: PAINTER_NORTH_CROSS_FYLKE_NABOFYLKE_VARIANT_REASON,
-    isEligible: isPainterNorthCrossFylkeNabofylkeVariantEligible,
+    resolveVariantId: (professionSlug) => northCrossFylkeNabofylkeVariantId(professionSlug),
+    resolveVariantLabel: (professionSlug) =>
+      buildNorthCrossFylkeNabofylkeVariantLabel(professionSlug),
+    resolveVariantReason: (professionSlug) =>
+      northCrossFylkeNabofylkeVariantReason(professionSlug),
+    isEligible: isNorthCrossFylkeNabofylkeVariantEligible,
     buildSteps: ({ supabase, professionSlug, preferredMunicipalityCodes }: BuildStepsParams) =>
-      buildPainterNorthCrossFylkeNabofylkeAlternativeSteps({
+      buildNorthCrossFylkeNabofylkeAlternativeSteps({
         professionSlug,
         preferredMunicipalityCodes,
         buildMergedRouteSteps: () =>
@@ -140,13 +142,15 @@ const CURATED_REGIONAL_VARIANTS: CuratedRegionalVariantDefinition[] = [
             supabase,
             professionSlug,
             preferredMunicipalityCodes,
+            // P-7 commute — relocation_willingness must not gate schools.
+            relocationWillingness: null,
           }),
       }),
   },
   {
-    variantId: ANLEGGSTEKNIKK_SPARSE_VG2_ALTERNATIVE_VARIANT_ID,
-    variantLabel: buildAnleggsteknikkSparseVg2AlternativeVariantLabel(),
-    variantReason: ANLEGGSTEKNIKK_SPARSE_VG2_ALTERNATIVE_VARIANT_REASON,
+    resolveVariantId: () => ANLEGGSTEKNIKK_SPARSE_VG2_ALTERNATIVE_VARIANT_ID,
+    resolveVariantLabel: () => buildAnleggsteknikkSparseVg2AlternativeVariantLabel(),
+    resolveVariantReason: () => ANLEGGSTEKNIKK_SPARSE_VG2_ALTERNATIVE_VARIANT_REASON,
     isEligible: isAnleggsteknikkSparseVg2VariantEligible,
     buildSteps: ({
       supabase,
@@ -399,6 +403,10 @@ export async function syncStudyRouteCuratedRegionalAlternatives(params: {
       continue;
     }
 
+    const curatedVariantId = definition.resolveVariantId(params.professionSlug);
+    const curatedVariantLabel = definition.resolveVariantLabel(params.professionSlug);
+    const curatedVariantReason = definition.resolveVariantReason(params.professionSlug);
+
     const alternativeSteps = await definition.buildSteps({
       supabase: params.supabase,
       professionSlug: params.professionSlug,
@@ -414,8 +422,8 @@ export async function syncStudyRouteCuratedRegionalAlternatives(params: {
       continue;
     }
 
-    activeCuratedIds.add(definition.variantId);
-    const existing = existingByCuratedId.get(definition.variantId);
+    activeCuratedIds.add(curatedVariantId);
+    const existing = existingByCuratedId.get(curatedVariantId);
 
     let variantId = existing?.id ?? null;
     if (variantId) {
@@ -444,8 +452,8 @@ export async function syncStudyRouteCuratedRegionalAlternatives(params: {
         .from("study_route_variants")
         .insert({
           route_id: params.routeId,
-          variant_label: definition.variantLabel,
-          variant_reason: definition.variantReason,
+          variant_label: curatedVariantLabel,
+          variant_reason: curatedVariantReason,
           is_current: false,
           status: "draft",
           created_by_type: params.createdByType,
@@ -464,8 +472,8 @@ export async function syncStudyRouteCuratedRegionalAlternatives(params: {
       const { error: relabelError } = await params.supabase
         .from("study_route_variants")
         .update({
-          variant_label: definition.variantLabel,
-          variant_reason: definition.variantReason,
+          variant_label: curatedVariantLabel,
+          variant_reason: curatedVariantReason,
           status: "draft",
           is_current: false,
         })
@@ -482,7 +490,7 @@ export async function syncStudyRouteCuratedRegionalAlternatives(params: {
     await ensureCuratedRegionalSnapshot({
       supabase: params.supabase,
       variantId,
-      generationReason: definition.variantReason,
+      generationReason: curatedVariantReason,
       snapshotContext: params.snapshotContext,
       alternativeSteps,
       routeInputSignature: params.routeInputSignature,

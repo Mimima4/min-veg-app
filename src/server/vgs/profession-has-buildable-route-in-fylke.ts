@@ -1,11 +1,12 @@
 import {
-  assessPainterNorthSplitRouteTruthEligibility,
-  listPainterNorthReachableNeighborCountyCodes,
-  PAINTER_NORTH_CROSS_FYLKE_NEIGHBOR_CONFIGS,
-  PAINTER_NORTH_HOME_FYLKE_CODES,
-  painterHomeVg1ProgrammeSlugsForFylke,
-  painterProgrammeSlugsForFylke,
+  assessNorthCrossFylkeSplitRouteTruthEligibility,
+  listNorthCrossFylkeReachableNeighborCountyCodes,
+  NORTH_CROSS_FYLKE_HOME_FYLKE_CODES,
+  NORTH_CROSS_FYLKE_NEIGHBOR_CONFIGS,
+  northCrossFylkeHomeVg1ProgrammeSlugsForFylke,
+  northCrossFylkeProgrammeSlugsForFylke,
 } from "@/lib/regional-delivery/painter-north-cross-fylke-pilot";
+import { SUPPORTED_VGS_PROFESSION_SLUGS } from "@/lib/vgs/contour-b-operational-eligibility";
 import { getAvailabilityTruth } from "@/server/children/routes/get-availability-truth";
 import { professionHasPrimaryRouteInCounty } from "@/server/vgs/profession-has-primary-route-in-county";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -13,7 +14,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 /**
  * V.BA VG2 programme picker gate: show a sibling profession when a full route is
  * buildable in the home fylke context — primary (local VG1+VG2) or curated
- * alternative (e.g. painter P-7 north split).
+ * alternative (P-7 north nabofylke split).
  */
 export async function professionHasBuildableRouteInFylke(params: {
   supabase: SupabaseClient;
@@ -37,9 +38,13 @@ export async function professionHasBuildableRouteInFylke(params: {
     return true;
   }
 
-  if (professionSlug === "painter" && PAINTER_NORTH_HOME_FYLKE_CODES.has(countyCode)) {
-    return professionHasPainterNorthSplitRouteInHomeFylke({
+  if (
+    SUPPORTED_VGS_PROFESSION_SLUGS.has(professionSlug) &&
+    NORTH_CROSS_FYLKE_HOME_FYLKE_CODES.has(countyCode)
+  ) {
+    return professionHasNorthCrossFylkeSplitRouteInHomeFylke({
       supabase: params.supabase,
+      professionSlug,
       countyCode,
       preferredMunicipalityCodes: params.preferredMunicipalityCodes,
     });
@@ -48,8 +53,9 @@ export async function professionHasBuildableRouteInFylke(params: {
   return false;
 }
 
-async function professionHasPainterNorthSplitRouteInHomeFylke(params: {
+async function professionHasNorthCrossFylkeSplitRouteInHomeFylke(params: {
   supabase: SupabaseClient;
+  professionSlug: string;
   countyCode: string;
   preferredMunicipalityCodes?: string[];
 }): Promise<boolean> {
@@ -60,25 +66,41 @@ async function professionHasPainterNorthSplitRouteInHomeFylke(params: {
 
   const neighborCountyCodes =
     municipalityCodes.length > 0
-      ? listPainterNorthReachableNeighborCountyCodes(municipalityCodes)
-      : PAINTER_NORTH_CROSS_FYLKE_NEIGHBOR_CONFIGS.map((neighbor) => neighbor.countyCode);
+      ? listNorthCrossFylkeReachableNeighborCountyCodes(municipalityCodes)
+      : NORTH_CROSS_FYLKE_NEIGHBOR_CONFIGS.map((neighbor) => neighbor.countyCode).filter(
+          (code) => code !== homeFylkeCode
+        );
 
   if (neighborCountyCodes.length === 0) {
     return false;
   }
 
-  const homeVg1Slugs = painterHomeVg1ProgrammeSlugsForFylke(homeFylkeCode);
-  if (homeVg1Slugs.length === 0) {
+  const homeProgrammeSlugs = Array.from(
+    new Set([
+      ...northCrossFylkeHomeVg1ProgrammeSlugsForFylke({
+        professionSlug: params.professionSlug,
+        fylkeCode: homeFylkeCode,
+      }),
+      ...northCrossFylkeProgrammeSlugsForFylke({
+        professionSlug: params.professionSlug,
+        fylkeCode: homeFylkeCode,
+      }),
+    ])
+  );
+  if (homeProgrammeSlugs.length === 0) {
     return false;
   }
 
   const homeTruth = await getAvailabilityTruth({
     countyCode: homeFylkeCode,
-    programmeSlugsOrCodes: homeVg1Slugs,
+    programmeSlugsOrCodes: homeProgrammeSlugs,
   });
 
   for (const neighborCountyCode of neighborCountyCodes) {
-    const neighborProgrammeSlugs = painterProgrammeSlugsForFylke(neighborCountyCode);
+    const neighborProgrammeSlugs = northCrossFylkeProgrammeSlugsForFylke({
+      professionSlug: params.professionSlug,
+      fylkeCode: neighborCountyCode,
+    });
     if (neighborProgrammeSlugs.length === 0) {
       continue;
     }
@@ -89,7 +111,8 @@ async function professionHasPainterNorthSplitRouteInHomeFylke(params: {
     });
 
     if (
-      assessPainterNorthSplitRouteTruthEligibility({
+      assessNorthCrossFylkeSplitRouteTruthEligibility({
+        professionSlug: params.professionSlug,
         homeRows: homeTruth.rows,
         neighborRows: neighborTruth.rows,
       }).eligible

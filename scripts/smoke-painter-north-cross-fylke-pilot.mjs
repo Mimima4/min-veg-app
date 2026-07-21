@@ -1,7 +1,17 @@
 #!/usr/bin/env node
 import assert from "node:assert/strict";
 
-const PAINTER_NORTH_HOME_FYLKE_CODES = new Set(["55", "56"]);
+const NORTH_CROSS_FYLKE_HOME_FYLKE_CODES = new Set(["55", "56"]);
+const NORTH_CROSS_FYLKE_NEIGHBOR_CODES = ["18", "50", "55"];
+const SUPPORTED = new Set([
+  "electrician",
+  "mechanic",
+  "carpenter",
+  "plumber",
+  "painter",
+  "anleggsteknikk",
+  "klima",
+]);
 
 const NORWAY_FYLKE_ADJACENCY_GRAPH = {
   "18": ["50", "55"],
@@ -37,24 +47,65 @@ function deriveFylkeAdjacencyRings(homeFylkeCodes) {
   return rings;
 }
 
-function painterNorthCrossFylkeVariantId(neighborCountyCode) {
-  return `painter-north-overflateteknikk-${neighborCountyCode}`;
+function nabofylkeVariantId(professionSlug) {
+  if (professionSlug === "painter") {
+    return "painter-north-overflateteknikk-nabofylke";
+  }
+  return `${professionSlug}-north-vg2-nabofylke`;
 }
 
-function isPainterNorthCrossFylkeEligible({ professionSlug, homeFylkeCode, neighborCountyCode }) {
-  if (professionSlug !== "painter") return false;
-  if (!PAINTER_NORTH_HOME_FYLKE_CODES.has(homeFylkeCode)) return false;
+function isNorthCrossFylkeEligible({ professionSlug, homeFylkeCode, neighborCountyCode }) {
+  if (!SUPPORTED.has(professionSlug)) return false;
+  if (!NORTH_CROSS_FYLKE_HOME_FYLKE_CODES.has(homeFylkeCode)) return false;
+  if (homeFylkeCode === neighborCountyCode) return false;
+  if (!NORTH_CROSS_FYLKE_NEIGHBOR_CODES.includes(neighborCountyCode)) return false;
   const rings = deriveFylkeAdjacencyRings([homeFylkeCode]);
   return rings.flat().includes(neighborCountyCode);
 }
 
-assert.equal(painterNorthCrossFylkeVariantId("18"), "painter-north-overflateteknikk-18");
-assert.equal(isPainterNorthCrossFylkeEligible({ professionSlug: "painter", homeFylkeCode: "56", neighborCountyCode: "18" }), true);
-assert.equal(isPainterNorthCrossFylkeEligible({ professionSlug: "painter", homeFylkeCode: "56", neighborCountyCode: "50" }), true);
-assert.equal(isPainterNorthCrossFylkeEligible({ professionSlug: "painter", homeFylkeCode: "03", neighborCountyCode: "18" }), false);
-assert.equal(isPainterNorthCrossFylkeEligible({ professionSlug: "carpenter", homeFylkeCode: "56", neighborCountyCode: "18" }), false);
+assert.equal(nabofylkeVariantId("painter"), "painter-north-overflateteknikk-nabofylke");
+assert.equal(nabofylkeVariantId("klima"), "klima-north-vg2-nabofylke");
+assert.equal(
+  isNorthCrossFylkeEligible({
+    professionSlug: "painter",
+    homeFylkeCode: "56",
+    neighborCountyCode: "18",
+  }),
+  true
+);
+assert.equal(
+  isNorthCrossFylkeEligible({
+    professionSlug: "klima",
+    homeFylkeCode: "56",
+    neighborCountyCode: "55",
+  }),
+  true
+);
+assert.equal(
+  isNorthCrossFylkeEligible({
+    professionSlug: "klima",
+    homeFylkeCode: "56",
+    neighborCountyCode: "50",
+  }),
+  true
+);
+assert.equal(
+  isNorthCrossFylkeEligible({
+    professionSlug: "klima",
+    homeFylkeCode: "03",
+    neighborCountyCode: "18",
+  }),
+  false
+);
+assert.equal(
+  isNorthCrossFylkeEligible({
+    professionSlug: "klima",
+    homeFylkeCode: "55",
+    neighborCountyCode: "55",
+  }),
+  false
+);
 
-// P-7 sync runs for all Contour B professions so stale curated variants are pruned on recompute.
 function shouldSyncCuratedRegionalAlternatives({ hasContourBProfessionLinks }) {
   return hasContourBProfessionLinks;
 }
@@ -109,8 +160,19 @@ const merged = mergeSplitTruthRows(
     { stage: "VG2", county: "55", school: "should-drop", availabilityScope: "programme_in_school" },
   ],
   [
-    { stage: "VG1", county: "18", school: "neighbor-vg1-drop", availabilityScope: "programme_in_school" },
-    { stage: "VG2", county: "18", school: "Bodø", availabilityScope: "programme_in_school", programSlug: "painter-vg2-overflateteknikk-nordland" },
+    {
+      stage: "VG1",
+      county: "18",
+      school: "neighbor-vg1-drop",
+      availabilityScope: "programme_in_school",
+    },
+    {
+      stage: "VG2",
+      county: "18",
+      school: "Bodø",
+      availabilityScope: "programme_in_school",
+      programSlug: "painter-vg2-overflateteknikk-nordland",
+    },
   ]
 );
 assert.equal(merged.length, 2);
@@ -124,8 +186,20 @@ const mergedWithLosaAndMultiVg2 = mergeSplitTruthRows(
     { stage: "VG1", county: "56", school: "LOSA Alta", availabilityScope: LOSA_SCOPE },
   ],
   [
-    { stage: "VG2", county: "18", school: "Bodø", availabilityScope: "programme_in_school", programSlug: "painter-vg2-overflateteknikk-nordland" },
-    { stage: "VG2", county: "50", school: "Charlottenlund", availabilityScope: "programme_in_school", programSlug: "painter-vg2-overflateteknikk-trondelag" },
+    {
+      stage: "VG2",
+      county: "18",
+      school: "Bodø",
+      availabilityScope: "programme_in_school",
+      programSlug: "painter-vg2-overflateteknikk-nordland",
+    },
+    {
+      stage: "VG2",
+      county: "50",
+      school: "Charlottenlund",
+      availabilityScope: "programme_in_school",
+      programSlug: "painter-vg2-overflateteknikk-trondelag",
+    },
   ]
 );
 assert.equal(mergedWithLosaAndMultiVg2.length, 4);

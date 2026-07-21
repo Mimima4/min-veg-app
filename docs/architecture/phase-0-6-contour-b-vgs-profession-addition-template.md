@@ -116,26 +116,26 @@ Source: `src/lib/i18n/route-steps-empty-copy.ts`. Signal: `PRIMARY_ROUTE_INCOMPL
 
 **Ref:** `phase-4-nordland-steigen-regional-delivery-research-owner-record.md`
 
-### 4.3 P-7 — profession-specific north cross-fylke (painter precedent)
+### 4.3 P-7 — north cross-fylke nabofylke (auto for Contour B)
 
-**Only when owner charters it** — not automatic for all VG2=0 fylke.
+**Automatic for all Contour B professions** when home fylke is Troms `55` or Finnmark `56` and local VG2 is missing — painter precedent generalized (`painter-north-cross-fylke-pilot.ts`).
 
-| Element | Painter implementation |
-|---------|------------------------|
-| Eligibility | `painter-north-cross-fylke-pilot.ts` — home `55`/`56` only |
+| Element | Implementation |
+|---------|----------------|
+| Eligibility | Home `55`/`56`; neighbor VG2 in `{18,50,55}` filtered by adjacency (Troms for Finnmark→Troms) |
 | Route shape | VG1 PSA **home** + VG2+ PSA **neighbor** (split, not full chain in neighbor) |
-| Builder | `build-painter-north-cross-fylke-route-steps.ts` |
-| Sync trigger | `shouldSyncStudyRouteCuratedRegionalAlternatives()` when home has no PSA rows |
-| UI testid | `painter-north-cross-fylke-alternative-route` |
+| Builder | `build-painter-north-cross-fylke-route-steps.ts` (profession-agnostic) |
+| Relocation | **Does not gate** P-7 (commute model — not P-8) |
+| UI testid | Painter: `painter-north-cross-fylke-alternative-route`; others: `north-cross-fylke-alternative-route` |
 | Bedrift scope | `countyCodesForEmployerScope: [homeFylkeCode]` |
 
-**Shared VG1 fallback:** when painter VG1 catalogue row missing but V.BA VG1 exists via carpenter slug — document in branch record; not a runtime hack.
+**Shared VG1 fallback:** V.BA professions may read carpenter VG1 PSA when own VG1 row missing.
 
-**Do not** use P-7 pattern for `15,32,33,39,40` unless owner signs a new charter.
+**Not** nationwide adjacency. Southern VG2=0 fylke (`15,32,33,39,40`) stay P-6 empty unless another overlay applies.
 
 ### 4.5 P-8 — sparse national VG2 + relocation (anleggsteknikk precedent)
 
-**Only when owner charters it** — gated by PSA-derived sparse eligibility; **not** for dense VGS professions.
+**Only when owner charters it** — gated by PSA-derived sparse eligibility; **not** for dense VGS professions. Keep manual until a separate auto-P-8 design is signed.
 
 | Element | Planned implementation |
 |---------|------------------------|
