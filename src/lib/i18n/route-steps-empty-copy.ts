@@ -2,10 +2,10 @@ import { getLocalizedValue } from "@/lib/i18n/get-localized-value";
 import { CONTENT_LOCALES, type ContentLocale } from "@/lib/i18n/locales";
 
 const ROUTE_STEPS_EMPTY_MESSAGE: Record<ContentLocale, string> = {
-  nb: "Ingen rutetrinn er tilgjengelige ennå.",
-  nn: "Ingen rutetrinn er tilgjengelige enno.",
-  en: "No route steps are available yet.",
-  se: "Ingen rutetrinn er tilgjengelige ennå.",
+  nb: "Ingen rutetrinn i hjemfylket i år.",
+  nn: "Ingen rutetrinn i heimfylket i år.",
+  en: "No route steps in the home county this year.",
+  se: "Ingen rutetrinn i hjemfylket i år.",
 };
 
 function resolveContentLocale(locale?: string): ContentLocale {

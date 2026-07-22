@@ -83,9 +83,9 @@ Create `docs/architecture/phase-0-6-contour-b-<slug>-vilbli-branch-owner-record.
 
 | Locale | Copy |
 |--------|------|
-| nb | «Ingen rutetrinn er tilgjengelige ennå.» |
-| nn | «Ingen rutetrinn er tilgjengelige enno.» |
-| en | «No route steps are available yet.» |
+| nb | «Ingen rutetrinn i hjemfylket i år.» |
+| nn | «Ingen rutetrinn i heimfylket i år.» |
+| en | «No route steps in the home county this year.» |
 
 Source: `src/lib/i18n/route-steps-empty-copy.ts`. Signal: `PRIMARY_ROUTE_INCOMPLETE_HOME_COUNTY`.
 

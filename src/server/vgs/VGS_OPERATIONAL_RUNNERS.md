@@ -6,6 +6,16 @@ Batch verify/ingest for eligible `(profession, county)` pairs. **Not** invoked o
 
 These rules are **blocking** for any change that adds or changes **professions**, **counties (fylke)**, **Vilbli-backed programme data**, or **route programme options** in the product. They apply to engineers, operators, and agents.
 
+### No manual PSA (hard process)
+
+**Default forbidden:** creating, reactivating, deactivating, or “fixing” Contour B / VGS `programme_school_availability` (or related school-picker truth) by hand — Supabase SQL/UI, ad-hoc `UPDATE … SET is_active`, or single-school plugs (example: Bardufoss `is_active=true` outside relay).
+
+**Allowed:** Contour B **relay / pipeline** writes (and owner-chartered reconcile that encodes the same Vilbli / current-year offering rules).
+
+If a manual plug is requested: agents **do not decide** — they **cite this rule**, **warn** (false truth, next-relay wipe/drift, P-6 better-empty-than-lie), **propose** gate/overlay/pipeline fix (dry-run → production relay → product proof), and **wait** for explicit owner override that acknowledges the rule. Better empty primary (P-6) than a silent false active row.
+
+Agent mirror: `.cursor/rules/no-manual-psa.mdc`, `AGENTS.md`.
+
 ### What does **not** run automatically
 
 | Event | Contour B relay / PSA ingest |
@@ -114,6 +124,16 @@ node scripts/relay-contour-b-vilbli-to-production.mjs --dry-run
 node scripts/relay-contour-b-vilbli-to-production.mjs   # production write
 ```
 
+4a. **After offering-gate / P-7 / P-8 truth changes** (owner 2026-07-22):
+
+| Step | Action |
+|------|--------|
+| A | Production scope per table above (full matrix if Contour code changed; else `--profession <slug>`) |
+| B | Push deploy, then relay |
+| C | Spot-check table **Vilbli vs Min Veg** per fylke: local VG2 count + out-of-county (continuation ∩ PSA) count — both columns must match |
+| D | Owner UI: recompute routes for affected professions; no manual PSA `is_active` edits |
+
+Example check script pattern (anleggsteknikk): compare county-page local VG2 pins vs active PSA; compare out-of-county pins vs `vgs_vilbli_home_vg2_continuations` ∩ destination PSA.
 5. **Schedule every 6 months (macOS launchd example):**
 
 ```xml

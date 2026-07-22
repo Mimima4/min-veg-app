@@ -1,0 +1,26 @@
+---
+description: No silent manual PSA plugs — cite rules, warn risks, wait for owner
+alwaysApply: true
+---
+
+# No manual PSA (hard process)
+
+## Rule
+
+**Do not** create, reactivate, deactivate, or “fix” Contour B / VGS **programme_school_availability** (or related truth that drives school pickers) by hand — including Supabase SQL/UI, one-off scripts that `UPDATE … SET is_active`, or “temporary plugs” (e.g. forcing a school active because Vilbli “looks right”).
+
+**Allowed writes:** Contour B **relay / pipeline** (and owner-chartered reconcile runners that implement the same offering rules). Truth must come from Vilbli extract + gates, not operator taste.
+
+## If anyone asks for a manual PSA plug
+
+The agent **does not decide** product/ops outcomes. Required behaviour:
+
+1. **Stop** — do not execute the plug immediately.
+2. **Cite** this rule + `src/server/vgs/VGS_OPERATIONAL_RUNNERS.md` (Mandatory rules / no manual PSA).
+3. **Warn** about risks: false active rows, drift vs next relay, P-6 “better empty than lie”, hard-to-audit one-offs, Bardufoss-style incident (2026-07 manual `is_active=true` was wrong process and reverted).
+4. **Propose** the correct path: pipeline / offering gate / continuation overlay / code fix → dry-run → production relay → product proof.
+5. **Wait** for an explicit owner override that acknowledges the rule and still orders the action. Until then — no plug.
+
+## Exceptions
+
+None as default product truth. Emergency audit scripts may **report** mismatches; they must not silently become the standing write path without an owner charter that still encodes Vilbli/offering rules (not a single-school toggle).

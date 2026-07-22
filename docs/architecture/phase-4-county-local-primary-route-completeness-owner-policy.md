@@ -96,9 +96,11 @@ Electrician Finnmark has local VG2 on `V.EL` — different Vilbli branch; partia
 
 | Locale | Primary unavailable (incomplete home-fylke chain) |
 |--------|-----------------------------------------------------|
-| nb | «Ingen rutetrinn er tilgjengelige ennå.» |
-| nn | «Ingen rutetrinn er tilgjengelige enno.» |
-| en | «No route steps are available yet.» |
+| nb | «Ingen rutetrinn i hjemfylket i år.» |
+| nn | «Ingen rutetrinn i heimfylket i år.» |
+| en | «No route steps in the home county this year.» |
+
+**Copy rule:** clarify time/geography only — **never** invent alternatives to fill the card. Alternatives appear only when an owned overlay (P-7 / chartered P-8 / …) has real PSA membership; otherwise empty stays empty (better empty than lie).
 
 **Status:** **Live** — `src/lib/i18n/route-steps-empty-copy.ts`, `route-steps-panel.tsx`; signal `PRIMARY_ROUTE_INCOMPLETE_HOME_COUNTY` in `signals_payload.warnings`.
 
