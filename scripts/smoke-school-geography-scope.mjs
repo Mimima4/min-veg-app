@@ -1,19 +1,13 @@
 #!/usr/bin/env node
 import assert from "node:assert/strict";
 
-const NORTH_HOME = new Set(["55", "56"]);
-const NORTH_FRIENDLY = new Set(["18"]);
-
 function resolveScope({ layer, homeFylke, relocation, sparseGate }) {
   if (!sparseGate) {
     return { allowed: new Set(homeFylke), nationalAlt: false };
   }
   if (layer === "primary") {
-    const allowed = new Set(homeFylke);
-    if (homeFylke.some((c) => NORTH_HOME.has(c))) {
-      for (const c of NORTH_FRIENDLY) allowed.add(c);
-    }
-    return { allowed, nationalAlt: false };
+    // Owner 2026-07-22: primary = home fylke only (no Nordland injection).
+    return { allowed: new Set(homeFylke), nationalAlt: false };
   }
   if (relocation === "no") {
     return { allowed: null, nationalAlt: false };
@@ -27,7 +21,7 @@ assert.deepEqual(
   ["46"]
 );
 
-// Anlegg north primary — home + Nordland
+// Anlegg north primary — home only (Nordland is alternative, not prime)
 const northPrimary = resolveScope({
   layer: "primary",
   homeFylke: ["56"],
@@ -35,7 +29,7 @@ const northPrimary = resolveScope({
   sparseGate: true,
 });
 assert.ok(northPrimary.allowed.has("56"));
-assert.ok(northPrimary.allowed.has("18"));
+assert.ok(!northPrimary.allowed.has("18"));
 assert.equal(northPrimary.nationalAlt, false);
 
 // Non-north primary — home only

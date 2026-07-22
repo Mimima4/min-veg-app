@@ -22,7 +22,6 @@ import {
   resolveOfferingDecision,
 } from "./lib/vilbli-current-year-offering.mjs";
 import {
-  clearVilbliHomeVg2Continuations,
   persistVilbliHomeVg2ContinuationsFromHtml,
 } from "./lib/vilbli-home-vg2-continuations.mjs";
 
@@ -754,18 +753,27 @@ export async function runVgsTruthPipeline({
     );
   }
 
-  // Local VG2 present — clear any stale continuation allowlist for this pair.
+  // Owner 2026-07-22: always refresh out-of-county allowlist from THIS county page
+  // (P-7 + P-8 membership). Replace-set — no Oslo gold list; each home fylke owns its truth.
   try {
-    await clearVilbliHomeVg2Continuations({
+    const continuation = await persistVilbliHomeVg2ContinuationsFromHtml({
       supabase,
       professionSlug,
       homeCountyCode: countyCode,
+      homeCountySlug: countyMeta.slug,
+      homeCountyLabel: countyMeta.label,
+      html,
       isDryRun,
     });
-  } catch (clearError) {
     console.error(
-      `[vilbli-home-vg2-continuations] clear failed profession=${professionSlug} home=${countyCode}: ${
-        clearError instanceof Error ? clearError.message : String(clearError)
+      `[vilbli-home-vg2-continuations] profession=${professionSlug} home=${countyCode} pins=${continuation.pinCount} matched=${continuation.matchedCount} unmatched=${continuation.unmatchedCount} ambiguous=${continuation.ambiguousCount} dryRun=${isDryRun}`
+    );
+  } catch (continuationError) {
+    console.error(
+      `[vilbli-home-vg2-continuations] persist failed profession=${professionSlug} home=${countyCode}: ${
+        continuationError instanceof Error
+          ? continuationError.message
+          : String(continuationError)
       }`
     );
   }
@@ -1342,17 +1350,17 @@ export async function runVgsTruthPipeline({
   const writeCounters = { inserted: 0, updated: 0 };
   const writeRows = [];
 
-  // Current-year offering gate (I-1…I-3). Fail-open: only acts when the p2 «Skoler som tilbyr
-  // dette» extract succeeded AND enforcement is explicitly enabled. Otherwise it is diagnostic
-  // only and PSA write behavior is unchanged.
+  // Current-year offering gate (I-1…I-3). Authority = THIS county's Vilbli p5 page only
+  // (owner 2026-07-22: no Oslo-probe gold standard — each fylke/profession has its own truth).
+  // Landslinje multi-fylke maps on the county page include local pins → they stay is_active.
   const currentYearOffering = buildCurrentYearOfferingSet({
-    offeringHtml: currentYearOfferingHtml,
+    offeringHtml: html,
     countySlug: countyMeta.slug,
     countyLabel: countyMeta.label,
   });
   const enforceCurrentYearOffering = isCurrentYearOfferingEnforcementEnabled();
   const offeringDiagnostics = {
-    provided: currentYearOfferingHtml != null,
+    provided: Boolean(html),
     parsed: Boolean(currentYearOffering),
     enforce: enforceCurrentYearOffering,
     source: currentYearOffering?.source ?? null,

@@ -2,31 +2,19 @@
  * Current-year programme offering truth for Contour B (I-1…I-3).
  * Owner: docs/architecture/phase-4-current-year-programme-offering-owner-decision-record.md
  *
- * REAL SIGNAL (audited 2026-07-18 from a home-IP fetch — see §4a of the owner record):
- *   The national strukturkart `side=p2` «fag- og timefordeling» page carries NO `vb_map_data`
- *   and NO school listing — it is only the subject/hour course graph. The earlier assumption that
- *   p2 mirrors the county `side=p5` map was WRONG, so the previous parser returned null forever
- *   (gate stuck fail-open).
+ * REAL SIGNAL (amended 2026-07-22):
+ *   Authority for a Contour B county ingest is **that county’s** Vilbli `side=p5` page.
+ *   There is **no** Oslo-probe gold list. Each fylke/profession owns its truth (same spirit as P-7).
  *
- *   `vb_map_data_Vg*` exists ONLY on county-scoped `side=p5` pages. For a «landslinje /
- *   landstilbud» course (a nationally-coordinated line offered at a handful of schools, e.g.
- *   anleggsteknikk VG2), the VG2 map on EVERY county page pins the same *national* offering
- *   schools — spanning several fylke — while broad, non-landslinje stages (e.g. VG1 Bygg- og
- *   anleggsteknikk) pin only that page's own single county.
- *
- *   We therefore fetch the course-specific `skoler-og-laerebedrifter … side=p5` page for a PROBE
- *   county that does NOT offer the landslinje locally (Oslo for anleggsteknikk). Its `vb_map_data_Vg2`
- *   is then exactly the national current-year offering set (no local-structure contamination). See
- *   `strukturkartReferenceUrl` in scripts/vgs-path-definitions.mjs.
+ *   For landslinje courses the county page still pins multi-fylke schools; local pins on that
+ *   page stay in the offering set and must not be deactivated. Out-of-county pins are NOT written
+ *   into home PSA (extract already county-filters) — they feed the continuation allowlist for
+ *   P-7 / P-8 alternatives.
  *
  * DESIGN:
  *   - A stage is treated as the offering set ONLY when its pins span ≥ 2 distinct fylke — the
  *     landslinje signal. Single-fylke stages (broad VG1) are left OUT → the gate stays fail-open
- *     for them (never deactivates broadly-offered stages). This is what keeps VG1 safe even though
- *     the probe page also carries a (single-county) `vb_map_data_Vg1`.
- *   - Membership is NATIONAL: the same offering set is applied to every county, because a
- *     landslinje school in county X must stay active in X while structure-only schools elsewhere
- *     are dropped.
+ *     for them (never deactivates broadly-offered stages).
  *
  * SAFETY (owner requirement #7 — fail-closed ONLY when the extract succeeds):
  *   - No offering HTML / too small / parse throws / no landslinje stage → NOT enforceable
@@ -68,11 +56,7 @@ function normalizeFylke(value) {
 }
 
 /**
- * Build the current-year offering set from a course-specific national strukturkart `side=p5` page.
- *
- * `countySlug` / `countyLabel` are accepted for signature compatibility and diagnostics only —
- * the offering set is NATIONAL (a landslinje is offered by the same schools regardless of the
- * county being ingested), so no per-county filtering is applied to membership.
+ * Build the current-year offering set from a course-specific strukturkart `side=p5` page.
  *
  * @returns {null | { byStage: Record<string, { codes: Set<string>, names: Set<string>, fylkeCount: number }>, source: string, stageCounts: Record<string, number> }}
  *   `null` when offering extraction is unavailable (fail-open signal).
@@ -128,6 +112,40 @@ export function buildCurrentYearOfferingSet({ offeringHtml, countySlug, countyLa
   }
 
   return { byStage, source: "vilbli_strukturkart_landstilbud_p5", stageCounts };
+}
+
+/**
+ * Union two offering sets (legacy helper). Contour B write path uses **county page only**
+ * (owner 2026-07-22) — kept for smokes/diagnostics.
+ */
+export function unionCurrentYearOfferingSets(probeOffering, countyPageOffering) {
+  if (!probeOffering && !countyPageOffering) return null;
+  if (!probeOffering) return countyPageOffering;
+  if (!countyPageOffering) return probeOffering;
+
+  const byStage = {};
+  const stageCounts = {};
+  const stages = new Set([
+    ...Object.keys(probeOffering.byStage ?? {}),
+    ...Object.keys(countyPageOffering.byStage ?? {}),
+  ]);
+  for (const stage of stages) {
+    const a = probeOffering.byStage?.[stage];
+    const b = countyPageOffering.byStage?.[stage];
+    if (!a && !b) continue;
+    const codes = new Set([...(a?.codes ?? []), ...(b?.codes ?? [])]);
+    const names = new Set([...(a?.names ?? []), ...(b?.names ?? [])]);
+    const fylkeCount = Math.max(a?.fylkeCount ?? 0, b?.fylkeCount ?? 0);
+    if (codes.size === 0 && names.size === 0) continue;
+    byStage[stage] = { codes, names, fylkeCount };
+    stageCounts[stage] = codes.size || names.size;
+  }
+  if (Object.keys(byStage).length === 0) return null;
+  return {
+    byStage,
+    source: "vilbli_strukturkart_landstilbud_p5_union_probe_county",
+    stageCounts,
+  };
 }
 
 /**

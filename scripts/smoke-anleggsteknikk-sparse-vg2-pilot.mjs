@@ -56,18 +56,10 @@ assert.equal(
 assert.equal(ANLEGGSTEKNIKK_SPARSE_VG2_ALTERNATIVE_LABEL_NB, "Anleggsteknikk — VG2 andre steder");
 
 // --- geography scope (mirrors school-geography-scope.ts; contract §4.1/§4.2) ---
-const NORTH_HOME = new Set(["55", "56"]);
-const NORTH_FRIENDLY = new Set(["18"]);
-
 function resolvePrimaryAllowedFylke({ homeFylke, sparseGate }) {
-  if (!sparseGate) {
-    return new Set(homeFylke);
-  }
-  const allowed = new Set(homeFylke);
-  if (homeFylke.some((c) => NORTH_HOME.has(c))) {
-    for (const c of NORTH_FRIENDLY) allowed.add(c);
-  }
-  return allowed;
+  void sparseGate;
+  // Owner 2026-07-22: primary = home fylke only (Nordland not injected).
+  return new Set(homeFylke);
 }
 
 function allowNationalSparseAlternative(relocation) {
@@ -80,10 +72,10 @@ assert.equal(allowNationalSparseAlternative(null), false);
 assert.equal(allowNationalSparseAlternative("maybe"), true);
 assert.equal(allowNationalSparseAlternative("yes"), true);
 
-// North primary scope widens to include Nordland (18) but not Agder/Vestland.
+// North primary scope = home only (Nordland goes to P-8 alt, not prime).
 const northPrimary = resolvePrimaryAllowedFylke({ homeFylke: ["56"], sparseGate: true });
 assert.ok(northPrimary.has("56"));
-assert.ok(northPrimary.has("18"));
+assert.ok(!northPrimary.has("18"));
 assert.ok(!northPrimary.has("42"));
 
 // Non-north primary scope stays home-only.
@@ -99,23 +91,21 @@ function selectNationalVg2OutsidePrimary(nationalRows, primaryAllowed) {
 
 const NATIONAL_VG2 = [
   { stage: "VG2", county: "56", school: "Kirkenes" },
-  { stage: "VG2", county: "18", school: "Bodø" },
+  { stage: "VG2", county: "18", school: "Fauske" },
   { stage: "VG2", county: "46", school: "Voss" },
   { stage: "VG2", county: "42", school: "Sør-Norge" },
   { stage: "VG2", county: "11", school: "Stavanger" },
 ];
 
-// Finnmark (north) family: 56 + 18 are in primary picker → alternative shows only 46/42/11.
+// Finnmark home: primary = 56 only → alternative includes Nordland + south.
 const finnmarkOutside = selectNationalVg2OutsidePrimary(NATIONAL_VG2, northPrimary);
 assert.deepEqual(
   finnmarkOutside.map((r) => r.county).sort(),
-  ["11", "42", "46"]
+  ["11", "18", "42", "46"]
 );
 
-// North primary must ALSO load Nordland VG2 into primary (not only exclude from alt) —
-// otherwise Fauske vanishes from both layers (regression covered by enrich helper).
-const northPrimaryExtraFylke = [...northPrimary].filter((c) => c !== "56");
-assert.deepEqual(northPrimaryExtraFylke, ["18"]);
+// North primary must NOT widen to Nordland (owner 2026-07-22).
+assert.deepEqual([...northPrimary], ["56"]);
 
 // Vestland family: only 46 in primary → alternative shows all others.
 const vestOutside = selectNationalVg2OutsidePrimary(NATIONAL_VG2, vestPrimary);

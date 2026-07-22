@@ -56,10 +56,9 @@ Applies to **main route card** school pickers when P-6 primary is eligible.
 
 | Child home region | Primary school geography (VGS) | Notes |
 |-------------------|-------------------------------|-------|
-| **North zone** (`55` Troms, `56` Finnmark) | Home fylke + **north friendly fylke** `{18 Nordland}` | Historical cross-fylke school access on the north coast; **not** national. Troms↔Finnmark↔Nordland service pattern. |
-| **All other fylke** | **Home fylke only** | Standard P-6. |
+| **All fylke** (incl. Troms `55` / Finnmark `56`) | **Home fylke only** | Standard P-6. Nabofylke (e.g. Nordland for Troms) → **alternatives** (P-7 / P-8), never primary. |
 
-**North zone does not widen the primary chain county** — it widens which **PSA-backed schools** may appear in primary VG1/VG2 pickers for **sparse-gated** professions only.
+**Owner amendment 2026-07-22:** retired north-zone primary expansion `{55,56}+{18}`. Aligns primary with G-2 / G-3 (cross-fylke seats stay on alternative cards).
 
 ### 4.2 Alternative layer (`layer: alternative`)
 
@@ -67,7 +66,7 @@ Curated / sparse alternatives (`P-7`, `P-8`, Steigen, future post-VGS contours).
 
 | `relocation_willingness` | Alternative geography (P-8 sparse VG2) |
 |--------------------------|----------------------------------------|
-| `no` | **Omit** P-8 national alternative (north zone schools already in primary scope where applicable) |
+| `no` | **Omit** P-8 national alternative |
 | `maybe` | Schools outside primary scope within **Entur public-transport reach** — bus+rail network km soft band ≤**700** (soft admit **700–800**; deny **>800**). **North-coast homes (Troms 55, Finnmark 56, Nordland 18):** if no ground PT admit, **air** allowed by one-way duration ≤**8h** (soft ≤**12h**). Prefer airport/rail/ferry hubs; last-mile car OK. If Entur admits zero P-8 candidates → haversine soft fallback. See `phase-4-relocation-maybe-public-transport-reach-owner-draft.md`. **Not** private-car km as primary admit. |
 | `yes` | **All PSA-backed national sparse VG2** schools for profession, ordered by transport realism |
 
@@ -92,8 +91,8 @@ Relocation **already** triggers route recompute via `route_input_signature`. Bef
 
 | Scenario | Before P-8 | After P-8 |
 |----------|------------|-----------|
-| **Anlegg, Finnmark, relocation `no`** | Primary: local VG1+VG2; no other VG2 schools | **Same** — north-zone schools in primary picker; no national alternative card |
-| **Anlegg, Finnmark, relocation `yes`** | Primary unchanged; **no** other VG2 schools anywhere | Primary: home + Nordland VG2 in picker (RG-2); **alternative** «VG2 andre steder» with national sparse VG2 outside that scope (Agder, Vestland, …) sorted by transport |
+| **Anlegg, Finnmark, relocation `no`** | Primary: local VG1+VG2; no other VG2 schools | **Same** — home fylke only; no national alternative card |
+| **Anlegg, Finnmark, relocation `yes`** | Primary unchanged; **no** other VG2 schools anywhere | Primary: home fylke only; **alternative** «VG2 andre steder» with national sparse VG2 outside home (incl. Nordland Fauske when offered) sorted by transport |
 | **Carpenter, Vestland, relocation `no`→`yes`** | County-local dropdown only | **No change** — sparse gate false |
 | **Anlegg, Oslo, primary empty (P-6)** | Empty primary | Alternatives per P-8 when relocation `maybe`/`yes`; still empty at `no` |
 | **Child profile: toggle relocation** | Signature changes; VGS lists unchanged | Alternatives appear/disappear — **no UI explanation of rings**; truth matches setting |
@@ -106,7 +105,7 @@ Relocation **already** triggers route recompute via `route_input_signature`. Bef
 |----|----------|--------|-------|
 | RG-0 | VGS relocation geography **inactive** until P-8 — current behaviour correct | **Yes** | ☑ 2026-07-15 |
 | RG-1 | Sparse PSA-derived gate before any national VGS geography | **Yes** | ☑ |
-| RG-2 | North zone primary scope `{55,56}` + `{18}` for sparse professions | **Yes** | ☑ |
+| RG-2 | Primary scope = **home fylke only** for sparse professions (Nordland nabofylke → alternatives, not prime). Amended 2026-07-22 — retired `{55,56}+{18}` primary widen. | **Yes** | ☑ 2026-07-22 |
 | RG-3 | National sparse VG2 → alternatives only; transport sort over adjacency | **Yes** | ☑ |
 | RG-4 | Opus 4.8+ review gate for P-8 implementation | **Yes** | ☑ |
 | RG-5 | Private transport mode deferred (`P4-TRANSPORT-PRIVATE`) | **Yes** | ☑ |

@@ -40,11 +40,14 @@ That map is a **superset** of current-year tilbud.
 > **fail-open**. The real current-year signal is described in §3 / §4a: the course-specific
 > `skoler-og-laerebedrifter … side=p5` **`vb_map_data_Vg2` landslinje set**, read from a probe county.
 
-| Source | Anleggsteknikk VG2 count (2026-07-18) |
-|--------|--------------------------------------|
-| Vilbli national landslinje `vb_map_data_Vg2` (Oslo probe p5) | **6** |
-| Our active PSA (`is_active=true`) before reconcile | **28** |
-| After `reconcile:anlegg-vg2-current-year --apply` (2026-07-18) | **6** |
+| Source | Anleggsteknikk VG2 |
+|--------|-------------------|
+| **Authority (2026-07-22)** | **Each county’s own** Vilbli p5 page (no Oslo gold list) |
+| Troms county p5 | includes Bardufoss `8824` + multi-fylke landslinje pins |
+| Rogaland county p5 | includes local VG2 pins (Dalane, …) + multi-fylke pins |
+| Out-of-county pins | **Not** written into home PSA; stored as continuation allowlist for P-7/P-8 |
+
+> **Amendment 2026-07-22:** Oslo-probe-as-national-truth retired. Contour B offering gate uses the **ingested county page**. P-8 membership = home-page out-of-county pins ∩ NSR ∩ PSA ∩ public (P-7 analogy).
 
 There is **no** `school_year` / `tilbud` column on `programme_school_availability`. All Contour B rows are written `verification_status=needs_review`. Read path accepts `verified` + `needs_review` + `is_active=true` — so structure-only rows must stay `is_active=false`.
 
@@ -65,8 +68,9 @@ https://www.vilbli.no/nb/oslo/strukturkart/V.BA/anleggsteknikk-skoler-og-laerebe
 | Nordland `18` | Fauske videregående skole | `8741` |
 | Rogaland `11` | Øksnevad vidaregåande skole | `6586` |
 | Vestland `46` | Os vidaregåande skule | `8524` |
+| Troms `55` | Bardufoss videregående skole | `8824` | *(viewer-fylke pin — on Troms p5, absent from Oslo probe; restored 2026-07-22)* |
 
-Live-verified 2026-07-18 (home IP): `node scripts/smoke-current-year-offering-gate.mjs --live` →
+Live-verified 2026-07-22 (home IP): Oslo probe=6; Troms∪probe=7 incl. `8824`.
 `VG2 offering count=6 (fylke=6) codes=303535,8858,8158,8741,6586,8524`.
 
 **Immediate remediation (applied 2026-07-18):** `npm run reconcile:anlegg-vg2-current-year -- --apply` deactivated 22 structure-only anleggsteknikk VG2 PSA rows (`is_active=false`, `verification_status=superseded`). Active count is **6**. Primary + P-8 both read via existing `is_active` filter — no route-builder allowlist.

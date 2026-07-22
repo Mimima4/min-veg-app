@@ -1,12 +1,18 @@
 /**
- * P-8 / P4-RELOCATION-GEOGRAPHY — north regional zone for historical cross-fylke school access.
+ * P-8 / P4-RELOCATION-GEOGRAPHY — school geography scope for sparse VGS.
  * Charter: phase-4-relocation-geography-contract-owner-decision-record.md §4.1
+ *
+ * Owner 2026-07-22: primary = home fylke only (G-2 / G-3). Nordland is not injected
+ * into Troms/Finnmark primary — nabofylke seats surface via P-7 / P-8 alternatives.
  */
 import { normalizeFylkeCodesFromMunicipalityCodes } from "@/lib/planning/norway-geo-code-normalization";
 
 export const NORTH_ZONE_HOME_FYLKE_CODES = new Set(["55", "56"]);
 
-/** Nordland — historical school-service partner for Troms/Finnmark. */
+/**
+ * Nordland — north-coast air-reach home set peer (maybe PT), not primary-scope expansion.
+ * Kept exported for `evaluate-maybe-reach` / north air eligibility.
+ */
 export const NORTH_ZONE_FRIENDLY_FYLKE_CODES = new Set(["18"]);
 
 export type SchoolGeographyLayer = "primary" | "alternative";
@@ -19,10 +25,6 @@ export type SchoolGeographyScope = {
   /** When true, national PSA-backed schools outside primary scope may appear in alternatives. */
   allowNationalSparseAlternative: boolean;
 };
-
-function isNorthZoneHome(homeFylkeCodes: string[]): boolean {
-  return homeFylkeCodes.some((code) => NORTH_ZONE_HOME_FYLKE_CODES.has(code));
-}
 
 /**
  * Resolves which fylke codes may surface school institutions for C-VGS pickers.
@@ -50,12 +52,8 @@ export function resolveSchoolGeographyScope(params: {
   }
 
   if (params.layer === "primary") {
+    // Home fylke only — nabofylke (e.g. Nordland for Troms) belongs in alternatives.
     const allowed = new Set(homeFylkeCodes);
-    if (isNorthZoneHome(homeFylkeCodes)) {
-      for (const code of NORTH_ZONE_FRIENDLY_FYLKE_CODES) {
-        allowed.add(code);
-      }
-    }
     return {
       allowedFylkeCodes: allowed.size > 0 ? allowed : null,
       allowNationalSparseAlternative: false,

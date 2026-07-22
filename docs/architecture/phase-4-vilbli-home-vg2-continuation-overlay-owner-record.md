@@ -24,9 +24,10 @@ show in alternative VG2 pool  ⟺
 - **Not** Utdanning (owner: redundant with Vilbli).
 - **Not** a new `availability_scope` and **not** a third UI zone.
 - **Not** “add fylke 15 to all north neighbors” (would false-positive other professions).
-- **Membership (amended 2026-07-22):** **only** Vilbli-listed continuations ∩ NSR ∩ destination PSA ∩ public. **No** adjacency PSA dump (that false-positived murer Nordland with Trøndelag/Troms schools Vilbli never listed). North home scope `{18,55,56}` still gates *when* P-7 may apply.
+- **Membership (amended 2026-07-22):** Vilbli-listed continuations ∩ NSR ∩ destination PSA ∩ public. **No** adjacency PSA dump. Allowlist refreshed on **every** Contour B county relay (not cleared when local VG2 exists). P-7 still only *shows* when home VG2 missing + north home scope; P-8 uses the same allowlist for sparse «andre steder». **No** Oslo gold list.
 - P-6 unchanged: empty primary when local chain incomplete; no foreign schools in home PSA.
-- Extract / upsert at **Contour B relay** (ABORT path when required VG2 missing); **not** on page load.
+- Extract / upsert at **Contour B relay** for **every** county ingest (success + ABORT-missing-VG2); **not** on page load.
+- Do **not** clear allowlist merely because local VG2 exists — P-8 needs out-of-county pins when home also has local seats.
 - Alta-style Vilbli lies (listed abroad but no destination PSA / not this year) stay out because PSA admission fails — not a profession×school ban-list.
 
 ---
@@ -59,7 +60,7 @@ Same curated P-7 nabofylke alternative card (`alternative_routes[]`). Copy may l
 
 | # | Decision |
 |---|----------|
-| Truth formula | Vilbli list ∩ NSR ∩ destination PSA ∩ public |
+| **Membership (amended 2026-07-22)** | **Always** refresh allowlist from home county Vilbli p5 out-of-county VG2 pins ∩ NSR (fail-closed). Used by **P-7** (when home VG2 missing) and **P-8** sparse alt (anleggsteknikk). **No** clear-on-local-VG2; replace-set each relay. **No** Oslo gold list. |
 | Adjacency PSA dump | **No** (amended 2026-07-22) — north scope only, not school membership |
 | Utdanning | **No** |
 | Scope | General Contour B rule (not profession×region hack) |

@@ -19955,20 +19955,6 @@ async function persistVilbliHomeVg2ContinuationsFromHtml({
     write
   };
 }
-async function clearVilbliHomeVg2Continuations({
-  supabase,
-  professionSlug,
-  homeCountyCode,
-  isDryRun = false
-}) {
-  return replaceVilbliHomeVg2Continuations({
-    supabase,
-    professionSlug,
-    homeCountyCode,
-    rows: [],
-    isDryRun
-  });
-}
 
 // scripts/run-vgs-truth-pipeline.mjs
 var COUNTY_CODE_TO_VILBLI4 = {
@@ -20521,15 +20507,21 @@ async function runVgsTruthPipeline({
     );
   }
   try {
-    await clearVilbliHomeVg2Continuations({
+    const continuation = await persistVilbliHomeVg2ContinuationsFromHtml({
       supabase,
       professionSlug,
       homeCountyCode: countyCode,
+      homeCountySlug: countyMeta.slug,
+      homeCountyLabel: countyMeta.label,
+      html,
       isDryRun
     });
-  } catch (clearError) {
     console.error(
-      `[vilbli-home-vg2-continuations] clear failed profession=${professionSlug} home=${countyCode}: ${clearError instanceof Error ? clearError.message : String(clearError)}`
+      `[vilbli-home-vg2-continuations] profession=${professionSlug} home=${countyCode} pins=${continuation.pinCount} matched=${continuation.matchedCount} unmatched=${continuation.unmatchedCount} ambiguous=${continuation.ambiguousCount} dryRun=${isDryRun}`
+    );
+  } catch (continuationError) {
+    console.error(
+      `[vilbli-home-vg2-continuations] persist failed profession=${professionSlug} home=${countyCode}: ${continuationError instanceof Error ? continuationError.message : String(continuationError)}`
     );
   }
   const routeCandidateLinks = schoolProgrammeLinks.filter((link) => !link.excluded);
@@ -20999,13 +20991,13 @@ async function runVgsTruthPipeline({
   const writeCounters = { inserted: 0, updated: 0 };
   const writeRows = [];
   const currentYearOffering = buildCurrentYearOfferingSet({
-    offeringHtml: currentYearOfferingHtml,
+    offeringHtml: html,
     countySlug: countyMeta.slug,
     countyLabel: countyMeta.label
   });
   const enforceCurrentYearOffering = isCurrentYearOfferingEnforcementEnabled();
   const offeringDiagnostics = {
-    provided: currentYearOfferingHtml != null,
+    provided: Boolean(html),
     parsed: Boolean(currentYearOffering),
     enforce: enforceCurrentYearOffering,
     source: currentYearOffering?.source ?? null,

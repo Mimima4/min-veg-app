@@ -2,13 +2,12 @@ import "server-only";
 
 import {
   anleggsteknikkHomeVg1ProgrammeSlugsForFylke,
-  anleggsteknikkVg2ProgrammeSlugsForFylke,
   anleggsteknikkVilbliChainUrlForFylke,
-  ANLEGGSTEKNIKK_SPARSE_VG2_CANDIDATE_FYLKE_CODES,
   countNationalSparseVg2Schools,
   mergeAnleggsteknikkSparseVg2TruthRows,
   resolveAnleggsteknikkHomeFylkeCode,
-  selectNationalSparseVg2RowsOutsidePrimaryScope,
+  anleggsteknikkVg2ProgrammeSlugsForFylke,
+  ANLEGGSTEKNIKK_SPARSE_VG2_CANDIDATE_FYLKE_CODES,
 } from "@/lib/regional-delivery/anleggsteknikk-sparse-vg2-pilot";
 import {
   enrichTransportSortContextWithVg2DistanceRanks,
@@ -35,6 +34,7 @@ import {
 import { buildRoutePathVariantNavContext } from "./build-route-path-variant-nav-context";
 import { buildStepsFromAvailabilityTruth } from "./build-steps-from-availability-truth";
 import { getAvailabilityTruth } from "./get-availability-truth";
+import { loadVilbliHomeVg2ContinuationTruthRows } from "./load-vilbli-home-vg2-continuation-truth-rows";
 import {
   attachCatalogProfessionIdsToNavMatches,
   resolveCatalogProfessionIdsForNavMatches,
@@ -54,16 +54,13 @@ function pathVariantsIncludeLarefag(pathVariants: PathVariantsResult | null | un
 }
 
 /**
- * P-8 — national sparse VG2 alternative for anleggsteknikk ("VG2 andre steder").
+ * P-8 — sparse VG2 alternative for anleggsteknikk ("VG2 andre steder").
  *
- * Loads multi-county anleggsteknikk VG2 PSA ONLY when the sparse gate passes, respects
- * relocation willingness (`no`/null → []), and surfaces schools that fall OUTSIDE the
- * child's primary geography scope. Returns [] for every other profession and whenever the
- * PSA-derived sparse gate is inactive — the primary route is never affected.
+ * Membership (owner 2026-07-22) mirrors P-7:
+ *   Vilbli home-page out-of-county VG2 pins ∩ NSR ∩ destination PSA ∩ public
+ * (allowlist written at Contour B relay). No Oslo gold list; each home fylke owns its truth.
  *
- * Kolonne-3 / Fagvalg: prefer the already-parsed primary `pathVariants` (zero extra Vilbli
- * fetch). Fallback is one canonical home-county chain URL — never re-resolve from the
- * multi-county national PSA URL set (that path was flaky / timed out).
+ * Relocation willingness still gates visibility (`no` → omit). Transport rank unchanged.
  */
 export async function buildAnleggsteknikkSparseVg2AlternativeRouteSteps(params: {
   supabase: SupabaseClient;
@@ -78,8 +75,6 @@ export async function buildAnleggsteknikkSparseVg2AlternativeRouteSteps(params: 
     return [];
   }
 
-  // relocation `no`/null → omit alternative (contract §4.2). Resolve via the shared scope
-  // so the gating stays single-sourced.
   const alternativeScope = resolveSchoolGeographyScope({
     layer: "alternative",
     preferredMunicipalityCodes: params.preferredMunicipalityCodes,
@@ -95,7 +90,8 @@ export async function buildAnleggsteknikkSparseVg2AlternativeRouteSteps(params: 
     return [];
   }
 
-  const nationalTruths = await Promise.all(
+  // Sparse gate still uses nationwide active PSA count (profession density), not membership.
+  const nationalTruthsForGate = await Promise.all(
     ANLEGGSTEKNIKK_SPARSE_VG2_CANDIDATE_FYLKE_CODES.map((fylkeCode) => {
       const programmeSlugs = anleggsteknikkVg2ProgrammeSlugsForFylke(fylkeCode);
       if (programmeSlugs.length === 0) {
@@ -108,66 +104,57 @@ export async function buildAnleggsteknikkSparseVg2AlternativeRouteSteps(params: 
       });
     })
   );
-  const nationalVg2Rows = nationalTruths.flatMap((truth) => truth.rows);
-
-  // PSA-derived sparse gate (owner §P8-7). When inactive the alternative is suppressed and
-  // the primary route behaviour stays identical.
   const sparseVg2GateActive = assessSparseVg2AlternativeEligibility({
     professionSlug: params.professionSlug,
-    nationalVg2PsaCount: countNationalSparseVg2Schools(nationalVg2Rows),
+    nationalVg2PsaCount: countNationalSparseVg2Schools(
+      nationalTruthsForGate.flatMap((truth) => truth.rows)
+    ),
   });
   if (!sparseVg2GateActive) {
     return [];
   }
 
-  const primaryScope = resolveSchoolGeographyScope({
-    layer: "primary",
-    preferredMunicipalityCodes: params.preferredMunicipalityCodes,
-    relocationWillingness: params.relocationWillingness,
-    sparseVg2GateActive: true,
-  });
+  const [homeTruth, continuationVg2Rows] = await Promise.all([
+    getAvailabilityTruth({
+      countyCode: homeFylkeCode,
+      programmeSlugsOrCodes: anleggsteknikkHomeVg1ProgrammeSlugsForFylke(homeFylkeCode),
+      locale: params.locale,
+    }),
+    loadVilbliHomeVg2ContinuationTruthRows({
+      supabase: params.supabase,
+      professionSlug: params.professionSlug,
+      homeCountyCode: homeFylkeCode,
+      locale: params.locale,
+    }),
+  ]);
 
-  const nationalVg2RowsOutsidePrimaryScope = selectNationalSparseVg2RowsOutsidePrimaryScope({
-    nationalRows: nationalVg2Rows,
-    primaryScope,
-  });
-  if (nationalVg2RowsOutsidePrimaryScope.length === 0) {
+  const continuationVg2Only = continuationVg2Rows.filter((row) => row.stage === "VG2");
+  if (continuationVg2Only.length === 0) {
     return [];
   }
 
-  // Transport context today ranks VG1 only — without distance ranks VG2 falls back to
-  // alphabetical. Rank by Entur PT km for maybe (500/550 soft band); haversine for yes.
   const {
-    rankedRows: rankedNationalVg2Rows,
+    rankedRows: rankedContinuationVg2Rows,
     distanceKmByInstitutionId,
     softByInstitutionId,
-  } =
-    await filterAndRankSparseVg2RowsByHomeDistance({
-      supabase: params.supabase,
-      vg2Rows: nationalVg2RowsOutsidePrimaryScope,
-      homeMunicipalityCodes: params.preferredMunicipalityCodes,
-      relocationWillingness: params.relocationWillingness,
-    });
-  if (rankedNationalVg2Rows.length === 0) {
+  } = await filterAndRankSparseVg2RowsByHomeDistance({
+    supabase: params.supabase,
+    vg2Rows: continuationVg2Only,
+    homeMunicipalityCodes: params.preferredMunicipalityCodes,
+    relocationWillingness: params.relocationWillingness,
+  });
+  if (rankedContinuationVg2Rows.length === 0) {
     return [];
   }
 
-  // Shared V.BA VG1 (carpenter) — required for Oslo and any county where anleggsteknikk
-  // VG1 catalogue rows were never materialized (Contour B ABORT / missing_programme_rows).
   const homeVg1Slugs = anleggsteknikkHomeVg1ProgrammeSlugsForFylke(homeFylkeCode);
   if (homeVg1Slugs.length === 0) {
     return [];
   }
 
-  const homeTruth = await getAvailabilityTruth({
-    countyCode: homeFylkeCode,
-    programmeSlugsOrCodes: homeVg1Slugs,
-    locale: params.locale,
-  });
-
   const mergedTruthRows = mergeAnleggsteknikkSparseVg2TruthRows({
     homeVg1Rows: homeTruth.rows,
-    nationalVg2RowsOutsidePrimaryScope: rankedNationalVg2Rows,
+    nationalVg2RowsOutsidePrimaryScope: rankedContinuationVg2Rows,
   });
   if (
     !mergedTruthRows.some((row) => row.stage === "VG1") ||
@@ -182,7 +169,7 @@ export async function buildAnleggsteknikkSparseVg2AlternativeRouteSteps(params: 
   });
   const transportSortContext = enrichTransportSortContextWithVg2DistanceRanks({
     context: baseTransportSortContext,
-    vg2Rows: rankedNationalVg2Rows,
+    vg2Rows: rankedContinuationVg2Rows,
     distanceKmByInstitutionId,
     softByInstitutionId,
   });
@@ -195,8 +182,6 @@ export async function buildAnleggsteknikkSparseVg2AlternativeRouteSteps(params: 
     transportSortContext,
   });
 
-  // Prefer primary's already-parsed kolonne-3 graph (same recompute). Otherwise one
-  // canonical home-county Vilbli URL — do not re-pick from national multi-county PSA URLs.
   const pathVariants = pathVariantsIncludeLarefag(params.primaryPathVariants)
     ? params.primaryPathVariants!
     : await buildPathVariants(mergedTruthRows, params.professionSlug, {

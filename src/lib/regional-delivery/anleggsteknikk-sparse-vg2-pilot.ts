@@ -101,8 +101,8 @@ export function countNationalSparseVg2Schools(nationalRows: AvailabilityTruthRow
 
 /**
  * National VG2 rows whose county is NOT inside the primary geography scope — these are the
- * "andre steder" schools. North-zone families already see `{55,56,18}` in the primary
- * picker, so those are excluded here (owner record §P8-4 / G-3).
+ * "andre steder" schools. Primary is home fylke only (owner 2026-07-22); nabofylke seats
+ * such as Nordland for Troms/Finnmark appear here when relocation allows (G-3).
  */
 export function selectNationalSparseVg2RowsOutsidePrimaryScope(params: {
   nationalRows: AvailabilityTruthRow[];

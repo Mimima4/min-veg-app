@@ -27,9 +27,9 @@ Contour B ingest materializes PSA **per fylke**. Runtime today reads **home coun
 | # | Question | Decision |
 |---|----------|----------|
 | P8-1 | Activate relocation for VGS schools now? | **Yes — pilot only** for `anleggsteknikk` via P-8; other professions unchanged |
-| P8-2 | Primary when home P-6 eligible? | **Keep** home-chain primary; widen **primary school picker** only on **north zone** (see P8-4) |
+| P8-2 | Primary when home P-6 eligible? | **Keep** home-chain primary; **home fylke school picker only** (nabofylke not in prime — owner 2026-07-22) |
 | P8-3 | National VG2 outside primary scope? | **Alternative route only** — label nb: **«Anleggsteknikk — VG2 andre steder»** |
-| P8-4 | North regional rule | Home `55`/`56`: primary picker scope = home fylke + **`18` Nordland** (historisk nabosamarbeid). **Not** Agder/Rogaland/Vestland in primary. |
+| P8-4 | North regional rule | **Amended 2026-07-22:** primary = home `55`/`56` only. Nordland VG2 (e.g. Fauske) → P-8 alt when relocation `maybe`/`yes` (or P-7 when home VG2=0). **Not** Agder/Rogaland/Vestland in primary. |
 | P8-5 | Non-north homes | Primary = home fylke only; P-8 alternative per relocation contract §4.2 |
 | P8-6 | Oslo `03` (VG2=0) | Primary empty (P-6); P-8 alternative when relocation `maybe`/`yes` |
 | P8-7 | Sparse eligibility | **PSA-derived** at ingest/read: `national_vg2_psa_count(anleggsteknikk) ≤ 50`. **No static school list.** |
@@ -61,7 +61,7 @@ Contour B ingest materializes PSA **per fylke**. Runtime today reads **home coun
 | Distance / maybe filter | `src/lib/regional-delivery/anleggsteknikk-sparse-vg2-distance-rank.ts` | Live (haversine ≤400 km v1; PT-reach upgrade → separate maybe record) |
 | Step build | `src/server/children/routes/build-anleggsteknikk-sparse-vg2-alternative-route-steps.ts` | Live |
 | Sync | `src/server/children/routes/sync-study-route-curated-regional-alternatives.ts` | Live |
-| North-zone primary | `src/server/children/routes/enrich-anleggsteknikk-north-zone-primary-truth.ts` | Live |
+| North-zone primary | `enrich-anleggsteknikk-north-zone-primary-truth.ts` | **No-op** since 2026-07-22 (nabofylke not injected into prime) |
 | Smokes | `npm run smoke:anleggsteknikk-sparse-vg2`, `npm run smoke:school-geography-scope` | PASS 2026-07-20 |
 | E2E | `e2e/route-anleggsteknikk-smoke.spec.ts` | Present |
 

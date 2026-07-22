@@ -125,30 +125,73 @@ assert.equal(isCurrentYearOfferingEnforcementEnabled({ CONTOUR_B_ENFORCE_CURRENT
 assert.equal(isCurrentYearOfferingEnforcementEnabled({ CONTOUR_B_ENFORCE_CURRENT_YEAR_OFFERING: "0" }), false);
 assert.equal(isCurrentYearOfferingEnforcementEnabled({ CONTOUR_B_ENFORCE_CURRENT_YEAR_OFFERING: "false" }), false);
 
+// --- county page is authority (no Oslo gold list): Troms page keeps Bardufoss ---
+const TROMS_EXTRA_PIN = pin({
+  name: "Bardufoss videregående skole",
+  code: "8824",
+  fylke: "Troms",
+  path: "/nb/troms/adr/8824/bardufoss-videregaende-skole",
+});
+const TROMS_PAGE_HTML = `<html><body>${PADDING}
+<script>vb_map_data_Vg2 = [${[...VG2_LANDSLINJE_PINS, TROMS_EXTRA_PIN].join(",")}];</script>
+</body></html>`;
+const tromsPageOffering = buildCurrentYearOfferingSet({ offeringHtml: TROMS_PAGE_HTML });
+assert.equal(tromsPageOffering.stageCounts.VG2, 7, "Troms page landslinje = 7");
+assert.ok(tromsPageOffering.byStage.VG2.codes.has("8824"), "Troms page keeps Bardufoss");
+assert.ok(
+  resolveOfferingDecision({
+    offering: tromsPageOffering,
+    stage: "VG2",
+    school: { schoolCode: "8824", schoolName: "Bardufoss videregående skole" },
+  }).isOffered,
+  "Bardufoss offered from Troms county page"
+);
+
+// Rogaland page includes local non-probe schools → offered under county authority
+const ROGALAND_LOCAL = pin({
+  name: "Dalane videregående skole",
+  code: "8430",
+  fylke: "Rogaland",
+  path: "/nb/rogaland/adr/8430/dalane",
+});
+const ROGALAND_PAGE_HTML = `<html><body>${PADDING}
+<script>vb_map_data_Vg2 = [${[...VG2_LANDSLINJE_PINS, ROGALAND_LOCAL].join(",")}];</script>
+</body></html>`;
+const rogalandOffering = buildCurrentYearOfferingSet({ offeringHtml: ROGALAND_PAGE_HTML });
+assert.ok(
+  resolveOfferingDecision({
+    offering: rogalandOffering,
+    stage: "VG2",
+    school: { schoolCode: "8430", schoolName: "Dalane videregående skole" },
+  }).isOffered,
+  "Rogaland local offered from Rogaland page"
+);
+
 console.error("[smoke:current-year-offering] PASS");
 
-// --- optional live validation against the real Vilbli reference (home IP only) ---
+// --- optional live validation (home IP only) ---
 if (process.argv.includes("--live")) {
-  const EXPECTED_ANLEGG_VG2 = 6;
-  const { getVgsPathDefinition } = await import("../scripts/vgs-path-definitions.mjs");
   const { vilbliFetch } = await import("../scripts/lib/vilbli-fetch.mjs");
-  const referenceUrl = getVgsPathDefinition("anleggsteknikk")?.sourceModel?.strukturkartReferenceUrl;
-  assert.ok(referenceUrl, "anleggsteknikk strukturkartReferenceUrl defined");
-  console.error(`[smoke:current-year-offering:live] fetching ${referenceUrl}`);
-  const res = await vilbliFetch(referenceUrl);
-  const html = await res.text();
-  console.error(`[smoke:current-year-offering:live] status=${res.status} len=${html.length}`);
-  const liveOffering = buildCurrentYearOfferingSet({ offeringHtml: html });
-  assert.ok(liveOffering, "live: offering set parsed from reference page");
-  const vg2 = liveOffering.byStage.VG2;
-  assert.ok(vg2, "live: VG2 landslinje offering present");
+  const tromsUrl =
+    "https://www.vilbli.no/nb/troms/strukturkart/V.BA/bygg-og-anleggsteknikk-skoler-og-laerebedrifter?kurs=V.BABAT1----_V.BAANL2----&side=p5";
+  console.error(`[smoke:current-year-offering:live] fetching ${tromsUrl}`);
+  const tromsRes = await vilbliFetch(tromsUrl);
+  const tromsHtml = await tromsRes.text();
+  const tromsLive = buildCurrentYearOfferingSet({ offeringHtml: tromsHtml });
+  assert.ok(tromsLive?.byStage.VG2.codes.has("8824"), "live: Troms page includes Bardufoss 8824");
   console.error(
-    `[smoke:current-year-offering:live] VG2 offering count=${vg2.codes.size} (fylke=${vg2.fylkeCount}) codes=${[...vg2.codes].join(",")}`
+    `[smoke:current-year-offering:live] Troms VG2 count=${tromsLive.byStage.VG2.codes.size} codes=${[...tromsLive.byStage.VG2.codes].join(",")}`
   );
-  assert.equal(
-    vg2.codes.size,
-    EXPECTED_ANLEGG_VG2,
-    `live: expected ${EXPECTED_ANLEGG_VG2} national anleggsteknikk VG2 offering schools, got ${vg2.codes.size}`
+
+  const rogalandUrl =
+    "https://www.vilbli.no/nb/rogaland/strukturkart/V.BA/bygg-og-anleggsteknikk-skoler-og-laerebedrifter?kurs=V.BABAT1----_V.BAANL2----&side=p5";
+  console.error(`[smoke:current-year-offering:live] fetching ${rogalandUrl}`);
+  const rogRes = await vilbliFetch(rogalandUrl);
+  const rogHtml = await rogRes.text();
+  const rogLive = buildCurrentYearOfferingSet({ offeringHtml: rogHtml });
+  assert.ok(rogLive?.byStage.VG2.codes.has("8430"), "live: Rogaland page includes Dalane 8430");
+  console.error(
+    `[smoke:current-year-offering:live] Rogaland VG2 count=${rogLive.byStage.VG2.codes.size}`
   );
-  console.error("[smoke:current-year-offering:live] PASS — READY signal for anleggsteknikk VG2");
+  console.error("[smoke:current-year-offering:live] PASS — county-page authority");
 }

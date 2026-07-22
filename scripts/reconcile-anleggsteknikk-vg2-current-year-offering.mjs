@@ -22,6 +22,8 @@ const CURRENT_YEAR_OFFERING_NAME_MATCHERS = [
   { countyCode: "18", nameIncludes: ["fauske"] },
   { countyCode: "11", nameIncludes: ["øksnevad", "oksnevad"] },
   { countyCode: "46", nameIncludes: ["os vidaregåande", "os videregående"] },
+  // Viewer-fylke pin on Troms p5 (missing from Oslo probe) — verified 2026-07-22.
+  { countyCode: "55", nameIncludes: ["bardufoss"] },
 ];
 
 function normalizeName(name) {
