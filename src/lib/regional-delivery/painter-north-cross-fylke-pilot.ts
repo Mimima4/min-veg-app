@@ -6,6 +6,7 @@
  * Scope: home fylke {18,55,56} — not nationwide adjacency.
  * Relocation willingness does not gate eligibility or alternative visibility.
  * P-8 (national sparse) stays separate / owner-chartered.
+ * Neighbor VG2+ pool excludes privatskole (north Vilbli chain pages list public continuations).
  */
 import { isLosaAvailabilityScope } from "@/lib/losa/availability-scope";
 import { normalizeFylkeCodesFromMunicipalityCodes } from "@/lib/planning/norway-geo-code-normalization";
@@ -142,6 +143,16 @@ function countyScopedSchoolRows(rows: AvailabilityTruthRow[]): AvailabilityTruth
   return rows.filter((row) => !isLosaAvailabilityScope(row.availabilityScope));
 }
 
+/**
+ * P-7 nabofylke VG2+ school pool: exclude private schools.
+ * Vilbli north home pages (18/55/56) for sparse VG2 chains list public
+ * out-of-fylke continuations — not privatskole markers — so neighbor PSA
+ * privatskole (e.g. Øya in Trøndelag) must not enter the P-7 dropdown.
+ */
+function isPublicSchoolTruthRow(row: AvailabilityTruthRow): boolean {
+  return row.institutionIsPrivateSchool !== true;
+}
+
 export function northCrossFylkeNabofylkeVg2ProgrammeSlug(professionSlug: string): string {
   const profession = String(professionSlug ?? "").trim();
   const middles = PROFESSION_COUNTY_SLUG_MIDDLES[profession];
@@ -186,6 +197,7 @@ export function mergeNorthCrossFylkeTruthRows(params: {
   const homeVg1 = params.homeRows.filter((row) => row.stage === "VG1");
   const neighborFromVg2 = countyScopedSchoolRows(params.neighborRows)
     .filter((row) => row.stage !== "VG1")
+    .filter(isPublicSchoolTruthRow)
     .map((row) =>
       row.stage === "VG2" ? { ...row, programSlug: nabofylkeSlug } : row
     );
@@ -216,7 +228,9 @@ export function assessNorthCrossFylkeSplitRouteTruthEligibility(params: {
   missingMergedStages: PrimaryRequiredSchoolStage[];
 } {
   const homeSchool = countyScopedSchoolRows(params.homeRows);
-  const neighborSchool = countyScopedSchoolRows(params.neighborRows);
+  const neighborSchool = countyScopedSchoolRows(params.neighborRows).filter(
+    isPublicSchoolTruthRow
+  );
   const homeHasVg1 = homeSchool.some((row) => row.stage === "VG1");
   const homeHasVg2 = homeSchool.some((row) => row.stage === "VG2");
   const neighborHasVg2 = neighborSchool.some((row) => row.stage === "VG2");

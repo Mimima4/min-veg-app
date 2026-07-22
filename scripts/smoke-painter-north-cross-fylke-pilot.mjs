@@ -172,6 +172,7 @@ function mergeSplitTruthRows(homeRows, neighborRows) {
   const homeVg1 = homeRows.filter((row) => row.stage === "VG1");
   const neighborFromVg2 = neighborRows
     .filter((row) => row.stage !== "VG1" && row.availabilityScope !== LOSA_SCOPE)
+    .filter((row) => row.institutionIsPrivateSchool !== true)
     .map((row) =>
       row.stage === "VG2"
         ? { ...row, programSlug: PAINTER_NORTH_NABOFYLKE_VG2_PROGRAMME_SLUG }
@@ -179,6 +180,39 @@ function mergeSplitTruthRows(homeRows, neighborRows) {
     );
   return [...homeVg1, ...neighborFromVg2];
 }
+
+const mergedWithPrivateFiltered = mergeSplitTruthRows(
+  [
+    {
+      stage: "VG1",
+      county: "55",
+      school: "Kvaløya",
+      availabilityScope: "programme_in_school",
+      institutionIsPrivateSchool: false,
+    },
+  ],
+  [
+    {
+      stage: "VG2",
+      county: "50",
+      school: "Øya",
+      availabilityScope: "programme_in_school",
+      institutionIsPrivateSchool: true,
+    },
+    {
+      stage: "VG2",
+      county: "50",
+      school: "Mære",
+      availabilityScope: "programme_in_school",
+      institutionIsPrivateSchool: false,
+    },
+  ]
+);
+assert.deepEqual(
+  mergedWithPrivateFiltered.map((row) => row.school),
+  ["Kvaløya", "Mære"],
+  "P-7 merge must drop neighbor privatskole"
+);
 
 const merged = mergeSplitTruthRows(
   [
