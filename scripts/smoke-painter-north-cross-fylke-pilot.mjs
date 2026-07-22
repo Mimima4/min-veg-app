@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import assert from "node:assert/strict";
 
-const NORTH_CROSS_FYLKE_HOME_FYLKE_CODES = new Set(["55", "56"]);
+const NORTH_CROSS_FYLKE_HOME_FYLKE_CODES = new Set(["18", "55", "56"]);
 const NORTH_CROSS_FYLKE_NEIGHBOR_CODES = ["18", "50", "55"];
 const SUPPORTED = new Set([
   "electrician",
@@ -86,6 +86,22 @@ assert.equal(
   isNorthCrossFylkeEligible({
     professionSlug: "klima",
     homeFylkeCode: "56",
+    neighborCountyCode: "50",
+  }),
+  true
+);
+assert.equal(
+  isNorthCrossFylkeEligible({
+    professionSlug: "murer",
+    homeFylkeCode: "18",
+    neighborCountyCode: "55",
+  }),
+  true
+);
+assert.equal(
+  isNorthCrossFylkeEligible({
+    professionSlug: "murer",
+    homeFylkeCode: "18",
     neighborCountyCode: "50",
   }),
   true

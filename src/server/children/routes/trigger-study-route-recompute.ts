@@ -963,6 +963,37 @@ export async function triggerStudyRouteRecompute(params: Params) {
     const shouldExposeNewRouteAvailable =
       shouldProtectSavedRoute && materialRouteShift;
 
+    // Curated overlays (P-7 north nabofylke, Steigen, …) must sync even when the
+    // saved/primary snapshot is protected — otherwise Finnmark/Nordland empty
+    // primaries stay without Alternative routes until a second unprotected recompute.
+    const routeInputSignatureForCurated = computeRouteInputSignature({
+      preferredMunicipalityCodes: snapshotContext.planning.preferredMunicipalityCodes,
+      relocationWillingness: snapshotContext.planning.relocationWillingness,
+      interestIds: snapshotContext.planning.interestIds,
+      observedTraitIds: snapshotContext.planning.observedTraitIds,
+      desiredIncomeBand: snapshotContext.planning.desiredIncomeBand,
+      preferredWorkStyle: snapshotContext.planning.preferredWorkStyle,
+      preferredEducationLevel: snapshotContext.planning.preferredEducationLevel,
+      truthVersion: null,
+    });
+
+    if (shouldSyncCuratedRegionalAlternatives && shouldProtectSavedRoute) {
+      await syncStudyRouteCuratedRegionalAlternatives({
+        supabase,
+        routeId: route.id,
+        primaryVariantId: route.current_variant_id,
+        primarySteps: recomputedSteps,
+        primaryPathVariants: outcomeFilterAlternativesContext?.pathVariants ?? null,
+        professionSlug: professionRow.slug,
+        preferredMunicipalityCodes,
+        relocationWillingness,
+        snapshotContext,
+        routeInputSignature: routeInputSignatureForCurated,
+        createdByType: triggeredByType,
+        createdByUserId: triggeredByUserId,
+      });
+    }
+
     if (shouldProtectSavedRoute) {
       await supabase
         .from("study_route_recompute_runs")

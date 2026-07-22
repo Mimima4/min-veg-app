@@ -1,9 +1,9 @@
 /**
- * P-7 — north cross-fylke (nabofylke) when home fylke is Troms/Finnmark and lacks local VG2.
+ * P-7 — north cross-fylke (nabofylke) when home fylke is Nordland/Troms/Finnmark and lacks local VG2.
  * Profession-agnostic Contour B overlay (painter precedent generalized).
  * Policy: phase-4-county-local-primary-route-completeness-owner-policy.md (R-3)
  *
- * Scope: home fylke {55,56} only — not nationwide adjacency.
+ * Scope: home fylke {18,55,56} — not nationwide adjacency.
  * Relocation willingness does not gate eligibility or alternative visibility.
  * P-8 (national sparse) stays separate / owner-chartered.
  */
@@ -20,12 +20,12 @@ import {
 import { isVbaSharedVg1Profession } from "@/lib/vgs/vg2-cross-profession";
 import type { AvailabilityTruthRow } from "@/server/children/routes/get-availability-truth";
 
-/** Troms + Finnmark — same north home set as painter P-7. */
-export const NORTH_CROSS_FYLKE_HOME_FYLKE_CODES = new Set(["55", "56"]);
+/** Nordland + Troms + Finnmark — north zone homes for nabofylke VG2 commute. */
+export const NORTH_CROSS_FYLKE_HOME_FYLKE_CODES = new Set(["18", "55", "56"]);
 
 /**
- * Neighbor counties scanned for VG2 (filtered by adjacency from home).
- * Includes Troms `55` so Finnmark homes can use Troms VG2 (klima etc.).
+ * Neighbor counties scanned for VG2 (filtered by adjacency from home; home excluded).
+ * Includes Troms `55` so Finnmark/Nordland homes can use Troms VG2.
  */
 export const NORTH_CROSS_FYLKE_NEIGHBOR_CONFIGS = [
   { countyCode: "18", labelNb: "Nordland", labelEn: "Nordland" },

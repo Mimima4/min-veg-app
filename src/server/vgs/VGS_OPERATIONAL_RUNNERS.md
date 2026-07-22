@@ -77,7 +77,15 @@ Readiness values such as `missing_programme_rows` or `canonical_matching_review`
 
 **Every 6 months** — automated via **home-IP relay** (see below). Vilbli.no returns a stub (~2KB, HTTP 202) to Vercel/datacenter IPs, so **do not** rely on Vercel Cron to fetch Vilbli directly.
 
-**Production relay scope (binding):** Contour B relay **always** runs the **full** `SUPPORTED_VGS_PROFESSION_SLUGS × VGS_PIPELINE_COUNTY_CODES` matrix. **Never** scope production relay to one profession or one county. `--profession` / `--county` are **smoke-only** with `--dry-run` (scripts enforce this).
+**Production relay scope (binding, owner 2026-07-22):**
+
+| Trigger | Production scope |
+|---------|------------------|
+| Contour **code** changes (builders, eligibility, overlays, pipeline) | **Full** `SUPPORTED_VGS_PROFESSION_SLUGS × VGS_PIPELINE_COUNTY_CODES` matrix |
+| Profession **addition** only (catalog + eligibility slug; no contour code change) | **Profession-local** matrix: `--profession <slug>` (all pipeline counties for that slug) |
+| `--county` | **Smoke-only** with `--dry-run` — never production |
+
+Scheduled 6‑month cadence stays **full matrix**.
 
 ## Production automation (required)
 
@@ -92,14 +100,21 @@ set -a && source .env.local && set +a
 node scripts/relay-contour-b-vilbli-to-production.mjs --dry-run --county 56 --profession electrician
 ```
 
-3. **Full batch (all pipeline counties):**
+3. **Profession-local batch** (new profession, no contour code change):
+
+```bash
+node scripts/relay-contour-b-vilbli-to-production.mjs --dry-run --profession murer
+node scripts/relay-contour-b-vilbli-to-production.mjs --profession murer
+```
+
+4. **Full batch** (contour code change or scheduled cadence):
 
 ```bash
 node scripts/relay-contour-b-vilbli-to-production.mjs --dry-run
 node scripts/relay-contour-b-vilbli-to-production.mjs   # production write
 ```
 
-4. **Schedule every 6 months (macOS launchd example):**
+5. **Schedule every 6 months (macOS launchd example):**
 
 ```xml
 <!-- ~/Library/LaunchAgents/no.minveg.contour-b-relay.plist -->

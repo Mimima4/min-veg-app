@@ -42,7 +42,7 @@
 | VG1 | `murer-vg1-bygg-{countySlug}` |
 | VG2 | `murer-vg2-betong-mur-{countySlug}` |
 
-Full-matrix relay (retry after Vilbli 504 window): murer **13 ingested**, **2 ABORT** (Vilbli VG2=0: Nordland `18`, Finnmark `56`). Active programmes **26** (13 VG1 + 13 VG2). ABORT → P-6 empty primary; P-7 north nabofylke auto for Finnmark (`56`) when Troms has VG2.
+Full-matrix relay (retry after Vilbli 504 window): murer **13 ingested**, **2 ABORT** (Vilbli VG2=0: Nordland `18`, Finnmark `56`). Active programmes **26** (13 VG1 + 13 VG2). ABORT → P-6 empty primary; P-7 north nabofylke auto for home `{18,55,56}` when a neighbor has VG2 (e.g. Nordland/Finnmark → Troms).
 
 ---
 

@@ -70,14 +70,20 @@ async function main() {
   const skipGreenA = String(args["skip-green-a"] ?? "").toLowerCase() === "true";
   const skipStaleBatch = String(args["skip-stale-batch"] ?? "").toLowerCase() === "true";
   const skipNavSnapshot = String(args["skip-nav-snapshot"] ?? "").toLowerCase() === "true";
-  const hasScopeFilter = Boolean(args.profession || args.county);
-  if (!dryRun && hasScopeFilter) {
+  const profession = String(args.profession ?? "").trim();
+  const county = String(args.county ?? "").trim();
+  if (!dryRun && county) {
     throw new Error(
-      "[scheduled-ops] --profession/--county are smoke-only (--dry-run). " +
-        "Production relay must run the full Contour B matrix."
+      "[scheduled-ops] --county is smoke-only (--dry-run). " +
+        "Production Contour B must not scope to a single county. " +
+        "Use full matrix, or --profession <slug> for a profession-local matrix."
     );
   }
-  const scopeArgs = dryRun ? filterArgs(args, ["profession", "county"]) : [];
+  const scopeArgs = dryRun
+    ? filterArgs(args, ["profession", "county"])
+    : profession
+      ? filterArgs(args, ["profession"])
+      : [];
 
   const steps = [];
 

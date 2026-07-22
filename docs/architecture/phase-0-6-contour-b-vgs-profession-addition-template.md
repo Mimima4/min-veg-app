@@ -118,11 +118,11 @@ Source: `src/lib/i18n/route-steps-empty-copy.ts`. Signal: `PRIMARY_ROUTE_INCOMPL
 
 ### 4.3 P-7 — north cross-fylke nabofylke (auto for Contour B)
 
-**Automatic for all Contour B professions** when home fylke is Troms `55` or Finnmark `56` and local VG2 is missing — painter precedent generalized (`painter-north-cross-fylke-pilot.ts`).
+**Automatic for all Contour B professions** when home fylke is Nordland `18`, Troms `55`, or Finnmark `56` and local VG2 is missing — painter precedent generalized (`painter-north-cross-fylke-pilot.ts`).
 
 | Element | Implementation |
 |---------|----------------|
-| Eligibility | Home `55`/`56`; neighbor VG2 in `{18,50,55}` filtered by adjacency (Troms for Finnmark→Troms) |
+| Eligibility | Home `{18,55,56}`; neighbor VG2 in `{18,50,55}` filtered by adjacency (e.g. Nordland→Troms/Trøndelag; Finnmark→Troms) |
 | Route shape | VG1 PSA **home** + VG2+ PSA **neighbor** (split, not full chain in neighbor) |
 | Builder | `build-painter-north-cross-fylke-route-steps.ts` (profession-agnostic) |
 | Relocation | **Does not gate** P-7 (commute model — not P-8) |
@@ -249,7 +249,7 @@ For each kolonne-3 fag Vilbli lists on the signed chain in a fylke:
 | Kolonne-3 roster verify | `npm run verify:kolonne3-roster -- <slug>` when bedrift chain has ≥2 fag |
 | Kolonne-3 mapping smoke | `npm run smoke:kolonne3-larefag-mapping` |
 | E2E | `npm run test:e2e:<profession>` — Block C `programme_selection` |
-| Prod relay | Full matrix from home IP; record `ingested`/`ABORT` per pair in branch record |
+| Prod relay | Profession-local from home IP (full matrix only if contour code changed); record `ingested`/`ABORT` per pair in branch record |
 | Prod UI spot-check | Owner sign-off per pilot matrix row |
 
 ---
@@ -261,7 +261,7 @@ For each kolonne-3 fag Vilbli lists on the signed chain in a fylke:
 | 1 | Branch owner record signed |
 | 2 | Expansion gate steps 2.1–2.7 complete |
 | 3 | Dry-run green counties |
-| 4 | Production relay (full matrix) |
+| 4 | Production relay — profession-local (`--profession <slug>`) unless contour code changed (then full matrix) |
 | 5 | P-6 primary gate verified (incl. VG2=0 fylke → empty primary + copy) |
 | 6 | Overlay contours chartered & verified (LOSA / Steigen / P-7 / bedrift — as applicable) |
 | 7 | Classify matrix documented |
@@ -290,7 +290,7 @@ For each kolonne-3 fag Vilbli lists on the signed chain in a fylke:
 |---------|----------|----------|
 | Contour B path + relay | **Yes** | `vgs-path-definitions.mjs` `painter` |
 | P-6 primary gate | **Yes** | `e0098e3` |
-| P-7 north (`55`/`56`) | **Yes** | `painter-north-cross-fylke-*`, E2E + prod Troms/Finnmark |
+| P-7 north (`{18,55,56}`) | **Yes** | `painter-north-cross-fylke-*`, E2E + prod Troms/Finnmark/Nordland |
 | V.BA VG2 switch | **Yes** | Shared with carpenter/plumber |
 | Bedrift | **Yes** | `BAMOT3` / `BAIMF3`, batch 0 |
 | Steigen | **No** | Carpenter-only |

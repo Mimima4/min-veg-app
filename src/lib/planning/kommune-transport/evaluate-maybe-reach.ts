@@ -448,9 +448,6 @@ export async function evaluateMaybeReachBetweenMunicipalities(params: {
       resolveHubStopPlaceForMunicipalityCode(school),
     ]);
     if (!fromHub || !toHub) {
-      console.error(
-        `[maybe-pt-reach] denied_hub_unresolved home=${home} school=${school} from=${fromHub} to=${toHub}`
-      );
       return {
         admitted: false,
         soft: false,
@@ -466,18 +463,11 @@ export async function evaluateMaybeReachBetweenMunicipalities(params: {
       fromStopPlaceId: fromHub,
       toStopPlaceId: toHub,
     });
-    const verdict = verdictFromPatterns(patterns, { allowAir });
-    if (!verdict.admitted) {
-      console.error(
-        `[maybe-pt-reach] ${verdict.reason} home=${home} school=${school} km=${verdict.ptNetworkKm} air=${allowAir}`
-      );
-    }
-    return verdict;
+    // Expected denials are common on sparse/long routes — do not spam server logs.
+    return verdictFromPatterns(patterns, { allowAir });
   } catch (error) {
-    console.error(
-      `[maybe-pt-reach] denied_no_pt home=${home} school=${school}`,
-      error instanceof Error ? error.message : error
-    );
+    // Entur miss / timeout → deny; avoid console spam on expected sparse pairs.
+    void error;
     return {
       admitted: false,
       soft: false,

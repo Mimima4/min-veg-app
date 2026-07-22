@@ -58,7 +58,7 @@ ABORT counties → no primary route (county-local policy); not a defect.
 | P-3 NAV | **OK —** `håndverkere.platearbeider-og-sveiser` |
 | P-4 V.BA VG2 switch | **OK** |
 | P-5 empty bedrift | **OK — godkjent-only** |
-| P-6 / P-7 / P-8 | P-6 auto empty primary (VG2=0); **P-7 north nabofylke auto** for Contour B (home `55`/`56`, e.g. Finnmark VG1 + Troms/Trøndelag VG2); **P-8 not chartered** for klima |
+| P-6 / P-7 / P-8 | P-6 auto empty primary (VG2=0); **P-7 north nabofylke auto** for Contour B (home `{18,55,56}`, e.g. Finnmark/Nordland VG1 + Troms/Trøndelag VG2); **P-8 not chartered** for klima |
 
 ---
 
