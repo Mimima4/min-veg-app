@@ -18,6 +18,7 @@ import { buildPathVariants } from "./build-path-variants";
 import { buildRoutePathVariantNavContext } from "./build-route-path-variant-nav-context";
 import { buildStepsFromAvailabilityTruth } from "./build-steps-from-availability-truth";
 import { getAvailabilityTruth } from "./get-availability-truth";
+import { loadVilbliHomeVg2ContinuationTruthRows } from "./load-vilbli-home-vg2-continuation-truth-rows";
 import {
   attachCatalogProfessionIdsToNavMatches,
   resolveCatalogProfessionIdsForNavMatches,
@@ -26,9 +27,11 @@ import { resolveVbaSharedVg2ProgrammeOptions } from "./resolve-vba-shared-vg2-pr
 import { selectTruthCandidateForRoute } from "./select-truth-candidate-for-route";
 
 /**
- * P-7 — Vilbli north split: VG1 PSA in home fylke (55/56) + VG2+ PSA in neighbor fylke.
+ * P-7 — Vilbli north split: VG1 PSA in home fylke (55/56) + VG2+ PSA in neighbor fylke
+ * union Vilbli home-page continuation schools (destination PSA ∩ allowlist).
  * Relocation willingness is ignored for selection (commute model — not P-8 relocation).
- * Returns [] when home lacks VG1, home already has VG2, or neighbor lacks VG2.
+ * Returns [] when home lacks VG1, home already has VG2, or neither neighbor nor
+ * continuation pool has VG2.
  */
 export async function buildPainterNorthCrossFylkeRouteSteps(params: {
   supabase: SupabaseClient;
@@ -75,7 +78,7 @@ export async function buildPainterNorthCrossFylkeRouteSteps(params: {
     return [];
   }
 
-  const [homeTruth, neighborTruth] = await Promise.all([
+  const [homeTruth, neighborTruth, continuationRows] = await Promise.all([
     getAvailabilityTruth({
       countyCode: homeFylkeCode,
       programmeSlugsOrCodes: homeProgrammeSlugs,
@@ -86,12 +89,19 @@ export async function buildPainterNorthCrossFylkeRouteSteps(params: {
       programmeSlugsOrCodes: neighborProgrammeSlugs,
       locale: params.locale,
     }),
+    loadVilbliHomeVg2ContinuationTruthRows({
+      supabase: params.supabase,
+      professionSlug: params.professionSlug,
+      homeCountyCode: homeFylkeCode,
+      locale: params.locale,
+    }),
   ]);
 
   const splitEligibility = assessNorthCrossFylkeSplitRouteTruthEligibility({
     professionSlug: params.professionSlug,
     homeRows: homeTruth.rows,
     neighborRows: neighborTruth.rows,
+    continuationRows,
   });
   if (!splitEligibility.eligible) {
     return [];
@@ -101,6 +111,7 @@ export async function buildPainterNorthCrossFylkeRouteSteps(params: {
     professionSlug: params.professionSlug,
     homeRows: homeTruth.rows,
     neighborRows: neighborTruth.rows,
+    continuationRows,
   });
 
   return buildStepsFromMergedNorthCrossFylkeTruth({
@@ -109,7 +120,7 @@ export async function buildPainterNorthCrossFylkeRouteSteps(params: {
     preferredMunicipalityCodes: params.preferredMunicipalityCodes,
     homeFylkeCode,
     mergedTruthRows,
-    neighborRowsForPathVariants: neighborTruth.rows,
+    neighborRowsForPathVariants: [...neighborTruth.rows, ...continuationRows],
   });
 }
 
@@ -154,11 +165,19 @@ export async function buildPainterNorthCrossFylkeMergedRouteSteps(params: {
     return [];
   }
 
-  const homeTruth = await getAvailabilityTruth({
-    countyCode: homeFylkeCode,
-    programmeSlugsOrCodes: homeProgrammeSlugs,
-    locale: params.locale,
-  });
+  const [homeTruth, continuationRows] = await Promise.all([
+    getAvailabilityTruth({
+      countyCode: homeFylkeCode,
+      programmeSlugsOrCodes: homeProgrammeSlugs,
+      locale: params.locale,
+    }),
+    loadVilbliHomeVg2ContinuationTruthRows({
+      supabase: params.supabase,
+      professionSlug: params.professionSlug,
+      homeCountyCode: homeFylkeCode,
+      locale: params.locale,
+    }),
+  ]);
 
   const neighborTruths = await Promise.all(
     neighborCountyCodes.map((neighborCountyCode) =>
@@ -173,6 +192,7 @@ export async function buildPainterNorthCrossFylkeMergedRouteSteps(params: {
     )
   );
 
+  // Adjacency neighbors that independently qualify; continuations always union into merge.
   const eligibleNeighborPairs = neighborCountyCodes
     .map((neighborCountyCode, index) => ({
       neighborCountyCode,
@@ -183,20 +203,27 @@ export async function buildPainterNorthCrossFylkeMergedRouteSteps(params: {
         professionSlug: params.professionSlug,
         homeRows: homeTruth.rows,
         neighborRows: neighborTruth.rows,
+        continuationRows: [],
       }).eligible
     );
 
-  if (eligibleNeighborPairs.length === 0) {
+  const allNeighborRows = eligibleNeighborPairs.flatMap((pair) => pair.neighborTruth.rows);
+  const splitEligibility = assessNorthCrossFylkeSplitRouteTruthEligibility({
+    professionSlug: params.professionSlug,
+    homeRows: homeTruth.rows,
+    neighborRows: allNeighborRows,
+    continuationRows,
+  });
+  if (!splitEligibility.eligible) {
     return [];
   }
 
   const mergedTruthRows = mergeNorthCrossFylkeTruthRows({
     professionSlug: params.professionSlug,
     homeRows: homeTruth.rows,
-    neighborRows: eligibleNeighborPairs.flatMap((pair) => pair.neighborTruth.rows),
+    neighborRows: allNeighborRows,
+    continuationRows,
   });
-
-  const allNeighborRows = eligibleNeighborPairs.flatMap((pair) => pair.neighborTruth.rows);
 
   return buildStepsFromMergedNorthCrossFylkeTruth({
     supabase: params.supabase,
@@ -204,7 +231,7 @@ export async function buildPainterNorthCrossFylkeMergedRouteSteps(params: {
     preferredMunicipalityCodes: params.preferredMunicipalityCodes,
     homeFylkeCode,
     mergedTruthRows,
-    neighborRowsForPathVariants: allNeighborRows,
+    neighborRowsForPathVariants: [...allNeighborRows, ...continuationRows],
   });
 }
 

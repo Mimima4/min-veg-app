@@ -18462,6 +18462,22 @@ function extractVilbliStagesFromHtml({ html, countySlug, countyLabel }) {
     }
   };
 }
+function extractOutOfCountyVg2ContinuationSchools({ html, countySlug, countyLabel }) {
+  const byStage = extractVilbliMapPinsByStage(html);
+  const homeSlug = String(countySlug ?? "").trim().toLowerCase();
+  const homeLabel = normalizeBasic3(countyLabel);
+  return (byStage.VG2 ?? []).filter((school) => {
+    if (!school.schoolName || !school.schoolCode) return false;
+    const typeNorm = normalizeBasic3(school.schoolType);
+    if (typeNorm.includes("privatskole") || typeNorm === "privatskoler") {
+      return false;
+    }
+    const pinLabel = normalizeBasic3(school.fylkeName);
+    const path2 = String(school.schoolPagePath ?? "");
+    const isHome = homeLabel.length > 0 && pinLabel === homeLabel || homeSlug.length > 0 && path2.includes(`/${homeSlug}/`);
+    return !isHome;
+  });
+}
 
 // scripts/school-identity-semantics.mjs
 function asString(value) {
@@ -19773,8 +19789,189 @@ function isCurrentYearOfferingEnforcementEnabled(env = process.env) {
   return raw !== "0" && raw.toLowerCase() !== "false";
 }
 
-// scripts/run-vgs-truth-pipeline.mjs
+// scripts/lib/vilbli-county-meta.mjs
 var COUNTY_CODE_TO_VILBLI3 = {
+  "03": { slug: "oslo", label: "Oslo" },
+  "31": { slug: "ostfold", label: "\xD8stfold" },
+  "32": { slug: "akershus", label: "Akershus" },
+  "33": { slug: "buskerud", label: "Buskerud" },
+  "34": { slug: "innlandet", label: "Innlandet" },
+  "39": { slug: "vestfold", label: "Vestfold" },
+  "40": { slug: "telemark", label: "Telemark" },
+  "42": { slug: "agder", label: "Agder" },
+  "46": { slug: "vestland", label: "Vestland" },
+  "50": { slug: "trondelag", label: "Tr\xF8ndelag" },
+  "55": { slug: "troms", label: "Troms" },
+  "56": { slug: "finnmark", label: "Finnmark" },
+  "11": { slug: "rogaland", label: "Rogaland" },
+  "15": { slug: "more-og-romsdal", label: "M\xF8re og Romsdal" },
+  "18": { slug: "nordland", label: "Nordland" }
+};
+
+// scripts/lib/vilbli-home-vg2-continuations.mjs
+var MIN_MATCH_SCORE = 0.6;
+function normalizeBasic4(value) {
+  return String(value ?? "").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim();
+}
+function resolveDestinationCountyCodeFromVilbliPin(school) {
+  const pinLabel = normalizeBasic4(school?.fylkeName);
+  const path2 = String(school?.schoolPagePath ?? "");
+  for (const [code, meta] of Object.entries(COUNTY_CODE_TO_VILBLI3)) {
+    if (pinLabel && pinLabel === normalizeBasic4(meta.label)) {
+      return code;
+    }
+    if (meta.slug && path2.includes(`/${meta.slug}/`)) {
+      return code;
+    }
+  }
+  return null;
+}
+async function matchVilbliHomeVg2ContinuationsToNsr({
+  supabase,
+  schools
+}) {
+  const byDest = /* @__PURE__ */ new Map();
+  for (const school of schools ?? []) {
+    const dest = resolveDestinationCountyCodeFromVilbliPin(school);
+    if (!dest) continue;
+    if (!byDest.has(dest)) byDest.set(dest, []);
+    byDest.get(dest).push(school);
+  }
+  const rows = [];
+  const unmatched = [];
+  const ambiguous = [];
+  for (const [destinationCountyCode, destSchools] of byDest.entries()) {
+    const { data: nsrInstitutions, error } = await supabase.from("education_institutions").select("id, name, county_code, municipality_code, municipality_name, is_private_school, source").eq("county_code", destinationCountyCode).eq("source", "nsr").eq("is_active", true);
+    if (error) throw error;
+    for (const school of destSchools) {
+      const ranked = (nsrInstitutions ?? []).filter((institution) => institution.is_private_school !== true).map((institution) => ({
+        institution,
+        ...classifyInstitutionMatchForVilbliSchool(
+          school.schoolName,
+          institution.name,
+          institution.municipality_name
+        )
+      })).filter((candidate) => candidate.matchType !== "none" && candidate.score >= MIN_MATCH_SCORE).sort(
+        (a, b) => b.score - a.score || String(a.institution.name).localeCompare(String(b.institution.name))
+      );
+      const picked = pickInstitutionMatchesForVilbliSchool({
+        vilbliSchoolName: school.schoolName,
+        ranked
+      });
+      if (picked.unmatched) {
+        unmatched.push({ ...school, destinationCountyCode });
+        continue;
+      }
+      if (picked.ambiguous) {
+        ambiguous.push({ ...school, destinationCountyCode });
+        continue;
+      }
+      const forPsa = pickInstitutionsForPsaEmission(
+        picked.matches.map((match) => ({
+          institutionId: match.institution.id,
+          institutionName: match.institution.name,
+          institutionMunicipalityCode: match.institution.municipality_code,
+          resolvedVia: match.resolvedVia ?? null
+        }))
+      );
+      for (const match of forPsa) {
+        rows.push({
+          institutionId: match.institutionId,
+          vilbliSchoolCode: String(school.schoolCode ?? "").trim() || null,
+          destinationCountyCode
+        });
+      }
+    }
+  }
+  const deduped = Array.from(
+    new Map(rows.map((row) => [`${row.institutionId}:${row.destinationCountyCode}`, row])).values()
+  );
+  return { rows: deduped, unmatched, ambiguous };
+}
+async function replaceVilbliHomeVg2Continuations({
+  supabase,
+  professionSlug,
+  homeCountyCode,
+  rows,
+  isDryRun = false
+}) {
+  const profession = String(professionSlug ?? "").trim();
+  const home = String(homeCountyCode ?? "").trim();
+  if (!profession || !home) {
+    throw new Error("replaceVilbliHomeVg2Continuations requires professionSlug and homeCountyCode");
+  }
+  if (isDryRun) {
+    return { written: 0, cleared: true, dryRun: true, rowCount: (rows ?? []).length };
+  }
+  const { error: deleteError } = await supabase.from("vgs_vilbli_home_vg2_continuations").delete().eq("profession_slug", profession).eq("home_county_code", home);
+  if (deleteError) throw deleteError;
+  const payload = (rows ?? []).map((row) => ({
+    profession_slug: profession,
+    home_county_code: home,
+    institution_id: row.institutionId,
+    vilbli_school_code: row.vilbliSchoolCode,
+    destination_county_code: row.destinationCountyCode,
+    updated_at: (/* @__PURE__ */ new Date()).toISOString()
+  }));
+  if (payload.length === 0) {
+    return { written: 0, cleared: true, dryRun: false };
+  }
+  const { error: insertError } = await supabase.from("vgs_vilbli_home_vg2_continuations").insert(payload);
+  if (insertError) throw insertError;
+  return { written: payload.length, cleared: true, dryRun: false };
+}
+async function persistVilbliHomeVg2ContinuationsFromHtml({
+  supabase,
+  professionSlug,
+  homeCountyCode,
+  homeCountySlug,
+  homeCountyLabel,
+  html,
+  isDryRun = false
+}) {
+  const schools = extractOutOfCountyVg2ContinuationSchools({
+    html,
+    countySlug: homeCountySlug,
+    countyLabel: homeCountyLabel
+  });
+  const matched = await matchVilbliHomeVg2ContinuationsToNsr({
+    supabase,
+    schools
+  });
+  const write = await replaceVilbliHomeVg2Continuations({
+    supabase,
+    professionSlug,
+    homeCountyCode,
+    rows: matched.rows,
+    isDryRun
+  });
+  return {
+    pinCount: schools.length,
+    matchedCount: matched.rows.length,
+    unmatchedCount: matched.unmatched.length,
+    ambiguousCount: matched.ambiguous.length,
+    unmatched: matched.unmatched,
+    ambiguous: matched.ambiguous,
+    write
+  };
+}
+async function clearVilbliHomeVg2Continuations({
+  supabase,
+  professionSlug,
+  homeCountyCode,
+  isDryRun = false
+}) {
+  return replaceVilbliHomeVg2Continuations({
+    supabase,
+    professionSlug,
+    homeCountyCode,
+    rows: [],
+    isDryRun
+  });
+}
+
+// scripts/run-vgs-truth-pipeline.mjs
+var COUNTY_CODE_TO_VILBLI4 = {
   "03": { slug: "oslo", label: "Oslo" },
   "31": { slug: "ostfold", label: "\xD8stfold" },
   "32": { slug: "akershus", label: "Akershus" },
@@ -19811,7 +20008,7 @@ function parseArgs3(argv) {
   }
   return args;
 }
-function normalizeBasic4(value) {
+function normalizeBasic5(value) {
   return String(value ?? "").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim();
 }
 async function upsertAvailabilityRow(supabase, payload) {
@@ -19844,13 +20041,13 @@ function collectRequiredStageNodes(pathDefinition) {
   );
 }
 function matchesPathNodeLabel(link, node) {
-  const titleNorm = normalizeBasic4(link.titleDisplay ?? link.title ?? "");
-  const expectedLabelNorm = normalizeBasic4(node.expectedLabel ?? "");
+  const titleNorm = normalizeBasic5(link.titleDisplay ?? link.title ?? "");
+  const expectedLabelNorm = normalizeBasic5(node.expectedLabel ?? "");
   if (expectedLabelNorm && titleNorm === expectedLabelNorm) {
     return true;
   }
   const includesAny = node.programmeMatcher?.includesAny ?? [];
-  return includesAny.some((hint) => titleNorm.includes(normalizeBasic4(hint)));
+  return includesAny.some((hint) => titleNorm.includes(normalizeBasic5(hint)));
 }
 function pickRequiredLinksByPathDefinition({ schoolProgrammeLinks, requiredNodes }) {
   const selectedByStage = /* @__PURE__ */ new Map();
@@ -20013,7 +20210,7 @@ function buildIdentitySemanticsDiagnosticsFromUniqueSchools(uniqueExtractedSchoo
       if ((semantics.unsupportedReasonCodes ?? []).length > 0) identitySemanticsSummary.unsupportedCount += 1;
       if ((semantics.needsReviewReasonCodes ?? []).length > 0) identitySemanticsSummary.needsReviewCount += 1;
       if (emitted < maxDetailedEntries) {
-        const fallbackLabel = normalizeBasic4(entry.schoolName || "unknown");
+        const fallbackLabel = normalizeBasic5(entry.schoolName || "unknown");
         const stableIndex = String(i + 1).padStart(4, "0");
         const key = entry.schoolCode || `${fallbackLabel}::${stableIndex}`;
         diagnosticsMap[key] = {
@@ -20245,7 +20442,7 @@ async function runVgsTruthPipeline({
   if (!pathDefinition) {
     throw new Error(`No path definition for profession: ${professionSlug}`);
   }
-  const countyMeta = COUNTY_CODE_TO_VILBLI3[countyCode];
+  const countyMeta = COUNTY_CODE_TO_VILBLI4[countyCode];
   if (!countyMeta) {
     throw new Error(`Unsupported county code: ${countyCode}`);
   }
@@ -20299,8 +20496,40 @@ async function runVgsTruthPipeline({
   const requiredProgrammeNodes = collectRequiredStageNodes(pathDefinition);
   const missingRequiredStages = requiredProgrammeNodes.filter((node) => (extractedStages[node.stage] ?? []).length === 0).map((node) => node.stage);
   if (missingRequiredStages.length > 0) {
+    if (missingRequiredStages.includes("VG2")) {
+      try {
+        const continuation = await persistVilbliHomeVg2ContinuationsFromHtml({
+          supabase,
+          professionSlug,
+          homeCountyCode: countyCode,
+          homeCountySlug: countyMeta.slug,
+          homeCountyLabel: countyMeta.label,
+          html,
+          isDryRun
+        });
+        console.error(
+          `[vilbli-home-vg2-continuations] profession=${professionSlug} home=${countyCode} pins=${continuation.pinCount} matched=${continuation.matchedCount} unmatched=${continuation.unmatchedCount} ambiguous=${continuation.ambiguousCount} dryRun=${isDryRun}`
+        );
+      } catch (continuationError) {
+        console.error(
+          `[vilbli-home-vg2-continuations] persist failed profession=${professionSlug} home=${countyCode}: ${continuationError instanceof Error ? continuationError.message : String(continuationError)}`
+        );
+      }
+    }
     throw new Error(
       `ABORT: Missing required extracted stages from Vilbli: ${missingRequiredStages.join(", ")}`
+    );
+  }
+  try {
+    await clearVilbliHomeVg2Continuations({
+      supabase,
+      professionSlug,
+      homeCountyCode: countyCode,
+      isDryRun
+    });
+  } catch (clearError) {
+    console.error(
+      `[vilbli-home-vg2-continuations] clear failed profession=${professionSlug} home=${countyCode}: ${clearError instanceof Error ? clearError.message : String(clearError)}`
     );
   }
   const routeCandidateLinks = schoolProgrammeLinks.filter((link) => !link.excluded);
@@ -21182,31 +21411,12 @@ if (isMainModule(import.meta.url)) {
   });
 }
 
-// scripts/lib/vilbli-county-meta.mjs
-var COUNTY_CODE_TO_VILBLI4 = {
-  "03": { slug: "oslo", label: "Oslo" },
-  "31": { slug: "ostfold", label: "\xD8stfold" },
-  "32": { slug: "akershus", label: "Akershus" },
-  "33": { slug: "buskerud", label: "Buskerud" },
-  "34": { slug: "innlandet", label: "Innlandet" },
-  "39": { slug: "vestfold", label: "Vestfold" },
-  "40": { slug: "telemark", label: "Telemark" },
-  "42": { slug: "agder", label: "Agder" },
-  "46": { slug: "vestland", label: "Vestland" },
-  "50": { slug: "trondelag", label: "Tr\xF8ndelag" },
-  "55": { slug: "troms", label: "Troms" },
-  "56": { slug: "finnmark", label: "Finnmark" },
-  "11": { slug: "rogaland", label: "Rogaland" },
-  "15": { slug: "more-og-romsdal", label: "M\xF8re og Romsdal" },
-  "18": { slug: "nordland", label: "Nordland" }
-};
-
 // scripts/lib/vilbli-probe.mjs
 async function probeVilbliCounty({ professionSlug, countyCode }) {
   const profession = String(professionSlug ?? "").trim();
   const county = String(countyCode ?? "").trim();
   const pathDefinition = getVgsPathDefinition(profession);
-  const countyMeta = COUNTY_CODE_TO_VILBLI4[county] ?? null;
+  const countyMeta = COUNTY_CODE_TO_VILBLI3[county] ?? null;
   if (!pathDefinition || !countyMeta) {
     return {
       ok: false,

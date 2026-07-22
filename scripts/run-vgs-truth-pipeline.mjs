@@ -21,6 +21,10 @@ import {
   isCurrentYearOfferingEnforcementEnabled,
   resolveOfferingDecision,
 } from "./lib/vilbli-current-year-offering.mjs";
+import {
+  clearVilbliHomeVg2Continuations,
+  persistVilbliHomeVg2ContinuationsFromHtml,
+} from "./lib/vilbli-home-vg2-continuations.mjs";
 
 const COUNTY_CODE_TO_VILBLI = {
   "03": { slug: "oslo", label: "Oslo" },
@@ -719,8 +723,50 @@ export async function runVgsTruthPipeline({
     .filter((node) => (extractedStages[node.stage] ?? []).length === 0)
     .map((node) => node.stage);
   if (missingRequiredStages.length > 0) {
+    // P-6 ABORT stands: do not write home PSA for foreign schools. Persist Vilbli
+    // home-page out-of-county VG2 pins (NSR-matched) for alternative overlay only.
+    if (missingRequiredStages.includes("VG2")) {
+      try {
+        const continuation = await persistVilbliHomeVg2ContinuationsFromHtml({
+          supabase,
+          professionSlug,
+          homeCountyCode: countyCode,
+          homeCountySlug: countyMeta.slug,
+          homeCountyLabel: countyMeta.label,
+          html,
+          isDryRun,
+        });
+        console.error(
+          `[vilbli-home-vg2-continuations] profession=${professionSlug} home=${countyCode} pins=${continuation.pinCount} matched=${continuation.matchedCount} unmatched=${continuation.unmatchedCount} ambiguous=${continuation.ambiguousCount} dryRun=${isDryRun}`
+        );
+      } catch (continuationError) {
+        console.error(
+          `[vilbli-home-vg2-continuations] persist failed profession=${professionSlug} home=${countyCode}: ${
+            continuationError instanceof Error
+              ? continuationError.message
+              : String(continuationError)
+          }`
+        );
+      }
+    }
     throw new Error(
       `ABORT: Missing required extracted stages from Vilbli: ${missingRequiredStages.join(", ")}`
+    );
+  }
+
+  // Local VG2 present — clear any stale continuation allowlist for this pair.
+  try {
+    await clearVilbliHomeVg2Continuations({
+      supabase,
+      professionSlug,
+      homeCountyCode: countyCode,
+      isDryRun,
+    });
+  } catch (clearError) {
+    console.error(
+      `[vilbli-home-vg2-continuations] clear failed profession=${professionSlug} home=${countyCode}: ${
+        clearError instanceof Error ? clearError.message : String(clearError)
+      }`
     );
   }
 

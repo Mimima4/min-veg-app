@@ -324,3 +324,30 @@ export function extractVilbliStagesFromHtml({ html, countySlug, countyLabel }) {
     },
   };
 }
+
+/**
+ * VG2 pins on a county side=p5 page that are NOT in the page’s home county.
+ * Used for Contour B home-page continuation overlay (Vilbli list ∩ NSR ∩ PSA).
+ *
+ * @param {{ html: string, countySlug: string, countyLabel: string }} params
+ * @returns {Array<{schoolName:string, schoolCode:string, schoolType:string, fylkeName:string, schoolPagePath:string, source:string}>}
+ */
+export function extractOutOfCountyVg2ContinuationSchools({ html, countySlug, countyLabel }) {
+  const byStage = extractVilbliMapPinsByStage(html);
+  const homeSlug = String(countySlug ?? "").trim().toLowerCase();
+  const homeLabel = normalizeBasic(countyLabel);
+
+  return (byStage.VG2 ?? []).filter((school) => {
+    if (!school.schoolName || !school.schoolCode) return false;
+    const typeNorm = normalizeBasic(school.schoolType);
+    if (typeNorm.includes("privatskole") || typeNorm === "privatskoler") {
+      return false;
+    }
+    const pinLabel = normalizeBasic(school.fylkeName);
+    const path = String(school.schoolPagePath ?? "");
+    const isHome =
+      (homeLabel.length > 0 && pinLabel === homeLabel) ||
+      (homeSlug.length > 0 && path.includes(`/${homeSlug}/`));
+    return !isHome;
+  });
+}
