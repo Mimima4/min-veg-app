@@ -9,6 +9,7 @@ export const PAINTER_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_OVERFLATETEKN
 export const ANLEGSTEKNIKK_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_ANLEGSTEKNIKK"];
 export const KLIMA_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_KLIMA"];
 export const MURER_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_BETONG_MUR"];
+export const ANLEGGSGARTNER_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_ANLEGGSGARTNER"];
 
 const PROFESSION_MATERIALIZATION_CONFIG = {
   electrician: {
@@ -108,6 +109,21 @@ const PROFESSION_MATERIALIZATION_CONFIG = {
     trondelagSlugPatterns: {
       VG1: { slug: "murer-vg1-bygg-trondelag", code: "MURER-VG1-TRONDELAG" },
       VG2: { slug: "murer-vg2-betong-mur-trondelag", code: "MURER-VG2-TRONDELAG" },
+    },
+  },
+  anleggsgartner: {
+    nodeKeys: ANLEGGSGARTNER_MATERIALIZATION_NODE_KEYS,
+    deriveIdentitySpecs: deriveAnleggsgartnerProgrammeIdentitySpecs,
+    countyScopedSlugPatterns: {
+      VG1: { slugMiddle: "vg1-bygg", codePrefix: "ANLEGGSGARTNER-VG1" },
+      VG2: { slugMiddle: "vg2-anleggsgartner", codePrefix: "ANLEGGSGARTNER-VG2" },
+    },
+    trondelagSlugPatterns: {
+      VG1: { slug: "anleggsgartner-vg1-bygg-trondelag", code: "ANLEGGSGARTNER-VG1-TRONDELAG" },
+      VG2: {
+        slug: "anleggsgartner-vg2-anleggsgartner-trondelag",
+        code: "ANLEGGSGARTNER-VG2-TRONDELAG",
+      },
     },
   },
 };
@@ -497,6 +513,50 @@ function deriveMurerProgrammeIdentitySpecs({ professionSlug, countyCode, countyM
       slug: `${professionSlug}-${patterns.VG2.slugMiddle}-${countyMeta.slug}`,
       programCode: `${patterns.VG2.codePrefix}-${countyUpper}`,
       title: "VG2 Betong og mur",
+    },
+  };
+}
+
+/** @internal */
+function deriveAnleggsgartnerProgrammeIdentitySpecs({ professionSlug, countyCode, countyMeta }) {
+  if (professionSlug !== "anleggsgartner") {
+    return null;
+  }
+
+  if (countyMeta == null || typeof countyMeta.slug !== "string" || countyMeta.slug.length === 0) {
+    return null;
+  }
+
+  const config = PROFESSION_MATERIALIZATION_CONFIG.anleggsgartner;
+
+  if (countyCode === "50") {
+    return {
+      VG1_BYGG: {
+        slug: config.trondelagSlugPatterns.VG1.slug,
+        programCode: config.trondelagSlugPatterns.VG1.code,
+        title: "VG1 Bygg- og anleggsteknikk",
+      },
+      VG2_ANLEGGSGARTNER: {
+        slug: config.trondelagSlugPatterns.VG2.slug,
+        programCode: config.trondelagSlugPatterns.VG2.code,
+        title: "VG2 Anleggsgartner",
+      },
+    };
+  }
+
+  const countyUpper = countyTokenFromMeta(countyMeta);
+  const patterns = config.countyScopedSlugPatterns;
+
+  return {
+    VG1_BYGG: {
+      slug: `${professionSlug}-${patterns.VG1.slugMiddle}-${countyMeta.slug}`,
+      programCode: `${patterns.VG1.codePrefix}-${countyUpper}`,
+      title: "VG1 Bygg- og anleggsteknikk",
+    },
+    VG2_ANLEGGSGARTNER: {
+      slug: `${professionSlug}-${patterns.VG2.slugMiddle}-${countyMeta.slug}`,
+      programCode: `${patterns.VG2.codePrefix}-${countyUpper}`,
+      title: "VG2 Anleggsgartner",
     },
   };
 }

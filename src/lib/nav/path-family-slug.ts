@@ -12,6 +12,7 @@ const PATH_FAMILY_SLUG_BY_PROFESSION: Record<string, string> = {
   anleggsteknikk: "anleggsteknikk-vba-anleggsteknikk",
   klima: "klima-vba-klima-energi",
   murer: "murer-vba-betong-mur",
+  anleggsgartner: "anleggsgartner-vba-anleggsgartner",
 };
 
 export function resolvePathFamilySlug(professionSlug: string): string | null {

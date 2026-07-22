@@ -68,6 +68,11 @@ const PROFESSION_COUNTY_SLUG_MIDDLES: Record<
     vg2: "vg2-betong-mur",
     vg2TitleNb: "Betong og mur",
   },
+  anleggsgartner: {
+    vg1: "vg1-bygg",
+    vg2: "vg2-anleggsgartner",
+    vg2TitleNb: "Anleggsgartner",
+  },
 };
 
 function countySlugForFylke(fylkeCode: string): string | null {

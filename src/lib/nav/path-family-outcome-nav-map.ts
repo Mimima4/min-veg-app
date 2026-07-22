@@ -254,6 +254,21 @@ export const PATH_FAMILY_OUTCOME_NAV_MAP_ROWS: PathFamilyOutcomeNavMapRow[] = [
     sourceReferenceUrl:
       "https://www.vilbli.no/nb/no/strukturkart/V.BA/betong-og-mur-fag-og-timefordeling?kurs=V.BABAT1----_V.BABMO2----&side=p2",
   },
+  // --- anleggsgartner / anleggsgartner-vba-anleggsgartner ---
+  {
+    mapVersion: 1,
+    pathFamilySlug: "anleggsgartner-vba-anleggsgartner",
+    professionSlug: "anleggsgartner",
+    vilbliTitleIncludes: ["anleggsgartner", "gartner"],
+    vilbliOutcomeUrlIncludes: ["/yrker/v.ba/"],
+    filterTags: ["laere", "fagbrev"],
+    // No dedicated NAV leaf for Anleggsgartner — closest vacancy-catalog occupation.
+    navStyrkCode: "natur-og-miljø.skogbruk,-gartnerarbeid-og-hagebruk",
+    navTitle: "Skogbruk, gartnerarbeid og hagebruk",
+    catalogProfessionSlug: "anleggsgartner",
+    sourceReferenceUrl:
+      "https://www.vilbli.no/nb/no/strukturkart/V.BA/anleggsgartner-fag-og-timefordeling?kurs=V.BABAT1----_V.BAANG2----&side=p2",
+  },
 ];
 
 const FILTER_TAG_ALLOWLIST: Record<RouteOutcomeFilterId, Set<PathFamilyOutcomeFilterTag> | null> =

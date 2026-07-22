@@ -1,0 +1,19 @@
+{
+  "professionSlug": "anleggsgartner",
+  "vilbliChainTokens": "V.BABAT1----_V.BAANG2----",
+  "extractReferenceCountySlug": "oslo",
+  "ingestBatch": 7,
+  "entries": [
+    {
+      "apiQueryCode": "BAANG3",
+      "code": "ANLEGGSGARTNERFAGET",
+      "label": "Anleggsgartnerfaget",
+      "labelAliases": [
+        "anleggsgartnerfaget",
+        "anleggsgartner",
+        "gartner"
+      ],
+      "ingestBatch": 0
+    }
+  ]
+}

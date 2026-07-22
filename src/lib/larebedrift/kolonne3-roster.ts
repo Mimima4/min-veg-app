@@ -5,6 +5,7 @@
  * Add a new profession: extract with `scripts/extract-vilbli-kolonne3-roster.mjs`,
  * commit JSON under `data/larebedrift/kolonne3-rosters/`, wire ingest batch in template §4.4.
  */
+import anleggsgartnerRoster from "../../../data/larebedrift/kolonne3-rosters/anleggsgartner.json" with { type: "json" };
 import anleggsteknikkRoster from "../../../data/larebedrift/kolonne3-rosters/anleggsteknikk.json" with { type: "json" };
 import klimaRoster from "../../../data/larebedrift/kolonne3-rosters/klima.json" with { type: "json" };
 import murerRoster from "../../../data/larebedrift/kolonne3-rosters/murer.json" with { type: "json" };
@@ -27,6 +28,7 @@ export type Kolonne3ProfessionRoster = {
 };
 
 export const KOLONNE3_PROFESSION_ROSTERS: ReadonlyArray<Kolonne3ProfessionRoster> = [
+  anleggsgartnerRoster as Kolonne3ProfessionRoster,
   anleggsteknikkRoster as Kolonne3ProfessionRoster,
   klimaRoster as Kolonne3ProfessionRoster,
   murerRoster as Kolonne3ProfessionRoster,

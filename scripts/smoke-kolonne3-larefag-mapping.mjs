@@ -303,6 +303,20 @@ if (murerProfessionDefault?.code !== "MURER_OG_FLISLEGGERFAGET") {
   console.log(`OK murer VG3 slug -> ${murerProfessionDefault.code}`);
 }
 
+const anleggsgartnerProfessionDefault = resolveLarefagFromKolonne3Selection({
+  programSlug: "anleggsgartner-vg3-anleggsgartner-vestland",
+  programTitle: "VG3 Anleggsgartnerfaget",
+  title: "Anleggsgartnerfaget",
+});
+if (anleggsgartnerProfessionDefault?.code !== "ANLEGGSGARTNERFAGET") {
+  failed += 1;
+  console.error(
+    `FAIL anleggsgartner VG3 slug: expected ANLEGGSGARTNERFAGET, got ${anleggsgartnerProfessionDefault?.code ?? "null"}`
+  );
+} else {
+  console.log(`OK anleggsgartner VG3 slug -> ${anleggsgartnerProfessionDefault.code}`);
+}
+
 const betongFag = resolveLarefagFromKolonne3Selection({
   programSlug: "kolonne3-betongfaget",
   programTitle: "Betongfaget",

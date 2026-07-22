@@ -24,6 +24,10 @@ const PROFESSION_TO_LAREFAG: Readonly<Record<string, LarefagMapping>> = {
     code: "MURER_OG_FLISLEGGERFAGET",
     label: "Murer- og flisleggerfaget",
   },
+  anleggsgartner: {
+    code: "ANLEGGSGARTNERFAGET",
+    label: "Anleggsgartnerfaget",
+  },
   electrician: { code: "ELEKTRIKERFAGET", label: "Elektrikerfaget" },
   mechanic: { code: "MOTORMEKANIKERFAGET", label: "Motormekanikerfaget" },
 };
