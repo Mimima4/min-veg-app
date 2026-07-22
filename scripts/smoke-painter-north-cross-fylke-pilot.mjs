@@ -328,11 +328,11 @@ assert.ok(
 );
 
 // P-7 membership (amended): continuation ∩ PSA only — adjacency dump must NOT admit.
+// Landslinje guard: >2 destination counties → not P-7 (national tilbud dump).
 function mergeContinuationOnly(homeRows, continuationRows) {
   const homeVg1 = homeRows.filter((row) => row.stage === "VG1");
   const fromCont = continuationRows
     .filter((row) => row.stage !== "VG1" && row.availabilityScope !== LOSA_SCOPE)
-    .filter((row) => row.institutionIsPrivateSchool !== true)
     .map((row) =>
       row.stage === "VG2"
         ? { ...row, programSlug: PAINTER_NORTH_NABOFYLKE_VG2_PROGRAMME_SLUG }
@@ -348,13 +348,13 @@ function assessContinuationEligible(homeRows, continuationRows) {
   const homeHasVg2 = homeRows.some(
     (row) => row.stage === "VG2" && row.availabilityScope !== LOSA_SCOPE
   );
-  const continuationHasVg2 = continuationRows.some(
-    (row) =>
-      row.stage === "VG2" &&
-      row.availabilityScope !== LOSA_SCOPE &&
-      row.institutionIsPrivateSchool !== true
+  const contVg2 = continuationRows.filter(
+    (row) => row.stage === "VG2" && row.availabilityScope !== LOSA_SCOPE
   );
-  return homeHasVg1 && !homeHasVg2 && continuationHasVg2;
+  const continuationHasVg2 = contVg2.length > 0;
+  const destCounties = new Set(contVg2.map((row) => String(row.county ?? "").trim()).filter(Boolean));
+  const sparseContinuations = destCounties.size > 0 && destCounties.size <= 2;
+  return homeHasVg1 && !homeHasVg2 && continuationHasVg2 && sparseContinuations;
 }
 
 const tromsHome = [
@@ -401,6 +401,25 @@ assert.equal(
   assessContinuationEligible(tromsHome, moreContinuations),
   true,
   "Vilbli∩PSA continuations → eligible"
+);
+assert.equal(
+  assessContinuationEligible(tromsHome, [
+    ...moreContinuations,
+    {
+      stage: "VG2",
+      county: "46",
+      school: "Åsane",
+      availabilityScope: "programme_in_school",
+    },
+    {
+      stage: "VG2",
+      county: "11",
+      school: "Bryne",
+      availabilityScope: "programme_in_school",
+    },
+  ]),
+  false,
+  "landslinje dump (>2 dest fylke) → P-7 not eligible (murer Finnmark class)"
 );
 assert.deepEqual(
   mergeContinuationOnly(tromsHome, moreContinuations)

@@ -7,8 +7,12 @@
  * Scope: home fylke {18,55,56} — when P-7 may apply (not a school membership source).
  * Relocation willingness does not gate eligibility or alternative visibility.
  * P-8 (national sparse) stays separate / owner-chartered.
- * VG2 membership = Vilbli home continuations ∩ NSR ∩ destination PSA ∩ public
+ * VG2 membership = Vilbli home continuations ∩ NSR ∩ destination PSA
  * (no adjacency PSA dump — that false-positived murer Nordland with Trøndelag/Troms).
+ * Landslinje guard: if continuation destinations span more than
+ * {@link MAX_P7_CONTINUATION_DESTINATION_COUNTIES} counties, treat as national
+ * tilbud dump on the home p5 (e.g. murer Finnmark) — P-7 stays off. P-8 may still
+ * use the full allowlist.
  */
 import { isLosaAvailabilityScope } from "@/lib/losa/availability-scope";
 import { normalizeFylkeCodesFromMunicipalityCodes } from "@/lib/planning/norway-geo-code-normalization";
@@ -25,6 +29,24 @@ import type { AvailabilityTruthRow } from "@/server/children/routes/get-availabi
 
 /** Nordland + Troms + Finnmark — north zone homes for nabofylke VG2 commute. */
 export const NORTH_CROSS_FYLKE_HOME_FYLKE_CODES = new Set(["18", "55", "56"]);
+
+/**
+ * P-7 only. Sparse Vilbli continuations (painter / anleggsgartner north) land in ≤2
+ * destination fylke. Dense landslinje pages (murer Finnmark ≈13 fylke) must not become
+ * a «nabofylke» dropdown of half Norway.
+ */
+export const MAX_P7_CONTINUATION_DESTINATION_COUNTIES = 2;
+
+export function isP7SparseContinuationDestinationSet(
+  destinationCountyCodes: Iterable<string | null | undefined>
+): boolean {
+  const dest = new Set(
+    [...destinationCountyCodes]
+      .map((code) => String(code ?? "").trim())
+      .filter((code) => code.length > 0)
+  );
+  return dest.size > 0 && dest.size <= MAX_P7_CONTINUATION_DESTINATION_COUNTIES;
+}
 
 /**
  * Neighbor counties scanned for VG2 (filtered by adjacency from home; home excluded).
@@ -244,17 +266,24 @@ export function assessNorthCrossFylkeSplitRouteTruthEligibility(params: {
   const homeHasVg1 = homeSchool.some((row) => row.stage === "VG1");
   const homeHasVg2 = homeSchool.some((row) => row.stage === "VG2");
   const continuationHasVg2 = continuationSchool.some((row) => row.stage === "VG2");
+  const sparseContinuations = isP7SparseContinuationDestinationSet(
+    continuationSchool.map((row) => row.countyCode)
+  );
   const merged = mergeNorthCrossFylkeTruthRows({
     professionSlug: params.professionSlug,
     homeRows: params.homeRows,
-    continuationRows: params.continuationRows,
+    continuationRows: sparseContinuations ? params.continuationRows : [],
   });
   const mergedEligibility = assessHomeCountyPrimaryRouteEligibility({
     truthRows: merged,
   });
   return {
     eligible:
-      homeHasVg1 && !homeHasVg2 && continuationHasVg2 && mergedEligibility.eligible,
+      homeHasVg1 &&
+      !homeHasVg2 &&
+      continuationHasVg2 &&
+      sparseContinuations &&
+      mergedEligibility.eligible,
     homeHasVg1,
     homeHasVg2,
     /** Always false — adjacency dump retired; kept for deprecated callers. */
