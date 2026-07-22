@@ -5,8 +5,11 @@ import {
   northCrossFylkeNabofylkeVg2ProgrammeSlug,
   northCrossFylkeVg2TitleNb,
 } from "@/lib/regional-delivery/painter-north-cross-fylke-pilot";
+import { toStageAwareProgrammeTitle } from "@/lib/vgs/stage-aware-programme-title";
 import {
   buildVg2ProgrammeOptionsFromTruthRows,
+  dedupeVg2ProgrammeOptionsByProfession,
+  isNabofylkeVg2ProgrammeSlug,
   type Vg2ProgrammeOption,
 } from "@/lib/vgs/vg2-programme-options";
 import {
@@ -16,6 +19,7 @@ import {
   VBA_SHARED_VG1_PROFESSION_SLUGS,
 } from "@/lib/vgs/vg2-cross-profession";
 import { professionHasBuildableRouteInFylke } from "@/server/vgs/profession-has-buildable-route-in-fylke";
+import { professionHasPrimaryRouteInCounty } from "@/server/vgs/profession-has-primary-route-in-county";
 
 type TruthRowSlice = {
   stage: string;
@@ -65,36 +69,11 @@ function isVg2OptionAllowedForProfession(params: {
   return params.eligibleSiblingProfessions.has(optionProfession);
 }
 
-async function loadEducationProgrammeOption(params: {
-  supabase: SupabaseClient;
-  programSlug: string;
-  professionSlug: string;
-}): Promise<Vg2ProgrammeOption | null> {
-  const slug = String(params.programSlug ?? "").trim();
-  if (!slug) {
-    return null;
-  }
-
-  const { data, error } = await params.supabase
-    .from("education_programs")
-    .select("slug, title")
-    .eq("slug", slug)
-    .eq("is_active", true)
-    .maybeSingle();
-
-  if (error) {
-    throw new Error(`Failed to resolve education programme ${slug}: ${error.message}`);
-  }
-
-  if (!data) {
-    return null;
-  }
-
-  return {
-    program_slug: slug,
-    program_title: String(data.title ?? slug).trim(),
-    profession_slug: params.professionSlug,
-  };
+function nabofylkeDisplayTitle(professionSlug: string): string {
+  return toStageAwareProgrammeTitle({
+    stage: "VG2",
+    title: northCrossFylkeVg2TitleNb(professionSlug),
+  });
 }
 
 export async function resolveVbaSharedVg2ProgrammeOptions(params: {
@@ -145,26 +124,40 @@ export async function resolveVbaSharedVg2ProgrammeOptions(params: {
     bySlug.set(option.program_slug, option);
   }
 
+  const isNorthHome = NORTH_CROSS_FYLKE_HOME_FYLKE_CODES.has(homeCountyCode);
+
   for (const siblingProfessionSlug of VBA_SHARED_VG1_PROFESSION_SLUGS) {
     if (!eligibleSiblingProfessions.has(siblingProfessionSlug)) {
       continue;
     }
 
-    if (NORTH_CROSS_FYLKE_HOME_FYLKE_CODES.has(homeCountyCode)) {
-      const nabofylkeSlug = northCrossFylkeNabofylkeVg2ProgrammeSlug(siblingProfessionSlug);
-      const nabofylkeOption = await loadEducationProgrammeOption({
-        supabase: params.supabase,
-        programSlug: nabofylkeSlug,
-        professionSlug: siblingProfessionSlug,
-      });
-      const northOption = nabofylkeOption ?? {
-        program_slug: nabofylkeSlug,
-        program_title: `VG2 ${northCrossFylkeVg2TitleNb(siblingProfessionSlug)}`,
-        profession_slug: siblingProfessionSlug,
-      };
-      if (!bySlug.has(northOption.program_slug)) {
-        bySlug.set(northOption.program_slug, northOption);
+    const hasPrimary = isNorthHome
+      ? await professionHasPrimaryRouteInCounty({
+          supabase: params.supabase,
+          professionSlug: siblingProfessionSlug,
+          countyCode: homeCountyCode,
+        })
+      : true;
+
+    // North + no local PSA primary → nabofylke only (ignore catalogue county rows).
+    if (isNorthHome && !hasPrimary) {
+      for (const [slug, option] of [...bySlug.entries()]) {
+        if (
+          option.profession_slug === siblingProfessionSlug &&
+          !isNabofylkeVg2ProgrammeSlug(slug) &&
+          slug.endsWith(`-${countySuffix}`)
+        ) {
+          bySlug.delete(slug);
+        }
       }
+
+      const nabofylkeSlug = northCrossFylkeNabofylkeVg2ProgrammeSlug(siblingProfessionSlug);
+      bySlug.set(nabofylkeSlug, {
+        program_slug: nabofylkeSlug,
+        program_title: nabofylkeDisplayTitle(siblingProfessionSlug),
+        profession_slug: siblingProfessionSlug,
+      });
+      continue;
     }
 
     const pattern = `${siblingProfessionSlug}-vg2-%-${countySuffix}`;
@@ -182,7 +175,7 @@ export async function resolveVbaSharedVg2ProgrammeOptions(params: {
 
     for (const row of (data ?? []) as Array<{ slug: string; title: string | null }>) {
       const slug = String(row.slug ?? "").trim();
-      if (!slug || bySlug.has(slug)) continue;
+      if (!slug || isNabofylkeVg2ProgrammeSlug(slug) || bySlug.has(slug)) continue;
       bySlug.set(slug, {
         program_slug: slug,
         program_title: String(row.title ?? slug).trim(),
@@ -191,5 +184,9 @@ export async function resolveVbaSharedVg2ProgrammeOptions(params: {
     }
   }
 
-  return sortProgrammeOptions(Array.from(bySlug.values()));
+  return dedupeVg2ProgrammeOptionsByProfession({
+    options: Array.from(bySlug.values()),
+    countySuffix,
+    routeProfessionSlug: params.professionSlug,
+  });
 }

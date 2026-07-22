@@ -35,13 +35,14 @@ export function buildPainterNorthCrossFylkeNabofylkeVariantLabel(): string {
   return buildNorthCrossFylkeNabofylkeVariantLabel("painter");
 }
 
-/** One VG2 programme slug so the school dropdown lists all nabofylke schools. */
+/** Canonicalize VG2 school options onto the nabofylke slug; keep sibling programme_options. */
 export function normalizeNorthCrossFylkeNabofylkeVg2StepPresentation(params: {
   professionSlug: string;
   steps: StudyRouteSnapshotStep[];
 }): StudyRouteSnapshotStep[] {
   const canonicalSlug = northCrossFylkeNabofylkeVg2ProgrammeSlug(params.professionSlug);
   const programTitleFallback = `VG2 ${northCrossFylkeVg2TitleNb(params.professionSlug)}`;
+  const professionSlug = String(params.professionSlug ?? "").trim() || "painter";
 
   return params.steps.map((step) => {
     if (step.type !== "programme_selection" || step.stage !== "VG2") {
@@ -55,17 +56,42 @@ export function normalizeNorthCrossFylkeNabofylkeVg2StepPresentation(params: {
       program_title: option.program_title ?? programTitle,
     }));
 
+    // Preserve V.BA sibling switcher options from resolveVbaSharedVg2ProgrammeOptions.
+    // Older normalize wiped these down to a single nabofylke slug (empty picker on alts).
+    const existingProgrammeOptions = Array.isArray(step.programme_options)
+      ? step.programme_options
+      : [];
+    const programmeOptionsBySlug = new Map<
+      string,
+      {
+        program_slug: string;
+        program_title: string;
+        profession_slug?: string;
+      }
+    >();
+    for (const option of existingProgrammeOptions) {
+      const slug = String(option.program_slug ?? "").trim();
+      if (!slug) continue;
+      programmeOptionsBySlug.set(slug, {
+        program_slug: slug,
+        program_title: String(option.program_title ?? slug).trim(),
+        profession_slug: option.profession_slug,
+      });
+    }
+    programmeOptionsBySlug.set(canonicalSlug, {
+      program_slug: canonicalSlug,
+      program_title: programTitle,
+      profession_slug:
+        step.current_profession_slug ??
+        programmeOptionsBySlug.get(canonicalSlug)?.profession_slug ??
+        professionSlug,
+    });
+
     return {
       ...step,
       program_slug: canonicalSlug,
       program_title: programTitle,
-      programme_options: [
-        {
-          program_slug: canonicalSlug,
-          program_title: programTitle,
-          profession_slug: step.current_profession_slug ?? params.professionSlug,
-        },
-      ],
+      programme_options: Array.from(programmeOptionsBySlug.values()),
       options: normalizedOptions,
     };
   });

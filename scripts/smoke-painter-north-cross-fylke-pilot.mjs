@@ -230,4 +230,59 @@ assert.ok(
     .every((row) => row.programSlug === PAINTER_NORTH_NABOFYLKE_VG2_PROGRAMME_SLUG)
 );
 
+// Normalize must keep sibling programme_options (V.BA switcher on nabofylke alts).
+function normalizeNabofylkeVg2Presentation(step, professionSlug, canonicalSlug) {
+  const existing = Array.isArray(step.programme_options) ? step.programme_options : [];
+  const bySlug = new Map();
+  for (const option of existing) {
+    if (option.program_slug) bySlug.set(option.program_slug, option);
+  }
+  bySlug.set(canonicalSlug, {
+    program_slug: canonicalSlug,
+    program_title: step.program_title ?? `VG2 ${professionSlug}`,
+    profession_slug: professionSlug,
+  });
+  return {
+    ...step,
+    program_slug: canonicalSlug,
+    programme_options: Array.from(bySlug.values()),
+    options: (step.options ?? []).map((o) => ({ ...o, program_slug: canonicalSlug })),
+  };
+}
+
+const normalized = normalizeNabofylkeVg2Presentation(
+  {
+    type: "programme_selection",
+    stage: "VG2",
+    program_title: "VG2 Klima, energi og miljøteknikk",
+    programme_options: [
+      {
+        program_slug: "klima-vg2-klima-nabofylke",
+        program_title: "VG2 Klima, energi og miljøteknikk",
+        profession_slug: "klima",
+      },
+      {
+        program_slug: "plumber-vg2-rorlegger-finnmark",
+        program_title: "VG2 Rørleggerfaget",
+        profession_slug: "plumber",
+      },
+      {
+        program_slug: "painter-vg2-overflateteknikk-nabofylke",
+        program_title: "VG2 Overflateteknikk",
+        profession_slug: "painter",
+      },
+    ],
+    options: [{ institution_name: "Kvaløya", program_slug: "klima-vg2-klima-troms" }],
+  },
+  "klima",
+  "klima-vg2-klima-nabofylke"
+);
+assert.equal(normalized.programme_options.length, 3);
+assert.ok(
+  normalized.programme_options.some((o) => o.program_slug === "plumber-vg2-rorlegger-finnmark")
+);
+assert.ok(
+  normalized.options.every((o) => o.program_slug === "klima-vg2-klima-nabofylke")
+);
+
 console.error("[smoke:painter-north-cross-fylke] PASS");

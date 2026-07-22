@@ -108,3 +108,63 @@ export function buildVg2ProgrammeOptionsFromTruthRows(
 
   return options.sort((a, b) => a.program_title.localeCompare(b.program_title, "nb"));
 }
+
+export function isNabofylkeVg2ProgrammeSlug(programSlug: string): boolean {
+  return /(?:^|-)nabofylke$/.test(String(programSlug ?? "").trim());
+}
+
+/**
+ * One VG2 switch option per catalogue profession. Prefer home-county PSA slug
+ * over synthetic P-7 nabofylke (avoids north picker duplicates).
+ */
+export function preferVg2ProgrammeOptionForProfession(
+  a: Vg2ProgrammeOption,
+  b: Vg2ProgrammeOption,
+  countySuffix: string
+): Vg2ProgrammeOption {
+  const aNabo = isNabofylkeVg2ProgrammeSlug(a.program_slug);
+  const bNabo = isNabofylkeVg2ProgrammeSlug(b.program_slug);
+  if (aNabo !== bNabo) {
+    // Prefer home-county slug over nabofylke when both are present.
+    return aNabo ? b : a;
+  }
+
+  const suffix = String(countySuffix ?? "").trim();
+  if (suffix) {
+    const aLocal = a.program_slug.endsWith(`-${suffix}`);
+    const bLocal = b.program_slug.endsWith(`-${suffix}`);
+    if (aLocal !== bLocal) {
+      return aLocal ? a : b;
+    }
+  }
+
+  return a.program_title.length >= b.program_title.length ? a : b;
+}
+
+export function dedupeVg2ProgrammeOptionsByProfession(params: {
+  options: Vg2ProgrammeOption[];
+  countySuffix: string;
+  routeProfessionSlug: string;
+}): Vg2ProgrammeOption[] {
+  const byProfession = new Map<string, Vg2ProgrammeOption>();
+
+  for (const option of params.options) {
+    const profession =
+      option.profession_slug ??
+      resolveProfessionSlugFromProgramSlug(option.program_slug) ??
+      params.routeProfessionSlug;
+    const existing = byProfession.get(profession);
+    if (!existing) {
+      byProfession.set(profession, option);
+      continue;
+    }
+    byProfession.set(
+      profession,
+      preferVg2ProgrammeOptionForProfession(existing, option, params.countySuffix)
+    );
+  }
+
+  return Array.from(byProfession.values()).sort((a, b) =>
+    a.program_title.localeCompare(b.program_title, "nb")
+  );
+}

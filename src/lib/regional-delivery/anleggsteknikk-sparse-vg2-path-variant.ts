@@ -63,12 +63,27 @@ export function normalizeAnleggsteknikkSparseVg2StepPresentation(
 /**
  * P-8 only: copy Fagvalg from primary when the alternative skipped LAREFAG
  * (second Vilbli parse failed / never ran). No new network — reuses primary snapshot steps.
+ * Requires the alternative to already have VG1/VG2 programme steps — never invent a
+ * Fagvalg-only "VG2 andre steder" card from an empty builder result.
  */
 export function ensureAnleggsteknikkSparseVg2LarefagParity(params: {
   alternativeSteps: StudyRouteSnapshotStep[];
   primarySteps: StudyRouteSnapshotStep[];
 }): StudyRouteSnapshotStep[] {
   const alt = params.alternativeSteps;
+  if (alt.length === 0) {
+    return [];
+  }
+
+  const hasProgrammeChain = alt.some(
+    (step) =>
+      step.type === "programme_selection" &&
+      (step.stage === "VG1" || step.stage === "VG2")
+  );
+  if (!hasProgrammeChain) {
+    return alt;
+  }
+
   if (
     alt.some(
       (step) =>
@@ -143,6 +158,12 @@ export async function buildAnleggsteknikkSparseVg2AlternativeSteps(
   }
 
   const steps = await params.buildRouteSteps();
+  // Empty builder (no reachable national VG2) must not become a Fagvalg-only
+  // teaser via larefag parity — that is the broken "VG2 andre steder" card.
+  if (steps.length === 0) {
+    return [];
+  }
+
   const withLarefag = ensureAnleggsteknikkSparseVg2LarefagParity({
     alternativeSteps: steps,
     primarySteps: params.primarySteps ?? [],

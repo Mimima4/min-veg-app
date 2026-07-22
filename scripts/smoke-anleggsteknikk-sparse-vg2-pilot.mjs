@@ -196,6 +196,14 @@ assert.equal(maybeBand.find((r) => r.school === "Åfjord")?.soft, false);
 
 // --- P-8 Fagvalg parity: copy LAREFAG from primary when alt skipped it ---
 function ensureLarefagParity(alt, primary) {
+  if (alt.length === 0) return [];
+  const hasProgrammeChain = alt.some(
+    (s) =>
+      s.type === "programme_selection" &&
+      (String(s.stage ?? "").toUpperCase() === "VG1" ||
+        String(s.stage ?? "").toUpperCase() === "VG2")
+  );
+  if (!hasProgrammeChain) return alt;
   if (alt.some((s) => String(s.stage ?? "").toUpperCase() === "LAREFAG")) return alt;
   const primaryLarefag = primary.find(
     (s) => s.type === "programme_selection" && String(s.stage ?? "").toUpperCase() === "LAREFAG"
@@ -223,6 +231,11 @@ const altMissingFag = [
   { type: "programme_selection", stage: "VG2", title: "VG2" },
   { type: "apprenticeship_step", title: "Opplæring i bedrift (Anleggsmaskinførerfaget)" },
 ];
+assert.deepEqual(
+  ensureLarefagParity([], primaryWithFag),
+  [],
+  "empty builder → no Fagvalg-only teaser"
+);
 const repaired = ensureLarefagParity(altMissingFag, primaryWithFag);
 assert.equal(repaired.length, 4);
 assert.equal(repaired[2].stage, "LAREFAG");

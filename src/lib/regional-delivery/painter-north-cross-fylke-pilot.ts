@@ -44,10 +44,10 @@ const PROFESSION_COUNTY_SLUG_MIDDLES: Record<
   string,
   { vg1: string; vg2: string; vg2TitleNb: string }
 > = {
-  electrician: { vg1: "vg1-elektro", vg2: "vg2-elenergi", vg2TitleNb: "elenergi" },
-  mechanic: { vg1: "vg1-teknologi", vg2: "vg2-kjoretoy", vg2TitleNb: "kjøretøy" },
-  carpenter: { vg1: "vg1-bygg", vg2: "vg2-tomrer", vg2TitleNb: "tømrer" },
-  plumber: { vg1: "vg1-bygg", vg2: "vg2-rorlegger", vg2TitleNb: "rørlegger" },
+  electrician: { vg1: "vg1-elektro", vg2: "vg2-elenergi", vg2TitleNb: "Elenergi og ekom" },
+  mechanic: { vg1: "vg1-teknologi", vg2: "vg2-kjoretoy", vg2TitleNb: "Kjøretøy" },
+  carpenter: { vg1: "vg1-bygg", vg2: "vg2-tomrer", vg2TitleNb: "Tømrerfaget" },
+  plumber: { vg1: "vg1-bygg", vg2: "vg2-rorlegger", vg2TitleNb: "Rørleggerfaget" },
   painter: {
     vg1: "vg1-bygg",
     vg2: "vg2-overflateteknikk",
@@ -56,7 +56,7 @@ const PROFESSION_COUNTY_SLUG_MIDDLES: Record<
   anleggsteknikk: {
     vg1: "vg1-bygg",
     vg2: "vg2-anleggsteknikk",
-    vg2TitleNb: "Anleggsteknikk",
+    vg2TitleNb: "Anleggsteknikkfaget",
   },
   klima: {
     vg1: "vg1-bygg",
