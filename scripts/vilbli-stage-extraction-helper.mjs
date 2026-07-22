@@ -339,10 +339,6 @@ export function extractOutOfCountyVg2ContinuationSchools({ html, countySlug, cou
 
   return (byStage.VG2 ?? []).filter((school) => {
     if (!school.schoolName || !school.schoolCode) return false;
-    const typeNorm = normalizeBasic(school.schoolType);
-    if (typeNorm.includes("privatskole") || typeNorm === "privatskoler") {
-      return false;
-    }
     const pinLabel = normalizeBasic(school.fylkeName);
     const path = String(school.schoolPagePath ?? "");
     const isHome =

@@ -59,6 +59,7 @@ Before production relay for a **new** `(professionSlug, countyCode)`:
 | 9 | Relay production | Same without `--dry-run` |
 | 10 | **Current-year offering (I-1…I-3; anlegg VG2 enforced)** | Relay fetches landslinje offering HTML (`strukturkartReferenceUrl` → Oslo course `side=p5` for anleggsteknikk). Gate **default ON**; structure-only skipped when extract succeeds. Opt out: `CONTOUR_B_ENFORCE_CURRENT_YEAR_OFFERING=0`. Dense professions without landslinje probe URL stay fail-open. Live smoke: `npm run smoke:current-year-offering -- --live`. See `phase-4-current-year-programme-offering-owner-decision-record.md` §4/§4a. |
 | 11 | Product proof | E2E: `programme_selection.options` for that profession + county (Block C) |
+| 12 | **Vilbli ↔ Min Veg table** | After relay: per-county Vilbli local VG2 map pins vs Min Veg active PSA; north `{18,55,56}` also out-of-county pins vs `vgs_vilbli_home_vg2_continuations`. Unexplained DIFF blocks “data is live”. |
 
 If step 3–6 are missing, relay **will not** process the new pair even if the product UI shows it.
 

@@ -72,7 +72,6 @@ export async function matchVilbliHomeVg2ContinuationsToNsr({
 
     for (const school of destSchools) {
       const ranked = (nsrInstitutions ?? [])
-        .filter((institution) => institution.is_private_school !== true)
         .map((institution) => ({
           institution,
           ...classifyInstitutionMatchForVilbliSchool(

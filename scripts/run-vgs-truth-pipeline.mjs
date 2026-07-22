@@ -1352,7 +1352,7 @@ export async function runVgsTruthPipeline({
 
   // Current-year offering gate (I-1…I-3). Authority = THIS county's Vilbli p5 page only
   // (owner 2026-07-22: no Oslo-probe gold standard — each fylke/profession has its own truth).
-  // Landslinje multi-fylke maps on the county page include local pins → they stay is_active.
+  // VG2+ map pins are the offering set even for a single fylke; VG1 still needs multi-fylke.
   const currentYearOffering = buildCurrentYearOfferingSet({
     offeringHtml: html,
     countySlug: countyMeta.slug,

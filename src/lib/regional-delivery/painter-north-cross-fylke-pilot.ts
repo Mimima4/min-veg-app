@@ -141,18 +141,11 @@ export function painterHomeVg1ProgrammeSlugsForFylke(fylkeCode: string): string[
   });
 }
 
+/**
+ * County-scoped ordinary school rows (exclude LOSA delivery scopes).
+ */
 function countyScopedSchoolRows(rows: AvailabilityTruthRow[]): AvailabilityTruthRow[] {
   return rows.filter((row) => !isLosaAvailabilityScope(row.availabilityScope));
-}
-
-/**
- * P-7 nabofylke VG2+ school pool: exclude private schools.
- * Vilbli north home pages (18/55/56) for sparse VG2 chains list public
- * out-of-fylke continuations — not privatskole markers — so neighbor PSA
- * privatskole (e.g. Øya in Trøndelag) must not enter the P-7 dropdown.
- */
-function isPublicSchoolTruthRow(row: AvailabilityTruthRow): boolean {
-  return row.institutionIsPrivateSchool !== true;
 }
 
 export function northCrossFylkeNabofylkeVg2ProgrammeSlug(professionSlug: string): string {
@@ -206,7 +199,6 @@ export function mergeNorthCrossFylkeTruthRows(params: {
   const homeVg1 = params.homeRows.filter((row) => row.stage === "VG1");
   const continuationFromVg2 = countyScopedSchoolRows(params.continuationRows ?? [])
     .filter((row) => row.stage !== "VG1")
-    .filter(isPublicSchoolTruthRow)
     .map((row) =>
       row.stage === "VG2" ? { ...row, programSlug: nabofylkeSlug } : row
     );
@@ -248,9 +240,7 @@ export function assessNorthCrossFylkeSplitRouteTruthEligibility(params: {
   missingMergedStages: PrimaryRequiredSchoolStage[];
 } {
   const homeSchool = countyScopedSchoolRows(params.homeRows);
-  const continuationSchool = countyScopedSchoolRows(params.continuationRows ?? []).filter(
-    isPublicSchoolTruthRow
-  );
+  const continuationSchool = countyScopedSchoolRows(params.continuationRows ?? []);
   const homeHasVg1 = homeSchool.some((row) => row.stage === "VG1");
   const homeHasVg2 = homeSchool.some((row) => row.stage === "VG2");
   const continuationHasVg2 = continuationSchool.some((row) => row.stage === "VG2");

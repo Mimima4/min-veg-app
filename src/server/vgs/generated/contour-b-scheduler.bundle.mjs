@@ -18468,10 +18468,6 @@ function extractOutOfCountyVg2ContinuationSchools({ html, countySlug, countyLabe
   const homeLabel = normalizeBasic3(countyLabel);
   return (byStage.VG2 ?? []).filter((school) => {
     if (!school.schoolName || !school.schoolCode) return false;
-    const typeNorm = normalizeBasic3(school.schoolType);
-    if (typeNorm.includes("privatskole") || typeNorm === "privatskoler") {
-      return false;
-    }
     const pinLabel = normalizeBasic3(school.fylkeName);
     const path2 = String(school.schoolPagePath ?? "");
     const isHome = homeLabel.length > 0 && pinLabel === homeLabel || homeSlug.length > 0 && path2.includes(`/${homeSlug}/`);
@@ -19738,12 +19734,13 @@ function buildCurrentYearOfferingSet({ offeringHtml, countySlug, countyLabel } =
   const byStage = {};
   const stageCounts = {};
   for (const [stage, schools] of Object.entries(byStagePins ?? {})) {
+    const stageKey = String(stage ?? "").trim().toUpperCase();
     const fylker = /* @__PURE__ */ new Set();
     for (const school of schools ?? []) {
       const fylke = normalizeFylke(school?.fylkeName);
       if (fylke) fylker.add(fylke);
     }
-    if (fylker.size < MIN_LANDSLINJE_FYLKE) {
+    if (stageKey === "VG1" && fylker.size < MIN_LANDSLINJE_FYLKE) {
       continue;
     }
     const codes = /* @__PURE__ */ new Set();
@@ -19844,7 +19841,7 @@ async function matchVilbliHomeVg2ContinuationsToNsr({
     const { data: nsrInstitutions, error } = await supabase.from("education_institutions").select("id, name, county_code, municipality_code, municipality_name, is_private_school, source").eq("county_code", destinationCountyCode).eq("source", "nsr").eq("is_active", true);
     if (error) throw error;
     for (const school of destSchools) {
-      const ranked = (nsrInstitutions ?? []).filter((institution) => institution.is_private_school !== true).map((institution) => ({
+      const ranked = (nsrInstitutions ?? []).map((institution) => ({
         institution,
         ...classifyInstitutionMatchForVilbliSchool(
           school.schoolName,

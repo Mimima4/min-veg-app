@@ -248,6 +248,7 @@ For each kolonne-3 fag Vilbli lists on the signed chain in a fylke:
 | Profession smokes | e.g. `npm run smoke:painter-north-cross-fylke-pilot` when P-7 applies |
 | Kolonne-3 roster verify | `npm run verify:kolonne3-roster -- <slug>` when bedrift chain has ≥2 fag |
 | Kolonne-3 mapping smoke | `npm run smoke:kolonne3-larefag-mapping` |
+| **Vilbli ↔ Min Veg table** | **Required** after production relay: for every pipeline county, compare county-page Vilbli VG2 local pins (map) to Min Veg `is_active` VG2 PSA; also check north `{18,55,56}` out-of-county pins ↔ `vgs_vilbli_home_vg2_continuations`. Diffs must be explained (ABORT expected / NSR name avd / privat match) or fixed via pipeline — not manual PSA plugs. |
 | E2E | `npm run test:e2e:<profession>` — Block C `programme_selection` |
 | Prod relay | Profession-local from home IP (full matrix only if contour code changed); record `ingested`/`ABORT` per pair in branch record |
 | Prod UI spot-check | Owner sign-off per pilot matrix row |
@@ -265,9 +266,10 @@ For each kolonne-3 fag Vilbli lists on the signed chain in a fylke:
 | 5 | P-6 primary gate verified (incl. VG2=0 fylke → empty primary + copy) |
 | 6 | Overlay contours chartered & verified (LOSA / Steigen / P-7 / bedrift — as applicable) |
 | 7 | Classify matrix documented |
-| 8 | E2E PASS |
-| 9 | Prod UI owner sign-off |
-| 10 | Update `phase-4-multi-contour-truth-registry-owner-decision-record.md` profession count when closing slice |
+| 8 | **Vilbli ↔ Min Veg county table PASS** (local VG2 + north continuations; unexplained DIFF = not closed) |
+| 9 | E2E PASS |
+| 10 | Prod UI owner sign-off |
+| 11 | Update `phase-4-multi-contour-truth-registry-owner-decision-record.md` profession count when closing slice |
 
 ---
 

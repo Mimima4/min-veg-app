@@ -11,13 +11,15 @@
  *   into home PSA (extract already county-filters) — they feed the continuation allowlist for
  *   P-7 / P-8 alternatives.
  *
- * DESIGN:
- *   - A stage is treated as the offering set ONLY when its pins span ≥ 2 distinct fylke — the
- *     landslinje signal. Single-fylke stages (broad VG1) are left OUT → the gate stays fail-open
- *     for them (never deactivates broadly-offered stages).
+ * DESIGN (amended 2026-07-22):
+ *   - **VG2+:** county-page `vb_map_data` pins ARE the offering set even when they span only
+ *     one fylke. This stops `html_stage_block` structure links (e.g. Agder Østre Agder on
+ *     anleggsgartner) from staying `is_active` when the map pin list does not include them.
+ *   - **VG1:** still requires ≥ 2 distinct fylke (landslinje). Broad single-fylke VG1 stays
+ *     fail-open so we never mass-deactivate ordinary local VG1 structure.
  *
  * SAFETY (owner requirement #7 — fail-closed ONLY when the extract succeeds):
- *   - No offering HTML / too small / parse throws / no landslinje stage → NOT enforceable
+ *   - No offering HTML / too small / parse throws / no usable stage → NOT enforceable
  *     (fail-open: keep current behavior). The caller must still emit a loud diagnostic.
  *   - Offering present + non-empty for a stage → enforceable: schools not in the offering set
  *     are structure-only and must not stay is_active=true.
@@ -79,15 +81,14 @@ export function buildCurrentYearOfferingSet({ offeringHtml, countySlug, countyLa
   const byStage = {};
   const stageCounts = {};
   for (const [stage, schools] of Object.entries(byStagePins ?? {})) {
+    const stageKey = String(stage ?? "").trim().toUpperCase();
     const fylker = new Set();
     for (const school of schools ?? []) {
       const fylke = normalizeFylke(school?.fylkeName);
       if (fylke) fylker.add(fylke);
     }
-    // Only a landslinje/landstilbud stage (national, multi-fylke) is a current-year offering set.
-    // Broad single-county stages (e.g. VG1 Bygg- og anleggsteknikk) are intentionally left out so
-    // the gate stays fail-open for them.
-    if (fylker.size < MIN_LANDSLINJE_FYLKE) {
+    // VG1: landslinje only (≥2 fylke). VG2+: county map pins are authority even for 1 fylke.
+    if (stageKey === "VG1" && fylker.size < MIN_LANDSLINJE_FYLKE) {
       continue;
     }
 

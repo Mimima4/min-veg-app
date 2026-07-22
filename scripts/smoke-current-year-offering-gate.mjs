@@ -107,13 +107,42 @@ assert.equal(
   "sub-10k stub → null"
 );
 
-// --- fail-open: p5-sized page with only a single-fylke stage (no landslinje) → null ---
-const NO_LANDSLINJE_HTML = `<html><body>${PADDING}
+// --- single-fylke VG2 map pins ARE an offering set (county-page authority) ---
+const SINGLE_FYLKE_VG2_HTML = `<html><body>${PADDING}
 <script>vb_map_data_Vg2 = [${VG1_BROAD_PINS.join(",")}];</script></body></html>`;
+const singleFylkeVg2 = buildCurrentYearOfferingSet({
+  offeringHtml: SINGLE_FYLKE_VG2_HTML,
+  countySlug: "oslo",
+  countyLabel: "Oslo",
+});
+assert.ok(singleFylkeVg2, "single-fylke VG2 map pins → offering set");
+assert.equal(singleFylkeVg2.stageCounts.VG2, 2);
 assert.equal(
-  buildCurrentYearOfferingSet({ offeringHtml: NO_LANDSLINJE_HTML, countySlug: "oslo", countyLabel: "Oslo" }),
+  resolveOfferingDecision({
+    offering: singleFylkeVg2,
+    stage: "VG2",
+    school: { schoolCode: "111111", schoolName: "Etterstad videregående skole" },
+  }).isOffered,
+  true,
+  "map-pin school offered"
+);
+assert.equal(
+  resolveOfferingDecision({
+    offering: singleFylkeVg2,
+    stage: "VG2",
+    school: { schoolCode: "6100979", schoolName: "Østre Agder Videregående skole" },
+  }).isOffered,
+  false,
+  "html_stage_block-only school is structure-only"
+);
+
+// --- fail-open: page with only single-fylke VG1 (no VG2 pins) → null ---
+const VG1_ONLY_HTML = `<html><body>${PADDING}
+<script>vb_map_data_Vg1 = [${VG1_BROAD_PINS.join(",")}];</script></body></html>`;
+assert.equal(
+  buildCurrentYearOfferingSet({ offeringHtml: VG1_ONLY_HTML, countySlug: "oslo", countyLabel: "Oslo" }),
   null,
-  "single-fylke-only page → no landslinje stage → null (fail-open)"
+  "VG1-only single-fylke page → null (fail-open)"
 );
 
 const failOpen = resolveOfferingDecision({ offering: null, stage: "VG2", school: { schoolCode: "X", schoolName: "Y" } });

@@ -172,7 +172,6 @@ function mergeSplitTruthRows(homeRows, neighborRows) {
   const homeVg1 = homeRows.filter((row) => row.stage === "VG1");
   const neighborFromVg2 = neighborRows
     .filter((row) => row.stage !== "VG1" && row.availabilityScope !== LOSA_SCOPE)
-    .filter((row) => row.institutionIsPrivateSchool !== true)
     .map((row) =>
       row.stage === "VG2"
         ? { ...row, programSlug: PAINTER_NORTH_NABOFYLKE_VG2_PROGRAMME_SLUG }
@@ -181,7 +180,7 @@ function mergeSplitTruthRows(homeRows, neighborRows) {
   return [...homeVg1, ...neighborFromVg2];
 }
 
-const mergedWithPrivateFiltered = mergeSplitTruthRows(
+const mergedWithPrivateIncluded = mergeSplitTruthRows(
   [
     {
       stage: "VG1",
@@ -209,9 +208,9 @@ const mergedWithPrivateFiltered = mergeSplitTruthRows(
   ]
 );
 assert.deepEqual(
-  mergedWithPrivateFiltered.map((row) => row.school),
-  ["Kvaløya", "Mære"],
-  "P-7 merge must drop neighbor privatskole"
+  mergedWithPrivateIncluded.map((row) => row.school),
+  ["Kvaløya", "Øya", "Mære"],
+  "P-7 merge keeps Vilbli-listed privatskole when in continuation PSA"
 );
 
 const merged = mergeSplitTruthRows(
