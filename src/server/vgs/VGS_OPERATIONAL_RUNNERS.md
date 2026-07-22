@@ -279,9 +279,9 @@ Checks: CLI rejects `--contour-b-partial` on `run-vgs-truth-pipeline.mjs`; Conto
 
 | Layer | Status |
 |-------|--------|
-| **C-VGS-YRKESFAG** | **9 professions** in pipeline (`…`, **`murer`** live; **`anleggsgartner`** scaffold 2026-07-22 — Anleggsgartner / `BAANG2`) |
+| **C-VGS-YRKESFAG** | **9 professions** in pipeline (`…`, **`anleggsgartner`** closed 2026-07-22 — Anleggsgartner / `BAANG2`) |
 | **C-NAV-OCCUPATION** | Matcher wired at **catalog profession / NAV vacancy level** |
-| **Verified bedrift** | P3b for **9 professions** (anleggsgartner bedrift ingest pending); murer kolonne-3 ingest 2026-07-21 (`BAMFF3`/`BABET3`); **empty bedrift when no godkjent = OK** |
+| **Verified bedrift** | P3b for **9 professions**; anleggsgartner kolonne-3 ingest 2026-07-22 (`BAANG3`, 271); **empty bedrift when no godkjent = OK** |
 | **C-TRANSPORT-KOMMUNE** | Live nationwide overlay |
 | **C-LOSA-FJERN** | Live Finnmark (56) electrician charter |
 | **C-FAGSKOLE / C-HOYSKOLE / C-PROFESJONSSTUDIER / C-PABYGGING** | **Out of scope for P4-MCT-1** — filters hidden until respective MCT phases |
@@ -386,18 +386,18 @@ Contour B / catalog expansion checklist (if adding counties): `§ Expansion gate
 | PSA ingest | ☑ full-matrix 2026-07-22 — 13/15 fylke; ABORT VG2=0 on `18`,`56` |
 | Bedrift ingest | ☑ Finnlærebedrift — 257+414 upserted |
 
-### Anleggsgartner (`anleggsgartner`) — scaffold (2026-07-22)
+### Anleggsgartner (`anleggsgartner`) — live (2026-07-22)
 
-**Code scaffold; catalog seed + PSA relay + bedrift pending.** Vilbli: VG1 `V.BABAT1----` → VG2 `V.BAANG2----`; kolonne-3 primary `BAANG3`. Charter: `phase-0-6-contour-b-anleggsgartner-vilbli-branch-owner-record.md`. Expansion: `phase-0-6-contour-b-ninth-profession-expansion-owner-record.md`.
+**Code + nationwide PSA + bedrift.** Vilbli: VG1 `V.BABAT1----` → VG2 `V.BAANG2----`; kolonne-3 sole `BAANG3`. Charter: `phase-0-6-contour-b-anleggsgartner-vilbli-branch-owner-record.md`.
 
 | Layer | Status |
 |-------|--------|
-| Path definition + materialization | ☑ scaffold |
+| Path definition + materialization | ☑ |
 | V.BA VG2 switch | ☑ |
-| Catalog seed | ☐ apply `seed-profession-anleggsgartner-catalog.sql` to prod |
+| Catalog seed | ☑ |
 | NAV map | ☑ closest `natur-og-miljø.skogbruk,-gartnerarbeid-og-hagebruk` |
-| PSA ingest | ☐ profession-local `--profession anleggsgartner` after deploy |
-| Bedrift ingest | ☐ `BAANG3` / `ANLEGGSGARTNERFAGET` |
+| PSA ingest | ☑ profession-local 2026-07-22 — 12/15 fylke; ABORT VG2=0 on `18`,`55`,`56` |
+| Bedrift ingest | ☑ Finnlærebedrift — 271 upserted |
 
 ### Bedrift UI performance (truth-preserving)
 

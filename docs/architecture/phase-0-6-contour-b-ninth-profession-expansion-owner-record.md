@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **OPEN** — scaffold in progress; PSA relay + bedrift ingest pending |
+| **Status** | **CLOSED** — `anleggsgartner` live 2026-07-22 (PSA + bedrift) |
 | **Date (UTC)** | 2026-07-22 |
 | **Prerequisite** | Eight professions closed; template `phase-0-6-contour-b-vgs-profession-addition-template.md` |
 | **Profession slug** | `anleggsgartner` (catalog: **Anleggsgartner**) |
@@ -35,10 +35,10 @@ Detail: `phase-0-6-contour-b-anleggsgartner-vilbli-branch-owner-record.md`.
 | Step | Status |
 |------|--------|
 | Owner sign P-1 / P-4 | ☑ |
-| Path + materialization + eligibility | ☑ scaffold |
-| Catalog seed | ☑ SQL ready — **apply to prod pending** |
-| Kolonne-3 roster | ☑ primary `BAANG3` — sibling extract optional/pending |
+| Path + materialization + eligibility | ☑ |
+| Catalog seed | ☑ prod 2026-07-22 |
+| Kolonne-3 roster | ☑ sole fag `BAANG3` (Oslo extract) |
 | NAV map | ☑ closest leaf (above) |
-| Contour B production relay | ☐ profession-local `--profession anleggsgartner` after deploy |
-| Lærebedrift ingest | ☐ `BAANG3` / `ANLEGGSGARTNERFAGET` |
-| Owner UI spot-check | ☐ |
+| Contour B production relay | ☑ profession-local 2026-07-22 — 12/15 ingested; ABORT VG2=0 on `18`,`55`,`56` |
+| Lærebedrift ingest | ☑ 271 upserted `ANLEGGSGARTNERFAGET` |
+| Owner UI spot-check | ☐ optional |

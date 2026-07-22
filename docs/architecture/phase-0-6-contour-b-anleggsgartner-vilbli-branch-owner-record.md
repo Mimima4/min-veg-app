@@ -2,11 +2,11 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **OPEN** — code scaffold; catalog seed + relay + bedrift pending |
+| **Status** | **CLOSED** — PSA relay + bedrift ingest + catalog 2026-07-22 |
 | **Date (UTC)** | 2026-07-22 |
 | **Profession slug** | `anleggsgartner` (catalog: Anleggsgartner) |
 | **Parent gate** | `phase-0-6-contour-b-vgs-profession-addition-template.md`; `phase-0-6-contour-b-ninth-profession-expansion-owner-record.md` |
-| **Commits** | scaffold TBD |
+| **Commits** | `a6bc7ae` (scaffold); closure ops 2026-07-22 |
 
 ---
 
@@ -17,13 +17,11 @@
 | VG1 | Bygg- og anleggsteknikk | `V.BABAT1----` |
 | VG2 | Anleggsgartner | `V.BAANG2----` |
 
-**Kolonne-3 / bedrift (scaffold):**
+**Kolonne-3 / bedrift:**
 
-| VIGO | Label | Ingest |
-|------|--------|--------|
-| `BAANG3` | Anleggsgartnerfaget (**primary**) | pending |
-
-Sibling kolonne-3 fag (if any beyond primary) — re-extract with `scripts/extract-vilbli-kolonne3-roster.mjs` before claiming full roster closed.
+| VIGO | Label | Ingest (2026-07-22) |
+|------|--------|---------------------|
+| `BAANG3` | Anleggsgartnerfaget (**sole fag** on chain) | upserted **271** |
 
 ---
 
@@ -36,14 +34,14 @@ Sibling kolonne-3 fag (if any beyond primary) — re-extract with `scripts/extra
 
 ---
 
-## Materialization / PSA
+## Materialization / PSA (relay 2026-07-22)
 
 | Node | Slug pattern |
 |------|----------------|
 | VG1 | `anleggsgartner-vg1-bygg-{countySlug}` |
 | VG2 | `anleggsgartner-vg2-anleggsgartner-{countySlug}` |
 
-Relay scope after deploy: **profession-local** `--profession anleggsgartner` (all pipeline counties). Full matrix only if contour code / 6-month cadence requires it.
+Profession-local relay: **12 ingested**, **3 ABORT** (Vilbli VG2=0: Nordland `18`, Troms `55`, Finnmark `56`). Active programmes **24** (12 VG1 + 12 VG2). ABORT → P-6 empty primary; P-7 north nabofylke auto for home `{18,55,56}` when a neighbor has VG2 (e.g. Nordland → Trøndelag `50`). **Note:** Troms (`55`) neighbors are only `18`/`56` (also VG2=0), so P-7 may stay empty for Troms homes until offering appears.
 
 ---
 
@@ -52,8 +50,8 @@ Relay scope after deploy: **profession-local** `--profession anleggsgartner` (al
 | # | Status |
 |---|--------|
 | P-1 Vilbli contour | **OK — Bygg → Anleggsgartner** (`BAANG2`) |
-| P-2 kolonne-3 | **OK primary — `BAANG3`**; siblings TBD extract |
-| P-3 NAV | **OK closest —** `natur-og-miljø.skogbruk,-gartnerarbeid-og-hagebruk` («Skogbruk, gartnerarbeid og hagebruk») |
+| P-2 kolonne-3 | **OK — sole fag** (`BAANG3`) |
+| P-3 NAV | **OK closest —** `natur-og-miljø.skogbruk,-gartnerarbeid-og-hagebruk` |
 | P-4 V.BA VG2 switch | **OK** |
 | P-5 empty bedrift | **OK — godkjent-only** |
 | P-6 / P-7 / P-8 | P-6 auto; P-7 north auto; **no P-8** |
@@ -64,9 +62,9 @@ Relay scope after deploy: **profession-local** `--profession anleggsgartner` (al
 
 | Step | Status |
 |------|--------|
-| Code scaffolding | ☐ commit pending |
-| Catalog seed prod | ☐ `scripts/sql/seed-profession-anleggsgartner-catalog.sql` |
-| Profession-local Contour B relay | ☐ after deploy |
-| Lærebedrift ingest (`BAANG3`) | ☐ |
-| Monthly cron | ☑ primary in batch 0 via roster `ingestBatch: 0` + `scheduled-larebedrift-ingest-fags.ts` |
-| Owner UI spot-check | ☐ |
+| Code scaffolding | ☑ `a6bc7ae` |
+| Catalog seed prod | ☑ 2026-07-22 |
+| Profession-local Contour B relay | ☑ 2026-07-22 (12/15; ABORT `18`,`55`,`56`) |
+| Lærebedrift ingest (`BAANG3`) | ☑ 271 upserted |
+| Monthly cron | ☑ primary in batch 0 |
+| Owner UI spot-check | ☐ optional |
