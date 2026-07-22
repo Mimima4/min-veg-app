@@ -1,7 +1,7 @@
 /**
  * P-8 — rank / filter sparse national VG2 schools for relocation geography.
  *
- * `maybe`: Entur bus+rail network km soft band (500/550) — owner lock 2026-07-21.
+ * `maybe`: Entur bus+rail network km soft band (700/800) — owner lock 2026-07-22.
  * `yes`: haversine nearest-first (all sparse seats).
  * Contract: phase-4-relocation-maybe-public-transport-reach-owner-draft.md
  */
@@ -23,7 +23,7 @@ import type { AvailabilityTruthRow } from "@/server/children/routes/get-availabi
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 /** @deprecated Prefer MAYBE_PT_SOFT_MAX_KM — kept as export alias for smokes/docs. */
-export const SPARSE_VG2_MAYBE_MAX_DISTANCE_KM = 500;
+export const SPARSE_VG2_MAYBE_MAX_DISTANCE_KM = 700;
 
 async function mapWithConcurrency<T, R>(
   items: T[],
@@ -163,10 +163,29 @@ export async function filterAndRankSparseVg2RowsByHomeDistance(params: {
       return (a.row.institutionName ?? "").localeCompare(b.row.institutionName ?? "", "nb");
     });
 
+    if (scored.length > 0) {
+      return {
+        rankedRows: scored.map((item) => item.row),
+        distanceKmByInstitutionId,
+        softByInstitutionId,
+      };
+    }
+
+    // Owner 2026-07-22: every kommune must keep P-8 when national sparse PSA seats exist.
+    // Entur silent / hub miss → haversine soft admit (same sort as `yes`), not empty card.
+    console.error(
+      `[sparse-vg2-maybe] Entur admitted 0/${params.vg2Rows.length} for home=${primaryHome}; falling back to haversine soft admit`
+    );
+    const fallback = await filterAndRankSparseVg2RowsByHomeDistance({
+      ...params,
+      relocationWillingness: "yes",
+    });
     return {
-      rankedRows: scored.map((item) => item.row),
-      distanceKmByInstitutionId,
-      softByInstitutionId,
+      rankedRows: fallback.rankedRows,
+      distanceKmByInstitutionId: fallback.distanceKmByInstitutionId,
+      softByInstitutionId: new Map(
+        [...fallback.distanceKmByInstitutionId.keys()].map((id) => [id, true] as const)
+      ),
     };
   }
 

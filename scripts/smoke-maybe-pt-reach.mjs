@@ -5,10 +5,10 @@
  */
 import assert from "node:assert/strict";
 
-const SOFT = 500;
-const HARD = 550;
-const AIR_SOFT_SEC = 5 * 60 * 60;
-const AIR_HARD_SEC = 8 * 60 * 60;
+const SOFT = 700;
+const HARD = 800;
+const AIR_SOFT_SEC = 8 * 60 * 60;
+const AIR_HARD_SEC = 12 * 60 * 60;
 const GROUND = new Set(["rail", "bus", "coach", "metro", "tram", "water", "ferry", "foot", "bicycle"]);
 const CAR = new Set(["car", "taxi"]);
 
@@ -90,14 +90,14 @@ function verdictFromPatterns(patterns, { allowAir = false } = {}) {
 }
 
 assert.equal(classifyKm(120).reason, "normal");
-assert.equal(classifyKm(500).reason, "normal");
-assert.equal(classifyKm(520).reason, "soft");
-assert.equal(classifyKm(550).admitted, true);
-assert.equal(classifyKm(551).admitted, false);
+assert.equal(classifyKm(700).reason, "normal");
+assert.equal(classifyKm(750).reason, "soft");
+assert.equal(classifyKm(800).admitted, true);
+assert.equal(classifyKm(801).admitted, false);
 
 assert.equal(classifyAir(3 * 3600).reason, "air_north");
-assert.equal(classifyAir(6 * 3600).reason, "air_north_soft");
-assert.equal(classifyAir(9 * 3600).admitted, false);
+assert.equal(classifyAir(10 * 3600).reason, "air_north_soft");
+assert.equal(classifyAir(13 * 3600).admitted, false);
 
 const railBus = {
   duration: 4 * 3600,

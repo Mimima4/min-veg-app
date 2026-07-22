@@ -328,28 +328,26 @@ assert.ok(
   normalized.options.every((o) => o.program_slug === "klima-vg2-klima-nabofylke")
 );
 
-// Vilbli home VG2 continuation overlay: union adjacency ∪ allowlisted destination PSA.
-function mergeWithContinuations(homeRows, neighborRows, continuationRows) {
-  const byKey = new Map();
-  for (const row of mergeSplitTruthRows(homeRows, [...neighborRows, ...continuationRows])) {
-    const key = `${row.school}:${row.stage}`;
-    if (!byKey.has(key)) byKey.set(key, row);
-  }
-  return Array.from(byKey.values());
+// P-7 membership (amended): continuation ∩ PSA only — adjacency dump must NOT admit.
+function mergeContinuationOnly(homeRows, continuationRows) {
+  const homeVg1 = homeRows.filter((row) => row.stage === "VG1");
+  const fromCont = continuationRows
+    .filter((row) => row.stage !== "VG1" && row.availabilityScope !== LOSA_SCOPE)
+    .filter((row) => row.institutionIsPrivateSchool !== true)
+    .map((row) =>
+      row.stage === "VG2"
+        ? { ...row, programSlug: PAINTER_NORTH_NABOFYLKE_VG2_PROGRAMME_SLUG }
+        : row
+    );
+  return [...homeVg1, ...fromCont];
 }
 
-function assessSplitEligible(homeRows, neighborRows, continuationRows = []) {
+function assessContinuationEligible(homeRows, continuationRows) {
   const homeHasVg1 = homeRows.some(
     (row) => row.stage === "VG1" && row.availabilityScope !== LOSA_SCOPE
   );
   const homeHasVg2 = homeRows.some(
     (row) => row.stage === "VG2" && row.availabilityScope !== LOSA_SCOPE
-  );
-  const neighborHasVg2 = neighborRows.some(
-    (row) =>
-      row.stage === "VG2" &&
-      row.availabilityScope !== LOSA_SCOPE &&
-      row.institutionIsPrivateSchool !== true
   );
   const continuationHasVg2 = continuationRows.some(
     (row) =>
@@ -357,7 +355,7 @@ function assessSplitEligible(homeRows, neighborRows, continuationRows = []) {
       row.availabilityScope !== LOSA_SCOPE &&
       row.institutionIsPrivateSchool !== true
   );
-  return homeHasVg1 && !homeHasVg2 && (neighborHasVg2 || continuationHasVg2);
+  return homeHasVg1 && !homeHasVg2 && continuationHasVg2;
 }
 
 const tromsHome = [
@@ -369,92 +367,71 @@ const tromsHome = [
     institutionIsPrivateSchool: false,
   },
 ];
-const emptyNeighbors = [];
-const gjermundnesContinuation = [
+const adjacencyFalsePositives = [
+  {
+    stage: "VG2",
+    county: "50",
+    school: "Charlottenlund",
+    availabilityScope: "programme_in_school",
+    institutionIsPrivateSchool: false,
+  },
+];
+const moreContinuations = [
   {
     stage: "VG2",
     county: "15",
-    school: "Gjermundnes",
+    school: "Borgund",
     availabilityScope: "programme_in_school",
     institutionIsPrivateSchool: false,
-    programSlug: "anleggsgartner-vg2-anleggsgartner-more-og-romsdal",
+  },
+  {
+    stage: "VG2",
+    county: "15",
+    school: "Romsdal",
+    availabilityScope: "programme_in_school",
+    institutionIsPrivateSchool: false,
   },
 ];
 
 assert.equal(
-  assessSplitEligible(tromsHome, emptyNeighbors, gjermundnesContinuation),
-  true,
-  "continuation-only VG2 must make P-7 eligible (Troms anleggsgartner)"
+  assessContinuationEligible(tromsHome, []),
+  false,
+  "no continuations → P-7 not eligible"
 );
 assert.equal(
-  assessSplitEligible(tromsHome, emptyNeighbors, []),
-  false,
-  "no neighbor and no continuation → not eligible"
-);
-
-const unionMerged = mergeWithContinuations(
-  tromsHome,
-  [
-    {
-      stage: "VG2",
-      county: "50",
-      school: "Mære",
-      availabilityScope: "programme_in_school",
-      institutionIsPrivateSchool: false,
-    },
-  ],
-  gjermundnesContinuation
+  assessContinuationEligible(tromsHome, moreContinuations),
+  true,
+  "Vilbli∩PSA continuations → eligible"
 );
 assert.deepEqual(
-  unionMerged.filter((row) => row.stage === "VG2").map((row) => row.school).sort(),
-  ["Gjermundnes", "Mære"],
-  "membership = adjacency ∪ Vilbli continuation"
+  mergeContinuationOnly(tromsHome, moreContinuations)
+    .filter((r) => r.stage === "VG2")
+    .map((r) => r.school)
+    .sort(),
+  ["Borgund", "Romsdal"]
 );
-
-// False positive guard: dense/local profession must not invent Møre bleed without allowlist.
 assert.equal(
-  assessSplitEligible(
+  mergeContinuationOnly(tromsHome, moreContinuations).some((r) => r.school === "Charlottenlund"),
+  false,
+  "adjacency dump schools must not enter merge"
+);
+void adjacencyFalsePositives;
+
+assert.equal(
+  assessContinuationEligible(
     [
-      {
-        stage: "VG1",
-        county: "55",
-        school: "Home",
-        availabilityScope: "programme_in_school",
-      },
+      ...tromsHome,
       {
         stage: "VG2",
         county: "55",
-        school: "LocalVG2",
+        school: "Local",
         availabilityScope: "programme_in_school",
       },
     ],
-    emptyNeighbors,
-    gjermundnesContinuation
+    moreContinuations
   ),
   false,
-  "home local VG2 present → continuation overlay must not open P-7"
-);
-
-const painterNeighborOnly = [
-  {
-    stage: "VG2",
-    county: "18",
-    school: "Bodø",
-    availabilityScope: "programme_in_school",
-    institutionIsPrivateSchool: false,
-  },
-];
-assert.equal(
-  assessSplitEligible(tromsHome, painterNeighborOnly, []),
-  true,
-  "adjacency-only still eligible without continuations"
-);
-assert.equal(
-  mergeWithContinuations(tromsHome, painterNeighborOnly, []).some(
-    (row) => row.school === "Gjermundnes"
-  ),
-  false,
-  "without allowlist rows, Møre schools must not appear"
+  "local VG2 present → P-7 closed"
 );
 
 console.error("[smoke:painter-north-cross-fylke] PASS");

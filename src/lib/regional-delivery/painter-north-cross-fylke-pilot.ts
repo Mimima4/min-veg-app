@@ -1,14 +1,14 @@
 /**
- * P-7 — north cross-fylke (nabofylke) when home fylke is Nordland/Troms/Finnmark and lacks local VG2.
+ * P-7 — north cross-fylke alternative when home fylke is Nordland/Troms/Finnmark and lacks local VG2.
  * Profession-agnostic Contour B overlay (painter precedent generalized).
  * Policy: phase-4-county-local-primary-route-completeness-owner-policy.md (R-3)
  * + phase-4-vilbli-home-vg2-continuation-overlay-owner-record.md
  *
- * Scope: home fylke {18,55,56} — not nationwide adjacency.
+ * Scope: home fylke {18,55,56} — when P-7 may apply (not a school membership source).
  * Relocation willingness does not gate eligibility or alternative visibility.
  * P-8 (national sparse) stays separate / owner-chartered.
- * Neighbor VG2+ pool excludes privatskole (north Vilbli chain pages list public continuations).
- * Membership = adjacency nabofylke ∪ Vilbli home-page continuation allowlist ∩ destination PSA.
+ * VG2 membership = Vilbli home continuations ∩ NSR ∩ destination PSA ∩ public
+ * (no adjacency PSA dump — that false-positived murer Nordland with Trøndelag/Troms).
  */
 import { isLosaAvailabilityScope } from "@/lib/losa/availability-scope";
 import { normalizeFylkeCodesFromMunicipalityCodes } from "@/lib/planning/norway-geo-code-normalization";
@@ -193,18 +193,17 @@ export const resolvePainterNorthHomeFylkeCode = resolveNorthCrossFylkeHomeFylkeC
 export function mergeNorthCrossFylkeTruthRows(params: {
   professionSlug: string;
   homeRows: AvailabilityTruthRow[];
-  neighborRows: AvailabilityTruthRow[];
-  /** Optional Vilbli home-page continuation PSA rows (destination counties). */
+  /**
+   * @deprecated Adjacency PSA dump removed from membership (owner 2026-07-22).
+   * Ignored — kept so call sites compile during migration.
+   */
+  neighborRows?: AvailabilityTruthRow[];
+  /** Vilbli home-page continuation PSA rows (destination counties) — sole VG2+ source. */
   continuationRows?: AvailabilityTruthRow[];
 }): AvailabilityTruthRow[] {
+  void params.neighborRows;
   const nabofylkeSlug = northCrossFylkeNabofylkeVg2ProgrammeSlug(params.professionSlug);
   const homeVg1 = params.homeRows.filter((row) => row.stage === "VG1");
-  const neighborFromVg2 = countyScopedSchoolRows(params.neighborRows)
-    .filter((row) => row.stage !== "VG1")
-    .filter(isPublicSchoolTruthRow)
-    .map((row) =>
-      row.stage === "VG2" ? { ...row, programSlug: nabofylkeSlug } : row
-    );
   const continuationFromVg2 = countyScopedSchoolRows(params.continuationRows ?? [])
     .filter((row) => row.stage !== "VG1")
     .filter(isPublicSchoolTruthRow)
@@ -213,7 +212,7 @@ export function mergeNorthCrossFylkeTruthRows(params: {
     );
 
   const byInstitutionStage = new Map<string, AvailabilityTruthRow>();
-  for (const row of [...neighborFromVg2, ...continuationFromVg2]) {
+  for (const row of continuationFromVg2) {
     const key = `${row.institutionId}:${row.stage}:${row.programSlug}`;
     if (!byInstitutionStage.has(key)) {
       byInstitutionStage.set(key, row);
@@ -238,7 +237,8 @@ export function mergePainterNorthCrossFylkeTruthRows(params: {
 export function assessNorthCrossFylkeSplitRouteTruthEligibility(params: {
   professionSlug: string;
   homeRows: AvailabilityTruthRow[];
-  neighborRows: AvailabilityTruthRow[];
+  /** @deprecated Ignored — adjacency no longer admits VG2. */
+  neighborRows?: AvailabilityTruthRow[];
   continuationRows?: AvailabilityTruthRow[];
 }): {
   eligible: boolean;
@@ -248,20 +248,15 @@ export function assessNorthCrossFylkeSplitRouteTruthEligibility(params: {
   missingMergedStages: PrimaryRequiredSchoolStage[];
 } {
   const homeSchool = countyScopedSchoolRows(params.homeRows);
-  const neighborSchool = countyScopedSchoolRows(params.neighborRows).filter(
-    isPublicSchoolTruthRow
-  );
   const continuationSchool = countyScopedSchoolRows(params.continuationRows ?? []).filter(
     isPublicSchoolTruthRow
   );
   const homeHasVg1 = homeSchool.some((row) => row.stage === "VG1");
   const homeHasVg2 = homeSchool.some((row) => row.stage === "VG2");
-  const neighborHasVg2 = neighborSchool.some((row) => row.stage === "VG2");
   const continuationHasVg2 = continuationSchool.some((row) => row.stage === "VG2");
   const merged = mergeNorthCrossFylkeTruthRows({
     professionSlug: params.professionSlug,
     homeRows: params.homeRows,
-    neighborRows: params.neighborRows,
     continuationRows: params.continuationRows,
   });
   const mergedEligibility = assessHomeCountyPrimaryRouteEligibility({
@@ -269,13 +264,11 @@ export function assessNorthCrossFylkeSplitRouteTruthEligibility(params: {
   });
   return {
     eligible:
-      homeHasVg1 &&
-      !homeHasVg2 &&
-      (neighborHasVg2 || continuationHasVg2) &&
-      mergedEligibility.eligible,
+      homeHasVg1 && !homeHasVg2 && continuationHasVg2 && mergedEligibility.eligible,
     homeHasVg1,
     homeHasVg2,
-    neighborHasVg2,
+    /** Always false — adjacency dump retired; kept for deprecated callers. */
+    neighborHasVg2: false,
     missingMergedStages: listMissingPrimarySchoolChainStages(merged),
   };
 }
@@ -446,10 +439,8 @@ export function isNorthCrossFylkeNabofylkeVariantEligible(params: {
   if (!SUPPORTED_VGS_PROFESSION_SLUGS.has(profession)) {
     return false;
   }
-  return (
-    listNorthCrossFylkeReachableNeighborCountyCodes(params.preferredMunicipalityCodes)
-      .length > 0
-  );
+  // North home zone only — VG2 schools come from Vilbli continuations ∩ PSA, not adjacency.
+  return isNorthCrossFylkeHomeFylke(childHomeFylkeCodes(params.preferredMunicipalityCodes));
 }
 
 /** @deprecated */

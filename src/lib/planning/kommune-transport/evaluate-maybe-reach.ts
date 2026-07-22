@@ -1,7 +1,7 @@
 /**
- * Relocation `maybe` admit — Entur bus+rail network km soft band;
- * Troms/Finnmark homes also admit via air (duration band).
- * Owner: phase-4-relocation-maybe-public-transport-reach-owner-draft.md
+ * Relocation `maybe` admit — Entur bus+rail network km soft band (700/800);
+ * Troms/Finnmark/Nordland homes also admit via air (8–12h duration).
+ * Owner: phase-4-relocation-maybe-public-transport-reach-owner-draft.md (amended 2026-07-22)
  */
 import { normalizeFylkeCodesFromMunicipalityCodes } from "@/lib/planning/norway-geo-code-normalization";
 import {

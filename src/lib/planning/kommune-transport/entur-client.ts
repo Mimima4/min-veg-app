@@ -13,6 +13,7 @@ type GeocoderFeature = {
     name?: string;
     label?: string;
     county?: string;
+    category?: string[];
     categories?: string[];
   };
   geometry?: {
@@ -111,17 +112,39 @@ function pickBestStopFeature(
 
   pool.sort((a, b) => a.distanceKm - b.distanceKm);
 
-  const railway = pool.find((item) =>
-    (item.feature.properties?.categories ?? []).some((category) =>
-      /rail|train|railway/i.test(category)
-    )
+  const categoryOf = (item: (typeof pool)[number]) => {
+    const props = item.feature.properties;
+    const cats = [...(props?.categories ?? []), ...(props?.category ?? [])];
+    return cats.join(" ").toLowerCase();
+  };
+  const nameOf = (item: (typeof pool)[number]) =>
+    (item.feature.properties?.name ?? "").toLowerCase();
+
+  // Prefer real transport hubs — airport / rail / ferry — over random onstreetBus.
+  // Last-mile to lodging may be private car (owner 2026-07-22).
+  const airport = pool.find(
+    (item) =>
+      /airport|lufthavn/.test(categoryOf(item)) || /lufthavn/.test(nameOf(item))
+  );
+  if (airport) return airport.feature;
+
+  const railway = pool.find(
+    (item) =>
+      /rail|train|railway/.test(categoryOf(item)) || /stasjon/.test(nameOf(item))
   );
   if (railway) return railway.feature;
 
-  const stationName = pool.find((item) =>
-    /stasjon/i.test(item.feature.properties?.name ?? "")
+  const ferry = pool.find(
+    (item) =>
+      /ferry|harbour|water|boat/.test(categoryOf(item)) ||
+      /ferjekai|hurtigbåt|kai/.test(nameOf(item))
   );
-  if (stationName) return stationName.feature;
+  if (ferry) return ferry.feature;
+
+  const terminal = pool.find((item) =>
+    /terminal|rutebil/.test(nameOf(item))
+  );
+  if (terminal) return terminal.feature;
 
   const stopPlace = pool.find((item) => isStopPlaceId(item.feature.properties?.id));
   if (stopPlace) return stopPlace.feature;
@@ -151,8 +174,10 @@ async function resolveHubViaReverse(focus: { lat: number; lng: number }): Promis
             : Number.POSITIVE_INFINITY;
         const name = feature.properties?.name ?? "";
         let score = distanceKm;
-        if (/terminal|stasjon|sentrum|kai/i.test(name)) score -= 5;
-        if (/skole|barneskole|ungdomsskole/i.test(name)) score += 3;
+        if (/lufthavn|airport/i.test(name)) score -= 12;
+        if (/stasjon/i.test(name)) score -= 8;
+        if (/ferjekai|hurtigbåt|kai|terminal|sentrum/i.test(name)) score -= 5;
+        if (/skole|barneskole|ungdomsskole/i.test(name)) score += 8;
         return { id: feature.properties?.id, score, distanceKm, name };
       })
       .filter((item) => item.distanceKm <= MAX_HUB_DISTANCE_FROM_CENTROID_KM)
@@ -179,7 +204,10 @@ export async function resolveKommuneHubStopPlaceId(params: {
 
   const queries = [
     params.municipalityName,
+    `${params.municipalityName} lufthavn`,
     `${params.municipalityName} stasjon`,
+    `${params.municipalityName} ferjekai`,
+    `${params.municipalityName} hurtigbåtkai`,
     `${params.municipalityName} rutebileterminal`,
     `${params.municipalityName} bussterminal`,
   ];

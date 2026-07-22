@@ -183,10 +183,10 @@ const scored = [
   { school: "Skedsmo", distanceKm: 25 },
   { school: "Åfjord", distanceKm: 480 },
   { school: "Kalnes", distanceKm: 90 },
-  { school: "SoftEdge", distanceKm: 520 },
-  { school: "TooFar", distanceKm: 600 },
+  { school: "SoftEdge", distanceKm: 750 },
+  { school: "TooFar", distanceKm: 850 },
 ];
-const maybeBand = filterMaybe(scored, 500, 550);
+const maybeBand = filterMaybe(scored, 700, 800);
 assert.deepEqual(
   maybeBand.map((r) => r.school),
   ["Skedsmo", "Åfjord", "Kalnes", "SoftEdge"]

@@ -1,8 +1,6 @@
 import {
   assessNorthCrossFylkeSplitRouteTruthEligibility,
-  listNorthCrossFylkeReachableNeighborCountyCodes,
   NORTH_CROSS_FYLKE_HOME_FYLKE_CODES,
-  NORTH_CROSS_FYLKE_NEIGHBOR_CONFIGS,
   northCrossFylkeHomeVg1ProgrammeSlugsForFylke,
   northCrossFylkeProgrammeSlugsForFylke,
 } from "@/lib/regional-delivery/painter-north-cross-fylke-pilot";
@@ -60,21 +58,8 @@ async function professionHasNorthCrossFylkeSplitRouteInHomeFylke(params: {
   countyCode: string;
   preferredMunicipalityCodes?: string[];
 }): Promise<boolean> {
+  void params.preferredMunicipalityCodes;
   const homeFylkeCode = String(params.countyCode ?? "").trim();
-  const municipalityCodes = (params.preferredMunicipalityCodes ?? []).filter(
-    (code) => typeof code === "string" && code.trim().length > 0
-  );
-
-  const neighborCountyCodes =
-    municipalityCodes.length > 0
-      ? listNorthCrossFylkeReachableNeighborCountyCodes(municipalityCodes)
-      : NORTH_CROSS_FYLKE_NEIGHBOR_CONFIGS.map((neighbor) => neighbor.countyCode).filter(
-          (code) => code !== homeFylkeCode
-        );
-
-  if (neighborCountyCodes.length === 0) {
-    return false;
-  }
 
   const homeProgrammeSlugs = Array.from(
     new Set([
@@ -104,36 +89,9 @@ async function professionHasNorthCrossFylkeSplitRouteInHomeFylke(params: {
     }),
   ]);
 
-  for (const neighborCountyCode of neighborCountyCodes) {
-    const neighborProgrammeSlugs = northCrossFylkeProgrammeSlugsForFylke({
-      professionSlug: params.professionSlug,
-      fylkeCode: neighborCountyCode,
-    });
-    if (neighborProgrammeSlugs.length === 0) {
-      continue;
-    }
-
-    const neighborTruth = await getAvailabilityTruth({
-      countyCode: neighborCountyCode,
-      programmeSlugsOrCodes: neighborProgrammeSlugs,
-    });
-
-    if (
-      assessNorthCrossFylkeSplitRouteTruthEligibility({
-        professionSlug: params.professionSlug,
-        homeRows: homeTruth.rows,
-        neighborRows: neighborTruth.rows,
-        continuationRows,
-      }).eligible
-    ) {
-      return true;
-    }
-  }
-
   return assessNorthCrossFylkeSplitRouteTruthEligibility({
     professionSlug: params.professionSlug,
     homeRows: homeTruth.rows,
-    neighborRows: [],
     continuationRows,
   }).eligible;
 }
