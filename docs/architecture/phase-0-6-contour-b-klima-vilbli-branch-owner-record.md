@@ -2,9 +2,10 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **CLOSED** — PSA relay + bedrift ingest + catalog 2026-07-21 |
-| **Date (UTC)** | 2026-07-21 |
-| **Profession slug** | `klima` (catalog: Ventilasjons- og blikkenslager) |
+| **Status** | **RENAMED (catalog)** — 2026-07-23: catalog slug `klima` → `platearbeider-og-sveiser`; school VG2 KEM unchanged |
+| **Date (UTC)** | 2026-07-21 (branch live); catalog rename 2026-07-23 |
+| **Profession slug** | `platearbeider-og-sveiser` (catalog: **Platearbeider og sveiser**) |
+| **Prior slug** | `klima` (deactivated; school VG2 Klima/energi/miljø / BAKEM2 unchanged) |
 | **Parent gate** | `phase-0-6-contour-b-vgs-profession-addition-template.md`; `phase-0-6-contour-b-seventh-profession-expansion-owner-record.md` |
 | **Commits** | `66cb987` (scaffold); closure ops same day |
 
@@ -40,8 +41,10 @@
 
 | Node | Slug pattern |
 |------|----------------|
-| VG1 | `klima-vg1-bygg-{countySlug}` |
-| VG2 | `klima-vg2-klima-{countySlug}` |
+| VG1 | `platearbeider-og-sveiser-vg1-bygg-{countySlug}` |
+| VG2 | `platearbeider-og-sveiser-vg2-klima-{countySlug}` |
+
+Path family slug: `platearbeider-og-sveiser-vba-klima-energi`.
 
 Full-matrix relay: **105** pairs — klima **10 ingested**, **5 ABORT** (Vilbli VG2=0: `15,18,32,40,56`). Active PSA **120** rows across 10 fylke with VG1+VG2. `profession_program_links` **20**.
 

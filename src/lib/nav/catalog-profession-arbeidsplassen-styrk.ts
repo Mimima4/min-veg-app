@@ -45,12 +45,12 @@ export const CATALOG_PROFESSION_ARBEIDSPLASSEN: Readonly<
     level1Label: "Håndverkere",
     occupationLabel: "Maler",
   },
-  anleggsteknikk: {
+  "maskin-og-kranforer": {
     styrkCode: "bygg-og-anlegg.maskin--og-kranfører",
     level1Label: "Bygg og anlegg",
     occupationLabel: "Maskin- og kranfører",
   },
-  klima: {
+  "platearbeider-og-sveiser": {
     styrkCode: "håndverkere.platearbeider-og-sveiser",
     level1Label: "Håndverkere",
     occupationLabel: "Platearbeider og sveiser",

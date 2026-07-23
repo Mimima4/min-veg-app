@@ -10,12 +10,12 @@
  * Phase 4 (closed): mechanic nationwide when the child has a home kommune.
  * Phase 5 (closed 2026-07-04): plumber nationwide when the child has a home kommune.
  * Phase 6 (closed): painter nationwide when the child has a home kommune.
- * Phase 7 (2026-07-10): anleggsteknikk nationwide when the child has a home kommune.
- * Phase 8 (2026-07-21): klima nationwide when the child has a home kommune.
+ * Phase 7 (2026-07-10): maskin-og-kranforer (was anleggsteknikk) nationwide when the child has a home kommune.
+ * Phase 8 (2026-07-21): platearbeider-og-sveiser (was klima) nationwide when the child has a home kommune.
  * Phase 9 (2026-07-21): murer nationwide when the child has a home kommune.
  * Phase 10 (2026-07-22): anleggsgartner nationwide when the child has a home kommune.
  * Phase 11 (2026-07-23): snekker nationwide when the child has a home kommune.
- * V.BA VG2 cross-profession programme switch (carpenter ↔ plumber ↔ painter ↔ anleggsteknikk ↔ klima ↔ murer ↔ anleggsgartner ↔ snekker) — see `VGS_OPERATIONAL_RUNNERS.md`.
+ * V.BA VG2 cross-profession programme switch (carpenter ↔ plumber ↔ painter ↔ maskin-og-kranforer ↔ platearbeider-og-sveiser ↔ murer ↔ anleggsgartner ↔ snekker) — see `VGS_OPERATIONAL_RUNNERS.md`.
  */
 
 const PRIMARY_ROUTE_LAREBEDRIFT_PROFESSIONS = new Set([
@@ -24,8 +24,8 @@ const PRIMARY_ROUTE_LAREBEDRIFT_PROFESSIONS = new Set([
   "mechanic",
   "plumber",
   "painter",
-  "anleggsteknikk",
-  "klima",
+  "maskin-og-kranforer",
+  "platearbeider-og-sveiser",
   "murer",
   "anleggsgartner",
   "snekker",

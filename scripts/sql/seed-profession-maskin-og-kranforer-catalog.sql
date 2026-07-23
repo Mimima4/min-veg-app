@@ -1,4 +1,4 @@
--- Min Veg — anleggsteknikk (Anleggsmaskinfører) catalog profession seed
+-- Min Veg — maskin-og-kranforer (Maskin- og kranfører) catalog profession seed
 -- Charter: docs/architecture/phase-0-6-contour-b-anleggsteknikk-vilbli-branch-owner-record.md
 -- Catalog shape: mirror plumber/painter rows (tags, salary, nb/nn/en i18n).
 -- Scope: one professions row only; no PSA / programme links (pipeline materializes those).
@@ -22,8 +22,8 @@ insert into professions (
   avg_salary_nok
 )
 select
-  'anleggsteknikk',
-  '{"nb":"Anleggsmaskinfører","nn":"Anleggsmaskinførar","en":"Construction equipment operator"}'::jsonb,
+  'maskin-og-kranforer',
+  '{"nb":"Maskin- og kranfører","nn":"Maskin- og kranførar","en":"Machine and crane operator"}'::jsonb,
   '{"nb":"Maskiner, anlegg og infrastruktur i bygg og anlegg.","nn":"Maskiner, anlegg og infrastruktur i bygg og anlegg.","en":"Machinery, construction sites and infrastructure in building and civil engineering."}'::jsonb,
   '{"nb":"VGS: Bygg- og anleggsteknikk → Anleggsteknikfaget. Deretter lære og fagbrev.","nn":"VGS: Bygg- og anleggsteknikk → Anleggsteknikfaget. Deretter lære og fagbrev.","en":"Upper secondary: Building and construction → Construction technology. Then apprenticeship and trade certificate."}'::jsonb,
   'vocational',
@@ -39,7 +39,7 @@ select
 where not exists (
   select 1
   from professions p
-  where p.slug = 'anleggsteknikk'
+  where p.slug = 'maskin-og-kranforer'
 );
 
 commit;

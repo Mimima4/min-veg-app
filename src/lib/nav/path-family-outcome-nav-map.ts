@@ -190,11 +190,12 @@ export const PATH_FAMILY_OUTCOME_NAV_MAP_ROWS: PathFamilyOutcomeNavMapRow[] = [
     catalogProfessionSlug: "painter",
     sourceReferenceUrl: PAINTER_OVERFLATETEKNIKK_SOURCE,
   },
-  // --- anleggsteknikk / anleggsteknikk-vba-anleggsteknikk ---
+  // --- maskin-og-kranforer / maskin-og-kranforer-vba-anleggsteknikk ---
+  // Catalog Maskin- og kranfører; school VG2 stays Anleggsteknikk (BAANL2).
   {
     mapVersion: 1,
-    pathFamilySlug: "anleggsteknikk-vba-anleggsteknikk",
-    professionSlug: "anleggsteknikk",
+    pathFamilySlug: "maskin-og-kranforer-vba-anleggsteknikk",
+    professionSlug: "maskin-og-kranforer",
     vilbliTitleIncludes: [
       "anleggsteknikk",
       "anleggsteknikfaget",
@@ -208,14 +209,15 @@ export const PATH_FAMILY_OUTCOME_NAV_MAP_ROWS: PathFamilyOutcomeNavMapRow[] = [
     // closest occupation is Maskin- og kranfører.
     navStyrkCode: "bygg-og-anlegg.maskin--og-kranfører",
     navTitle: "Maskin- og kranfører",
-    catalogProfessionSlug: "anleggsteknikk",
+    catalogProfessionSlug: "maskin-og-kranforer",
     sourceReferenceUrl: ANLEGSTEKNIKK_SOURCE,
   },
-  // --- klima / klima-vba-klima-energi ---
+  // --- platearbeider-og-sveiser / platearbeider-og-sveiser-vba-klima-energi ---
+  // Catalog Platearbeider og sveiser; school VG2 stays Klima/energi/miljø (BAKEM2).
   {
     mapVersion: 1,
-    pathFamilySlug: "klima-vba-klima-energi",
-    professionSlug: "klima",
+    pathFamilySlug: "platearbeider-og-sveiser-vba-klima-energi",
+    professionSlug: "platearbeider-og-sveiser",
     vilbliTitleIncludes: [
       "klima",
       "energi og miljo",
@@ -231,7 +233,7 @@ export const PATH_FAMILY_OUTCOME_NAV_MAP_ROWS: PathFamilyOutcomeNavMapRow[] = [
     // Closest NAV arbeidsplassen leaf for Ventilasjons- / blikkenslager chain.
     navStyrkCode: "håndverkere.platearbeider-og-sveiser",
     navTitle: "Platearbeider og sveiser",
-    catalogProfessionSlug: "klima",
+    catalogProfessionSlug: "platearbeider-og-sveiser",
     sourceReferenceUrl:
       "https://www.vilbli.no/nb/no/strukturkart/V.BA/klima-energi-og-miljoteknikk-fag-og-timefordeling?kurs=V.BABAT1----_V.BAKEM2----&side=p2",
   },

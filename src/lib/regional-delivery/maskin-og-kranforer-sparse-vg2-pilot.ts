@@ -1,11 +1,11 @@
 /**
- * P-8 — anleggsteknikk sparse national VG2 alternative ("VG2 andre steder").
+ * P-8 — maskin-og-kranforer sparse national VG2 alternative ("VG2 andre steder").
  * Charter: phase-0-6-contour-b-anleggsteknikk-p8-sparse-vg2-relocation-owner-record.md
  * Contract: phase-4-relocation-geography-contract-owner-decision-record.md §4.2
  *
  * Contour B ingest materializes PSA per fylke. Runtime reads the home county only, so a
  * family in a sparse-VG2 profession never sees national VG2 schools elsewhere. This module
- * loads multi-county anleggsteknikk VG2 PSA and exposes only the schools that fall OUTSIDE
+ * loads multi-county maskin-og-kranforer VG2 PSA (school Anleggsteknikk) and exposes only the schools that fall OUTSIDE
  * the primary geography scope, gated by the sparse PSA gate + relocation willingness.
  */
 import { isLosaAvailabilityScope } from "@/lib/losa/availability-scope";
@@ -17,19 +17,23 @@ import {
 } from "@/lib/planning/school-geography-scope";
 import { FYLKE_CODE_TO_VILBLI_COUNTY_SLUG } from "@/lib/vgs/vilbli-county-meta";
 import {
-  ANLEGGSTEKNIKK_SPARSE_VG2_NATIONAL_PROGRAMME_SLUG,
+  MASKIN_OG_KRANFORER_SPARSE_VG2_NATIONAL_PROGRAMME_SLUG,
   isSparseVg2PilotProfession,
 } from "@/lib/vgs/sparse-vg2-alternative-eligibility";
 import type { AvailabilityTruthRow } from "@/server/children/routes/get-availability-truth";
 
 /**
- * Fylke codes materialized for anleggsteknikk (15-county Contour B batch; Oslo `03`
+ * Fylke codes materialized for maskin-og-kranforer (15-county Contour B batch; Oslo `03`
  * aborted with VG2=0 — owner record §closure). getAvailabilityTruth returns empty for
  * counties with no PSA, so querying the full set is safe.
  */
-export const ANLEGGSTEKNIKK_SPARSE_VG2_CANDIDATE_FYLKE_CODES: string[] = Object.keys(
+export const MASKIN_OG_KRANFORER_SPARSE_VG2_CANDIDATE_FYLKE_CODES: string[] = Object.keys(
   FYLKE_CODE_TO_VILBLI_COUNTY_SLUG
 );
+
+/** @deprecated use MASKIN_OG_KRANFORER_SPARSE_VG2_CANDIDATE_FYLKE_CODES */
+export const ANLEGGSTEKNIKK_SPARSE_VG2_CANDIDATE_FYLKE_CODES =
+  MASKIN_OG_KRANFORER_SPARSE_VG2_CANDIDATE_FYLKE_CODES;
 
 export function childHomeFylkeCodes(preferredMunicipalityCodes: string[]): string[] {
   return normalizeFylkeCodesFromMunicipalityCodes(preferredMunicipalityCodes);
@@ -46,11 +50,11 @@ export function anleggsteknikkVg1ProgrammeSlugsForFylke(fylkeCode: string): stri
   if (!countySlug) {
     return [];
   }
-  return [`anleggsteknikk-vg1-bygg-${countySlug}`];
+  return [`maskin-og-kranforer-vg1-bygg-${countySlug}`];
 }
 
 /**
- * V.BA shared VG1 — anleggsteknikk may lack its own VG1 catalogue row when Contour B
+ * V.BA shared VG1 — maskin-og-kranforer may lack its own VG1 catalogue row when Contour B
  * ABORTed the county (e.g. Oslo `03` VG2=0). Read home VG1 via carpenter PSA like painter P-7.
  */
 export function anleggsteknikkHomeVg1ProgrammeSlugsForFylke(fylkeCode: string): string[] {
@@ -80,7 +84,7 @@ export function anleggsteknikkVg2ProgrammeSlugsForFylke(fylkeCode: string): stri
   if (!countySlug) {
     return [];
   }
-  return [`anleggsteknikk-vg2-anleggsteknikk-${countySlug}`];
+  return [`maskin-og-kranforer-vg2-anleggsteknikk-${countySlug}`];
 }
 
 /** Ordinary (non-LOSA) PSA rows only — LOSA is county-delivery, not a national school seat. */
@@ -137,7 +141,7 @@ export function mergeAnleggsteknikkSparseVg2TruthRows(params: {
     .filter((row) => row.stage === "VG2")
     .map((row) => ({
       ...row,
-      programSlug: ANLEGGSTEKNIKK_SPARSE_VG2_NATIONAL_PROGRAMME_SLUG,
+      programSlug: MASKIN_OG_KRANFORER_SPARSE_VG2_NATIONAL_PROGRAMME_SLUG,
     }));
   return [...homeVg1, ...nationalVg2];
 }

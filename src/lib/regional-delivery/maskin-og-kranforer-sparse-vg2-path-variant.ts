@@ -7,30 +7,30 @@
 import type { StudyRouteSnapshotStep } from "@/lib/routes/route-types";
 import type { RelocationWillingness } from "@/lib/planning/school-geography-scope";
 import {
-  ANLEGGSTEKNIKK_SPARSE_VG2_ALTERNATIVE_LABEL_NB,
-  ANLEGGSTEKNIKK_SPARSE_VG2_ALTERNATIVE_VARIANT_ID,
-  ANLEGGSTEKNIKK_SPARSE_VG2_NATIONAL_PROGRAMME_SLUG,
+  MASKIN_OG_KRANFORER_SPARSE_VG2_ALTERNATIVE_LABEL_NB,
+  MASKIN_OG_KRANFORER_SPARSE_VG2_ALTERNATIVE_VARIANT_ID,
+  MASKIN_OG_KRANFORER_SPARSE_VG2_NATIONAL_PROGRAMME_SLUG,
 } from "@/lib/vgs/sparse-vg2-alternative-eligibility";
 import { isLarefagSelectionStage } from "@/lib/vgs/larefag-selection-stage";
 import {
   getAnleggsteknikkSparseVg2InfoCopy,
   isAnleggsteknikkSparseVg2VariantEligible,
   relocationAllowsNationalSparseAlternative,
-} from "./anleggsteknikk-sparse-vg2-pilot";
+} from "./maskin-og-kranforer-sparse-vg2-pilot";
 import { formatCuratedRegionalVariantReason } from "./curated-regional-variant-reason";
 
-export const ANLEGGSTEKNIKK_SPARSE_VG2_ALTERNATIVE_VARIANT_REASON =
-  formatCuratedRegionalVariantReason(ANLEGGSTEKNIKK_SPARSE_VG2_ALTERNATIVE_VARIANT_ID);
+export const MASKIN_OG_KRANFORER_SPARSE_VG2_ALTERNATIVE_VARIANT_REASON =
+  formatCuratedRegionalVariantReason(MASKIN_OG_KRANFORER_SPARSE_VG2_ALTERNATIVE_VARIANT_ID);
 
 export function buildAnleggsteknikkSparseVg2AlternativeVariantLabel(): string {
-  return ANLEGGSTEKNIKK_SPARSE_VG2_ALTERNATIVE_LABEL_NB;
+  return MASKIN_OG_KRANFORER_SPARSE_VG2_ALTERNATIVE_LABEL_NB;
 }
 
 /** One canonical VG2 programme slug so the school dropdown lists all national schools. */
 export function normalizeAnleggsteknikkSparseVg2StepPresentation(
   steps: StudyRouteSnapshotStep[]
 ): StudyRouteSnapshotStep[] {
-  const canonicalSlug = ANLEGGSTEKNIKK_SPARSE_VG2_NATIONAL_PROGRAMME_SLUG;
+  const canonicalSlug = MASKIN_OG_KRANFORER_SPARSE_VG2_NATIONAL_PROGRAMME_SLUG;
 
   return steps.map((step) => {
     if (step.type !== "programme_selection" || step.stage !== "VG2") {
@@ -52,7 +52,7 @@ export function normalizeAnleggsteknikkSparseVg2StepPresentation(
         {
           program_slug: canonicalSlug,
           program_title: programTitle,
-          profession_slug: step.current_profession_slug ?? "anleggsteknikk",
+          profession_slug: step.current_profession_slug ?? "maskin-og-kranforer",
         },
       ],
       options: normalizedOptions,

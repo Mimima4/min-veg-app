@@ -25,7 +25,7 @@ function childHomeCountyCodes(preferredMunicipalityCodes) {
 
 function isPilotEligible(professionSlug, preferredMunicipalityCodes) {
   const slug = String(professionSlug ?? "").trim();
-  if (!["carpenter", "electrician", "mechanic", "plumber", "painter", "anleggsteknikk", "klima", "murer", "anleggsgartner", "snekker"].includes(slug)) return false;
+  if (!["carpenter", "electrician", "mechanic", "plumber", "painter", "maskin-og-kranforer", "platearbeider-og-sveiser", "murer", "anleggsgartner", "snekker"].includes(slug)) return false;
   return childHomeCountyCodes(preferredMunicipalityCodes).length > 0;
 }
 
@@ -45,12 +45,12 @@ export function runCarpenterPrimaryLarebedriftPilotSmoke() {
   assert(isPilotEligible("plumber", ["0301"]), "Oslo plumber must be eligible");
   assert(isPilotEligible("painter", ["4601"]), "Vestland painter must be eligible");
   assert(isPilotEligible("painter", ["0301"]), "Oslo painter must be eligible");
-  assert(isPilotEligible("anleggsteknikk", ["4601"]), "Vestland anleggsteknikk must be eligible");
-  assert(isPilotEligible("anleggsteknikk", ["5601"]), "Finnmark anleggsteknikk must be eligible");
-  assert(!isPilotEligible("anleggsteknikk", []), "anleggsteknikk without home kommune must not be eligible");
-  assert(isPilotEligible("klima", ["4601"]), "Vestland klima must be eligible");
-  assert(isPilotEligible("klima", ["0301"]), "Oslo klima must be eligible");
-  assert(!isPilotEligible("klima", []), "klima without home kommune must not be eligible");
+  assert(isPilotEligible("maskin-og-kranforer", ["4601"]), "Vestland maskin-og-kranforer must be eligible");
+  assert(isPilotEligible("maskin-og-kranforer", ["5601"]), "Finnmark maskin-og-kranforer must be eligible");
+  assert(!isPilotEligible("maskin-og-kranforer", []), "maskin-og-kranforer without home kommune must not be eligible");
+  assert(isPilotEligible("platearbeider-og-sveiser", ["4601"]), "Vestland platearbeider-og-sveiser must be eligible");
+  assert(isPilotEligible("platearbeider-og-sveiser", ["0301"]), "Oslo platearbeider-og-sveiser must be eligible");
+  assert(!isPilotEligible("platearbeider-og-sveiser", []), "platearbeider-og-sveiser without home kommune must not be eligible");
   assert(isPilotEligible("murer", ["4601"]), "Vestland murer must be eligible");
   assert(isPilotEligible("murer", ["5601"]), "Finnmark murer must be eligible");
   assert(!isPilotEligible("murer", []), "murer without home kommune must not be eligible");

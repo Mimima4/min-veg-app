@@ -17033,9 +17033,9 @@ var PAINTER_PATH_DEFINITION = {
   ]
 };
 var ANLEGSTEKNIKK_PATH_DEFINITION = {
-  professionSlug: "anleggsteknikk",
+  professionSlug: "maskin-og-kranforer",
   contour: "vgs",
-  description: "Anleggsteknikk VGS path: VG1 Bygg- og anleggsteknikk, VG2 Anleggsteknikfaget, kolonne-3/bedrift list from Vilbli.",
+  description: "Maskin- og kranf\xF8rer VGS path: VG1 Bygg- og anleggsteknikk, VG2 Anleggsteknikfaget (school), kolonne-3/bedrift list from Vilbli.",
   sourceModel: {
     buildVilbliUrl(countySlug) {
       return `https://www.vilbli.no/nb/${countySlug}/strukturkart/V.BA/bygg-og-anleggsteknikk-skoler-og-laerebedrifter?kurs=V.BABAT1----_V.BAANL2----&side=p5`;
@@ -17242,9 +17242,9 @@ var ELECTRICIAN_PATH_DEFINITION = {
   ]
 };
 var KLIMA_PATH_DEFINITION = {
-  professionSlug: "klima",
+  professionSlug: "platearbeider-og-sveiser",
   contour: "vgs",
-  description: "Klima VGS path: VG1 Bygg- og anleggsteknikk, VG2 Klima energi og milj\xF8teknikk, kolonne-3/bedrift list from Vilbli.",
+  description: "Platearbeider og sveiser VGS path: VG1 Bygg- og anleggsteknikk, VG2 Klima energi og milj\xF8teknikk (school), kolonne-3/bedrift list from Vilbli.",
   sourceModel: {
     buildVilbliUrl(countySlug) {
       return `https://www.vilbli.no/nb/${countySlug}/strukturkart/V.BA/bygg-og-anleggsteknikk-skoler-og-laerebedrifter?kurs=V.BABAT1----_V.BAKEM2----&side=p5`;
@@ -17524,8 +17524,8 @@ var VGS_PATH_DEFINITIONS = {
   carpenter: CARPENTER_PATH_DEFINITION,
   plumber: PLUMBER_PATH_DEFINITION,
   painter: PAINTER_PATH_DEFINITION,
-  anleggsteknikk: ANLEGSTEKNIKK_PATH_DEFINITION,
-  klima: KLIMA_PATH_DEFINITION,
+  "maskin-og-kranforer": ANLEGSTEKNIKK_PATH_DEFINITION,
+  "platearbeider-og-sveiser": KLIMA_PATH_DEFINITION,
   murer: MURER_PATH_DEFINITION,
   anleggsgartner: ANLEGGSGARTNER_PATH_DEFINITION,
   snekker: SNEKKER_PATH_DEFINITION
@@ -17637,31 +17637,33 @@ var PROFESSION_MATERIALIZATION_CONFIG = {
       VG2: { slug: "painter-vg2-overflateteknikk-trondelag", code: "PAINT-VG2-TRONDELAG" }
     }
   },
-  anleggsteknikk: {
+  "maskin-og-kranforer": {
     nodeKeys: ANLEGSTEKNIKK_MATERIALIZATION_NODE_KEYS,
     deriveIdentitySpecs: deriveAnleggsteknikkProgrammeIdentitySpecs,
     countyScopedSlugPatterns: {
-      VG1: { slugMiddle: "vg1-bygg", codePrefix: "ANLEG-VG1" },
-      VG2: { slugMiddle: "vg2-anleggsteknikk", codePrefix: "ANLEG-VG2" }
+      VG1: { slugMiddle: "vg1-bygg", codePrefix: "MASKIN-OG-KRANFORER-VG1" },
+      // School VG2 programme name stays Anleggsteknikk (Vilbli BAANL2).
+      VG2: { slugMiddle: "vg2-anleggsteknikk", codePrefix: "MASKIN-OG-KRANFORER-VG2" }
     },
     trondelagSlugPatterns: {
-      VG1: { slug: "anleggsteknikk-vg1-bygg-trondelag", code: "ANLEG-VG1-TRONDELAG" },
+      VG1: { slug: "maskin-og-kranforer-vg1-bygg-trondelag", code: "MASKIN-OG-KRANFORER-VG1-TRONDELAG" },
       VG2: {
-        slug: "anleggsteknikk-vg2-anleggsteknikk-trondelag",
-        code: "ANLEG-VG2-TRONDELAG"
+        slug: "maskin-og-kranforer-vg2-anleggsteknikk-trondelag",
+        code: "MASKIN-OG-KRANFORER-VG2-TRONDELAG"
       }
     }
   },
-  klima: {
+  "platearbeider-og-sveiser": {
     nodeKeys: KLIMA_MATERIALIZATION_NODE_KEYS,
     deriveIdentitySpecs: deriveKlimaProgrammeIdentitySpecs,
     countyScopedSlugPatterns: {
-      VG1: { slugMiddle: "vg1-bygg", codePrefix: "KLIMA-VG1" },
-      VG2: { slugMiddle: "vg2-klima", codePrefix: "KLIMA-VG2" }
+      VG1: { slugMiddle: "vg1-bygg", codePrefix: "PLATEARBEIDER-OG-SVEISER-VG1" },
+      // School VG2 programme name stays Klima/energi/miljø (Vilbli BAKEM2).
+      VG2: { slugMiddle: "vg2-klima", codePrefix: "PLATEARBEIDER-OG-SVEISER-VG2" }
     },
     trondelagSlugPatterns: {
-      VG1: { slug: "klima-vg1-bygg-trondelag", code: "KLIMA-VG1-TRONDELAG" },
-      VG2: { slug: "klima-vg2-klima-trondelag", code: "KLIMA-VG2-TRONDELAG" }
+      VG1: { slug: "platearbeider-og-sveiser-vg1-bygg-trondelag", code: "PLATEARBEIDER-OG-SVEISER-VG1-TRONDELAG" },
+      VG2: { slug: "platearbeider-og-sveiser-vg2-klima-trondelag", code: "PLATEARBEIDER-OG-SVEISER-VG2-TRONDELAG" }
     }
   },
   murer: {
@@ -17905,13 +17907,13 @@ function derivePainterProgrammeIdentitySpecs({ professionSlug, countyCode, count
   };
 }
 function deriveAnleggsteknikkProgrammeIdentitySpecs({ professionSlug, countyCode, countyMeta }) {
-  if (professionSlug !== "anleggsteknikk") {
+  if (professionSlug !== "maskin-og-kranforer") {
     return null;
   }
   if (countyMeta == null || typeof countyMeta.slug !== "string" || countyMeta.slug.length === 0) {
     return null;
   }
-  const config = PROFESSION_MATERIALIZATION_CONFIG.anleggsteknikk;
+  const config = PROFESSION_MATERIALIZATION_CONFIG["maskin-og-kranforer"];
   if (countyCode === "50") {
     return {
       VG1_BYGG: {
@@ -17942,13 +17944,13 @@ function deriveAnleggsteknikkProgrammeIdentitySpecs({ professionSlug, countyCode
   };
 }
 function deriveKlimaProgrammeIdentitySpecs({ professionSlug, countyCode, countyMeta }) {
-  if (professionSlug !== "klima") {
+  if (professionSlug !== "platearbeider-og-sveiser") {
     return null;
   }
   if (countyMeta == null || typeof countyMeta.slug !== "string" || countyMeta.slug.length === 0) {
     return null;
   }
-  const config = PROFESSION_MATERIALIZATION_CONFIG.klima;
+  const config = PROFESSION_MATERIALIZATION_CONFIG["platearbeider-og-sveiser"];
   if (countyCode === "50") {
     return {
       VG1_BYGG: {
@@ -19548,8 +19550,8 @@ var MATERIALIZATION_NODE_KEYS_BY_PROFESSION = {
   carpenter: CARPENTER_MATERIALIZATION_NODE_KEYS,
   plumber: PLUMBER_MATERIALIZATION_NODE_KEYS,
   painter: PAINTER_MATERIALIZATION_NODE_KEYS,
-  anleggsteknikk: ANLEGSTEKNIKK_MATERIALIZATION_NODE_KEYS,
-  klima: KLIMA_MATERIALIZATION_NODE_KEYS,
+  "maskin-og-kranforer": ANLEGSTEKNIKK_MATERIALIZATION_NODE_KEYS,
+  "platearbeider-og-sveiser": KLIMA_MATERIALIZATION_NODE_KEYS,
   murer: MURER_MATERIALIZATION_NODE_KEYS,
   anleggsgartner: ANLEGGSGARTNER_MATERIALIZATION_NODE_KEYS,
   snekker: TRETEKNIKK_MATERIALIZATION_NODE_KEYS

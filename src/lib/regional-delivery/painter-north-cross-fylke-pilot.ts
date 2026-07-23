@@ -78,12 +78,12 @@ const PROFESSION_COUNTY_SLUG_MIDDLES: Record<
     vg2: "vg2-overflateteknikk",
     vg2TitleNb: "Overflateteknikk",
   },
-  anleggsteknikk: {
+  "maskin-og-kranforer": {
     vg1: "vg1-bygg",
     vg2: "vg2-anleggsteknikk",
     vg2TitleNb: "Anleggsteknikkfaget",
   },
-  klima: {
+  "platearbeider-og-sveiser": {
     vg1: "vg1-bygg",
     vg2: "vg2-klima",
     vg2TitleNb: "Klima, energi og miljøteknikk",

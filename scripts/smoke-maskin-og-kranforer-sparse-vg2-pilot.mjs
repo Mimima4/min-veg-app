@@ -9,9 +9,9 @@
  */
 import assert from "node:assert/strict";
 import {
-  ANLEGGSTEKNIKK_SPARSE_VG2_ALTERNATIVE_LABEL_NB,
-  ANLEGGSTEKNIKK_SPARSE_VG2_ALTERNATIVE_VARIANT_ID,
-  ANLEGGSTEKNIKK_SPARSE_VG2_NATIONAL_PROGRAMME_SLUG,
+  MASKIN_OG_KRANFORER_SPARSE_VG2_ALTERNATIVE_LABEL_NB,
+  MASKIN_OG_KRANFORER_SPARSE_VG2_ALTERNATIVE_VARIANT_ID,
+  MASKIN_OG_KRANFORER_SPARSE_VG2_NATIONAL_PROGRAMME_SLUG,
   SPARSE_VG2_NATIONAL_PSA_THRESHOLD,
   assessSparseVg2AlternativeEligibility,
   isSparseVg2NationalPsaCountEligible,
@@ -26,7 +26,7 @@ assert.equal(isSparseVg2NationalPsaCountEligible(50), true, "at threshold → ga
 assert.equal(isSparseVg2NationalPsaCountEligible(120), false, "dense count → gate off");
 
 // --- pilot profession gate (anleggsteknikk only) ---
-assert.equal(isSparseVg2PilotProfession("anleggsteknikk"), true);
+assert.equal(isSparseVg2PilotProfession("maskin-og-kranforer"), true);
 assert.equal(isSparseVg2PilotProfession("carpenter"), false);
 assert.equal(isSparseVg2PilotProfession("painter"), false);
 
@@ -36,24 +36,24 @@ assert.equal(
   false
 );
 assert.equal(
-  assessSparseVg2AlternativeEligibility({ professionSlug: "anleggsteknikk", nationalVg2PsaCount: 30 }),
+  assessSparseVg2AlternativeEligibility({ professionSlug: "maskin-og-kranforer", nationalVg2PsaCount: 30 }),
   true
 );
 assert.equal(
-  assessSparseVg2AlternativeEligibility({ professionSlug: "anleggsteknikk", nationalVg2PsaCount: 200 }),
+  assessSparseVg2AlternativeEligibility({ professionSlug: "maskin-og-kranforer", nationalVg2PsaCount: 200 }),
   false
 );
 
 // --- canonical slug + variant identity (owner §P8-8 / UI contract) ---
 assert.equal(
-  ANLEGGSTEKNIKK_SPARSE_VG2_NATIONAL_PROGRAMME_SLUG,
-  "anleggsteknikk-vg2-anleggsteknikk-nasjonalt"
+  MASKIN_OG_KRANFORER_SPARSE_VG2_NATIONAL_PROGRAMME_SLUG,
+  "maskin-og-kranforer-vg2-anleggsteknikk-nasjonalt"
 );
 assert.equal(
-  ANLEGGSTEKNIKK_SPARSE_VG2_ALTERNATIVE_VARIANT_ID,
-  "anleggsteknikk-sparse-vg2-andre-steder"
+  MASKIN_OG_KRANFORER_SPARSE_VG2_ALTERNATIVE_VARIANT_ID,
+  "maskin-og-kranforer-sparse-vg2-andre-steder"
 );
-assert.equal(ANLEGGSTEKNIKK_SPARSE_VG2_ALTERNATIVE_LABEL_NB, "Anleggsteknikk — VG2 andre steder");
+assert.equal(MASKIN_OG_KRANFORER_SPARSE_VG2_ALTERNATIVE_LABEL_NB, "Anleggsteknikk — VG2 andre steder");
 
 // --- geography scope (mirrors school-geography-scope.ts; contract §4.1/§4.2) ---
 function resolvePrimaryAllowedFylke({ homeFylke, sparseGate }) {
@@ -119,19 +119,19 @@ function mergeSparseVg2(homeVg1Rows, nationalVg2Outside) {
   const homeVg1 = homeVg1Rows.filter((row) => row.stage === "VG1");
   const nationalVg2 = nationalVg2Outside
     .filter((row) => row.stage === "VG2")
-    .map((row) => ({ ...row, programSlug: ANLEGGSTEKNIKK_SPARSE_VG2_NATIONAL_PROGRAMME_SLUG }));
+    .map((row) => ({ ...row, programSlug: MASKIN_OG_KRANFORER_SPARSE_VG2_NATIONAL_PROGRAMME_SLUG }));
   return [...homeVg1, ...nationalVg2];
 }
 
 const merged = mergeSparseVg2(
-  [{ stage: "VG1", county: "46", school: "Voss VG1", programSlug: "anleggsteknikk-vg1-bygg-vestland" }],
+  [{ stage: "VG1", county: "46", school: "Voss VG1", programSlug: "maskin-og-kranforer-vg1-bygg-vestland" }],
   vestOutside
 );
 assert.equal(merged[0].stage, "VG1");
 assert.ok(
   merged
     .filter((row) => row.stage === "VG2")
-    .every((row) => row.programSlug === ANLEGGSTEKNIKK_SPARSE_VG2_NATIONAL_PROGRAMME_SLUG),
+    .every((row) => row.programSlug === MASKIN_OG_KRANFORER_SPARSE_VG2_NATIONAL_PROGRAMME_SLUG),
   "all VG2 rows canonicalized to national slug"
 );
 assert.equal(merged.filter((row) => row.stage === "VG2").length, 4);
@@ -140,7 +140,7 @@ assert.equal(merged.filter((row) => row.stage === "VG2").length, 4);
 function anleggsteknikkHomeVg1ProgrammeSlugsForFylke(fylkeCode, countySlugByCode) {
   const countySlug = countySlugByCode[fylkeCode];
   if (!countySlug) return [];
-  const anlegg = [`anleggsteknikk-vg1-bygg-${countySlug}`];
+  const anlegg = [`maskin-og-kranforer-vg1-bygg-${countySlug}`];
   const carpenter =
     fylkeCode === "50"
       ? "carpenter-vg1-bygg-trondelag"
@@ -149,7 +149,7 @@ function anleggsteknikkHomeVg1ProgrammeSlugsForFylke(fylkeCode, countySlugByCode
 }
 
 const osloVg1Slugs = anleggsteknikkHomeVg1ProgrammeSlugsForFylke("03", { "03": "oslo" });
-assert.ok(osloVg1Slugs.includes("anleggsteknikk-vg1-bygg-oslo"));
+assert.ok(osloVg1Slugs.includes("maskin-og-kranforer-vg1-bygg-oslo"));
 assert.ok(
   osloVg1Slugs.includes("carpenter-vg1-bygg-oslo"),
   "Oslo must fall back to carpenter shared VG1 when anlegg VG1 was never materialized"
@@ -236,4 +236,4 @@ assert.equal(
   "already has LAREFAG → unchanged"
 );
 
-console.error("[smoke:anleggsteknikk-sparse-vg2] PASS");
+console.error("[smoke:maskin-og-kranforer-sparse-vg2] PASS");

@@ -45,12 +45,12 @@ export const VILBLI_BRANCH_CONFIG_BY_PROFESSION: Record<string, VilbliBranchProf
       preferVg3OptionOrdering: false,
       preferredYrkerPathPattern: /\/yrker\/v\.ba\//i,
     },
-    anleggsteknikk: {
+    "maskin-og-kranforer": {
       branchSkolerUrlPattern: /bygg-og-anleggsteknikk-skoler-og-laerebedrifter/i,
       preferVg3OptionOrdering: false,
       preferredYrkerPathPattern: /\/yrker\/v\.ba\//i,
     },
-    klima: {
+    "platearbeider-og-sveiser": {
       branchSkolerUrlPattern: /bygg-og-anleggsteknikk-skoler-og-laerebedrifter/i,
       preferVg3OptionOrdering: false,
       preferredYrkerPathPattern: /\/yrker\/v\.ba\//i,

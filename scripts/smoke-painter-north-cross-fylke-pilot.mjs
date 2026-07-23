@@ -9,8 +9,8 @@ const SUPPORTED = new Set([
   "carpenter",
   "plumber",
   "painter",
-  "anleggsteknikk",
-  "klima",
+  "maskin-og-kranforer",
+  "platearbeider-og-sveiser",
   "murer",
   "anleggsgartner",
   "snekker",
@@ -67,7 +67,7 @@ function isNorthCrossFylkeEligible({ professionSlug, homeFylkeCode, neighborCoun
 }
 
 assert.equal(nabofylkeVariantId("painter"), "painter-north-overflateteknikk-nabofylke");
-assert.equal(nabofylkeVariantId("klima"), "klima-north-vg2-nabofylke");
+assert.equal(nabofylkeVariantId("platearbeider-og-sveiser"), "platearbeider-og-sveiser-north-vg2-nabofylke");
 assert.equal(
   isNorthCrossFylkeEligible({
     professionSlug: "painter",
@@ -78,7 +78,7 @@ assert.equal(
 );
 assert.equal(
   isNorthCrossFylkeEligible({
-    professionSlug: "klima",
+    professionSlug: "platearbeider-og-sveiser",
     homeFylkeCode: "56",
     neighborCountyCode: "55",
   }),
@@ -86,7 +86,7 @@ assert.equal(
 );
 assert.equal(
   isNorthCrossFylkeEligible({
-    professionSlug: "klima",
+    professionSlug: "platearbeider-og-sveiser",
     homeFylkeCode: "56",
     neighborCountyCode: "50",
   }),
@@ -126,7 +126,7 @@ assert.equal(
 );
 assert.equal(
   isNorthCrossFylkeEligible({
-    professionSlug: "klima",
+    professionSlug: "platearbeider-og-sveiser",
     homeFylkeCode: "03",
     neighborCountyCode: "18",
   }),
@@ -134,7 +134,7 @@ assert.equal(
 );
 assert.equal(
   isNorthCrossFylkeEligible({
-    professionSlug: "klima",
+    professionSlug: "platearbeider-og-sveiser",
     homeFylkeCode: "55",
     neighborCountyCode: "55",
   }),
@@ -308,9 +308,9 @@ const normalized = normalizeNabofylkeVg2Presentation(
     program_title: "VG2 Klima, energi og miljøteknikk",
     programme_options: [
       {
-        program_slug: "klima-vg2-klima-nabofylke",
+        program_slug: "platearbeider-og-sveiser-vg2-klima-nabofylke",
         program_title: "VG2 Klima, energi og miljøteknikk",
-        profession_slug: "klima",
+        profession_slug: "platearbeider-og-sveiser",
       },
       {
         program_slug: "plumber-vg2-rorlegger-finnmark",
@@ -323,17 +323,17 @@ const normalized = normalizeNabofylkeVg2Presentation(
         profession_slug: "painter",
       },
     ],
-    options: [{ institution_name: "Kvaløya", program_slug: "klima-vg2-klima-troms" }],
+    options: [{ institution_name: "Kvaløya", program_slug: "platearbeider-og-sveiser-vg2-klima-troms" }],
   },
-  "klima",
-  "klima-vg2-klima-nabofylke"
+  "platearbeider-og-sveiser",
+  "platearbeider-og-sveiser-vg2-klima-nabofylke"
 );
 assert.equal(normalized.programme_options.length, 3);
 assert.ok(
   normalized.programme_options.some((o) => o.program_slug === "plumber-vg2-rorlegger-finnmark")
 );
 assert.ok(
-  normalized.options.every((o) => o.program_slug === "klima-vg2-klima-nabofylke")
+  normalized.options.every((o) => o.program_slug === "platearbeider-og-sveiser-vg2-klima-nabofylke")
 );
 
 // P-7 membership (amended): continuation ∩ PSA only — adjacency dump must NOT admit.

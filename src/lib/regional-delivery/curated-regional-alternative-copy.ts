@@ -3,7 +3,7 @@ import {
   isNorthCrossFylkeCuratedVariantId,
   painterNorthCrossFylkeVariantId,
 } from "./painter-north-cross-fylke-pilot";
-import { ANLEGGSTEKNIKK_SPARSE_VG2_ALTERNATIVE_VARIANT_ID } from "@/lib/vgs/sparse-vg2-alternative-eligibility";
+import { MASKIN_OG_KRANFORER_SPARSE_VG2_ALTERNATIVE_VARIANT_ID } from "@/lib/vgs/sparse-vg2-alternative-eligibility";
 
 export function resolveCuratedRegionalAlternativeMainDifference(
   curatedRegionalVariantId: string
@@ -14,7 +14,7 @@ export function resolveCuratedRegionalAlternativeMainDifference(
   if (isNorthCrossFylkeCuratedVariantId(curatedRegionalVariantId)) {
     return "VG1 in home county; VG2 at nabofylke schools (dropdown) — apprenticeship normally in home county";
   }
-  if (curatedRegionalVariantId === ANLEGGSTEKNIKK_SPARSE_VG2_ALTERNATIVE_VARIANT_ID) {
+  if (curatedRegionalVariantId === MASKIN_OG_KRANFORER_SPARSE_VG2_ALTERNATIVE_VARIANT_ID) {
     return "VG1 Bygg in home county; VG2 Anleggsteknikk at national sparse schools outside primary area — sorted by public-transport travel time";
   }
   if (curatedRegionalVariantId === painterNorthCrossFylkeVariantId("18")) {

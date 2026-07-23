@@ -341,7 +341,7 @@ export function resolvePathVariantSourceUrl(
     if (chainUrl) return chainUrl;
   }
 
-  if (profession === "anleggsteknikk") {
+  if (profession === "maskin-og-kranforer") {
     const chainUrl = urls.find(
       (url) =>
         /bygg-og-anleggsteknikk-skoler-og-laerebedrifter/i.test(url) &&
@@ -350,7 +350,7 @@ export function resolvePathVariantSourceUrl(
     if (chainUrl) return chainUrl;
   }
 
-  if (profession === "klima") {
+  if (profession === "platearbeider-og-sveiser") {
     const chainUrl = urls.find(
       (url) =>
         /bygg-og-anleggsteknikk-skoler-og-laerebedrifter/i.test(url) &&

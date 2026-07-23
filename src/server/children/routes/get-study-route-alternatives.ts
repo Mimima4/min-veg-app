@@ -11,12 +11,12 @@ import {
 import {
   isAnleggsteknikkSparseVg2VariantEligible,
   relocationAllowsNationalSparseAlternative,
-} from "@/lib/regional-delivery/anleggsteknikk-sparse-vg2-pilot";
+} from "@/lib/regional-delivery/maskin-og-kranforer-sparse-vg2-pilot";
 import {
   isSteigenCarpenterVekslingPathVariantEligible,
   STEIGEN_CARPENTER_VEKSLING_VARIANT_ID,
 } from "@/lib/regional-delivery/steigen-carpenter-veksling-path-variant";
-import { ANLEGGSTEKNIKK_SPARSE_VG2_ALTERNATIVE_VARIANT_ID } from "@/lib/vgs/sparse-vg2-alternative-eligibility";
+import { MASKIN_OG_KRANFORER_SPARSE_VG2_ALTERNATIVE_VARIANT_ID } from "@/lib/vgs/sparse-vg2-alternative-eligibility";
 import type { RelocationWillingness } from "@/lib/planning/school-geography-scope";
 import type {
   StudyRouteAlternativeTeaser,
@@ -129,7 +129,7 @@ function isCuratedRegionalVariantEligible(
     });
   }
 
-  if (curatedRegionalVariantId === ANLEGGSTEKNIKK_SPARSE_VG2_ALTERNATIVE_VARIANT_ID) {
+  if (curatedRegionalVariantId === MASKIN_OG_KRANFORER_SPARSE_VG2_ALTERNATIVE_VARIANT_ID) {
     return (
       isAnleggsteknikkSparseVg2VariantEligible({
         professionSlug: context.professionSlug,

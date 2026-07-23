@@ -2,9 +2,10 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **CLOSED** — relay + bedrift + prod sign-off 2026-07-12 |
-| **Date (UTC)** | 2026-07-10 |
-| **Profession slug** | `anleggsteknikk` (catalog: Anleggsmaskinfører — **owner sign P-1**) |
+| **Status** | **RENAMED (catalog)** — 2026-07-23: catalog slug `anleggsteknikk` → `maskin-og-kranforer`; school VG2 unchanged |
+| **Date (UTC)** | 2026-07-10 (branch live); catalog rename 2026-07-23 |
+| **Profession slug** | `maskin-og-kranforer` (catalog: **Maskin- og kranfører**) |
+| **Prior slug** | `anleggsteknikk` (deactivated; school VG2 name Anleggsteknikk / BAANL2 unchanged) |
 | **Parent gate** | `phase-0-6-contour-b-sixth-profession-expansion-owner-record.md` |
 
 ---
@@ -30,7 +31,7 @@ Show kolonne-3 / bedrift continuations Vilbli lists on the county `bygg-og-anleg
 | Kolonne-3 / bedrift from **this** chain | National master list of all `V.BA` branches |
 | | **Påbygging til generell studiekompetanse** |
 
-Catalog profession: **Anleggsmaskinfører** (NAV level — confirm in P-3). Route truth is **programme-path-scoped**.
+Catalog profession: **Maskin- og kranfører** (`maskin-og-kranforer`). School VG2 remains **Anleggsteknikk**. Route truth is **programme-path-scoped**.
 
 **V.BA shared VG1:** extends existing switch with `carpenter` / `plumber` / `painter` — separate `profession_slug`, separate path truth.
 
@@ -47,16 +48,18 @@ Catalog profession: **Anleggsmaskinfører** (NAV level — confirm in P-3). Rout
 
 ---
 
-## Materialization slugs (proposed)
+## Materialization slugs
 
 | Node | Slug pattern | Title |
 |------|----------------|-------|
-| VG1 | `anleggsteknikk-vg1-bygg-{countySlug}` | VG1 Bygg- og anleggsteknikk |
-| VG2 | `anleggsteknikk-vg2-anleggsteknikk-{countySlug}` | VG2 Anleggsteknikfaget |
+| VG1 | `maskin-og-kranforer-vg1-bygg-{countySlug}` | VG1 Bygg- og anleggsteknikk |
+| VG2 | `maskin-og-kranforer-vg2-anleggsteknikk-{countySlug}` | VG2 Anleggsteknikfaget |
 
-Trøndelag (`50`): `anleggsteknikk-vg1-bygg-trondelag`, `anleggsteknikk-vg2-anleggsteknikk-trondelag`.
+Trøndelag (`50`): `maskin-og-kranforer-vg1-bygg-trondelag`, `maskin-og-kranforer-vg2-anleggsteknikk-trondelag`.
 
-VG3/bedrift: `anleggsteknikk-vg3-{title}-{countySlug}` pattern.
+VG3/bedrift: `maskin-og-kranforer-vg3-{title}-{countySlug}` pattern.
+
+Path family slug: `maskin-og-kranforer-vba-anleggsteknikk`.
 
 ---
 
@@ -64,8 +67,8 @@ VG3/bedrift: `anleggsteknikk-vg3-{title}-{countySlug}` pattern.
 
 | Field | Value |
 |-------|--------|
-| Primary `larefag_code` | **`ANLEGGSMASKINFORERFAGET`** (profession default for `anleggsteknikk`) |
-| Kolonne-3 roster | **`data/larebedrift/kolonne3-rosters/anleggsteknikk.json`** — 9 fag, URL-first VIGO match |
+| Primary `larefag_code` | **`ANLEGGSMASKINFORERFAGET`** (profession default for `maskin-og-kranforer`) |
+| Kolonne-3 roster | **`data/larebedrift/kolonne3-rosters/maskin-og-kranforer.json`** — 9 fag, URL-first VIGO match |
 | VIGO codes (reference) | `BAAMF3`, `BAARL3`, `BAASF3`, `BABAN3`, `BABRO3`, `BAFJE3`, `BAFUN3`, `BAVOA3`, `BAVOV3` |
 | Cron batch | **0** (`BAAMF3` primary) + **7** (8 siblings) |
 | Pilot gate | `primary-route-larebedrift-pilot.ts` — nationwide when child has home kommune |

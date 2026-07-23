@@ -23,14 +23,14 @@ function loadFixture(): RouteFixture {
       cwd: process.cwd(),
       env: {
         ...process.env,
-        E2E_PROFESSION_SLUG: "anleggsteknikk",
+        E2E_PROFESSION_SLUG: "maskin-og-kranforer",
       },
     }
   ).trim();
   return JSON.parse(output) as RouteFixture;
 }
 
-test.describe("route anleggsteknikk smoke", () => {
+test.describe("route maskin-og-kranforer smoke", () => {
   test.beforeAll(() => {
     test.skip(!process.env.E2E_CHILD_ID?.trim(), "Set E2E_CHILD_ID in .env.local");
     test.skip(
@@ -44,7 +44,7 @@ test.describe("route anleggsteknikk smoke", () => {
 
   test("VG1 options render and save stays on working route", async ({ page }) => {
     const fixture = loadFixture();
-    expect(fixture.professionSlug).toBe("anleggsteknikk");
+    expect(fixture.professionSlug).toBe("maskin-og-kranforer");
     const routePath = `/nb/app/children/${fixture.childId}/route/${fixture.routeId}`;
 
     await page.goto(routePath);

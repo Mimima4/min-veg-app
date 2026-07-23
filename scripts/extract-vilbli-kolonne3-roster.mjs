@@ -6,11 +6,11 @@
  *
  * Usage:
  *   node scripts/extract-vilbli-kolonne3-roster.mjs \
- *     --profession anleggsteknikk \
+ *     --profession maskin-og-kranforer \
  *     --county-slug vestland \
  *     --chain "V.BABAT1----_V.BAANL2----"
  *
- *   node scripts/extract-vilbli-kolonne3-roster.mjs --verify anleggsteknikk
+ *   node scripts/extract-vilbli-kolonne3-roster.mjs --verify maskin-og-kranforer
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -26,7 +26,7 @@ const ROSTER_DIR = join(
 function parseArgs(argv) {
   const args = {
     verify: null,
-    profession: "anleggsteknikk",
+    profession: "maskin-og-kranforer",
     countySlug: "vestland",
     chain: "V.BABAT1----_V.BAANL2----",
     ingestBatch: 7,

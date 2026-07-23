@@ -429,15 +429,15 @@ const PAINTER_PATH_DEFINITION = {
 };
 
 /**
- * Anleggsteknikk (catalog: anleggsteknikk / Anleggsmaskinfører) — Vilbli area V.BA:
+ * Anleggsteknikk school chain (catalog: maskin-og-kranforer / Maskin- og kranfører) — Vilbli area V.BA:
  * VG1 Bygg- og anleggsteknikk → VG2 Anleggsteknikfaget → kolonne-3/bedrift list from Vilbli.
  * Excludes other V.BA VG2 columns and Påbygging.
  */
 const ANLEGSTEKNIKK_PATH_DEFINITION = {
-  professionSlug: "anleggsteknikk",
+  professionSlug: "maskin-og-kranforer",
   contour: "vgs",
   description:
-    "Anleggsteknikk VGS path: VG1 Bygg- og anleggsteknikk, VG2 Anleggsteknikfaget, kolonne-3/bedrift list from Vilbli.",
+    "Maskin- og kranfører VGS path: VG1 Bygg- og anleggsteknikk, VG2 Anleggsteknikfaget (school), kolonne-3/bedrift list from Vilbli.",
   sourceModel: {
     buildVilbliUrl(countySlug) {
       return `https://www.vilbli.no/nb/${countySlug}/strukturkart/V.BA/bygg-og-anleggsteknikk-skoler-og-laerebedrifter?kurs=V.BABAT1----_V.BAANL2----&side=p5`;
@@ -653,15 +653,15 @@ const ELECTRICIAN_PATH_DEFINITION = {
 };
 
 /**
- * Klima (catalog: klima / Ventilasjons- og blikkenslager) — Vilbli area V.BA:
+ * Klima/energi/miljø school chain (catalog: platearbeider-og-sveiser / Platearbeider og sveiser) — Vilbli area V.BA:
  * VG1 Bygg- og anleggsteknikk → VG2 Klima, energi og miljøteknikk → kolonne-3/bedrift.
  * Excludes other V.BA VG2 columns and Påbygging.
  */
 const KLIMA_PATH_DEFINITION = {
-  professionSlug: "klima",
+  professionSlug: "platearbeider-og-sveiser",
   contour: "vgs",
   description:
-    "Klima VGS path: VG1 Bygg- og anleggsteknikk, VG2 Klima energi og miljøteknikk, kolonne-3/bedrift list from Vilbli.",
+    "Platearbeider og sveiser VGS path: VG1 Bygg- og anleggsteknikk, VG2 Klima energi og miljøteknikk (school), kolonne-3/bedrift list from Vilbli.",
   sourceModel: {
     buildVilbliUrl(countySlug) {
       return `https://www.vilbli.no/nb/${countySlug}/strukturkart/V.BA/bygg-og-anleggsteknikk-skoler-og-laerebedrifter?kurs=V.BABAT1----_V.BAKEM2----&side=p5`;
@@ -972,8 +972,8 @@ export const VGS_PATH_DEFINITIONS = {
   carpenter: CARPENTER_PATH_DEFINITION,
   plumber: PLUMBER_PATH_DEFINITION,
   painter: PAINTER_PATH_DEFINITION,
-  anleggsteknikk: ANLEGSTEKNIKK_PATH_DEFINITION,
-  klima: KLIMA_PATH_DEFINITION,
+  "maskin-og-kranforer": ANLEGSTEKNIKK_PATH_DEFINITION,
+  "platearbeider-og-sveiser": KLIMA_PATH_DEFINITION,
   murer: MURER_PATH_DEFINITION,
   anleggsgartner: ANLEGGSGARTNER_PATH_DEFINITION,
   snekker: SNEKKER_PATH_DEFINITION,

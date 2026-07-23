@@ -19,18 +19,18 @@ import {
   northCrossFylkeNabofylkeVariantReason,
 } from "@/lib/regional-delivery/painter-north-cross-fylke-path-variant";
 import {
-  ANLEGGSTEKNIKK_SPARSE_VG2_ALTERNATIVE_VARIANT_ID,
+  MASKIN_OG_KRANFORER_SPARSE_VG2_ALTERNATIVE_VARIANT_ID,
 } from "@/lib/vgs/sparse-vg2-alternative-eligibility";
-import { isAnleggsteknikkSparseVg2VariantEligible } from "@/lib/regional-delivery/anleggsteknikk-sparse-vg2-pilot";
+import { isAnleggsteknikkSparseVg2VariantEligible } from "@/lib/regional-delivery/maskin-og-kranforer-sparse-vg2-pilot";
 import {
   buildAnleggsteknikkSparseVg2AlternativeSteps,
   buildAnleggsteknikkSparseVg2AlternativeVariantLabel,
-  ANLEGGSTEKNIKK_SPARSE_VG2_ALTERNATIVE_VARIANT_REASON,
-} from "@/lib/regional-delivery/anleggsteknikk-sparse-vg2-path-variant";
+  MASKIN_OG_KRANFORER_SPARSE_VG2_ALTERNATIVE_VARIANT_REASON,
+} from "@/lib/regional-delivery/maskin-og-kranforer-sparse-vg2-path-variant";
 import type { RelocationWillingness } from "@/lib/planning/school-geography-scope";
 import type { StudyRouteSnapshotStep } from "@/lib/routes/route-types";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { buildAnleggsteknikkSparseVg2AlternativeRouteSteps } from "./build-anleggsteknikk-sparse-vg2-alternative-route-steps";
+import { buildAnleggsteknikkSparseVg2AlternativeRouteSteps } from "./build-maskin-og-kranforer-sparse-vg2-alternative-route-steps";
 import type { PathVariantsResult } from "./build-path-variants";
 import { buildPainterNorthCrossFylkeMergedRouteSteps } from "./build-painter-north-cross-fylke-route-steps";
 import { getVerifiedLarebedriftApprenticeshipOptions } from "./get-verified-larebedrift-options";
@@ -148,9 +148,9 @@ const CURATED_REGIONAL_VARIANTS: CuratedRegionalVariantDefinition[] = [
       }),
   },
   {
-    resolveVariantId: () => ANLEGGSTEKNIKK_SPARSE_VG2_ALTERNATIVE_VARIANT_ID,
+    resolveVariantId: () => MASKIN_OG_KRANFORER_SPARSE_VG2_ALTERNATIVE_VARIANT_ID,
     resolveVariantLabel: () => buildAnleggsteknikkSparseVg2AlternativeVariantLabel(),
-    resolveVariantReason: () => ANLEGGSTEKNIKK_SPARSE_VG2_ALTERNATIVE_VARIANT_REASON,
+    resolveVariantReason: () => MASKIN_OG_KRANFORER_SPARSE_VG2_ALTERNATIVE_VARIANT_REASON,
     isEligible: isAnleggsteknikkSparseVg2VariantEligible,
     buildSteps: ({
       supabase,

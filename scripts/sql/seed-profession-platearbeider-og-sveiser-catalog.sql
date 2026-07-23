@@ -1,4 +1,4 @@
--- Min Veg — klima (Ventilasjons- og blikkenslager / Klima, energi og miljøteknikk) catalog profession seed
+-- Min Veg — platearbeider-og-sveiser (Platearbeider og sveiser) catalog profession seed
 -- Charter: docs/architecture/phase-0-6-contour-b-klima-vilbli-branch-owner-record.md
 -- Catalog shape: mirror plumber/painter rows (tags, salary, nb/nn/en i18n).
 -- Scope: one professions row only; no PSA / programme links (pipeline materializes those).
@@ -22,8 +22,8 @@ insert into professions (
   avg_salary_nok
 )
 select
-  'klima',
-  '{"nb":"Ventilasjons- og blikkenslager","nn":"Ventilasjons- og blikkenslagar","en":"Ventilation and sheet metal worker"}'::jsonb,
+  'platearbeider-og-sveiser',
+  '{"nb":"Platearbeider og sveiser","nn":"Platearbeidar og sveiser","en":"Sheet metal worker and welder"}'::jsonb,
   '{"nb":"Ventilasjon, blikk og klima i bygg — KEM-kjeden.","nn":"Ventilasjon, blikk og klima i bygg — KEM-kjeda.","en":"Ventilation, sheet metal and climate systems in buildings — KEM pathway."}'::jsonb,
   '{"nb":"VGS: Bygg- og anleggsteknikk → Klima, energi og miljøteknikk. Deretter lære og fagbrev.","nn":"VGS: Bygg- og anleggsteknikk → Klima, energi og miljøteknikk. Deretter lære og fagbrev.","en":"Upper secondary: Building and construction → Climate, energy and environmental technology. Then apprenticeship and trade certificate."}'::jsonb,
   'vocational',
@@ -39,7 +39,7 @@ select
 where not exists (
   select 1
   from professions p
-  where p.slug = 'klima'
+  where p.slug = 'platearbeider-og-sveiser'
 );
 
 commit;

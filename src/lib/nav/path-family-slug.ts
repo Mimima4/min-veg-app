@@ -9,8 +9,10 @@ const PATH_FAMILY_SLUG_BY_PROFESSION: Record<string, string> = {
   carpenter: "carpenter-vba-tomrer",
   plumber: "plumber-vba-rorlegger",
   painter: "painter-vba-overflateteknikk",
-  anleggsteknikk: "anleggsteknikk-vba-anleggsteknikk",
-  klima: "klima-vba-klima-energi",
+  // Catalog Maskin- og kranfører; Vilbli school VG2 branch is Anleggsteknikk.
+  "maskin-og-kranforer": "maskin-og-kranforer-vba-anleggsteknikk",
+  // Catalog Platearbeider og sveiser; Vilbli school VG2 branch is Klima/energi/miljø.
+  "platearbeider-og-sveiser": "platearbeider-og-sveiser-vba-klima-energi",
   murer: "murer-vba-betong-mur",
   anleggsgartner: "anleggsgartner-vba-anleggsgartner",
   // Catalog profession Snekker; Vilbli school VG2 branch is Treteknikk.

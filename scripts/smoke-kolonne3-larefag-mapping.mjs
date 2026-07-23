@@ -276,7 +276,7 @@ for (const fixture of ANLEGGSTEKNIKK_FAG) {
 }
 
 const anleggProfessionDefault = resolveLarefagFromKolonne3Selection({
-  programSlug: "anleggsteknikk-vg3-anleggsmaskinforer-vestland",
+  programSlug: "maskin-og-kranforer-vg3-anleggsmaskinforer-vestland",
   programTitle: "VG3 Anleggsmaskinførerfaget",
   title: "Anleggsmaskinførerfaget",
 });

@@ -23,8 +23,8 @@ assert.deepEqual(parseRegionalProgrammeSlug("painter-vg2-overflateteknikk-vestla
   professionPrefix: "painter",
   regionSuffix: "vestland",
 });
-assert.deepEqual(parseRegionalProgrammeSlug("anleggsteknikk-vg2-anleggsteknikk-vestland"), {
-  professionPrefix: "anleggsteknikk",
+assert.deepEqual(parseRegionalProgrammeSlug("maskin-og-kranforer-vg2-anleggsteknikk-vestland"), {
+  professionPrefix: "maskin-og-kranforer",
   regionSuffix: "vestland",
 });
 
@@ -37,8 +37,8 @@ assert.equal(
   "painter"
 );
 assert.equal(
-  resolveProfessionSlugFromProgramSlug("anleggsteknikk-vg2-anleggsteknikk-vestland"),
-  "anleggsteknikk"
+  resolveProfessionSlugFromProgramSlug("maskin-og-kranforer-vg2-anleggsteknikk-vestland"),
+  "maskin-og-kranforer"
 );
 assert.equal(
   resolveProfessionSlugFromProgramSlug("carpenter-vg2-tomrer-trondelag"),
@@ -48,8 +48,8 @@ assert.equal(
 assert.equal(isVbaSharedVg1Profession("carpenter"), true);
 assert.equal(isVbaSharedVg1Profession("plumber"), true);
 assert.equal(isVbaSharedVg1Profession("painter"), true);
-assert.equal(isVbaSharedVg1Profession("anleggsteknikk"), true);
-assert.equal(isVbaSharedVg1Profession("klima"), true);
+assert.equal(isVbaSharedVg1Profession("maskin-og-kranforer"), true);
+assert.equal(isVbaSharedVg1Profession("platearbeider-og-sveiser"), true);
 assert.equal(isVbaSharedVg1Profession("murer"), true);
 assert.equal(isVbaSharedVg1Profession("anleggsgartner"), true);
 assert.equal(isVbaSharedVg1Profession("snekker"), true);
@@ -71,7 +71,7 @@ assert.equal(
 );
 assert.equal(
   isVbaSharedVg1CrossProfessionSwitch({
-    fromProfessionSlug: "anleggsteknikk",
+    fromProfessionSlug: "maskin-og-kranforer",
     toProfessionSlug: "plumber",
   }),
   true

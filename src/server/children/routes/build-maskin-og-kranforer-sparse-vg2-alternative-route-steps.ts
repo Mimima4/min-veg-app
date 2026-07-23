@@ -7,19 +7,19 @@ import {
   mergeAnleggsteknikkSparseVg2TruthRows,
   resolveAnleggsteknikkHomeFylkeCode,
   anleggsteknikkVg2ProgrammeSlugsForFylke,
-  ANLEGGSTEKNIKK_SPARSE_VG2_CANDIDATE_FYLKE_CODES,
-} from "@/lib/regional-delivery/anleggsteknikk-sparse-vg2-pilot";
+  MASKIN_OG_KRANFORER_SPARSE_VG2_CANDIDATE_FYLKE_CODES,
+} from "@/lib/regional-delivery/maskin-og-kranforer-sparse-vg2-pilot";
 import {
   enrichTransportSortContextWithVg2DistanceRanks,
   filterAndRankSparseVg2RowsByHomeDistance,
-} from "@/lib/regional-delivery/anleggsteknikk-sparse-vg2-distance-rank";
+} from "@/lib/regional-delivery/maskin-og-kranforer-sparse-vg2-distance-rank";
 import {
   resolveSchoolGeographyScope,
   type RelocationWillingness,
 } from "@/lib/planning/school-geography-scope";
 import {
   assessSparseVg2AlternativeEligibility,
-  ANLEGGSTEKNIKK_SPARSE_VG2_NATIONAL_PROGRAMME_SLUG,
+  MASKIN_OG_KRANFORER_SPARSE_VG2_NATIONAL_PROGRAMME_SLUG,
   isSparseVg2PilotProfession,
 } from "@/lib/vgs/sparse-vg2-alternative-eligibility";
 import { isLarefagSelectionStage } from "@/lib/vgs/larefag-selection-stage";
@@ -54,7 +54,7 @@ function pathVariantsIncludeLarefag(pathVariants: PathVariantsResult | null | un
 }
 
 /**
- * P-8 — sparse VG2 alternative for anleggsteknikk ("VG2 andre steder").
+ * P-8 — sparse VG2 alternative for maskin-og-kranforer ("VG2 andre steder").
  *
  * Membership (owner 2026-07-22) mirrors P-7:
  *   Vilbli home-page out-of-county VG2 pins ∩ NSR ∩ destination PSA ∩ public
@@ -92,7 +92,7 @@ export async function buildAnleggsteknikkSparseVg2AlternativeRouteSteps(params: 
 
   // Sparse gate still uses nationwide active PSA count (profession density), not membership.
   const nationalTruthsForGate = await Promise.all(
-    ANLEGGSTEKNIKK_SPARSE_VG2_CANDIDATE_FYLKE_CODES.map((fylkeCode) => {
+    MASKIN_OG_KRANFORER_SPARSE_VG2_CANDIDATE_FYLKE_CODES.map((fylkeCode) => {
       const programmeSlugs = anleggsteknikkVg2ProgrammeSlugsForFylke(fylkeCode);
       if (programmeSlugs.length === 0) {
         return Promise.resolve({ hasTruth: false, rows: [] as never[] });
@@ -224,7 +224,7 @@ export async function buildAnleggsteknikkSparseVg2AlternativeRouteSteps(params: 
     pathVariants: enrichedPathVariants,
     selectedPathVariantId: pathVariantNavContext.primaryPathVariantId,
     navOutcomes: navOutcomesForSteps,
-    selectedVg2ProgramSlug: ANLEGGSTEKNIKK_SPARSE_VG2_NATIONAL_PROGRAMME_SLUG,
+    selectedVg2ProgramSlug: MASKIN_OG_KRANFORER_SPARSE_VG2_NATIONAL_PROGRAMME_SLUG,
   });
 
   steps = await applyVerifiedLarebedriftToApprenticeshipSteps({

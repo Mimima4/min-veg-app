@@ -253,7 +253,7 @@ async function main() {
   const { data: progs, error: progError } = await supabase
     .from("education_programs")
     .select("id, slug")
-    .ilike("slug", "anleggsteknikk-vg2-anleggsteknikk-%")
+    .ilike("slug", "maskin-og-kranforer-vg2-anleggsteknikk-%")
     .eq("is_active", true);
   if (progError) throw new Error(progError.message);
 

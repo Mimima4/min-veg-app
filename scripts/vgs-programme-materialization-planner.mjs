@@ -73,31 +73,33 @@ const PROFESSION_MATERIALIZATION_CONFIG = {
       VG2: { slug: "painter-vg2-overflateteknikk-trondelag", code: "PAINT-VG2-TRONDELAG" },
     },
   },
-  anleggsteknikk: {
+  "maskin-og-kranforer": {
     nodeKeys: ANLEGSTEKNIKK_MATERIALIZATION_NODE_KEYS,
     deriveIdentitySpecs: deriveAnleggsteknikkProgrammeIdentitySpecs,
     countyScopedSlugPatterns: {
-      VG1: { slugMiddle: "vg1-bygg", codePrefix: "ANLEG-VG1" },
-      VG2: { slugMiddle: "vg2-anleggsteknikk", codePrefix: "ANLEG-VG2" },
+      VG1: { slugMiddle: "vg1-bygg", codePrefix: "MASKIN-OG-KRANFORER-VG1" },
+      // School VG2 programme name stays Anleggsteknikk (Vilbli BAANL2).
+      VG2: { slugMiddle: "vg2-anleggsteknikk", codePrefix: "MASKIN-OG-KRANFORER-VG2" },
     },
     trondelagSlugPatterns: {
-      VG1: { slug: "anleggsteknikk-vg1-bygg-trondelag", code: "ANLEG-VG1-TRONDELAG" },
+      VG1: { slug: "maskin-og-kranforer-vg1-bygg-trondelag", code: "MASKIN-OG-KRANFORER-VG1-TRONDELAG" },
       VG2: {
-        slug: "anleggsteknikk-vg2-anleggsteknikk-trondelag",
-        code: "ANLEG-VG2-TRONDELAG",
+        slug: "maskin-og-kranforer-vg2-anleggsteknikk-trondelag",
+        code: "MASKIN-OG-KRANFORER-VG2-TRONDELAG",
       },
     },
   },
-  klima: {
+  "platearbeider-og-sveiser": {
     nodeKeys: KLIMA_MATERIALIZATION_NODE_KEYS,
     deriveIdentitySpecs: deriveKlimaProgrammeIdentitySpecs,
     countyScopedSlugPatterns: {
-      VG1: { slugMiddle: "vg1-bygg", codePrefix: "KLIMA-VG1" },
-      VG2: { slugMiddle: "vg2-klima", codePrefix: "KLIMA-VG2" },
+      VG1: { slugMiddle: "vg1-bygg", codePrefix: "PLATEARBEIDER-OG-SVEISER-VG1" },
+      // School VG2 programme name stays Klima/energi/miljø (Vilbli BAKEM2).
+      VG2: { slugMiddle: "vg2-klima", codePrefix: "PLATEARBEIDER-OG-SVEISER-VG2" },
     },
     trondelagSlugPatterns: {
-      VG1: { slug: "klima-vg1-bygg-trondelag", code: "KLIMA-VG1-TRONDELAG" },
-      VG2: { slug: "klima-vg2-klima-trondelag", code: "KLIMA-VG2-TRONDELAG" },
+      VG1: { slug: "platearbeider-og-sveiser-vg1-bygg-trondelag", code: "PLATEARBEIDER-OG-SVEISER-VG1-TRONDELAG" },
+      VG2: { slug: "platearbeider-og-sveiser-vg2-klima-trondelag", code: "PLATEARBEIDER-OG-SVEISER-VG2-TRONDELAG" },
     },
   },
   murer: {
@@ -404,7 +406,7 @@ function derivePainterProgrammeIdentitySpecs({ professionSlug, countyCode, count
 
 /** @internal */
 function deriveAnleggsteknikkProgrammeIdentitySpecs({ professionSlug, countyCode, countyMeta }) {
-  if (professionSlug !== "anleggsteknikk") {
+  if (professionSlug !== "maskin-og-kranforer") {
     return null;
   }
 
@@ -412,7 +414,7 @@ function deriveAnleggsteknikkProgrammeIdentitySpecs({ professionSlug, countyCode
     return null;
   }
 
-  const config = PROFESSION_MATERIALIZATION_CONFIG.anleggsteknikk;
+  const config = PROFESSION_MATERIALIZATION_CONFIG["maskin-og-kranforer"];
 
   if (countyCode === "50") {
     return {
@@ -448,7 +450,7 @@ function deriveAnleggsteknikkProgrammeIdentitySpecs({ professionSlug, countyCode
 
 /** @internal */
 function deriveKlimaProgrammeIdentitySpecs({ professionSlug, countyCode, countyMeta }) {
-  if (professionSlug !== "klima") {
+  if (professionSlug !== "platearbeider-og-sveiser") {
     return null;
   }
 
@@ -456,7 +458,7 @@ function deriveKlimaProgrammeIdentitySpecs({ professionSlug, countyCode, countyM
     return null;
   }
 
-  const config = PROFESSION_MATERIALIZATION_CONFIG.klima;
+  const config = PROFESSION_MATERIALIZATION_CONFIG["platearbeider-og-sveiser"];
 
   if (countyCode === "50") {
     return {

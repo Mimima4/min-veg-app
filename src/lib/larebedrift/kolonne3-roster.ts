@@ -6,8 +6,8 @@
  * commit JSON under `data/larebedrift/kolonne3-rosters/`, wire ingest batch in template §4.4.
  */
 import anleggsgartnerRoster from "../../../data/larebedrift/kolonne3-rosters/anleggsgartner.json" with { type: "json" };
-import anleggsteknikkRoster from "../../../data/larebedrift/kolonne3-rosters/anleggsteknikk.json" with { type: "json" };
-import klimaRoster from "../../../data/larebedrift/kolonne3-rosters/klima.json" with { type: "json" };
+import maskinOgKranforerRoster from "../../../data/larebedrift/kolonne3-rosters/maskin-og-kranforer.json" with { type: "json" };
+import platearbeiderOgSveiserRoster from "../../../data/larebedrift/kolonne3-rosters/platearbeider-og-sveiser.json" with { type: "json" };
 import murerRoster from "../../../data/larebedrift/kolonne3-rosters/murer.json" with { type: "json" };
 import snekkerRoster from "../../../data/larebedrift/kolonne3-rosters/snekker.json" with { type: "json" };
 
@@ -30,8 +30,8 @@ export type Kolonne3ProfessionRoster = {
 
 export const KOLONNE3_PROFESSION_ROSTERS: ReadonlyArray<Kolonne3ProfessionRoster> = [
   anleggsgartnerRoster as Kolonne3ProfessionRoster,
-  anleggsteknikkRoster as Kolonne3ProfessionRoster,
-  klimaRoster as Kolonne3ProfessionRoster,
+  maskinOgKranforerRoster as Kolonne3ProfessionRoster,
+  platearbeiderOgSveiserRoster as Kolonne3ProfessionRoster,
   murerRoster as Kolonne3ProfessionRoster,
   snekkerRoster as Kolonne3ProfessionRoster,
 ];

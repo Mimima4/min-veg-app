@@ -124,14 +124,14 @@ const deduped = dedupeVg2ProgrammeOptionsByProfession({
       profession_slug: "plumber",
     },
     {
-      program_slug: "anleggsteknikk-vg2-anleggsteknikk-finnmark",
+      program_slug: "maskin-og-kranforer-vg2-anleggsteknikk-finnmark",
       program_title: "VG2 Anleggsteknikfaget",
-      profession_slug: "anleggsteknikk",
+      profession_slug: "maskin-og-kranforer",
     },
     {
-      program_slug: "anleggsteknikk-vg2-anleggsteknikk-nabofylke",
+      program_slug: "maskin-og-kranforer-vg2-anleggsteknikk-nabofylke",
       program_title: "VG2 Anleggsteknikk",
-      profession_slug: "anleggsteknikk",
+      profession_slug: "maskin-og-kranforer",
     },
   ],
   countySuffix: "finnmark",
@@ -143,8 +143,8 @@ assert.equal(
   "plumber-vg2-rorlegger-finnmark"
 );
 assert.equal(
-  deduped.find((o) => o.profession_slug === "anleggsteknikk")?.program_slug,
-  "anleggsteknikk-vg2-anleggsteknikk-finnmark"
+  deduped.find((o) => o.profession_slug === "maskin-og-kranforer")?.program_slug,
+  "maskin-og-kranforer-vg2-anleggsteknikk-finnmark"
 );
 
 console.log("OK vg2-programme-options smoke");

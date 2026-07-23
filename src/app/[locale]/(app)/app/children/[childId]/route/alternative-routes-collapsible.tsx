@@ -8,7 +8,7 @@ import {
   isNorthCrossFylkeCuratedVariantId,
   PAINTER_NORTH_CROSS_FYLKE_NABOFYLKE_VARIANT_ID,
 } from "@/lib/regional-delivery/painter-north-cross-fylke-pilot";
-import { ANLEGGSTEKNIKK_SPARSE_VG2_ALTERNATIVE_VARIANT_ID } from "@/lib/vgs/sparse-vg2-alternative-eligibility";
+import { MASKIN_OG_KRANFORER_SPARSE_VG2_ALTERNATIVE_VARIANT_ID } from "@/lib/vgs/sparse-vg2-alternative-eligibility";
 import SteigenVekslingBadgeWithInfo from "@/components/route/steigen-veksling-badge-with-info";
 import RouteStepsPanel from "./route-steps-panel";
 import SaveRouteButton from "./[routeId]/save-route-button";
@@ -75,8 +75,8 @@ export default function AlternativeRoutesCollapsible({
                       ? "painter-north-cross-fylke-alternative-route"
                       : "north-cross-fylke-alternative-route"
                     : alternative.curatedRegionalVariantId ===
-                        ANLEGGSTEKNIKK_SPARSE_VG2_ALTERNATIVE_VARIANT_ID
-                      ? "anleggsteknikk-sparse-vg2-alternative-route"
+                        MASKIN_OG_KRANFORER_SPARSE_VG2_ALTERNATIVE_VARIANT_ID
+                      ? "maskin-og-kranforer-sparse-vg2-alternative-route"
                       : undefined
               }
             >
