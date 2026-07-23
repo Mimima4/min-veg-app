@@ -377,7 +377,7 @@ export function resolvePathVariantSourceUrl(
     if (chainUrl) return chainUrl;
   }
 
-  if (profession === "treteknikk") {
+  if (profession === "snekker") {
     const chainUrl = urls.find(
       (url) =>
         /bygg-og-anleggsteknikk-skoler-og-laerebedrifter/i.test(url) &&

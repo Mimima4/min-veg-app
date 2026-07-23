@@ -16,7 +16,7 @@
 | # | Gate | Required | Notes |
 |---|------|----------|-------|
 | G-0 | Owner signs Vilbli branch (VG1→VG2→kolonne-3 scope) | **Yes** | One signed contour per profession — not full Vilbli area menu |
-| G-1 | NAV catalog slug + matcher level | **Yes** | `phase-4-nav-matcher-owner-decision-record.md` — vacancy-catalog level, not per kolonne-3 STYRK |
+| G-1 | NAV catalog slug + matcher level + Arbeidsplassen link | **Yes** | Vacancy-catalog `navStyrkCode`; link label `Arbeidsplassen.nav.no` on profession + saved professions (§4.7) |
 | G-2 | P4-MCT-1 phase open | **Yes** | Professions added **incrementally** by owner pace; NAV is scope gate, not auto-ingest |
 | G-3 | No production stubs | **Yes** | Omit filter/alt/bedrift surfaces until contour is live |
 
@@ -198,14 +198,22 @@ Source: `src/lib/i18n/route-steps-empty-copy.ts`. Signal: `PRIMARY_ROUTE_INCOMPL
 
 **Ref:** `phase-4-route-kommune-transport-logistics-owner-record.md`
 
-### 4.7 C-NAV-OCCUPATION (matcher)
+### 4.7 C-NAV-OCCUPATION (matcher + labor-market link)
 
 | Step | Action |
 |------|--------|
 | Catalog profession row | One NAV vacancy-catalog slug per catalogue profession |
+| Path-family map row | `navStyrkCode` + `navTitle` in `path-family-outcome-nav-map.ts` (**required**) |
+| **Arbeidsplassen orientering link** | **Required standard for every catalogue profession** — Contour B and non-VGS; same UI; no per-profession copy review |
+| Link label | Exactly **`Arbeidsplassen.nav.no`** (blue text link, not a button; no disclaimer) |
+| Link surfaces | Profession detail + child **saved professions** only — **never** study routes |
+| URL helper | `resolveArbeidsplassenUrlForProfessionSlug` → **label** filters `occupationLevel1` + `occupationLevel2` (not STYRK slug-code params — those do not filter on Arbeidsplassen) |
+| STYRK table | `src/lib/nav/catalog-profession-arbeidsplassen-styrk.ts` — `styrkCode` + `level1Label` + `occupationLabel` (**required**; labels must match current NAV snapshot) |
 | Path variants | `buildRoutePathVariantNavContext` — kolonne-3 shapes outcomes |
 | Alternatives | Full step route or nothing (`phase-4-nav-matcher-owner-decision-record.md` §3.2) |
 | Outcome filter alts | `sync-study-route-outcome-filter-alternatives.ts` when chartered |
+
+**Owner rule (2026-07-23):** adding a Contour B profession without a resolvable `navStyrkCode` (and therefore without the Arbeidsplassen link) is incomplete — fix the map row, do not invent a one-off UI.
 
 ### 4.8 Outcome filter / kolonne-3 depth (P4-MCT-1)
 
@@ -261,6 +269,7 @@ For each kolonne-3 fag Vilbli lists on the signed chain in a fylke:
 |---|------|
 | 1 | Branch owner record signed |
 | 2 | Expansion gate steps 2.1–2.7 complete |
+| 2a | Arbeidsplassen link resolves for profession slug (`Arbeidsplassen.nav.no` on profession + saved professions) |
 | 3 | Dry-run green counties |
 | 4 | Production relay — profession-local (`--profession <slug>`) unless contour code changed (then full matrix) |
 | 5 | P-6 primary gate verified (incl. VG2=0 fylke → empty primary + copy) |

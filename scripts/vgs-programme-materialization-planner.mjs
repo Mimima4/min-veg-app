@@ -127,18 +127,19 @@ const PROFESSION_MATERIALIZATION_CONFIG = {
       },
     },
   },
-  treteknikk: {
+  snekker: {
     nodeKeys: TRETEKNIKK_MATERIALIZATION_NODE_KEYS,
-    deriveIdentitySpecs: deriveTreteknikkProgrammeIdentitySpecs,
+    deriveIdentitySpecs: deriveSnekkerProgrammeIdentitySpecs,
     countyScopedSlugPatterns: {
-      VG1: { slugMiddle: "vg1-bygg", codePrefix: "TRETEKNIKK-VG1" },
-      VG2: { slugMiddle: "vg2-treteknikk", codePrefix: "TRETEKNIKK-VG2" },
+      VG1: { slugMiddle: "vg1-bygg", codePrefix: "SNEKKER-VG1" },
+      // School VG2 programme name stays Treteknikk (Vilbli BATRT2).
+      VG2: { slugMiddle: "vg2-treteknikk", codePrefix: "SNEKKER-VG2" },
     },
     trondelagSlugPatterns: {
-      VG1: { slug: "treteknikk-vg1-bygg-trondelag", code: "TRETEKNIKK-VG1-TRONDELAG" },
+      VG1: { slug: "snekker-vg1-bygg-trondelag", code: "SNEKKER-VG1-TRONDELAG" },
       VG2: {
-        slug: "treteknikk-vg2-treteknikk-trondelag",
-        code: "TRETEKNIKK-VG2-TRONDELAG",
+        slug: "snekker-vg2-treteknikk-trondelag",
+        code: "SNEKKER-VG2-TRONDELAG",
       },
     },
   },
@@ -578,8 +579,8 @@ function deriveAnleggsgartnerProgrammeIdentitySpecs({ professionSlug, countyCode
 }
 
 /** @internal */
-function deriveTreteknikkProgrammeIdentitySpecs({ professionSlug, countyCode, countyMeta }) {
-  if (professionSlug !== "treteknikk") {
+function deriveSnekkerProgrammeIdentitySpecs({ professionSlug, countyCode, countyMeta }) {
+  if (professionSlug !== "snekker") {
     return null;
   }
 
@@ -587,7 +588,7 @@ function deriveTreteknikkProgrammeIdentitySpecs({ professionSlug, countyCode, co
     return null;
   }
 
-  const config = PROFESSION_MATERIALIZATION_CONFIG.treteknikk;
+  const config = PROFESSION_MATERIALIZATION_CONFIG.snekker;
 
   if (countyCode === "50") {
     return {

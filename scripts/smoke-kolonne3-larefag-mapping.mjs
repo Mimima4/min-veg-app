@@ -317,18 +317,18 @@ if (anleggsgartnerProfessionDefault?.code !== "ANLEGGSGARTNERFAGET") {
   console.log(`OK anleggsgartner VG3 slug -> ${anleggsgartnerProfessionDefault.code}`);
 }
 
-const treteknikkProfessionDefault = resolveLarefagFromKolonne3Selection({
-  programSlug: "treteknikk-vg3-snekker-vestland",
+const snekkerProfessionDefault = resolveLarefagFromKolonne3Selection({
+  programSlug: "snekker-vg3-snekker-vestland",
   programTitle: "VG3 Snekkerfaget",
   title: "Snekkerfaget",
 });
-if (treteknikkProfessionDefault?.code !== "SNEKKERFAGET") {
+if (snekkerProfessionDefault?.code !== "SNEKKERFAGET") {
   failed += 1;
   console.error(
-    `FAIL treteknikk VG3 slug: expected SNEKKERFAGET, got ${treteknikkProfessionDefault?.code ?? "null"}`
+    `FAIL snekker VG3 slug: expected SNEKKERFAGET, got ${snekkerProfessionDefault?.code ?? "null"}`
   );
 } else {
-  console.log(`OK treteknikk VG3 slug -> ${treteknikkProfessionDefault.code}`);
+  console.log(`OK snekker VG3 slug -> ${snekkerProfessionDefault.code}`);
 }
 
 const betongFag = resolveLarefagFromKolonne3Selection({

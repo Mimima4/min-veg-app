@@ -41,7 +41,7 @@ Variant B (pilot charter): veksling_hub_step? → apprenticeship_step (employer-
 | **Hub school** | Nord-Salten vgs **avd Steigen** (fellesfag 2 d/uke år 1–2) | DB institution exists; **not** on strukturkart PSA |
 | **Employer** | Local bedrift (opplæringsbedrift) | **New entity class** in product — not `education_institutions` campus row |
 | **Programfag** | In bedrift (per Steigenmodellen) | Not modelled as VG1/VG2 campus programme_selection |
-| **Outcome** | Fagbrev Tømrer | Reuse NAV `håndverkere.tømrer` |
+| **Outcome** | Fagbrev Tømrer | NAV `håndverkere.tømrer-og-snekker` (navTitle Tømrer) |
 
 **Reuse:** existing `apprenticeship_step` type for bedrift/lære tail; **new** early-step semantics for 0+4 (may need `delivery_model: veksling_0_4` metadata — design in implementation gate).
 

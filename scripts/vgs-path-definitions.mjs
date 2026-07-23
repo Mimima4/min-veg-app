@@ -161,10 +161,11 @@ function detectAnleggsgartnerBranch(program) {
   return "unspecified";
 }
 
-function detectTreteknikkBranch(program) {
+function detectSnekkerBranch(program) {
   const title = normalizeBasic(program.title);
   const code = normalizeBasic(program.program_code);
 
+  // School VG2 title is Treteknikk (BATRT2); fagbrev outcomes include snekker*.
   if (
     title.includes("treteknikk") ||
     title.includes("snekker") ||
@@ -173,7 +174,7 @@ function detectTreteknikkBranch(program) {
     code.includes("tpisn") ||
     code.includes("batlt")
   ) {
-    return "treteknikk";
+    return "snekker";
   }
   if (title.includes("bygg") || title.includes("anlegg") || code.includes("bat")) {
     return "bygg_og_anlegg";
@@ -890,15 +891,16 @@ const ANLEGGSGARTNER_PATH_DEFINITION = {
 };
 
 /**
- * Treteknikk (catalog: treteknikk) — Vilbli area V.BA:
- * VG1 Bygg- og anleggsteknikk → VG2 Treteknikk → kolonne-3/bedrift.
+ * Snekker (catalog: snekker) — Vilbli area V.BA:
+ * VG1 Bygg- og anleggsteknikk → VG2 Treteknikk (school) → kolonne-3/bedrift (Snekkerfaget primary).
+ * Catalog profession is Snekker; school VG2 title stays Treteknikk. Distinct from carpenter (Tømrer).
  * Excludes other V.BA VG2 columns and Påbygging.
  */
-const TRETEKNIKK_PATH_DEFINITION = {
-  professionSlug: "treteknikk",
+const SNEKKER_PATH_DEFINITION = {
+  professionSlug: "snekker",
   contour: "vgs",
   description:
-    "Treteknikk VGS path: VG1 Bygg- og anleggsteknikk, VG2 Treteknikk, kolonne-3/bedrift list from Vilbli.",
+    "Snekker VGS path: VG1 Bygg- og anleggsteknikk, VG2 Treteknikk (school), kolonne-3/bedrift list from Vilbli.",
   sourceModel: {
     buildVilbliUrl(countySlug) {
       return `https://www.vilbli.no/nb/${countySlug}/strukturkart/V.BA/bygg-og-anleggsteknikk-skoler-og-laerebedrifter?kurs=V.BABAT1----_V.BATRT2----&side=p5`;
@@ -929,12 +931,12 @@ const TRETEKNIKK_PATH_DEFINITION = {
       stageType: "school_programme",
       branchSpecific: true,
       requiredForWrite: true,
-      branchKey: "treteknikk",
+      branchKey: "snekker",
       expectedLabel: "VG2 Treteknikk",
       programmeMatcher: {
         includesAny: ["treteknikk", "batrt"],
       },
-      branchResolver: detectTreteknikkBranch,
+      branchResolver: detectSnekkerBranch,
     },
     {
       nodeKey: "VG3_OR_BEDRIFT_SPECIALIZATIONS",
@@ -959,7 +961,7 @@ const TRETEKNIKK_PATH_DEFINITION = {
       stageType: "progression_outcome",
       branchSpecific: true,
       requiredForWrite: false,
-      expectedLabel: "Fagbrev Treteknikk / Snekker",
+      expectedLabel: "Fagbrev Snekker",
     },
   ],
 };
@@ -974,7 +976,7 @@ export const VGS_PATH_DEFINITIONS = {
   klima: KLIMA_PATH_DEFINITION,
   murer: MURER_PATH_DEFINITION,
   anleggsgartner: ANLEGGSGARTNER_PATH_DEFINITION,
-  treteknikk: TRETEKNIKK_PATH_DEFINITION,
+  snekker: SNEKKER_PATH_DEFINITION,
 };
 
 export function getVgsPathDefinition(professionSlug) {

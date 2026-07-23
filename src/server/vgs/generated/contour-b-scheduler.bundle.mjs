@@ -16809,11 +16809,11 @@ function detectAnleggsgartnerBranch(program) {
   }
   return "unspecified";
 }
-function detectTreteknikkBranch(program) {
+function detectSnekkerBranch(program) {
   const title = normalizeBasic(program.title);
   const code = normalizeBasic(program.program_code);
   if (title.includes("treteknikk") || title.includes("snekker") || code.includes("batrt") || code.includes("basne") || code.includes("tpisn") || code.includes("batlt")) {
-    return "treteknikk";
+    return "snekker";
   }
   if (title.includes("bygg") || title.includes("anlegg") || code.includes("bat")) {
     return "bygg_og_anlegg";
@@ -17452,10 +17452,10 @@ var ANLEGGSGARTNER_PATH_DEFINITION = {
     }
   ]
 };
-var TRETEKNIKK_PATH_DEFINITION = {
-  professionSlug: "treteknikk",
+var SNEKKER_PATH_DEFINITION = {
+  professionSlug: "snekker",
   contour: "vgs",
-  description: "Treteknikk VGS path: VG1 Bygg- og anleggsteknikk, VG2 Treteknikk, kolonne-3/bedrift list from Vilbli.",
+  description: "Snekker VGS path: VG1 Bygg- og anleggsteknikk, VG2 Treteknikk (school), kolonne-3/bedrift list from Vilbli.",
   sourceModel: {
     buildVilbliUrl(countySlug) {
       return `https://www.vilbli.no/nb/${countySlug}/strukturkart/V.BA/bygg-og-anleggsteknikk-skoler-og-laerebedrifter?kurs=V.BABAT1----_V.BATRT2----&side=p5`;
@@ -17485,12 +17485,12 @@ var TRETEKNIKK_PATH_DEFINITION = {
       stageType: "school_programme",
       branchSpecific: true,
       requiredForWrite: true,
-      branchKey: "treteknikk",
+      branchKey: "snekker",
       expectedLabel: "VG2 Treteknikk",
       programmeMatcher: {
         includesAny: ["treteknikk", "batrt"]
       },
-      branchResolver: detectTreteknikkBranch
+      branchResolver: detectSnekkerBranch
     },
     {
       nodeKey: "VG3_OR_BEDRIFT_SPECIALIZATIONS",
@@ -17514,7 +17514,7 @@ var TRETEKNIKK_PATH_DEFINITION = {
       stageType: "progression_outcome",
       branchSpecific: true,
       requiredForWrite: false,
-      expectedLabel: "Fagbrev Treteknikk / Snekker"
+      expectedLabel: "Fagbrev Snekker"
     }
   ]
 };
@@ -17528,7 +17528,7 @@ var VGS_PATH_DEFINITIONS = {
   klima: KLIMA_PATH_DEFINITION,
   murer: MURER_PATH_DEFINITION,
   anleggsgartner: ANLEGGSGARTNER_PATH_DEFINITION,
-  treteknikk: TRETEKNIKK_PATH_DEFINITION
+  snekker: SNEKKER_PATH_DEFINITION
 };
 function getVgsPathDefinition(professionSlug) {
   return VGS_PATH_DEFINITIONS[professionSlug] ?? null;
@@ -17691,18 +17691,19 @@ var PROFESSION_MATERIALIZATION_CONFIG = {
       }
     }
   },
-  treteknikk: {
+  snekker: {
     nodeKeys: TRETEKNIKK_MATERIALIZATION_NODE_KEYS,
-    deriveIdentitySpecs: deriveTreteknikkProgrammeIdentitySpecs,
+    deriveIdentitySpecs: deriveSnekkerProgrammeIdentitySpecs,
     countyScopedSlugPatterns: {
-      VG1: { slugMiddle: "vg1-bygg", codePrefix: "TRETEKNIKK-VG1" },
-      VG2: { slugMiddle: "vg2-treteknikk", codePrefix: "TRETEKNIKK-VG2" }
+      VG1: { slugMiddle: "vg1-bygg", codePrefix: "SNEKKER-VG1" },
+      // School VG2 programme name stays Treteknikk (Vilbli BATRT2).
+      VG2: { slugMiddle: "vg2-treteknikk", codePrefix: "SNEKKER-VG2" }
     },
     trondelagSlugPatterns: {
-      VG1: { slug: "treteknikk-vg1-bygg-trondelag", code: "TRETEKNIKK-VG1-TRONDELAG" },
+      VG1: { slug: "snekker-vg1-bygg-trondelag", code: "SNEKKER-VG1-TRONDELAG" },
       VG2: {
-        slug: "treteknikk-vg2-treteknikk-trondelag",
-        code: "TRETEKNIKK-VG2-TRONDELAG"
+        slug: "snekker-vg2-treteknikk-trondelag",
+        code: "SNEKKER-VG2-TRONDELAG"
       }
     }
   }
@@ -18051,14 +18052,14 @@ function deriveAnleggsgartnerProgrammeIdentitySpecs({ professionSlug, countyCode
     }
   };
 }
-function deriveTreteknikkProgrammeIdentitySpecs({ professionSlug, countyCode, countyMeta }) {
-  if (professionSlug !== "treteknikk") {
+function deriveSnekkerProgrammeIdentitySpecs({ professionSlug, countyCode, countyMeta }) {
+  if (professionSlug !== "snekker") {
     return null;
   }
   if (countyMeta == null || typeof countyMeta.slug !== "string" || countyMeta.slug.length === 0) {
     return null;
   }
-  const config = PROFESSION_MATERIALIZATION_CONFIG.treteknikk;
+  const config = PROFESSION_MATERIALIZATION_CONFIG.snekker;
   if (countyCode === "50") {
     return {
       VG1_BYGG: {
@@ -19551,7 +19552,7 @@ var MATERIALIZATION_NODE_KEYS_BY_PROFESSION = {
   klima: KLIMA_MATERIALIZATION_NODE_KEYS,
   murer: MURER_MATERIALIZATION_NODE_KEYS,
   anleggsgartner: ANLEGGSGARTNER_MATERIALIZATION_NODE_KEYS,
-  treteknikk: TRETEKNIKK_MATERIALIZATION_NODE_KEYS
+  snekker: TRETEKNIKK_MATERIALIZATION_NODE_KEYS
 };
 var COUNTY_CODE_TO_VILBLI2 = {
   "03": { slug: "oslo", label: "Oslo" },

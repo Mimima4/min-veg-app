@@ -152,7 +152,9 @@ export const PATH_FAMILY_OUTCOME_NAV_MAP_ROWS: PathFamilyOutcomeNavMapRow[] = [
     vilbliTitleIncludes: ["tomrerfaget", "tømrerfaget", "tømrer"],
     vilbliOutcomeUrlIncludes: ["/yrker/v.ba/"],
     filterTags: ["laere", "fagbrev"],
-    navStyrkCode: "håndverkere.tømrer",
+    // NAV vacancy catalog merges Tømrer + Snekker into one leaf; Min Veg keeps them as
+    // two catalogue professions (carpenter vs snekker) with distinct navTitle.
+    navStyrkCode: "håndverkere.tømrer-og-snekker",
     navTitle: "Tømrer",
     catalogProfessionSlug: "carpenter",
     sourceReferenceUrl: CARPENTER_TOMRER_SOURCE,
@@ -269,18 +271,18 @@ export const PATH_FAMILY_OUTCOME_NAV_MAP_ROWS: PathFamilyOutcomeNavMapRow[] = [
     sourceReferenceUrl:
       "https://www.vilbli.no/nb/no/strukturkart/V.BA/anleggsgartner-fag-og-timefordeling?kurs=V.BABAT1----_V.BAANG2----&side=p2",
   },
-  // --- treteknikk / treteknikk-vba-treteknikk ---
+  // --- snekker / snekker-vba-treteknikk ---
   {
     mapVersion: 1,
-    pathFamilySlug: "treteknikk-vba-treteknikk",
-    professionSlug: "treteknikk",
-    vilbliTitleIncludes: ["treteknikk", "snekker", "industrisnekker", "trelast"],
+    pathFamilySlug: "snekker-vba-treteknikk",
+    professionSlug: "snekker",
+    vilbliTitleIncludes: ["snekkerfaget", "snekker", "industrisnekker", "trelast"],
     vilbliOutcomeUrlIncludes: ["/yrker/v.ba/"],
     filterTags: ["laere", "fagbrev"],
-    // No dedicated NAV leaf for Treteknikk — closest wood-trade vacancy-catalog occupation.
-    navStyrkCode: "håndverkere.tømrer",
-    navTitle: "Tømrer",
-    catalogProfessionSlug: "treteknikk",
+    // Same NAV vacancy leaf as carpenter (taxonomy merge). Distinct Min Veg profession + navTitle.
+    navStyrkCode: "håndverkere.tømrer-og-snekker",
+    navTitle: "Snekker",
+    catalogProfessionSlug: "snekker",
     sourceReferenceUrl:
       "https://www.vilbli.no/nb/no/strukturkart/V.BA/treteknikk-fag-og-timefordeling?kurs=V.BABAT1----_V.BATRT2----&side=p2",
   },

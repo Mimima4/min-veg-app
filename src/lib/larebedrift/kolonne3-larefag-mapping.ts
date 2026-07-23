@@ -10,7 +10,7 @@ import anleggsgartnerRoster from "../../../data/larebedrift/kolonne3-rosters/anl
 import anleggsteknikkRoster from "../../../data/larebedrift/kolonne3-rosters/anleggsteknikk.json" with { type: "json" };
 import klimaRoster from "../../../data/larebedrift/kolonne3-rosters/klima.json" with { type: "json" };
 import murerRoster from "../../../data/larebedrift/kolonne3-rosters/murer.json" with { type: "json" };
-import treteknikkRoster from "../../../data/larebedrift/kolonne3-rosters/treteknikk.json" with { type: "json" };
+import snekkerRoster from "../../../data/larebedrift/kolonne3-rosters/snekker.json" with { type: "json" };
 
 type Kolonne3RosterEntry = {
   apiQueryCode: string;
@@ -24,7 +24,7 @@ const KOLONNE3_ROSTER_ENTRIES: ReadonlyArray<Kolonne3RosterEntry> = [
   ...(anleggsteknikkRoster.entries as Kolonne3RosterEntry[]),
   ...(klimaRoster.entries as Kolonne3RosterEntry[]),
   ...(murerRoster.entries as Kolonne3RosterEntry[]),
-  ...(treteknikkRoster.entries as Kolonne3RosterEntry[]),
+  ...(snekkerRoster.entries as Kolonne3RosterEntry[]),
 ];
 
 function kolonne3RosterByApiQueryCode(): Readonly<Record<string, LarefagIdentity>> {

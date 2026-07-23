@@ -19,6 +19,7 @@ import type {
   PreferredEducationLevel,
   PreferredWorkStyle,
 } from "@/server/children/planning/get-child-planning-state";
+import { ArbeidsplassenMarketLink } from "@/components/nav/arbeidsplassen-market-link";
 import { requireAppAccess } from "@/server/billing/require-app-access";
 import { resolveChildRouteScopedProfessionsHref } from "@/server/children/routes/build-child-route-scoped-professions-href";
 
@@ -341,6 +342,8 @@ export default async function ChildDetailPage({
                       >
                         Open profession
                       </Link>
+
+                      <ArbeidsplassenMarketLink professionSlug={profession.slug} />
 
                       <RemoveSavedProfessionButton
                         childId={child.id}

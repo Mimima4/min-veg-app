@@ -14,6 +14,7 @@ import {
 } from "@/lib/planning/profession-tag-catalog";
 import SaveProfessionForChildForm from "./save-profession-for-child-form";
 import { requireAppAccess } from "@/server/billing/require-app-access";
+import { ArbeidsplassenMarketLink } from "@/components/nav/arbeidsplassen-market-link";
 
 function formatSalary(value: number | null) {
   if (!value) return "—";
@@ -197,9 +198,12 @@ export default async function ProfessionDetailPage({
 
       <div className="mt-6 grid gap-6">
         <div className="rounded-2xl border border-stone-200 bg-white p-6">
-          <h2 className="text-lg font-semibold text-stone-900">
-            Profession overview
-          </h2>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <h2 className="text-lg font-semibold text-stone-900">
+              Profession overview
+            </h2>
+            <ArbeidsplassenMarketLink professionSlug={profession.slug} />
+          </div>
 
           <dl className="mt-5 grid gap-4 sm:grid-cols-2">
             <div>
