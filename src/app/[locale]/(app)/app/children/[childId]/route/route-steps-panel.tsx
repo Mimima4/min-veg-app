@@ -906,6 +906,7 @@ export default function RouteStepsPanel({
 
       {steps.length === 0 ? (
         <div
+          data-testid="route-steps-empty"
           className={`${showHeader ? "mt-5" : "mt-0"} rounded-xl border border-stone-200 bg-stone-50 ${cardPadding} ${compact ? "text-xs" : "text-sm"} text-stone-600`}
         >
           {primaryRouteEmptyState?.message ?? getRouteStepsEmptyMessage(locale)}

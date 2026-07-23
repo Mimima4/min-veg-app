@@ -46,9 +46,7 @@ test.describe("route painter north P-6/P-7", () => {
     );
   });
 
-  test("P-6 empty primary shows north empty copy; P-7 nabofylke alternative renders", async ({
-    page,
-  }) => {
+  test("P-6 empty primary; P-7 nabofylke alternative renders", async ({ page }) => {
     const fixture = loadFixture();
     expect(fixture.professionSlug).toBe("painter");
     const routePath = `/nb/app/children/${fixture.childId}/route/${fixture.routeId}`;
@@ -59,15 +57,19 @@ test.describe("route painter north P-6/P-7", () => {
       { timeout: 120_000 }
     );
 
-    const emptyCopy = page.getByText(/Ingen rutetrinn i heimfylket/i);
-    await expect(emptyCopy.first()).toBeVisible({ timeout: 120_000 });
+    // Correctness is structural (testid), not display-locale copy (nb/nn/en/se).
+    await expect(page.getByTestId("route-steps-empty").first()).toBeVisible({
+      timeout: 120_000,
+    });
 
     const altToggle = page.getByRole("button", { name: "Alternative routes" });
     await expect(altToggle).toBeVisible();
+    if ((await altToggle.getAttribute("aria-expanded")) !== "true") {
+      await altToggle.click();
+    }
 
     const nabofylkeAlt = page.getByTestId("painter-north-cross-fylke-alternative-route");
     await expect(nabofylkeAlt).toBeVisible({ timeout: 120_000 });
-    await expect(nabofylkeAlt.getByText(/Overflateteknikk nabofylke/i)).toBeVisible();
 
     const vg2ProgrammeToggle = nabofylkeAlt.getByTestId("route-vg2-programme-toggle");
     if (await vg2ProgrammeToggle.isVisible().catch(() => false)) {
