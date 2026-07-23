@@ -213,12 +213,51 @@ function testCohortInvariant() {
   );
 }
 
+/** Rogaland privat: Vilbli brand without NSR site suffix (Tveit … Sti). */
+function testBrandPrefixCampusSuffix() {
+  console.error("[case] brand prefix vs NSR site suffix (Tveit Sti)");
+
+  const match = classifyInstitutionMatch(
+    "Tveit vidaregåande skule",
+    "Tveit vidaregåande skule Sti"
+  );
+  check(
+    "Tveit ↔ Tveit Sti = brand_prefix_match",
+    match.matchType === "brand_prefix_match" && match.score >= 0.85,
+    JSON.stringify(match)
+  );
+
+  const short = classifyInstitutionMatch("Os", "Os vidaregåande skule Sti");
+  check(
+    "short brand token does not prefix-match",
+    short.matchType === "none" || short.score < 0.85,
+    JSON.stringify(short)
+  );
+
+  const { picked } = rankAndPick("Tveit vidaregåande skule", [
+    {
+      id: "tveit-sti",
+      name: "Tveit vidaregåande skule Sti",
+      municipality_name: "Tysvær",
+      municipality_code: "1146",
+    },
+    {
+      id: "oksnevad",
+      name: "Øksnevad videregående skole",
+      municipality_name: "Klepp",
+      municipality_code: "1120",
+    },
+  ]);
+  check("picks Tveit Sti", !picked.unmatched && picked.matches?.[0]?.institution.id === "tveit-sti");
+}
+
 function run() {
   testCoreNormalization();
   testLillehammer();
   testSetesdalDuplicates();
   testFordeHoyanger();
   testCohortInvariant();
+  testBrandPrefixCampusSuffix();
 
   console.error("");
   if (failures.length > 0) {

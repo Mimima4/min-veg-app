@@ -18653,6 +18653,12 @@ function classifyInstitutionMatch(vilbliName, institutionName) {
   if (vilbliCore && nsrCore && vilbliCore === nsrCore) {
     return { matchType: "core_name_match", score: 0.9 };
   }
+  if (vilbliNorm.length >= 4 && nsrNorm.length > vilbliNorm.length && nsrNorm.startsWith(`${vilbliNorm} `)) {
+    return { matchType: "brand_prefix_match", score: 0.85 };
+  }
+  if (vilbliCore.length >= 4 && nsrCore.length > vilbliCore.length && nsrCore.startsWith(`${vilbliCore} `)) {
+    return { matchType: "brand_prefix_match", score: 0.85 };
+  }
   const vt = vilbliNorm.split(" ").filter(Boolean);
   const nt = nsrNorm.split(" ").filter(Boolean);
   const sharedTokens = vt.filter((token) => token.length >= 4 && nt.includes(token)).length;
