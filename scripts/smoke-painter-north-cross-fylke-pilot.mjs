@@ -13,6 +13,7 @@ const SUPPORTED = new Set([
   "klima",
   "murer",
   "anleggsgartner",
+  "treteknikk",
 ]);
 
 const NORWAY_FYLKE_ADJACENCY_GRAPH = {
@@ -112,6 +113,14 @@ assert.equal(
     professionSlug: "anleggsgartner",
     homeFylkeCode: "56",
     neighborCountyCode: "55",
+  }),
+  true
+);
+assert.equal(
+  isNorthCrossFylkeEligible({
+    professionSlug: "treteknikk",
+    homeFylkeCode: "18",
+    neighborCountyCode: "50",
   }),
   true
 );

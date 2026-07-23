@@ -161,6 +161,26 @@ function detectAnleggsgartnerBranch(program) {
   return "unspecified";
 }
 
+function detectTreteknikkBranch(program) {
+  const title = normalizeBasic(program.title);
+  const code = normalizeBasic(program.program_code);
+
+  if (
+    title.includes("treteknikk") ||
+    title.includes("snekker") ||
+    code.includes("batrt") ||
+    code.includes("basne") ||
+    code.includes("tpisn") ||
+    code.includes("batlt")
+  ) {
+    return "treteknikk";
+  }
+  if (title.includes("bygg") || title.includes("anlegg") || code.includes("bat")) {
+    return "bygg_og_anlegg";
+  }
+  return "unspecified";
+}
+
 function detectElectricianBranch(program) {
   const title = normalizeBasic(program.title);
   const code = normalizeBasic(program.program_code);
@@ -869,6 +889,81 @@ const ANLEGGSGARTNER_PATH_DEFINITION = {
   ],
 };
 
+/**
+ * Treteknikk (catalog: treteknikk) — Vilbli area V.BA:
+ * VG1 Bygg- og anleggsteknikk → VG2 Treteknikk → kolonne-3/bedrift.
+ * Excludes other V.BA VG2 columns and Påbygging.
+ */
+const TRETEKNIKK_PATH_DEFINITION = {
+  professionSlug: "treteknikk",
+  contour: "vgs",
+  description:
+    "Treteknikk VGS path: VG1 Bygg- og anleggsteknikk, VG2 Treteknikk, kolonne-3/bedrift list from Vilbli.",
+  sourceModel: {
+    buildVilbliUrl(countySlug) {
+      return `https://www.vilbli.no/nb/${countySlug}/strukturkart/V.BA/bygg-og-anleggsteknikk-skoler-og-laerebedrifter?kurs=V.BABAT1----_V.BATRT2----&side=p5`;
+    },
+    strukturkartReferenceUrl:
+      "https://www.vilbli.no/nb/no/strukturkart/V.BA/treteknikk-fag-og-timefordeling?kurs=V.BABAT1----_V.BATRT2----&side=p2",
+  },
+  stageNodes: [
+    {
+      nodeKey: "VG1_BYGG",
+      stage: "VG1",
+      stageType: "school_programme",
+      branchSpecific: false,
+      requiredForWrite: true,
+      expectedLabel: "VG1 Bygg- og anleggsteknikk",
+      programmeMatcher: {
+        includesAny: [
+          "vg1 bygg og anleggsteknikk",
+          "vg1 bygg- og anleggsteknikk",
+          "bygg- og anleggsteknikk",
+          "bygg og anlegg",
+        ],
+      },
+    },
+    {
+      nodeKey: "VG2_TRETEKNIKK",
+      stage: "VG2",
+      stageType: "school_programme",
+      branchSpecific: true,
+      requiredForWrite: true,
+      branchKey: "treteknikk",
+      expectedLabel: "VG2 Treteknikk",
+      programmeMatcher: {
+        includesAny: ["treteknikk", "batrt"],
+      },
+      branchResolver: detectTreteknikkBranch,
+    },
+    {
+      nodeKey: "VG3_OR_BEDRIFT_SPECIALIZATIONS",
+      stage: "VG3",
+      stageType: "awareness_only",
+      branchSpecific: false,
+      requiredForWrite: false,
+      expectedLabel:
+        "VG3 or Opplæring i bedrift — kolonne-3 list from Vilbli for Bygg→Treteknikk chain (not Påbygging)",
+    },
+    {
+      nodeKey: "APPRENTICESHIP_PROGRESS",
+      stage: "APPRENTICESHIP",
+      stageType: "progression",
+      branchSpecific: true,
+      requiredForWrite: false,
+      expectedLabel: "Opplæring i bedrift (lære / fagbrev) after VG2 or VG3 specialization choice",
+    },
+    {
+      nodeKey: "FAGBREV_OUTCOME",
+      stage: "FAGBREV",
+      stageType: "progression_outcome",
+      branchSpecific: true,
+      requiredForWrite: false,
+      expectedLabel: "Fagbrev Treteknikk / Snekker",
+    },
+  ],
+};
+
 export const VGS_PATH_DEFINITIONS = {
   electrician: ELECTRICIAN_PATH_DEFINITION,
   mechanic: MECHANIC_PATH_DEFINITION,
@@ -879,6 +974,7 @@ export const VGS_PATH_DEFINITIONS = {
   klima: KLIMA_PATH_DEFINITION,
   murer: MURER_PATH_DEFINITION,
   anleggsgartner: ANLEGGSGARTNER_PATH_DEFINITION,
+  treteknikk: TRETEKNIKK_PATH_DEFINITION,
 };
 
 export function getVgsPathDefinition(professionSlug) {

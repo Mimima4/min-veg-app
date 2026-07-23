@@ -10,6 +10,7 @@ export const ANLEGSTEKNIKK_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_ANLEGST
 export const KLIMA_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_KLIMA"];
 export const MURER_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_BETONG_MUR"];
 export const ANLEGGSGARTNER_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_ANLEGGSGARTNER"];
+export const TRETEKNIKK_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_TRETEKNIKK"];
 
 const PROFESSION_MATERIALIZATION_CONFIG = {
   electrician: {
@@ -123,6 +124,21 @@ const PROFESSION_MATERIALIZATION_CONFIG = {
       VG2: {
         slug: "anleggsgartner-vg2-anleggsgartner-trondelag",
         code: "ANLEGGSGARTNER-VG2-TRONDELAG",
+      },
+    },
+  },
+  treteknikk: {
+    nodeKeys: TRETEKNIKK_MATERIALIZATION_NODE_KEYS,
+    deriveIdentitySpecs: deriveTreteknikkProgrammeIdentitySpecs,
+    countyScopedSlugPatterns: {
+      VG1: { slugMiddle: "vg1-bygg", codePrefix: "TRETEKNIKK-VG1" },
+      VG2: { slugMiddle: "vg2-treteknikk", codePrefix: "TRETEKNIKK-VG2" },
+    },
+    trondelagSlugPatterns: {
+      VG1: { slug: "treteknikk-vg1-bygg-trondelag", code: "TRETEKNIKK-VG1-TRONDELAG" },
+      VG2: {
+        slug: "treteknikk-vg2-treteknikk-trondelag",
+        code: "TRETEKNIKK-VG2-TRONDELAG",
       },
     },
   },
@@ -557,6 +573,50 @@ function deriveAnleggsgartnerProgrammeIdentitySpecs({ professionSlug, countyCode
       slug: `${professionSlug}-${patterns.VG2.slugMiddle}-${countyMeta.slug}`,
       programCode: `${patterns.VG2.codePrefix}-${countyUpper}`,
       title: "VG2 Anleggsgartner",
+    },
+  };
+}
+
+/** @internal */
+function deriveTreteknikkProgrammeIdentitySpecs({ professionSlug, countyCode, countyMeta }) {
+  if (professionSlug !== "treteknikk") {
+    return null;
+  }
+
+  if (countyMeta == null || typeof countyMeta.slug !== "string" || countyMeta.slug.length === 0) {
+    return null;
+  }
+
+  const config = PROFESSION_MATERIALIZATION_CONFIG.treteknikk;
+
+  if (countyCode === "50") {
+    return {
+      VG1_BYGG: {
+        slug: config.trondelagSlugPatterns.VG1.slug,
+        programCode: config.trondelagSlugPatterns.VG1.code,
+        title: "VG1 Bygg- og anleggsteknikk",
+      },
+      VG2_TRETEKNIKK: {
+        slug: config.trondelagSlugPatterns.VG2.slug,
+        programCode: config.trondelagSlugPatterns.VG2.code,
+        title: "VG2 Treteknikk",
+      },
+    };
+  }
+
+  const countyUpper = countyTokenFromMeta(countyMeta);
+  const patterns = config.countyScopedSlugPatterns;
+
+  return {
+    VG1_BYGG: {
+      slug: `${professionSlug}-${patterns.VG1.slugMiddle}-${countyMeta.slug}`,
+      programCode: `${patterns.VG1.codePrefix}-${countyUpper}`,
+      title: "VG1 Bygg- og anleggsteknikk",
+    },
+    VG2_TRETEKNIKK: {
+      slug: `${professionSlug}-${patterns.VG2.slugMiddle}-${countyMeta.slug}`,
+      programCode: `${patterns.VG2.codePrefix}-${countyUpper}`,
+      title: "VG2 Treteknikk",
     },
   };
 }

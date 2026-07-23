@@ -377,6 +377,15 @@ export function resolvePathVariantSourceUrl(
     if (chainUrl) return chainUrl;
   }
 
+  if (profession === "treteknikk") {
+    const chainUrl = urls.find(
+      (url) =>
+        /bygg-og-anleggsteknikk-skoler-og-laerebedrifter/i.test(url) &&
+        /v\.batrt2|v\.babat1/i.test(url)
+    );
+    if (chainUrl) return chainUrl;
+  }
+
   const vg1SiblingOnly = new Set(
     urls.filter((url) => /teknologi-og-industrifag-skoler-og-laerebedrifter/i.test(url))
   );

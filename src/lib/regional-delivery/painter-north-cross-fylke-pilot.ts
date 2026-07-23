@@ -98,6 +98,11 @@ const PROFESSION_COUNTY_SLUG_MIDDLES: Record<
     vg2: "vg2-anleggsgartner",
     vg2TitleNb: "Anleggsgartner",
   },
+  treteknikk: {
+    vg1: "vg1-bygg",
+    vg2: "vg2-treteknikk",
+    vg2TitleNb: "Treteknikk",
+  },
 };
 
 function countySlugForFylke(fylkeCode: string): string | null {

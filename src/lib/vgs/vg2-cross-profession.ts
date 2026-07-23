@@ -11,6 +11,7 @@ export const VBA_SHARED_VG1_PROFESSION_SLUGS = [
   "klima",
   "murer",
   "anleggsgartner",
+  "treteknikk",
 ] as const;
 
 export type VbaSharedVg1ProfessionSlug = (typeof VBA_SHARED_VG1_PROFESSION_SLUGS)[number];

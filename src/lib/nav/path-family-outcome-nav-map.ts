@@ -269,6 +269,21 @@ export const PATH_FAMILY_OUTCOME_NAV_MAP_ROWS: PathFamilyOutcomeNavMapRow[] = [
     sourceReferenceUrl:
       "https://www.vilbli.no/nb/no/strukturkart/V.BA/anleggsgartner-fag-og-timefordeling?kurs=V.BABAT1----_V.BAANG2----&side=p2",
   },
+  // --- treteknikk / treteknikk-vba-treteknikk ---
+  {
+    mapVersion: 1,
+    pathFamilySlug: "treteknikk-vba-treteknikk",
+    professionSlug: "treteknikk",
+    vilbliTitleIncludes: ["treteknikk", "snekker", "industrisnekker", "trelast"],
+    vilbliOutcomeUrlIncludes: ["/yrker/v.ba/"],
+    filterTags: ["laere", "fagbrev"],
+    // No dedicated NAV leaf for Treteknikk — closest wood-trade vacancy-catalog occupation.
+    navStyrkCode: "håndverkere.tømrer",
+    navTitle: "Tømrer",
+    catalogProfessionSlug: "treteknikk",
+    sourceReferenceUrl:
+      "https://www.vilbli.no/nb/no/strukturkart/V.BA/treteknikk-fag-og-timefordeling?kurs=V.BABAT1----_V.BATRT2----&side=p2",
+  },
 ];
 
 const FILTER_TAG_ALLOWLIST: Record<RouteOutcomeFilterId, Set<PathFamilyOutcomeFilterTag> | null> =

@@ -1,0 +1,38 @@
+{
+  "professionSlug": "treteknikk",
+  "vilbliChainTokens": "V.BABAT1----_V.BATRT2----",
+  "extractReferenceCountySlug": "trondelag",
+  "ingestBatch": 7,
+  "entries": [
+    {
+      "apiQueryCode": "BASNE3",
+      "code": "SNEKKERFAGET",
+      "label": "Snekkerfaget",
+      "labelAliases": [
+        "snekker",
+        "snekkerfaget"
+      ],
+      "ingestBatch": 0
+    },
+    {
+      "apiQueryCode": "TPISN3",
+      "code": "INDUSTRISNEKKERFAGET",
+      "label": "Industrisnekkerfaget",
+      "labelAliases": [
+        "industrisnekker",
+        "industrisnekkerfaget"
+      ]
+    },
+    {
+      "apiQueryCode": "BATLT3",
+      "code": "TRELAST_OG_LIMTREPRODUKSJONSFAGET",
+      "label": "Trelast- og limtreproduksjonsfaget",
+      "labelAliases": [
+        "trelast",
+        "limtre",
+        "trelast- og limtreproduksjon",
+        "trelast- og limtreproduksjonsfaget"
+      ]
+    }
+  ]
+}
