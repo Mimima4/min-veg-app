@@ -421,6 +421,3 @@ export async function runContourBProfessionRename(spec) {
     newSlug,
   });
 }
-
-// silence unused helper (kept for clarity / future tables)
-void remapProfessionIdRows;
