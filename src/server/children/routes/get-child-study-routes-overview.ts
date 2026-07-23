@@ -220,13 +220,16 @@ export async function getChildStudyRoutesOverview(
       (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
     );
 
-  const mapped: ChildStudyRouteOverviewItem[] = primaryRoutes.map((route) => {
+  const mapped: ChildStudyRouteOverviewItem[] = primaryRoutes.flatMap((route) => {
     const profession = professionMap.get(route.target_profession_id);
 
+    // Deactivated catalog professions (e.g. treteknikk → snekker rename) must not
+    // crash the whole routes overview — skip and keep remaining drafts usable.
     if (!profession) {
-      throw new Error(
-        `Study route ${route.id} references missing or inactive profession ${route.target_profession_id}`
+      console.warn(
+        `[routes-overview] skipping study route ${route.id}: missing or inactive profession ${route.target_profession_id}`
       );
+      return [];
     }
 
     const professionTitle =
@@ -244,7 +247,7 @@ export async function getChildStudyRoutesOverview(
       snapshotSignals: snapshot?.signals_payload,
     });
 
-    return {
+    return [{
       routeId: route.id,
       professionId: route.target_profession_id,
       targetProfessionId: route.target_profession_id,
@@ -258,7 +261,7 @@ export async function getChildStudyRoutesOverview(
       warningsCount: resolvedState.warningsCount,
       newRouteAvailable: resolvedState.newRouteAvailable,
       updatedAt: route.updated_at,
-    };
+    }];
   });
 
   return {

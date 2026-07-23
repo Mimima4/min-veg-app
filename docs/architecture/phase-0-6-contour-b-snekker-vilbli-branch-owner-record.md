@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **RENAME APPLIED IN DB** — code ready; deploy required for app/scheduler (2026-07-23) |
+| **Status** | **LIVE (profession-local relay)** — 2026-07-23: dry-run + production `--profession snekker`; Vilbli↔Min Veg MATCH |
 | **Date (UTC)** | 2026-07-23 |
 | **Profession slug** | `snekker` (catalog: **Snekker**) |
 | **Parent gate** | `phase-0-6-contour-b-vgs-profession-addition-template.md` |
@@ -102,3 +102,16 @@ Path family slug: `snekker-vba-treteknikk`.
 5. Deactivate leftover `treteknikk` catalog row.
 
 Prior Treteknikk-named docs/seeds are superseded by this record.
+
+---
+
+## Profession-local relay closure (2026-07-23)
+
+| Step | Result |
+|------|--------|
+| Dry-run `--profession snekker` | **5** `dry_run_ok`: `11,31,33,39,42`; **10** `failed` Missing VG2 (no local Treteknikk schools — expected) |
+| Production `--profession snekker` | Same 5 **`ingested`** `contour_b_partial` |
+| Vilbli ↔ Min Veg (local VG2) | All 5 **MATCH** (Rogaland 2, Østfold 2, Buskerud 1, Vestfold 1, Agder 1) |
+| Empty counties + continuations | Sample `{03,15,18,32,34,40,46,50,55,56}`: local PSA empty + continuation counts **MATCH** Vilbli out-of-county pins |
+
+**National Treteknikk VG2 school set (Vilbli):** Agder, Buskerud, Rogaland (2), Vestfold, Østfold (2) — 7 schools total. Other pipeline fylke correctly have no home PSA and rely on home-page continuations.
