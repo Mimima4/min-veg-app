@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **OPEN** — scaffold + **catalog seed applied** prod DB 2026-07-24 (`kokk` active). Relay dry-run via Vercel API returned `unsupported_profession` until deployed code includes `kokk`. Next: deploy → dry-run → production profession-local relay → E2E. |
+| **Status** | **RELAY + VILBLI↔MIN VEG — FAIL (1 DIFF)** — catalog seed + profession-local production relay **15/15** `ingested`/`contour_b_partial` 2026-07-24; Vilbli map↔PSA **14/15 MATCH**, **Innlandet `34` DIFF** (campus mispick). Block C auto-proof Vestland OK; owner UI still pending. |
 | **Date (UTC)** | 2026-07-24 |
 | **Profession slug** | `kokk` (catalog: **Kokk**) |
 | **Parent gate** | `phase-0-6-contour-b-vgs-profession-addition-template.md` |
@@ -115,16 +115,74 @@ Secondary outcome rows (same path family, `catalogProfessionSlug` stays `kokk`):
 
 ---
 
-## Closure checklist (not done)
+## Profession-local relay (2026-07-24)
+
+| Step | Result |
+|------|--------|
+| Production `--profession kokk` | **15/15** `ingested` / `contour_b_partial` (no ABORT counties — every pipeline fylke has local VG2) |
+| Readiness on write | `missing_programme_rows` (Contour B partial path) |
+
+---
+
+## Vilbli ↔ Min Veg (map pins) — 2026-07-24
+
+**Method:** county `side=p5` `vb_map_data` VG2 local pins only (not `html_stage_block`-only) for `V.RMRMF1----_V.RMKOS2----` vs active PSA on `kokk-vg2-kokk-servitor-*` (`programme_in_school`, `verified`/`needs_review`). Identity via NSR orgnr / Contour B name matcher.
+
+**Totals:** Vilbli local VG2 pins **70** · Min Veg active VG2 PSA institutions **70** · continuation rows for `kokk` **0**.
+
+**Overall: FAIL** — **14 MATCH**, **1 DIFF**, **0 ABORT-expected**.
+
+| County | Label | Vilbli local VG2 | Min Veg active VG2 PSA | Verdict | Notes |
+|--------|-------|------------------|------------------------|---------|-------|
+| 03 | Oslo | 2 | 2 | MATCH | count+identity 1:1 |
+| 11 | Rogaland | 4 | 4 | MATCH | count+identity 1:1 |
+| 15 | Møre og Romsdal | 6 | 6 | MATCH | count+identity 1:1 |
+| 18 | Nordland | 6 | 6 | MATCH | count+identity 1:1; north OOC pins=0, continuations table=0 |
+| 31 | Østfold | 5 | 5 | MATCH | count+identity 1:1 |
+| 32 | Akershus | 5 | 5 | MATCH | count+identity 1:1 |
+| 33 | Buskerud | 5 | 5 | MATCH | count+identity 1:1 |
+| 34 | Innlandet | 5 | 5 | **DIFF** | Counts equal, but campus wrong: Vilbli map pin **Lillehammer … Avdeling Sør**; active PSA is **avd Nord** (`974597241`). NSR also has **avd Sør** (`874597252`) with **zero** kokk PSA rows. Pipeline `core_name_match` mispicked Nord. |
+| 39 | Vestfold | 3 | 3 | MATCH | count+identity 1:1 |
+| 40 | Telemark | 1 | 1 | MATCH | count+identity 1:1 |
+| 42 | Agder | 4 | 4 | MATCH | count+identity 1:1 |
+| 46 | Vestland | 7 | 7 | MATCH | count+identity 1:1 |
+| 50 | Trøndelag | 9 | 9 | MATCH | count+identity 1:1 |
+| 55 | Troms | 3 | 3 | MATCH | count+identity 1:1; north OOC=0, continuations=0 (Senja/Stangnes resolved to NSR avd campuses) |
+| 56 | Finnmark | 5 | 5 | MATCH | count+identity 1:1; north OOC=0, continuations=0 |
+
+### North `{18,55,56}` continuations
+
+`vgs_vilbli_home_vg2_continuations` for `kokk`: **0 rows**. Vilbli home-page out-of-county VG2 map pins also **0** for all three (local VG2 present everywhere → P-7 allowlist empty is expected / honest).
+
+### DIFF follow-up (not a manual PSA plug)
+
+Fix via pipeline NSR campus resolution for Lillehammer Sør (prefer `874597252` / avd location), then profession-local dry-run + production relay for county `34` — **do not** hand-toggle `is_active`.
+
+---
+
+## Block C / product proof (2026-07-24)
+
+| Check | Result |
+|-------|--------|
+| No browser E2E for `kokk` in repo | Confirmed — only painter / maskin-og-kranforer / mechanic / steigen e2e scripts |
+| Closest automated: `npm run smoke:contour-b` | **PASS** |
+| Closest automated: `npm run smoke:route-truth` | **PASS** |
+| Vestland `46` availability (service-role) | VG1 active PSA institutions **8**, VG2 **7**; `profession_program_links` has VG1+VG2 → `programme_selection` **can resolve** from availability_truth |
+| Owner UI | **Still required** — recompute kokk route for a Vestland child; confirm VG1/VG2 school pickers |
+
+---
+
+## Closure checklist
 
 | Step | Status |
 |------|--------|
 | Code scaffold (path def, materialization, roster, NAV map) | **Done** |
-| Catalog seed SQL | **Pending apply** — `scripts/sql/seed-profession-kokk-catalog.sql` |
-| `npm run build` + scheduler bundle | **Pending** |
-| Relay dry-run `--profession kokk` | **Pending** |
-| Relay production (full matrix policy) | **Pending** |
-| Block C E2E / prod sign-off | **Pending** |
+| Catalog seed SQL | **Done** (prod applied with relay prep) |
+| `npm run build` + scheduler bundle | **Done** (pre-relay) |
+| Relay dry-run `--profession kokk` | **Done** |
+| Relay production (profession-local) | **Done** — 15/15 ingested 2026-07-24 |
+| Vilbli ↔ Min Veg county table | **FAIL** — Innlandet campus DIFF (see table) |
+| Block C E2E / prod sign-off | **Partial** — smokes + Vestland truth OK; **owner UI pending** |
 
 ---
 
