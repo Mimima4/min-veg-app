@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **LIVE (profession-local relay)** — 2026-07-23: dry-run + production `--profession snekker`; Vilbli↔Min Veg MATCH |
+| **Status** | **LIVE (rename closed)** — catalog **Snekker**; school VG2 Treteknikk; profession-local relay + Vilbli↔Min Veg MATCH; owner UI + Arbeidsplassen OK in prod (2026-07-23). Contour B NAV-title rename program **CLOSED** with Maskin- og kranfører + Platearbeider og sveiser. |
 | **Date (UTC)** | 2026-07-23 |
 | **Profession slug** | `snekker` (catalog: **Snekker**) |
 | **Parent gate** | `phase-0-6-contour-b-vgs-profession-addition-template.md` |
@@ -115,3 +115,5 @@ Prior Treteknikk-named docs/seeds are superseded by this record.
 | Empty counties + continuations | Sample `{03,15,18,32,34,40,46,50,55,56}`: local PSA empty + continuation counts **MATCH** Vilbli out-of-county pins |
 
 **National Treteknikk VG2 school set (Vilbli):** Agder, Buskerud, Rogaland (2), Vestfold, Østfold (2) — 7 schools total. Other pipeline fylke correctly have no home PSA and rely on home-page continuations.
+
+**Next full Contour B matrix:** launchd `no.minveg.vgs-scheduled-ops` — **1 August 2026** @ 03:00 (home IP).

@@ -2,8 +2,8 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **RENAMED (catalog)** — 2026-07-23: catalog slug `anleggsteknikk` → `maskin-og-kranforer`; school VG2 unchanged |
-| **Date (UTC)** | 2026-07-10 (branch live); catalog rename 2026-07-23 |
+| **Status** | **LIVE (rename closed)** — catalog `maskin-og-kranforer` / **Maskin- og kranfører**; school VG2 Anleggsteknikk unchanged; profession-local relay + Vilbli↔Min Veg map 1:1 **PASS** (2026-07-23); owner UI + P-8 OK in prod (2026-07-23) |
+| **Date (UTC)** | 2026-07-10 (branch live); catalog rename + relay 2026-07-23 |
 | **Profession slug** | `maskin-og-kranforer` (catalog: **Maskin- og kranfører**) |
 | **Prior slug** | `anleggsteknikk` (deactivated; school VG2 name Anleggsteknikk / BAANL2 unchanged) |
 | **Parent gate** | `phase-0-6-contour-b-sixth-profession-expansion-owner-record.md` |
@@ -118,6 +118,10 @@ See parent `phase-0-6-contour-b-sixth-profession-expansion-owner-record.md` §3.
 | Owner sign P-1…P-6 | ☑ P-1/P-2/P-3/P-4/P-5; P-6 signed |
 | Code scaffolding | ☑ |
 | Classify green counties | ☐ N/A for Contour B partial — Contour A green counties skip anlegg relay |
-| Relay dry-run + production | ☑ **15-county batch** 2026-07-10; **full-matrix production relay 2026-07-21** (14/15 anlegg ingested; Oslo `03` ABORT; current-year PSA=6 held) |
-| E2E + prod UI | ☑ `phase-0-6-contour-b-anleggsteknikk-prod-e2e-closure.md` — owner 2026-07-12 |
-| P-8 sparse + relocation | ☑ **CLOSED** 2026-07-20 — owner UI + smokes |
+| Relay dry-run + production | ☑ **15-county batch** 2026-07-10; **full-matrix production relay 2026-07-21**; **profession-local after rename** `--profession maskin-og-kranforer` 2026-07-23 (Vestland Førde correctly inactive — not on Vilbli map / national offering) |
+| E2E + prod UI | ☑ `phase-0-6-contour-b-anleggsteknikk-prod-e2e-closure.md` — owner 2026-07-12; **rename UI + P-8 OK in prod** 2026-07-23 |
+| P-8 sparse + relocation | ☑ **CLOSED** 2026-07-20 — owner UI + smokes; **re-confirmed after rename** 2026-07-23 |
+| Vilbli ↔ Min Veg (map pins) | ☑ **1:1 PASS** all pipeline fylke after rename relay 2026-07-23 (local map↔PSA + P-7 continuations ∩ dest PSA) |
+| Catalog rename program | ☑ **CLOSED** with Snekker + Platearbeider og sveiser — Contour B NAV-title renames done 2026-07-23 |
+
+**Next full Contour B matrix:** launchd `no.minveg.vgs-scheduled-ops` — **1 August 2026** @ 03:00 (home IP).

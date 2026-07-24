@@ -2,8 +2,8 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **RENAMED (catalog)** — 2026-07-23: catalog slug `klima` → `platearbeider-og-sveiser`; school VG2 KEM unchanged |
-| **Date (UTC)** | 2026-07-21 (branch live); catalog rename 2026-07-23 |
+| **Status** | **LIVE (rename closed)** — catalog `platearbeider-og-sveiser` / **Platearbeider og sveiser**; school VG2 KEM unchanged; profession-local relay + Vilbli↔Min Veg map 1:1 **PASS** (2026-07-23); owner UI OK in prod (2026-07-23) |
+| **Date (UTC)** | 2026-07-21 (branch live); catalog rename + relay 2026-07-23 |
 | **Profession slug** | `platearbeider-og-sveiser` (catalog: **Platearbeider og sveiser**) |
 | **Prior slug** | `klima` (deactivated; school VG2 Klima/energi/miljø / BAKEM2 unchanged) |
 | **Parent gate** | `phase-0-6-contour-b-vgs-profession-addition-template.md`; `phase-0-6-contour-b-seventh-profession-expansion-owner-record.md` |
@@ -71,7 +71,11 @@ ABORT counties → no primary route (county-local policy); not a defect.
 |------|--------|
 | Code scaffolding | ☑ `66cb987` |
 | Catalog seed prod | ☑ |
-| Full Contour B relay | ☑ 2026-07-21 |
+| Full Contour B relay | ☑ 2026-07-21; **profession-local after rename** `--profession platearbeider-og-sveiser` 2026-07-23 |
 | Lærebedrift ingest (3 fag) | ☑ Finnlærebedrift API |
 | Monthly cron | ☑ primary in batch 0; siblings batch 7 via roster |
-| Prod UI / Block C E2E | ☑ owner verified P-7 nabofylke on Finnmark (dev) 2026-07-21 |
+| Prod UI / Block C E2E | ☑ owner verified P-7 nabofylke on Finnmark (dev) 2026-07-21; **rename UI OK in prod** 2026-07-23 |
+| Vilbli ↔ Min Veg (map pins) | ☑ **1:1 PASS** all pipeline fylke after rename relay 2026-07-23 |
+| Catalog rename program | ☑ **CLOSED** with Snekker + Maskin- og kranfører — Contour B NAV-title renames done 2026-07-23 |
+
+**Next full Contour B matrix:** launchd `no.minveg.vgs-scheduled-ops` — **1 August 2026** @ 03:00 (home IP).
