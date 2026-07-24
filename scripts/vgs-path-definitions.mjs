@@ -161,6 +161,28 @@ function detectAnleggsgartnerBranch(program) {
   return "unspecified";
 }
 
+function detectKokkBranch(program) {
+  const title = normalizeBasic(program.title);
+  const code = normalizeBasic(program.program_code);
+
+  if (
+    title.includes("kokk") ||
+    title.includes("servitor") ||
+    title.includes("servitør") ||
+    code.includes("rmkos")
+  ) {
+    return "kokk";
+  }
+  if (
+    title.includes("restaurant") ||
+    title.includes("matfag") ||
+    code.includes("rmrmf")
+  ) {
+    return "restaurant_og_mat";
+  }
+  return "unspecified";
+}
+
 function detectSnekkerBranch(program) {
   const title = normalizeBasic(program.title);
   const code = normalizeBasic(program.program_code);
@@ -891,6 +913,89 @@ const ANLEGGSGARTNER_PATH_DEFINITION = {
 };
 
 /**
+ * Kokk (catalog: kokk / Kokk) — Vilbli area V.RM:
+ * VG1 Restaurant- og matfag → VG2 Kokk- og servitørfag → kolonne-3/bedrift (Kokkfaget primary).
+ * Catalog profession is Kokk; school VG2 title stays Kokk- og servitørfag. Not in V.BA VG2 switcher.
+ * Excludes Påbygging and other V.RM VG2 columns.
+ */
+const KOKK_PATH_DEFINITION = {
+  professionSlug: "kokk",
+  contour: "vgs",
+  description:
+    "Kokk VGS path: VG1 Restaurant- og matfag, VG2 Kokk- og servitørfag, kolonne-3/bedrift list from Vilbli.",
+  sourceModel: {
+    buildVilbliUrl(countySlug) {
+      return `https://www.vilbli.no/nb/${countySlug}/strukturkart/V.RM/restaurant-og-matfag-skoler-og-laerebedrifter?kurs=V.RMRMF1----_V.RMKOS2----&side=p5`;
+    },
+    strukturkartReferenceUrl:
+      "https://www.vilbli.no/nb/no/strukturkart/V.RM/kokk-og-servitorfag-fag-og-timefordeling?kurs=V.RMRMF1----_V.RMKOS2----&side=p2",
+  },
+  stageNodes: [
+    {
+      nodeKey: "VG1_RESTAURANT",
+      stage: "VG1",
+      stageType: "school_programme",
+      branchSpecific: false,
+      requiredForWrite: true,
+      expectedLabel: "VG1 Restaurant- og matfag",
+      programmeMatcher: {
+        includesAny: [
+          "vg1 restaurant og matfag",
+          "vg1 restaurant- og matfag",
+          "restaurant- og matfag",
+          "restaurant og matfag",
+          "rmrmf",
+        ],
+      },
+    },
+    {
+      nodeKey: "VG2_KOKK_SERVITOR",
+      stage: "VG2",
+      stageType: "school_programme",
+      branchSpecific: true,
+      requiredForWrite: true,
+      branchKey: "kokk",
+      expectedLabel: "VG2 Kokk- og servitørfag",
+      programmeMatcher: {
+        includesAny: [
+          "kokk- og servitor",
+          "kokk og servitor",
+          "kokk- og servitørfag",
+          "kokk og servitørfag",
+          "rmkos",
+        ],
+      },
+      branchResolver: detectKokkBranch,
+    },
+    {
+      nodeKey: "VG3_OR_BEDRIFT_SPECIALIZATIONS",
+      stage: "VG3",
+      stageType: "awareness_only",
+      branchSpecific: false,
+      requiredForWrite: false,
+      expectedLabel:
+        "VG3 or Opplæring i bedrift — kolonne-3 list from Vilbli for Restaurant→Kokk chain (not Påbygging)",
+    },
+    {
+      nodeKey: "APPRENTICESHIP_PROGRESS",
+      stage: "APPRENTICESHIP",
+      stageType: "progression",
+      branchSpecific: true,
+      requiredForWrite: false,
+      expectedLabel: "Opplæring i bedrift (lære / fagbrev) after VG2 or VG3 specialization choice",
+    },
+    {
+      nodeKey: "FAGBREV_OUTCOME",
+      stage: "FAGBREV",
+      stageType: "progression_outcome",
+      branchSpecific: true,
+      requiredForWrite: false,
+      expectedLabel: "Fagbrev Kokk",
+    },
+  ],
+};
+
+/**
  * Snekker (catalog: snekker) — Vilbli area V.BA:
  * VG1 Bygg- og anleggsteknikk → VG2 Treteknikk (school) → kolonne-3/bedrift (Snekkerfaget primary).
  * Catalog profession is Snekker; school VG2 title stays Treteknikk. Distinct from carpenter (Tømrer).
@@ -977,6 +1082,7 @@ export const VGS_PATH_DEFINITIONS = {
   murer: MURER_PATH_DEFINITION,
   anleggsgartner: ANLEGGSGARTNER_PATH_DEFINITION,
   snekker: SNEKKER_PATH_DEFINITION,
+  kokk: KOKK_PATH_DEFINITION,
 };
 
 export function getVgsPathDefinition(professionSlug) {

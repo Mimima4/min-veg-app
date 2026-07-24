@@ -1,0 +1,49 @@
+{
+  "professionSlug": "kokk",
+  "vilbliChainTokens": "V.RMRMF1----_V.RMKOS2----",
+  "extractReferenceCountySlug": "trondelag",
+  "ingestBatch": 7,
+  "entries": [
+    {
+      "apiQueryCode": "RMKOK3",
+      "code": "KOKKFAGET",
+      "label": "Kokkfaget",
+      "labelAliases": [
+        "kokk",
+        "kokkfaget"
+      ],
+      "ingestBatch": 0
+    },
+    {
+      "apiQueryCode": "RMSER3",
+      "code": "SERVITORFAGET",
+      "label": "Servitørfaget",
+      "labelAliases": [
+        "servitor",
+        "servitør",
+        "servitorfaget",
+        "servitørfaget"
+      ]
+    },
+    {
+      "apiQueryCode": "RMEKF3",
+      "code": "ERNAERINGSKOKKFAGET",
+      "label": "Ernæringskokkfaget",
+      "labelAliases": [
+        "ernaeringskokk",
+        "ernæringskokk",
+        "ernaeringskokkfaget",
+        "ernæringskokkfaget"
+      ]
+    },
+    {
+      "apiQueryCode": "RMFVF3",
+      "code": "FERSKVAREHANDLERFAGET",
+      "label": "Ferskvarehandlerfaget",
+      "labelAliases": [
+        "ferskvarehandler",
+        "ferskvarehandlerfaget"
+      ]
+    }
+  ]
+}

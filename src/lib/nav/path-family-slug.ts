@@ -17,6 +17,8 @@ const PATH_FAMILY_SLUG_BY_PROFESSION: Record<string, string> = {
   anleggsgartner: "anleggsgartner-vba-anleggsgartner",
   // Catalog profession Snekker; Vilbli school VG2 branch is Treteknikk.
   snekker: "snekker-vba-treteknikk",
+  // Catalog profession Kokk; Vilbli school VG2 branch is Kokk- og servitørfag.
+  kokk: "kokk-vrm-kokk-servitor",
 };
 
 export function resolvePathFamilySlug(professionSlug: string): string | null {

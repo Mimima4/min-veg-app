@@ -11,6 +11,7 @@ export const KLIMA_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_KLIMA"];
 export const MURER_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_BETONG_MUR"];
 export const ANLEGGSGARTNER_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_ANLEGGSGARTNER"];
 export const TRETEKNIKK_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_TRETEKNIKK"];
+export const KOKK_MATERIALIZATION_NODE_KEYS = ["VG1_RESTAURANT", "VG2_KOKK_SERVITOR"];
 
 const PROFESSION_MATERIALIZATION_CONFIG = {
   electrician: {
@@ -142,6 +143,22 @@ const PROFESSION_MATERIALIZATION_CONFIG = {
       VG2: {
         slug: "snekker-vg2-treteknikk-trondelag",
         code: "SNEKKER-VG2-TRONDELAG",
+      },
+    },
+  },
+  kokk: {
+    nodeKeys: KOKK_MATERIALIZATION_NODE_KEYS,
+    deriveIdentitySpecs: deriveKokkProgrammeIdentitySpecs,
+    countyScopedSlugPatterns: {
+      VG1: { slugMiddle: "vg1-restaurant", codePrefix: "KOKK-VG1" },
+      // School VG2 programme name stays Kokk- og servitørfag (Vilbli RMKOS2).
+      VG2: { slugMiddle: "vg2-kokk-servitor", codePrefix: "KOKK-VG2" },
+    },
+    trondelagSlugPatterns: {
+      VG1: { slug: "kokk-vg1-restaurant-trondelag", code: "KOKK-VG1-TRONDELAG" },
+      VG2: {
+        slug: "kokk-vg2-kokk-servitor-trondelag",
+        code: "KOKK-VG2-TRONDELAG",
       },
     },
   },
@@ -576,6 +593,50 @@ function deriveAnleggsgartnerProgrammeIdentitySpecs({ professionSlug, countyCode
       slug: `${professionSlug}-${patterns.VG2.slugMiddle}-${countyMeta.slug}`,
       programCode: `${patterns.VG2.codePrefix}-${countyUpper}`,
       title: "VG2 Anleggsgartner",
+    },
+  };
+}
+
+/** @internal */
+function deriveKokkProgrammeIdentitySpecs({ professionSlug, countyCode, countyMeta }) {
+  if (professionSlug !== "kokk") {
+    return null;
+  }
+
+  if (countyMeta == null || typeof countyMeta.slug !== "string" || countyMeta.slug.length === 0) {
+    return null;
+  }
+
+  const config = PROFESSION_MATERIALIZATION_CONFIG.kokk;
+
+  if (countyCode === "50") {
+    return {
+      VG1_RESTAURANT: {
+        slug: config.trondelagSlugPatterns.VG1.slug,
+        programCode: config.trondelagSlugPatterns.VG1.code,
+        title: "VG1 Restaurant- og matfag",
+      },
+      VG2_KOKK_SERVITOR: {
+        slug: config.trondelagSlugPatterns.VG2.slug,
+        programCode: config.trondelagSlugPatterns.VG2.code,
+        title: "VG2 Kokk- og servitørfag",
+      },
+    };
+  }
+
+  const countyUpper = countyTokenFromMeta(countyMeta);
+  const patterns = config.countyScopedSlugPatterns;
+
+  return {
+    VG1_RESTAURANT: {
+      slug: `${professionSlug}-${patterns.VG1.slugMiddle}-${countyMeta.slug}`,
+      programCode: `${patterns.VG1.codePrefix}-${countyUpper}`,
+      title: "VG1 Restaurant- og matfag",
+    },
+    VG2_KOKK_SERVITOR: {
+      slug: `${professionSlug}-${patterns.VG2.slugMiddle}-${countyMeta.slug}`,
+      programCode: `${patterns.VG2.codePrefix}-${countyUpper}`,
+      title: "VG2 Kokk- og servitørfag",
     },
   };
 }

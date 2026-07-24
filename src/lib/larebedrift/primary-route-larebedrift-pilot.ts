@@ -15,6 +15,7 @@
  * Phase 9 (2026-07-21): murer nationwide when the child has a home kommune.
  * Phase 10 (2026-07-22): anleggsgartner nationwide when the child has a home kommune.
  * Phase 11 (2026-07-23): snekker nationwide when the child has a home kommune.
+ * Phase 12 (2026-07-24): kokk nationwide when the child has a home kommune.
  * V.BA VG2 cross-profession programme switch (carpenter ↔ plumber ↔ painter ↔ maskin-og-kranforer ↔ platearbeider-og-sveiser ↔ murer ↔ anleggsgartner ↔ snekker) — see `VGS_OPERATIONAL_RUNNERS.md`.
  */
 
@@ -29,6 +30,7 @@ const PRIMARY_ROUTE_LAREBEDRIFT_PROFESSIONS = new Set([
   "murer",
   "anleggsgartner",
   "snekker",
+  "kokk",
 ]);
 
 export function childHomeCountyCodes(

@@ -70,6 +70,11 @@ export const CATALOG_PROFESSION_ARBEIDSPLASSEN: Readonly<
     level1Label: "Håndverkere",
     occupationLabel: "Tømrer og snekker",
   },
+  kokk: {
+    styrkCode: "reiseliv-og-mat.kokk",
+    level1Label: "Reiseliv og mat",
+    occupationLabel: "Kokk",
+  },
 
   // Non-VGS catalogue
   doctor: {

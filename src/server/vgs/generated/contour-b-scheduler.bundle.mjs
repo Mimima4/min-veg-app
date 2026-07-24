@@ -16809,6 +16809,17 @@ function detectAnleggsgartnerBranch(program) {
   }
   return "unspecified";
 }
+function detectKokkBranch(program) {
+  const title = normalizeBasic(program.title);
+  const code = normalizeBasic(program.program_code);
+  if (title.includes("kokk") || title.includes("servitor") || title.includes("servit\xF8r") || code.includes("rmkos")) {
+    return "kokk";
+  }
+  if (title.includes("restaurant") || title.includes("matfag") || code.includes("rmrmf")) {
+    return "restaurant_og_mat";
+  }
+  return "unspecified";
+}
 function detectSnekkerBranch(program) {
   const title = normalizeBasic(program.title);
   const code = normalizeBasic(program.program_code);
@@ -17452,6 +17463,79 @@ var ANLEGGSGARTNER_PATH_DEFINITION = {
     }
   ]
 };
+var KOKK_PATH_DEFINITION = {
+  professionSlug: "kokk",
+  contour: "vgs",
+  description: "Kokk VGS path: VG1 Restaurant- og matfag, VG2 Kokk- og servit\xF8rfag, kolonne-3/bedrift list from Vilbli.",
+  sourceModel: {
+    buildVilbliUrl(countySlug) {
+      return `https://www.vilbli.no/nb/${countySlug}/strukturkart/V.RM/restaurant-og-matfag-skoler-og-laerebedrifter?kurs=V.RMRMF1----_V.RMKOS2----&side=p5`;
+    },
+    strukturkartReferenceUrl: "https://www.vilbli.no/nb/no/strukturkart/V.RM/kokk-og-servitorfag-fag-og-timefordeling?kurs=V.RMRMF1----_V.RMKOS2----&side=p2"
+  },
+  stageNodes: [
+    {
+      nodeKey: "VG1_RESTAURANT",
+      stage: "VG1",
+      stageType: "school_programme",
+      branchSpecific: false,
+      requiredForWrite: true,
+      expectedLabel: "VG1 Restaurant- og matfag",
+      programmeMatcher: {
+        includesAny: [
+          "vg1 restaurant og matfag",
+          "vg1 restaurant- og matfag",
+          "restaurant- og matfag",
+          "restaurant og matfag",
+          "rmrmf"
+        ]
+      }
+    },
+    {
+      nodeKey: "VG2_KOKK_SERVITOR",
+      stage: "VG2",
+      stageType: "school_programme",
+      branchSpecific: true,
+      requiredForWrite: true,
+      branchKey: "kokk",
+      expectedLabel: "VG2 Kokk- og servit\xF8rfag",
+      programmeMatcher: {
+        includesAny: [
+          "kokk- og servitor",
+          "kokk og servitor",
+          "kokk- og servit\xF8rfag",
+          "kokk og servit\xF8rfag",
+          "rmkos"
+        ]
+      },
+      branchResolver: detectKokkBranch
+    },
+    {
+      nodeKey: "VG3_OR_BEDRIFT_SPECIALIZATIONS",
+      stage: "VG3",
+      stageType: "awareness_only",
+      branchSpecific: false,
+      requiredForWrite: false,
+      expectedLabel: "VG3 or Oppl\xE6ring i bedrift \u2014 kolonne-3 list from Vilbli for Restaurant\u2192Kokk chain (not P\xE5bygging)"
+    },
+    {
+      nodeKey: "APPRENTICESHIP_PROGRESS",
+      stage: "APPRENTICESHIP",
+      stageType: "progression",
+      branchSpecific: true,
+      requiredForWrite: false,
+      expectedLabel: "Oppl\xE6ring i bedrift (l\xE6re / fagbrev) after VG2 or VG3 specialization choice"
+    },
+    {
+      nodeKey: "FAGBREV_OUTCOME",
+      stage: "FAGBREV",
+      stageType: "progression_outcome",
+      branchSpecific: true,
+      requiredForWrite: false,
+      expectedLabel: "Fagbrev Kokk"
+    }
+  ]
+};
 var SNEKKER_PATH_DEFINITION = {
   professionSlug: "snekker",
   contour: "vgs",
@@ -17528,7 +17612,8 @@ var VGS_PATH_DEFINITIONS = {
   "platearbeider-og-sveiser": KLIMA_PATH_DEFINITION,
   murer: MURER_PATH_DEFINITION,
   anleggsgartner: ANLEGGSGARTNER_PATH_DEFINITION,
-  snekker: SNEKKER_PATH_DEFINITION
+  snekker: SNEKKER_PATH_DEFINITION,
+  kokk: KOKK_PATH_DEFINITION
 };
 function getVgsPathDefinition(professionSlug) {
   return VGS_PATH_DEFINITIONS[professionSlug] ?? null;
@@ -17576,6 +17661,7 @@ var KLIMA_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_KLIMA"];
 var MURER_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_BETONG_MUR"];
 var ANLEGGSGARTNER_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_ANLEGGSGARTNER"];
 var TRETEKNIKK_MATERIALIZATION_NODE_KEYS = ["VG1_BYGG", "VG2_TRETEKNIKK"];
+var KOKK_MATERIALIZATION_NODE_KEYS = ["VG1_RESTAURANT", "VG2_KOKK_SERVITOR"];
 var PROFESSION_MATERIALIZATION_CONFIG = {
   electrician: {
     nodeKeys: ELECTRICIAN_MATERIALIZATION_NODE_KEYS,
@@ -17706,6 +17792,22 @@ var PROFESSION_MATERIALIZATION_CONFIG = {
       VG2: {
         slug: "snekker-vg2-treteknikk-trondelag",
         code: "SNEKKER-VG2-TRONDELAG"
+      }
+    }
+  },
+  kokk: {
+    nodeKeys: KOKK_MATERIALIZATION_NODE_KEYS,
+    deriveIdentitySpecs: deriveKokkProgrammeIdentitySpecs,
+    countyScopedSlugPatterns: {
+      VG1: { slugMiddle: "vg1-restaurant", codePrefix: "KOKK-VG1" },
+      // School VG2 programme name stays Kokk- og servitørfag (Vilbli RMKOS2).
+      VG2: { slugMiddle: "vg2-kokk-servitor", codePrefix: "KOKK-VG2" }
+    },
+    trondelagSlugPatterns: {
+      VG1: { slug: "kokk-vg1-restaurant-trondelag", code: "KOKK-VG1-TRONDELAG" },
+      VG2: {
+        slug: "kokk-vg2-kokk-servitor-trondelag",
+        code: "KOKK-VG2-TRONDELAG"
       }
     }
   }
@@ -18051,6 +18153,43 @@ function deriveAnleggsgartnerProgrammeIdentitySpecs({ professionSlug, countyCode
       slug: `${professionSlug}-${patterns.VG2.slugMiddle}-${countyMeta.slug}`,
       programCode: `${patterns.VG2.codePrefix}-${countyUpper}`,
       title: "VG2 Anleggsgartner"
+    }
+  };
+}
+function deriveKokkProgrammeIdentitySpecs({ professionSlug, countyCode, countyMeta }) {
+  if (professionSlug !== "kokk") {
+    return null;
+  }
+  if (countyMeta == null || typeof countyMeta.slug !== "string" || countyMeta.slug.length === 0) {
+    return null;
+  }
+  const config = PROFESSION_MATERIALIZATION_CONFIG.kokk;
+  if (countyCode === "50") {
+    return {
+      VG1_RESTAURANT: {
+        slug: config.trondelagSlugPatterns.VG1.slug,
+        programCode: config.trondelagSlugPatterns.VG1.code,
+        title: "VG1 Restaurant- og matfag"
+      },
+      VG2_KOKK_SERVITOR: {
+        slug: config.trondelagSlugPatterns.VG2.slug,
+        programCode: config.trondelagSlugPatterns.VG2.code,
+        title: "VG2 Kokk- og servit\xF8rfag"
+      }
+    };
+  }
+  const countyUpper = countyTokenFromMeta(countyMeta);
+  const patterns = config.countyScopedSlugPatterns;
+  return {
+    VG1_RESTAURANT: {
+      slug: `${professionSlug}-${patterns.VG1.slugMiddle}-${countyMeta.slug}`,
+      programCode: `${patterns.VG1.codePrefix}-${countyUpper}`,
+      title: "VG1 Restaurant- og matfag"
+    },
+    VG2_KOKK_SERVITOR: {
+      slug: `${professionSlug}-${patterns.VG2.slugMiddle}-${countyMeta.slug}`,
+      programCode: `${patterns.VG2.codePrefix}-${countyUpper}`,
+      title: "VG2 Kokk- og servit\xF8rfag"
     }
   };
 }
@@ -19554,7 +19693,8 @@ var MATERIALIZATION_NODE_KEYS_BY_PROFESSION = {
   "platearbeider-og-sveiser": KLIMA_MATERIALIZATION_NODE_KEYS,
   murer: MURER_MATERIALIZATION_NODE_KEYS,
   anleggsgartner: ANLEGGSGARTNER_MATERIALIZATION_NODE_KEYS,
-  snekker: TRETEKNIKK_MATERIALIZATION_NODE_KEYS
+  snekker: TRETEKNIKK_MATERIALIZATION_NODE_KEYS,
+  kokk: KOKK_MATERIALIZATION_NODE_KEYS
 };
 var COUNTY_CODE_TO_VILBLI2 = {
   "03": { slug: "oslo", label: "Oslo" },

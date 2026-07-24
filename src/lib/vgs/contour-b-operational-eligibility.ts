@@ -35,6 +35,7 @@ export const SUPPORTED_VGS_PROFESSION_SLUGS = new Set([
   "murer",
   "anleggsgartner",
   "snekker",
+  "kokk",
 ]);
 
 export const CONTOUR_A_OPERATIONAL_BY_PROFESSION: Record<string, Set<string>> = {

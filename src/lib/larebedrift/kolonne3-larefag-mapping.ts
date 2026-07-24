@@ -11,6 +11,7 @@ import maskinOgKranforerRoster from "../../../data/larebedrift/kolonne3-rosters/
 import platearbeiderOgSveiserRoster from "../../../data/larebedrift/kolonne3-rosters/platearbeider-og-sveiser.json" with { type: "json" };
 import murerRoster from "../../../data/larebedrift/kolonne3-rosters/murer.json" with { type: "json" };
 import snekkerRoster from "../../../data/larebedrift/kolonne3-rosters/snekker.json" with { type: "json" };
+import kokkRoster from "../../../data/larebedrift/kolonne3-rosters/kokk.json" with { type: "json" };
 
 type Kolonne3RosterEntry = {
   apiQueryCode: string;
@@ -25,6 +26,7 @@ const KOLONNE3_ROSTER_ENTRIES: ReadonlyArray<Kolonne3RosterEntry> = [
   ...(platearbeiderOgSveiserRoster.entries as Kolonne3RosterEntry[]),
   ...(murerRoster.entries as Kolonne3RosterEntry[]),
   ...(snekkerRoster.entries as Kolonne3RosterEntry[]),
+  ...(kokkRoster.entries as Kolonne3RosterEntry[]),
 ];
 
 function kolonne3RosterByApiQueryCode(): Readonly<Record<string, LarefagIdentity>> {

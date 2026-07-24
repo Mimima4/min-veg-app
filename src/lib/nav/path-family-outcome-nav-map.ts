@@ -288,6 +288,59 @@ export const PATH_FAMILY_OUTCOME_NAV_MAP_ROWS: PathFamilyOutcomeNavMapRow[] = [
     sourceReferenceUrl:
       "https://www.vilbli.no/nb/no/strukturkart/V.BA/treteknikk-fag-og-timefordeling?kurs=V.BABAT1----_V.BATRT2----&side=p2",
   },
+  // --- kokk / kokk-vrm-kokk-servitor ---
+  {
+    mapVersion: 1,
+    pathFamilySlug: "kokk-vrm-kokk-servitor",
+    professionSlug: "kokk",
+    vilbliTitleIncludes: ["kokkfaget", "kokk"],
+    vilbliOutcomeUrlIncludes: ["/yrker/v.rm/"],
+    filterTags: ["laere", "fagbrev"],
+    navStyrkCode: "reiseliv-og-mat.kokk",
+    navTitle: "Kokk",
+    catalogProfessionSlug: "kokk",
+    sourceReferenceUrl:
+      "https://www.vilbli.no/nb/no/strukturkart/V.RM/kokk-og-servitorfag-fag-og-timefordeling?kurs=V.RMRMF1----_V.RMKOS2----&side=p2",
+  },
+  {
+    mapVersion: 1,
+    pathFamilySlug: "kokk-vrm-kokk-servitor",
+    professionSlug: "kokk",
+    vilbliTitleIncludes: ["servitor", "servitør", "servitorfaget", "servitørfaget"],
+    vilbliOutcomeUrlIncludes: ["/yrker/v.rm/"],
+    filterTags: ["laere", "fagbrev"],
+    navStyrkCode: "reiseliv-og-mat.restaurant",
+    navTitle: "Restaurant",
+    catalogProfessionSlug: "kokk",
+    sourceReferenceUrl:
+      "https://www.vilbli.no/nb/no/strukturkart/V.RM/kokk-og-servitorfag-fag-og-timefordeling?kurs=V.RMRMF1----_V.RMKOS2----&side=p2",
+  },
+  {
+    mapVersion: 1,
+    pathFamilySlug: "kokk-vrm-kokk-servitor",
+    professionSlug: "kokk",
+    vilbliTitleIncludes: ["ernaeringskokk", "ernæringskokk", "ernaeringskokkfaget", "ernæringskokkfaget"],
+    vilbliOutcomeUrlIncludes: ["/yrker/v.rm/"],
+    filterTags: ["laere", "fagbrev"],
+    navStyrkCode: "reiseliv-og-mat.kokk",
+    navTitle: "Kokk",
+    catalogProfessionSlug: "kokk",
+    sourceReferenceUrl:
+      "https://www.vilbli.no/nb/no/strukturkart/V.RM/kokk-og-servitorfag-fag-og-timefordeling?kurs=V.RMRMF1----_V.RMKOS2----&side=p2",
+  },
+  {
+    mapVersion: 1,
+    pathFamilySlug: "kokk-vrm-kokk-servitor",
+    professionSlug: "kokk",
+    vilbliTitleIncludes: ["ferskvarehandler", "ferskvarehandlerfaget"],
+    vilbliOutcomeUrlIncludes: ["/yrker/v.rm/"],
+    filterTags: ["laere", "fagbrev"],
+    navStyrkCode: "industri-og-produksjon.matproduksjon-og-næringsmiddelarbeid",
+    navTitle: "Matproduksjon og næringsmiddelarbeid",
+    catalogProfessionSlug: "kokk",
+    sourceReferenceUrl:
+      "https://www.vilbli.no/nb/no/strukturkart/V.RM/kokk-og-servitorfag-fag-og-timefordeling?kurs=V.RMRMF1----_V.RMKOS2----&side=p2",
+  },
 ];
 
 const FILTER_TAG_ALLOWLIST: Record<RouteOutcomeFilterId, Set<PathFamilyOutcomeFilterTag> | null> =

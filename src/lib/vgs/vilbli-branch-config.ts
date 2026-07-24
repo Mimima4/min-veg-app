@@ -70,6 +70,12 @@ export const VILBLI_BRANCH_CONFIG_BY_PROFESSION: Record<string, VilbliBranchProf
       preferVg3OptionOrdering: false,
       preferredYrkerPathPattern: /\/yrker\/v\.ba\//i,
     },
+    kokk: {
+      branchSkolerUrlPattern:
+        /restaurant-og-matfag-skoler-og-laerebedrifter|kokk-og-servitorfag-skoler-og-laerebedrifter/i,
+      preferVg3OptionOrdering: false,
+      preferredYrkerPathPattern: /\/yrker\/v\.rm\//i,
+    },
   };
 
 export function getVilbliBranchConfig(professionSlug: string): VilbliBranchProfessionConfig | null {

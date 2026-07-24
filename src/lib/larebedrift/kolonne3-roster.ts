@@ -10,6 +10,7 @@ import maskinOgKranforerRoster from "../../../data/larebedrift/kolonne3-rosters/
 import platearbeiderOgSveiserRoster from "../../../data/larebedrift/kolonne3-rosters/platearbeider-og-sveiser.json" with { type: "json" };
 import murerRoster from "../../../data/larebedrift/kolonne3-rosters/murer.json" with { type: "json" };
 import snekkerRoster from "../../../data/larebedrift/kolonne3-rosters/snekker.json" with { type: "json" };
+import kokkRoster from "../../../data/larebedrift/kolonne3-rosters/kokk.json" with { type: "json" };
 
 export type Kolonne3RosterEntry = {
   apiQueryCode: string;
@@ -34,6 +35,7 @@ export const KOLONNE3_PROFESSION_ROSTERS: ReadonlyArray<Kolonne3ProfessionRoster
   platearbeiderOgSveiserRoster as Kolonne3ProfessionRoster,
   murerRoster as Kolonne3ProfessionRoster,
   snekkerRoster as Kolonne3ProfessionRoster,
+  kokkRoster as Kolonne3ProfessionRoster,
 ];
 
 export function kolonne3RosterEntriesFlat(): Kolonne3RosterEntry[] {
