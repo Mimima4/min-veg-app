@@ -97,8 +97,20 @@ function defaultLabelAliases(title) {
   );
 }
 
-async function extractFromVilbli({ countySlug, chain }) {
-  const url = `https://www.vilbli.no/nb/${countySlug}/strukturkart/V.BA/bygg-og-anleggsteknikk-skoler-og-laerebedrifter?kurs=${chain}&side=p5`;
+async function resolveKolonne3ExtractUrl({ countySlug, chain, professionSlug }) {
+  if (professionSlug) {
+    const { getVgsPathDefinition } = await import("./vgs-path-definitions.mjs");
+    const path = getVgsPathDefinition(professionSlug);
+    if (path?.sourceModel?.buildVilbliUrl) {
+      return path.sourceModel.buildVilbliUrl(countySlug);
+    }
+  }
+  // Legacy default: V.BA Bygg chain pages (most Contour B professions).
+  return `https://www.vilbli.no/nb/${countySlug}/strukturkart/V.BA/bygg-og-anleggsteknikk-skoler-og-laerebedrifter?kurs=${chain}&side=p5`;
+}
+
+async function extractFromVilbli({ countySlug, chain, professionSlug = null }) {
+  const url = await resolveKolonne3ExtractUrl({ countySlug, chain, professionSlug });
   const html = await (await fetch(url, { headers: { "user-agent": "Mozilla/5.0" } })).text();
   const block = html.match(
     /Vg3\s*[–-]\s*Videregående trinn 3 eller opplæring i bedrift[\s\S]*?<ul class="kursList">([\s\S]*?)<\/ul>/i
@@ -142,6 +154,7 @@ function verifyRoster(professionSlug) {
   return extractFromVilbli({
     countySlug: roster.extractReferenceCountySlug ?? "vestland",
     chain: roster.vilbliChainTokens,
+    professionSlug,
   }).then((extracted) => {
     let failed = 0;
     for (const row of extracted) {
@@ -177,6 +190,7 @@ async function main() {
   const extracted = await extractFromVilbli({
     countySlug: args.countySlug,
     chain: args.chain,
+    professionSlug: args.profession,
   });
 
   const roster = {

@@ -12,6 +12,10 @@ Adding or changing **professions**, **counties (fylke)**, or Vilbli-backed **pro
 ### No manual PSA (hard process)
 
 **Do not** hand-edit `programme_school_availability` (or equivalent Contour B school truth) via SQL/UI/one-off scripts — including “temporary” `is_active` plugs. Agent **does not decide**: cite this rule + `VGS_OPERATIONAL_RUNNERS.md`, warn about risks (false truth, relay drift, P-6), propose pipeline fix, and **wait** for explicit owner override. See `.cursor/rules/no-manual-psa.mdc`.
+
+### Flag Vilbli tilbud «ложь» (hard process)
+
+**CRITICAL on every 1:1:** always check structure vs map tilbud (I-1…I-3); always highlight Vilbli «ложь» (or say «none») — even when Min Veg omitted correctly. See `.cursor/rules/flag-vilbli-display-untruth.mdc`.
 <!-- END:vgs-contour-b-ops -->
 
 <!-- BEGIN:pre-commit-qa-build -->

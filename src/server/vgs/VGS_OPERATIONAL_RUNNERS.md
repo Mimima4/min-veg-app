@@ -16,6 +16,14 @@ If a manual plug is requested: agents **do not decide** — they **cite this rul
 
 Agent mirror: `.cursor/rules/no-manual-psa.mdc`, `AGENTS.md`.
 
+### Flag Vilbli tilbud «ложь» (hard process)
+
+**Definition (owner):** Vilbli shows the programme at a school (structure / `html_stage_block`) but that school is **not** in current-year tilbud on the same county `side=p5` map (`vb_map_data` VG2+ = offering; I-1…I-3). Precedent: anleggsteknikk structure-superset; Kokk Vestland Førde html-only.
+
+**CRITICAL on every Vilbli ↔ Min Veg 1:1:** always run the structure-only check and **always** highlight hits to the owner (Notes + branch record + chat) — or explicitly say «Vilbli structure-only: none». Even when Min Veg correctly skipped them. Skipping because counts match is a process defect. Split: Vilbli vs Min Veg/pipeline vs Unknown. No manual PSA plug.
+
+Agent mirror: `.cursor/rules/flag-vilbli-display-untruth.mdc`, `AGENTS.md`.
+
 ### What does **not** run automatically
 
 | Event | Contour B relay / PSA ingest |
@@ -59,7 +67,7 @@ Before production relay for a **new** `(professionSlug, countyCode)`:
 | 9 | Relay production | Same without `--dry-run` |
 | 10 | **Current-year offering (I-1…I-3; anlegg VG2 enforced)** | Relay fetches landslinje offering HTML (`strukturkartReferenceUrl` → Oslo course `side=p5` for anleggsteknikk). Gate **default ON**; structure-only skipped when extract succeeds. Opt out: `CONTOUR_B_ENFORCE_CURRENT_YEAR_OFFERING=0`. Dense professions without landslinje probe URL stay fail-open. Live smoke: `npm run smoke:current-year-offering -- --live`. See `phase-4-current-year-programme-offering-owner-decision-record.md` §4/§4a. |
 | 11 | Product proof | E2E: `programme_selection.options` for that profession + county (Block C) |
-| 12 | **Vilbli ↔ Min Veg table** | After relay: per-county Vilbli local VG2 map pins vs Min Veg active PSA; north `{18,55,56}` also out-of-county pins vs `vgs_vilbli_home_vg2_continuations`. Unexplained DIFF blocks “data is live”. |
+| 12 | **Vilbli ↔ Min Veg table** | After relay: (1) per-county Vilbli local VG2 **map** pins vs Min Veg active PSA; (2) north `{18,55,56}` OOC ↔ continuations; (3) **CRITICAL — always** I-1…I-3 structure-only check vs map tilbud — **highlight every Vilbli «ложь»** (or explicitly «none»), even when Min Veg omitted correctly. Unexplained DIFF blocks “data is live”. See `.cursor/rules/flag-vilbli-display-untruth.mdc`. |
 
 If step 3–6 are missing, relay **will not** process the new pair even if the product UI shows it.
 
@@ -439,4 +447,4 @@ Eleven elektro kolonne-3 lærefag in `larebedrift-fagkode.mjs` + `kolonne3-laref
 
 Ten kjøretøy kolonne-3 lærefag registered in `larebedrift-fagkode.mjs` + `kolonne3-larefag-mapping.ts` (VIGO `TP*` codes). Default profession slug `mechanic` → `MOTORMEKANIKERFAGET`. Pilot gate: `primary-route-larebedrift-pilot.ts` (nationwide when child has home kommune). **Nationwide ingest done (2026-07-03)** — ~1777 mechanic rows, ~6494 total active in `larebedrift_truth`; prod-check Vestland Fagvalg → bedrift.
 
-**Monthly cron:** Vercel runs eight batched `GET /api/internal/larebedrift/run-ingest/{0..7}` jobs on the 1st — batch 0 core Bygg fag + `BAAMF3` + `BAVBL3` (klima) + `BAMFF3` (murer primary) + `BAANG3` (anleggsgartner primary); batch **7** anlegg + klima + murer sibling kolonne-3 (`scheduled-larebedrift-ingest-fags.ts` + `data/larebedrift/kolonne3-rosters/`). Manual single-fag: `?larefagCode=ANLEGGSGARTNERFAGET`.
+**Monthly cron:** Vercel runs eight batched `GET /api/internal/larebedrift/run-ingest/{0..7}` jobs on the 1st — batch 0 core Bygg fag + `BAAMF3` + `BAVBL3` (klima) + `BAMFF3` (murer primary) + `BAANG3` (anleggsgartner primary) + `KOKKFAGET` (kokk primary); batch **7** anlegg + klima + murer + kokk sibling kolonne-3 (`scheduled-larebedrift-ingest-fags.ts` + `data/larebedrift/kolonne3-rosters/`). Manual single-fag: `?larefagCode=ANLEGGSGARTNERFAGET`.

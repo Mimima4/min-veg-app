@@ -36,6 +36,7 @@
 
 1. **Полный снимок Vilbli path-variant в бэкенде** — без live HTML на recompute.
 2. **Entur PT matrix/corridor в бэкенд 2×/неделю** — без live Journey Planner на обычном recompute (кроме редко chartered miss, если owner так решит).
+3. **После A+B:** matcher campus A+C (Lillehammer Sør≠Nord) — см. задачу C ниже. **Не выполнять до завершения A и B.**
 
 ---
 
@@ -70,14 +71,30 @@
 
 **Готово когда:** при свежем кэше обычный Contour B recompute с transport sort не вызывает Entur Journey Planner.
 
-### C. Вне объёма дня (пока owner не расширит)
+### C. Matcher campus A+C — Lillehammer Sør≠Nord (после A и B)
+
+**Статус:** **НЕ СЕЙЧАС** — владелец 2026-07-24: в план на 2026-07-25 **третьим пунктом**, выполнять **только после A и B**.
+
+**Зачем:** Kokk (и любой pin `Lillehammer … Avdeling Sør`) пишет PSA на **avd Nord** из‑за `token.length >= 4` (токен `sør` = 3) → `multi_avd_identity` → алфавитный Nord. Нарушает Forbidden matching-spec. Подтверждено Composer + **Grok 4.5**.
+
+**Решение (согласовано, не short-token):**
+
+1. **A** — в brand cohort: равенство `extractAvdLocationLabel(Vilbli)` ↔ `extractAvdLocationLabel(NSR)` (fold æøå); не ослаблять global `length >= 4` для Høyanger/Hornnes.
+2. **C** — если Vilbli указал avd, а resolve = 0 → ABORT/ambiguous, **не** alphabetical campus.
+3. **Отвергнуто:** naive `includes` / global `length >= 3` / Lillehammer-only hack / manual PSA.
+
+**Готово когда:** smoke Sør→Sør (+ регресс Nord, Sortland-neg, Høyanger, Hornnes, guard C) → dry-run + production relay `34` (kokk и затронутые профессии) → Vilbli↔Min Veg campus DIFF = 0; без manual PSA.
+
+**Код:** `scripts/lib/vilbli-nsr-institution-match.mjs` + `scripts/smoke-vilbli-nsr-institution-match.mjs`. Owner record: `phase-0-6-contour-b-kokk-vilbli-branch-owner-record.md`.
+
+### D. Вне объёма дня (пока owner не расширит)
 
 - Dual VG1 implementation (всё ещё **DEFERRED**).
-- Scaffold Kokk Contour B (ждёт P-1).
 - Широкий refactor family/route hub.
 - Ручные PSA-плаги (запрещены).
+- Kokk Block C owner UI — трек профессии **сегодня**, не этот day-plan.
 
-### D. Процесс
+### E. Процесс
 
 - Pre-commit: `npx tsc --noEmit && npm run build`.
 - Contour B writes только через relay/pipeline (`VGS_OPERATIONAL_RUNNERS.md` / no-manual-PSA).
@@ -97,7 +114,7 @@
 | Live Entur/Vilbli stampede | **Снят с happy path** |
 | Pro **без** A+B | **Не** убирает 15–20 с Entur — только запас по БД |
 
-**Продуктово:** Pro держит кухню открытой. A+B готовят заранее. Вместе = «никто не ждёт».
+**Продуктово:** Pro держит кухню открытой. A+B готовят заранее. Вместе = «никто не ждёт». Пункт C — data-truth, не latency; после A+B.
 
 ---
 

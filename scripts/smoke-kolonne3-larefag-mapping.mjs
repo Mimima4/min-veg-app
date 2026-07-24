@@ -331,6 +331,52 @@ if (snekkerProfessionDefault?.code !== "SNEKKERFAGET") {
   console.log(`OK snekker VG3 slug -> ${snekkerProfessionDefault.code}`);
 }
 
+const kokkProfessionDefault = resolveLarefagFromKolonne3Selection({
+  programSlug: "kokk-vg3-kokkfaget-vestland",
+  programTitle: "VG3 Kokkfaget",
+  title: "Kokkfaget",
+});
+if (kokkProfessionDefault?.code !== "KOKKFAGET") {
+  failed += 1;
+  console.error(
+    `FAIL kokk VG3 slug: expected KOKKFAGET, got ${kokkProfessionDefault?.code ?? "null"}`
+  );
+} else {
+  console.log(`OK kokk VG3 slug -> ${kokkProfessionDefault.code}`);
+}
+
+const kokkUrlPrimary = resolveLarefagFromKolonne3Selection({
+  programSlug: "kolonne3-kokkfaget",
+  programTitle: "Kokkfaget",
+  title: "Kokkfaget",
+  programmeUrl:
+    "/nb/trondelag/strukturkart/V.RM/kokkfaget-skoler-og-laerebedrifter?kurs=v.rmrmf1----_v.rmkos2----_v.rmkok3----_",
+});
+if (kokkUrlPrimary?.code !== "KOKKFAGET") {
+  failed += 1;
+  console.error(
+    `FAIL Kokkfaget URL: expected KOKKFAGET, got ${kokkUrlPrimary?.code ?? "null"}`
+  );
+} else {
+  console.log(`OK Kokkfaget URL -> ${kokkUrlPrimary.code}`);
+}
+
+const servitorUrl = resolveLarefagFromKolonne3Selection({
+  programSlug: "kolonne3-servitorfaget",
+  programTitle: "Servitørfaget",
+  title: "Servitørfaget",
+  programmeUrl:
+    "/nb/trondelag/strukturkart/V.RM/servitorfaget-skoler-og-laerebedrifter?kurs=v.rmrmf1----_v.rmkos2----_v.rmser3----_",
+});
+if (servitorUrl?.code !== "SERVITORFAGET") {
+  failed += 1;
+  console.error(
+    `FAIL Servitørfaget URL: expected SERVITORFAGET, got ${servitorUrl?.code ?? "null"}`
+  );
+} else {
+  console.log(`OK Servitørfaget URL -> ${servitorUrl.code}`);
+}
+
 const betongFag = resolveLarefagFromKolonne3Selection({
   programSlug: "kolonne3-betongfaget",
   programTitle: "Betongfaget",

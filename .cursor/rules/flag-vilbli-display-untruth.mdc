@@ -1,0 +1,37 @@
+---
+description: CRITICAL — always flag Vilbli structure-only lies on every 1:1
+alwaysApply: true
+---
+
+# Flag Vilbli tilbud «ложь» on every 1:1 (CRITICAL)
+
+## Why this is critical
+
+Vilbli’s county structure list (`html_stage_block` / merged extract) is often a **superset** of current-year tilbud (map `vb_map_data`). Min Veg may correctly omit structure-only schools via I-1…I-3 — **that is success**, not “nothing to report.” The owner still must see Vilbli’s lie on every 1:1 compare, or the gate looks green while the source site misleads.
+
+Precedent: anleggsteknikk (22 structure-only deactivated); Kokk Vestland `Førde` [`1000113`] html-only while map+PSA=7.
+
+## Binding definition
+
+Authority: `phase-4-current-year-programme-offering-owner-decision-record.md` (I-1…I-3) + `resolveOfferingDecision` / `buildCurrentYearOfferingSet`.
+
+**Vilbli «ложь» / structure-only** = school appears in structure / `html_stage_block` / merged extract for the programme×stage, but is **not** in the current-year tilbud set on the same county `side=p5` (`vb_map_data` VG2+ pins = offering after 2026-07-22).
+
+**Not** «ложь»: spelling variants (slash, `Sti`, `avd` suffix) when the school **is** on the map tilbud.
+
+## Mandatory on every Vilbli ↔ Min Veg 1:1 (no exceptions)
+
+1. **Always** run structure-only check for all pipeline counties (merged vs map offering).
+2. **Always** surface results to the owner in the **same** delivery as the county gate table:
+   - chat (explicit callout, even when count = 0: «Vilbli structure-only: none»),
+   - gate table Notes / dedicated row,
+   - profession branch owner record.
+3. If structure-only ≥ 1 → label **Vilbli defect**; say whether Min Veg correctly omitted them.
+4. Split blame: **Vilbli structure-only** vs **Min Veg/pipeline DIFF** vs **Unknown**. Never bury Vilbli-side hits inside a MATCH with empty Notes.
+5. No Tier-2 invention. No manual PSA plug (`no-manual-psa.mdc`).
+
+Skipping the structure-only pass because “counts match” or “app looks right” is a **process defect**.
+
+## Mirror
+
+`src/server/vgs/VGS_OPERATIONAL_RUNNERS.md` · `AGENTS.md` · template gate «Vilbli ↔ Min Veg table»
