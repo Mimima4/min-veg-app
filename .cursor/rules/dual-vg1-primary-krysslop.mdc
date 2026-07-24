@@ -1,27 +1,12 @@
 ---
-description: Dual VG1 Contour B policy — one primary VG1; kryssløp VG1 only as alternatives
-alwaysApply: true
+description: Dual VG1 Contour B — DEFERRED owner note only; do not implement yet
+alwaysApply: false
 ---
 
-# Dual VG1 (primary + kryssløp alternatives)
+# Dual VG1 (primary + kryssløp) — DEFERRED
 
-When a Contour B / VGS catalogue profession can be reached via **two different VG1** programmes (own area + **kryssløp** from another utdanningsprogram):
+**Status: DEFERRED.** Owner direction recorded 2026-07-24; **do not implement**, scaffold, or enforce until an explicit owner gate opens this for a named profession (e.g. Trearbeid).
 
-## Rule (owner 2026-07-24)
+When eventually approved: one catalogue profession; primary route from primary VG1 only; kryssløp VG1 only via chartered `alternative_routes[]` — not a VG1 split like VG2 columns.
 
-1. **One catalogue profession** — do not split into two professions by VG1.
-2. **Do not split VG1 like VG2 columns** — no dual primary school-programme pickers for two VG1s on the same route.
-3. **Primary route** is built from the **primary VG1** only (the profession’s signed home area / main Vilbli chain).
-4. The **second VG1 (kryssløp)** appears only in **`alternative_routes[]`** (governed overlay), never as a second primary chain or VG1-split UI.
-
-## Examples
-
-| Profession (future) | Primary VG1 | Kryssløp VG1 → alternatives |
-|---------------------|-------------|-----------------------------|
-| Trearbeid (deferred) | Håndverk, design og produktutvikling (V.DT) | Bygg- og anleggsteknikk (V.BA) → Trearbeid |
-
-## Implementation notes
-
-- Path definition / Contour B ingest: materialize and write PSA for the **primary** chain.
-- Kryssløp: charter as an alternatives overlay (membership ∩ PSA ∩ product rules) — same family as P-7/P-8 style surfaces, not a second Contour B primary matrix.
-- Template mirror: `docs/architecture/phase-0-6-contour-b-vgs-profession-addition-template.md` § dual VG1.
+See template note in `docs/architecture/phase-0-6-contour-b-vgs-profession-addition-template.md` § Dual VG1 (deferred).

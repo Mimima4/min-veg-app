@@ -91,18 +91,9 @@ Source: `src/lib/i18n/route-steps-empty-copy.ts`. Signal: `PRIMARY_ROUTE_INCOMPL
 
 **No P-7 overlay:** fylke with VG2=0 but **not** covered by a chartered cross-fylke pilot (e.g. painter `15,32,33,39,40`) → primary empty + copy above only — **no** alternative routes panel unless another overlay applies (Steigen, etc.).
 
-### Dual VG1 (primary + kryssløp) — owner 2026-07-24
+### Dual VG1 (primary + kryssløp) — DEFERRED (owner direction 2026-07-24)
 
-When Vilbli allows **two different VG1** programmes into the same school VG2 / profession (home area + **kryssløp**):
-
-| Rule | Product behaviour |
-|------|-------------------|
-| One catalogue profession | Do **not** create two professions by VG1 |
-| **No VG1 split** (unlike VG2 column switch) | Do **not** offer two primary VG1 pickers on one route |
-| **Primary route** | Built only from the **primary VG1** (signed home area chain) |
-| **Second VG1 (kryssløp)** | Only in **`alternative_routes[]`** (chartered overlay ∩ PSA) — never second primary |
-
-Agent mirror: `.cursor/rules/dual-vg1-primary-krysslop.mdc`. Example (deferred): Trearbeid — primary V.DT Håndverk/design; Bygg kryssløp → alternatives.
+**Do not implement** until an explicit owner gate names a profession. Recorded intent only: one catalogue profession; primary from home-area VG1; kryssløp VG1 via chartered `alternative_routes[]` only — not a VG1 split like VG2 columns. Example (still deferred): Trearbeid — primary V.DT; Bygg kryssløp → alternatives. Agent mirror (inactive): `.cursor/rules/dual-vg1-primary-krysslop.mdc` (`alwaysApply: false`).
 
 ---
 

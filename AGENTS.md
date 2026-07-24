@@ -9,10 +9,6 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 Adding or changing **professions**, **counties (fylke)**, or Vilbli-backed **programme options** in the product does **not** auto-run ingest. Before claiming data is live, follow the **Mandatory rules when updating application information** in `src/server/vgs/VGS_OPERATIONAL_RUNNERS.md` (expansion gate + relay dry-run + production relay + route E2E).
 
-### Dual VG1 (primary + kryssløp)
-
-If two VG1 programmes lead to the same Contour B profession: **primary route** uses the signed home-area VG1 only; the **kryssløp** VG1 is **alternatives only** — do **not** split VG1 like VG2 columns. See `.cursor/rules/dual-vg1-primary-krysslop.mdc` and the profession-addition template § Dual VG1.
-
 ### No manual PSA (hard process)
 
 **Do not** hand-edit `programme_school_availability` (or equivalent Contour B school truth) via SQL/UI/one-off scripts — including “temporary” `is_active` plugs. Agent **does not decide**: cite this rule + `VGS_OPERATIONAL_RUNNERS.md`, warn about risks (false truth, relay drift, P-6), propose pipeline fix, and **wait** for explicit owner override. See `.cursor/rules/no-manual-psa.mdc`.
